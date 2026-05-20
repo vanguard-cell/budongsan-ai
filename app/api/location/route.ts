@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     // 병렬 조회: 지하철(1000m), 버스정류장(500m), 학교(1000m), 대형마트(1500m), 편의점(500m), 병원(1000m)
     const [subwayList, busList, schoolList, martList, cvsList, hospitalList] = await Promise.all([
       searchNearby(x, y, "SW8", 1000), // 지하철역
-      searchNearby(x, y, "BS8", 500),  // 버스정류장
+      searchNearby(x, y, "BS8", 1000), // 버스정류장
       searchNearby(x, y, "SC4", 1000), // 학교
       searchNearby(x, y, "MT1", 1500), // 대형마트 (반경 넓게)
       searchNearby(x, y, "CS2", 500),  // 편의점 (대형마트 없을 때 대체)
