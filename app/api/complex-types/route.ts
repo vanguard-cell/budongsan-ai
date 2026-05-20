@@ -110,9 +110,23 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const types = Array.from(areaCount.entries())
-    .sort((a, b) => a[0] - b[0])
-    .map(([area, count]) => ({ area, count }));
+  // 0.5㎡ 이내 차이는 같은 타입으로 묶기 (가장 거래 많은 면적을 대표값으로)
+  const sorted = Array.from(areaCount.entries()).sort((a, b) => a[0] - b[0]);
+  const grouped: { area: number; count: number }[] = [];
 
-  return NextResponse.json(types);
+  for (const [area, count] of sorted) {
+    const last = grouped[grouped.length - 1];
+    if (last && area - last.area <= 0.5) {
+      // 같은 그룹 — 건수 합산, 더 많은 쪽 면적으로 대표
+      if (count > last.count) {
+        grouped[grouped.length - 1] = { area, count: last.count + count };
+      } else {
+        grouped[grouped.length - 1] = { area: last.area, count: last.count + count };
+      }
+    } else {
+      grouped.push({ area, count });
+    }
+  }
+
+  return NextResponse.json(grouped);
 }
