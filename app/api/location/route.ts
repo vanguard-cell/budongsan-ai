@@ -101,7 +101,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const coords = await getBestCoords(location, complexName);
+    // 자동완성으로 선택된 경우 카카오가 준 정확한 좌표 직접 사용
+    const coords: { x: string; y: string } | null =
+      body.x && body.y
+        ? { x: body.x, y: body.y }
+        : await getBestCoords(location, complexName);
+
     if (!coords) return NextResponse.json({ error: "위치를 찾을 수 없습니다." }, { status: 400 });
 
     const { x, y } = coords;

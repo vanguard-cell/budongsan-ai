@@ -206,7 +206,11 @@ export default function Home() {
     if (!form.complexName && !form.location) { setError("소재지 또는 단지명을 먼저 입력해주세요."); return; }
     setError(""); setLocationLoading(true); setLocationInfo(null);
     try {
-      const res = await fetch("/api/location", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: form.location, complexName: form.complexName }) });
+      // 자동완성으로 선택된 경우 정확한 좌표(x,y) 직접 전달
+      const body = selectedComplex?.x
+        ? { location: form.location, complexName: form.complexName, x: selectedComplex.x, y: selectedComplex.y }
+        : { location: form.location, complexName: form.complexName };
+      const res = await fetch("/api/location", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setLocationInfo(data);
