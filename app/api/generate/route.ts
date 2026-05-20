@@ -11,42 +11,55 @@ export async function POST(req: NextRequest) {
   const { form, agency } = await req.json();
 
   const dealInfo =
-    form.dealType === "월세"
-      ? `보증금 ${form.deposit}만원 / 월세 ${form.monthly}만원`
+    form.dealType === "월세" || form.dealType === "단기임대"
+      ? `보증금 ${form.deposit || "협의"}만원 / 월세 ${form.monthly || "협의"}만원`
       : form.dealType === "전세"
-      ? `전세 ${form.deposit}만원`
-      : `매매가 ${form.price}만원`;
+      ? `전세 ${form.deposit || "협의"}만원`
+      : form.price
+      ? `매매가 ${form.price}만원`
+      : form.deposit
+      ? `매매가 ${form.deposit}만원`
+      : "가격 협의";
 
   const agencyBlock = agency?.name
     ? `\n[중개사무소] ${agency.name} | 대표 ${agency.rep} | ${agency.phone} | ${agency.directions}\n소개: ${agency.intro}`
     : "";
 
+  // 값이 있는 필드만 포함
+  const fields = [
+    `- 매물분류: ${form.propertyType}`,
+    `- 거래종류: ${form.dealType} / ${dealInfo}`,
+    `- 소재지: ${form.location}${form.complexName ? ` (${form.complexName})` : ""}`,
+    form.exclusiveArea ? `- 전용면적: ${form.exclusiveArea}㎡${form.contractArea ? ` / 계약 ${form.contractArea}㎡` : ""}` : null,
+    (form.floor || form.totalFloor) ? `- 층수: ${form.floor || "?"}층 / 전체 ${form.totalFloor || "?"}층${form.isDuplex ? " (복층)" : ""}` : null,
+    (form.rooms || form.bathrooms) ? `- 방/욕실: ${form.rooms || "?"}개 / ${form.bathrooms || "?"}개` : null,
+    form.direction ? `- 방향: ${form.direction}` : null,
+    form.maintenanceFee ? `- 관리비: ${form.maintenanceFee}만원` : null,
+    form.heating ? `- 난방: ${form.heating}` : null,
+    form.transport ? `- 교통/역세권: ${form.transport}` : null,
+    form.investPoint ? `- 투자 포인트: ${form.investPoint}` : null,
+    form.options ? `- 옵션: ${form.options}` : null,
+    form.highlights ? `- 매물 장점: ${form.highlights}` : null,
+    form.notes ? `- 특이사항: ${form.notes}` : null,
+    form.complexUnits ? `- 단지 세대수: ${form.complexUnits}세대` : null,
+  ].filter(Boolean).join("\n");
+
   const prompt = `당신은 대한민국 부동산 중개사무소 전문 마케팅 작가입니다.
-아래 매물 정보 하나로 7가지 콘텐츠를 생성해주세요. 단순 정보 나열이 아닌, 각 독자에게 설득력 있는 언어로 써주세요.${agencyBlock}
+아래 매물 정보 하나로 7가지 콘텐츠를 생성해주세요. 단순 정보 나열이 아닌, 각 독자에게 설득력 있는 언어로 써주세요.
+⚠️ 중요: 제공된 정보에 없는 내용은 추측하거나 작성하지 마세요. 값이 없는 항목은 완전히 생략하세요.${agencyBlock}
 
 [매물 정보]
-- 매물분류: ${form.propertyType}
-- 거래종류: ${form.dealType} / ${dealInfo}
-- 소재지: ${form.location} ${form.complexName ? `(${form.complexName})` : ""}
-- 계약면적: ${form.contractArea || "-"}㎡ / 전용면적: ${form.exclusiveArea || "-"}㎡
-- 해당층/전체층: ${form.floor || "-"}층 / ${form.totalFloor || "-"}층
-- 방수/욕실수: ${form.rooms || "-"}개 / ${form.bathrooms || "-"}개
-- 방향: ${form.direction || "미기재"} / 복층: ${form.isDuplex ? "복층" : "일반"}
-- 관리비: ${form.maintenanceFee ? form.maintenanceFee + "만원" : "없음"} / 난방: ${form.heating || "미기재"}
-- 교통/역세권: ${form.transport || "없음"}
-- 투자 포인트: ${form.investPoint || "없음"}
-- 옵션: ${form.options || "없음"}
-- 매물 장점: ${form.highlights || "없음"}
-- 특이사항: ${form.notes || "없음"}
-- 단지 세대수: ${form.complexUnits ? form.complexUnits + "세대" : "미기재"}
+${fields}
 
 아래 형식으로 정확히 출력하세요:
 
 ===매물특징===
-네이버 매물특징 입력란용. 핵심 키워드를 쉼표로 구분. 한 줄. 예: 역세권, 복층, 수익형, 즉시입주
+네이버 매물특징 입력란용. 2~3어절 이내 짧은 키워드만 쉼표로 구분. 한 줄. 긴 문장 절대 금지.
+예: 8호선역세권, 복층구조, 수익형, 즉시입주, 초등학교인근
 
 ===매물설명===
-네이버 매물설명 입력란용. ✅와 *- 불릿 형식. 현 매물 특징 → 단지 정보 → 중개사 소개 순서. 실제 네이버 매물 설명 스타일. 400자 내외.
+네이버 매물설명 입력란용. ✅와 *- 불릿 형식. 현 매물 특징 → 단지 정보 → 중개사 소개 순서.
+입력된 정보만 사용. 값 없는 항목 생략. 400자 내외.
 
 ===블로그===
 네이버/티스토리 블로그 포스팅. 제목 포함. ## 소제목과 이모지 활용. SEO 키워드 자연스럽게 포함. 800자 이상.
