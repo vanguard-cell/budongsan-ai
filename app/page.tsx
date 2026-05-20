@@ -390,7 +390,7 @@ export default function Home() {
                   </div>
                 )}
                 {locationInfo.mart[0] && (
-                  <div><span className="font-medium text-gray-500">🛒 마트/편의</span>
+                  <div><span className="font-medium text-gray-500">🛒 대형마트/아울렛</span>
                     <p>{locationInfo.mart[0]}</p>
                   </div>
                 )}

@@ -161,29 +161,28 @@ export async function POST(req: NextRequest) {
     const { x, y } = coords;
 
     // 1단계: 카카오 카테고리 검색 (병렬)
-    const [subwayList, schoolList, martList, cvsList, outletList, hospitalList,
+    const [subwayList, schoolList, martList, outletList, hospitalList,
            kidsList, publicList, academyList] = await Promise.all([
-      searchNearby(x, y, "SW8", 1000),     // 지하철역
-      searchNearby(x, y, "SC4", 1500, 5),  // 학교 (반경 1.5km, 최대 5개)
-      searchNearby(x, y, "MT1", 2000, 5),  // 대형마트 (반경 2km)
-      searchNearby(x, y, "CS2", 500),       // 편의점
-      searchOutlet(x, y, 2000),             // 아울렛/백화점
-      searchNearby(x, y, "HP8", 1000),     // 병원
-      searchNearby(x, y, "PS3", 500),      // 어린이집/유치원
-      searchNearby(x, y, "PO3", 1000),     // 공공기관
-      searchNearby(x, y, "AC5", 1000, 15), // 학원 (개수 파악용)
+      searchNearby(x, y, "SW8", 1000),      // 지하철역
+      searchNearby(x, y, "SC4", 1500, 5),   // 학교 (반경 1.5km, 최대 5개)
+      searchNearby(x, y, "MT1", 5000, 3),   // 대형마트 (반경 5km, 차로 이동 거리)
+      searchOutlet(x, y, 5000),              // 아울렛/백화점 (반경 5km)
+      searchNearby(x, y, "HP8", 1000),      // 병원
+      searchNearby(x, y, "PS3", 500),       // 어린이집/유치원
+      searchNearby(x, y, "PO3", 1000),      // 공공기관
+      searchNearby(x, y, "AC5", 1000, 15),  // 학원 (개수 파악용)
     ]);
 
-    // 마트 실제 사용할 목록 결정 (대형마트 → 아울렛 → 편의점)
+    // 마트: 대형마트 → 아울렛/백화점 → 없으면 빈 배열 (편의점 제외)
     const martBaseList = martList.length > 0 ? martList :
-                         outletList.length > 0 ? outletList : cvsList;
+                         outletList.length > 0 ? outletList : [];
 
-    // 2단계: 각 카테고리 첫 번째 결과에 대해 OSRM 실제 도보 경로 조회 (병렬)
-    const [subwayRoute, schoolRoute, martRoute, hospitalRoute, kidsRoute, publicRoute] =
+    // 2단계: 각 카테고리 첫 번째 결과에 대해 Tmap 실제 도보 경로 조회 (병렬)
+    // 마트는 5km 반경이라 도보 표시 제외 (차로 이동 거리)
+    const [subwayRoute, schoolRoute, hospitalRoute, kidsRoute, publicRoute] =
       await Promise.all([
         routeFor(x, y, subwayList),
         routeFor(x, y, schoolList),
-        routeFor(x, y, martBaseList),
         routeFor(x, y, hospitalList),
         routeFor(x, y, kidsList),
         routeFor(x, y, publicList),
@@ -192,7 +191,11 @@ export async function POST(req: NextRequest) {
     // 3단계: 실제 도보 시간 적용해서 포맷
     const subway    = fmt(subwayList,   subwayRoute);
     const school    = fmt(schoolList,   schoolRoute);
-    const mart      = fmt(martBaseList, martRoute);
+    // 마트는 차로 이동 거리 → km 단위로 표시
+    const mart      = martBaseList.map(p => {
+      const km = (Number(p.distance) / 1000).toFixed(1);
+      return `${p.place_name} (${km}km)`;
+    });
     const hospital  = fmt(hospitalList, hospitalRoute);
     const kids      = fmt(kidsList,     kidsRoute);
     const publicOrg = fmt(publicList,   publicRoute);
