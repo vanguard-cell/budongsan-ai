@@ -52,23 +52,21 @@ function getTag(xml: string, tag: string) {
   return xml.match(new RegExp(`<${tag}>([^<]*)<\/${tag}>`))?.[1]?.trim() ?? "";
 }
 
-// 단지명 정규화: 공백·특수문자 제거, 소문자
+// 단지명 정규화: 공백·특수문자 제거, 소문자, 아파트/오피스텔 접미사 제거
 function normalize(s: string) {
-  return s.replace(/[\s\-_()\[\]（）·]/g, "").toLowerCase();
+  return s
+    .replace(/[\s\-_()\[\]（）·]/g, "")
+    .replace(/(아파트|오피스텔|빌라|주상복합|아이파크|더샵|자이)$/, "")
+    .toLowerCase();
 }
 
-// 단지명 매칭: 6글자 키 or 핵심명 포함 여부
+// 단지명 매칭: 정규화된 전체 이름이 서로 포함 관계인지 확인
 function nameMatch(searchName: string, dataName: string): boolean {
   if (!dataName) return false;
   const sn = normalize(searchName);
   const dn = normalize(dataName);
-  // 6글자 이상 공통 prefix
-  const key = sn.slice(0, Math.min(6, sn.length));
-  if (key.length >= 4 && dn.includes(key)) return true;
-  // 접미사(아파트/오피스텔 등) 제거한 핵심명
-  const core = sn.replace(/(아파트|오피스텔|빌라|주상복합)$/, "");
-  if (core.length >= 4 && dn.includes(core)) return true;
-  return false;
+  // 정규화된 검색명과 데이터명이 서로 포함 관계
+  return sn === dn || sn.includes(dn) || dn.includes(sn);
 }
 
 export async function POST(req: NextRequest) {
