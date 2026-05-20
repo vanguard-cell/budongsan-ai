@@ -383,13 +383,35 @@ export default function Home() {
             <div className="mt-3 bg-blue-50 rounded-2xl p-4 border border-blue-100">
               <p className="text-xs font-bold text-blue-700 mb-2">📍 주변 인프라 분석 결과</p>
               <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
-                {locationInfo.subway[0]
-                  ? <div><span className="font-medium text-gray-500">지하철</span><p>{locationInfo.subway[0]}</p>{locationInfo.subway[1] && <p>{locationInfo.subway[1]}</p>}</div>
-                  : locationInfo.bus[0] && <div><span className="font-medium text-gray-500">버스정류장</span>{locationInfo.bus.slice(0,2).map((b,i) => <p key={i}>{b}</p>)}</div>}
-                {locationInfo.subway[0] && locationInfo.bus[0] && <div><span className="font-medium text-gray-500">버스정류장</span><p>{locationInfo.bus[0]}</p></div>}
-                {locationInfo.mart[0] && <div><span className="font-medium text-gray-500">마트/편의</span><p>{locationInfo.mart[0]}</p></div>}
-                {locationInfo.school[0] && <div><span className="font-medium text-gray-500">학교</span><p>{locationInfo.school[0]}</p></div>}
-                {locationInfo.hospital[0] && <div><span className="font-medium text-gray-500">병원</span><p>{locationInfo.hospital[0]}</p></div>}
+                {locationInfo.subway[0] && (
+                  <div><span className="font-medium text-gray-500">🚇 지하철</span>
+                    <p>{locationInfo.subway[0]}</p>
+                    {locationInfo.subway[1] && <p>{locationInfo.subway[1]}</p>}
+                  </div>
+                )}
+                {locationInfo.bus[0] && (
+                  <div><span className="font-medium text-gray-500">🚌 버스정류장</span>
+                    {locationInfo.bus.slice(0, 2).map((b, i) => <p key={i}>{b}</p>)}
+                  </div>
+                )}
+                {locationInfo.mart[0] && (
+                  <div><span className="font-medium text-gray-500">🛒 마트/편의</span>
+                    <p>{locationInfo.mart[0]}</p>
+                  </div>
+                )}
+                {locationInfo.school[0] && (
+                  <div><span className="font-medium text-gray-500">🏫 학교</span>
+                    <p>{locationInfo.school[0]}</p>
+                  </div>
+                )}
+                {locationInfo.hospital[0] && (
+                  <div><span className="font-medium text-gray-500">🏥 병원</span>
+                    <p>{locationInfo.hospital[0]}</p>
+                  </div>
+                )}
+                {!locationInfo.subway[0] && !locationInfo.bus[0] && !locationInfo.mart[0] && !locationInfo.school[0] && !locationInfo.hospital[0] && (
+                  <p className="col-span-2 text-gray-400">주변 인프라 정보를 찾을 수 없습니다.</p>
+                )}
               </div>
               <p className="text-xs text-blue-600 mt-2 font-medium">→ 교통/역세권 항목에 자동 반영됨</p>
             </div>
