@@ -14,7 +14,7 @@ interface FormData {
   highlights: string; notes: string; complexUnits: string;
 }
 interface Result { feature: string; description: string; blog: string; insta: string; resident: string; investor: string; qna: string; }
-interface LocationInfo { subway: string[]; bus: string[]; school: string[]; mart: string[]; hospital: string[]; summary: string; }
+interface LocationInfo { subway: string[]; bus: string[]; school: string[]; mart: string[]; hospital: string[]; kids: string[]; pharmacy: string[]; publicOrg: string[]; academy: string[]; summary: string; }
 interface PriceInfo { trades: { date: string; price?: number; deposit?: number; monthly?: number; area: number; floor: string }[]; avgPrice: number; currentPrice: number; diff: number; pct: number; analysis: string; isRent?: boolean; }
 interface ComplexResult { name: string; address: string; category?: string; x?: string; y?: string; }
 interface ComplexType { area: number; count: number; }
@@ -407,6 +407,27 @@ export default function Home() {
                 {locationInfo.hospital[0] && (
                   <div><span className="font-medium text-gray-500">🏥 병원</span>
                     <p>{locationInfo.hospital[0]}</p>
+                  </div>
+                )}
+                {locationInfo.pharmacy?.[0] && (
+                  <div><span className="font-medium text-gray-500">💊 약국</span>
+                    <p>{locationInfo.pharmacy[0]}</p>
+                  </div>
+                )}
+                {locationInfo.kids?.[0] && (
+                  <div><span className="font-medium text-gray-500">👶 어린이집/유치원</span>
+                    <p>{locationInfo.kids[0]}</p>
+                    {locationInfo.kids[1] && <p>{locationInfo.kids[1]}</p>}
+                  </div>
+                )}
+                {locationInfo.academy?.[0] && (
+                  <div><span className="font-medium text-gray-500">📚 학원가</span>
+                    <p>{locationInfo.academy[0]}</p>
+                  </div>
+                )}
+                {locationInfo.publicOrg?.[0] && (
+                  <div><span className="font-medium text-gray-500">🏛️ 공공기관</span>
+                    <p>{locationInfo.publicOrg[0]}</p>
                   </div>
                 )}
                 {!locationInfo.subway[0] && !locationInfo.bus[0] && !locationInfo.mart[0] && !locationInfo.school[0] && !locationInfo.hospital[0] && (

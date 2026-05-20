@@ -117,36 +117,47 @@ export async function POST(req: NextRequest) {
 
     const { x, y } = coords;
 
-    // 병렬 조회: 지하철(1000m), 버스정류장(키워드검색), 학교(1000m), 대형마트(1500m), 편의점(500m), 병원(1000m)
-    const [subwayList, busList, schoolList, martList, cvsList, hospitalList] = await Promise.all([
+    // 병렬 조회 (모두 동시에)
+    const [subwayList, busList, schoolList, martList, cvsList, hospitalList,
+           kidsList, pharmacyList, publicList, academyList] = await Promise.all([
       searchNearby(x, y, "SW8", 1000), // 지하철역
-      searchBusStop(x, y, 1000),        // 버스정류장 (키워드 검색)
+      searchBusStop(x, y, 1000),        // 버스정류장
       searchNearby(x, y, "SC4", 1000), // 학교
-      searchNearby(x, y, "MT1", 1500), // 대형마트 (반경 넓게)
-      searchNearby(x, y, "CS2", 500),  // 편의점 (대형마트 없을 때 대체)
+      searchNearby(x, y, "MT1", 1500), // 대형마트
+      searchNearby(x, y, "CS2", 500),  // 편의점
       searchNearby(x, y, "HP8", 1000), // 병원
+      searchNearby(x, y, "PS3", 500),  // 어린이집/유치원
+      searchNearby(x, y, "PM9", 500),  // 약국
+      searchNearby(x, y, "PO3", 1000), // 공공기관 (주민센터 등)
+      searchNearby(x, y, "AC5", 500, 15), // 학원 (개수 파악용, 최대 15개)
     ]);
 
     const subway = fmt(subwayList);
     const bus = fmt(busList);
     const school = fmt(schoolList);
-    // 대형마트 있으면 우선, 없으면 편의점으로 대체
     const mart = martList.length > 0 ? fmt(martList) : fmt(cvsList);
     const hospital = fmt(hospitalList);
+    const kids = fmt(kidsList);
+    const pharmacy = fmt(pharmacyList);
+    const publicOrg = fmt(publicList);
+    // 학원은 개수만 표시
+    const academyCount = academyList.length;
+    const academy = academyCount > 0 ? [`반경 500m 내 학원 ${academyCount}개`] : [];
 
-    // summary: 실제 있는 것만 포함
+    // summary: 교통 + 주요 생활편의 위주
     const summaryParts: string[] = [];
     if (subway[0]) summaryParts.push(subway[0]);
-    else if (bus[0]) summaryParts.push(`버스 ${bus[0]}`);
+    else if (bus[0]) summaryParts.push(bus[0]);
     if (mart[0]) summaryParts.push(mart[0]);
     if (school[0]) summaryParts.push(school[0]);
     if (hospital[0]) summaryParts.push(hospital[0]);
+    if (kids[0]) summaryParts.push(kids[0]);
 
     const summary = summaryParts.length > 0
       ? summaryParts.join(". ") + "."
       : "주변 인프라를 직접 확인해주세요.";
 
-    return NextResponse.json({ subway, bus, school, mart, hospital, summary });
+    return NextResponse.json({ subway, bus, school, mart, hospital, kids, pharmacy, publicOrg, academy, summary });
   } catch (err) {
     console.error("location error:", err);
     return NextResponse.json({ error: "위치 조회 중 오류가 발생했습니다." }, { status: 500 });
