@@ -31,15 +31,44 @@ function getLawdCd(location: string): string {
   return "41450";
 }
 
-// 매물종류별 매매 API
-function getTradeApi(propertyType: string): string {
-  if (propertyType === "오피스텔") return "RTMSDataSvcOffiTrade/getRTMSDataSvcOffiTrade";
-  if (propertyType === "빌라/다세대" || propertyType === "원룸/투룸") return "RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade";
-  return "RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"; // 아파트 기본
+// 매물종류별 매매 + 전월세 API 목록 반환
+function getApis(propertyType: string): string[] {
+  if (propertyType === "오피스텔") return [
+    "RTMSDataSvcOffiTrade/getRTMSDataSvcOffiTrade",
+    "RTMSDataSvcOffiRent/getRTMSDataSvcOffiRent",
+  ];
+  if (propertyType === "빌라/다세대" || propertyType === "원룸/투룸") return [
+    "RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade",
+    "RTMSDataSvcRHRent/getRTMSDataSvcRHRent",
+  ];
+  // 아파트 기본
+  return [
+    "RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev",
+    "RTMSDataSvcAptRent/getRTMSDataSvcAptRent",
+  ];
 }
 
 function getTag(xml: string, tag: string) {
   return xml.match(new RegExp(`<${tag}>([^<]*)<\/${tag}>`))?.[1]?.trim() ?? "";
+}
+
+// 단지명 정규화: 공백·특수문자 제거, 소문자
+function normalize(s: string) {
+  return s.replace(/[\s\-_()\[\]（）·]/g, "").toLowerCase();
+}
+
+// 단지명 매칭: 6글자 키 or 핵심명 포함 여부
+function nameMatch(searchName: string, dataName: string): boolean {
+  if (!dataName) return false;
+  const sn = normalize(searchName);
+  const dn = normalize(dataName);
+  // 6글자 이상 공통 prefix
+  const key = sn.slice(0, Math.min(6, sn.length));
+  if (key.length >= 4 && dn.includes(key)) return true;
+  // 접미사(아파트/오피스텔 등) 제거한 핵심명
+  const core = sn.replace(/(아파트|오피스텔|빌라|주상복합)$/, "");
+  if (core.length >= 4 && dn.includes(core)) return true;
+  return false;
 }
 
 export async function POST(req: NextRequest) {
@@ -48,32 +77,39 @@ export async function POST(req: NextRequest) {
   if (!MOLIT_KEY || MOLIT_KEY === "여기에_공공데이터_키") return NextResponse.json([]);
 
   const lawdCd = getLawdCd(location || "");
-  const apiPath = getTradeApi(propertyType || "아파트");
+  const apis = getApis(propertyType || "아파트");
   const now = new Date();
   const areaCount = new Map<number, number>();
-  const nameKey = complexName.replace(/\s/g, "").slice(0, 4);
 
-  // 최근 12개월 조회
-  for (let i = 0; i < 12; i++) {
+  // 최근 24개월 × (매매 + 전월세) 병렬 조회
+  const months: string[] = [];
+  for (let i = 0; i < 24; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const ym = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const url = `https://apis.data.go.kr/1613000/${apiPath}?LAWD_CD=${lawdCd}&DEAL_YMD=${ym}&serviceKey=${MOLIT_KEY}&numOfRows=100&pageNo=1`;
+    months.push(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
 
-    try {
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) continue;
-      const text = await res.text();
-      const matches = text.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
+  const fetches = apis.flatMap(apiPath =>
+    months.map(ym => {
+      const url = `https://apis.data.go.kr/1613000/${apiPath}?LAWD_CD=${lawdCd}&DEAL_YMD=${ym}&serviceKey=${MOLIT_KEY}&numOfRows=1000&pageNo=1`;
+      return fetch(url, { cache: "no-store" })
+        .then(r => r.ok ? r.text() : "")
+        .catch(() => "");
+    })
+  );
 
-      for (const m of matches) {
-        const nm = getTag(m, "aptNm") || getTag(m, "offiNm") || getTag(m, "mhouseNm");
-        if (!nm.includes(nameKey)) continue;
-        const areaStr = getTag(m, "excluUseAr") || getTag(m, "totalFloorAr");
-        const area = Math.round(parseFloat(areaStr) * 100) / 100;
-        if (isNaN(area) || area <= 0) continue;
-        areaCount.set(area, (areaCount.get(area) ?? 0) + 1);
-      }
-    } catch { continue; }
+  const results = await Promise.all(fetches);
+
+  for (const text of results) {
+    if (!text) continue;
+    const matches = text.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
+    for (const m of matches) {
+      const nm = getTag(m, "aptNm") || getTag(m, "offiNm") || getTag(m, "mhouseNm");
+      if (!nameMatch(complexName, nm)) continue;
+      const areaStr = getTag(m, "excluUseAr") || getTag(m, "totalFloorAr");
+      const area = Math.round(parseFloat(areaStr) * 100) / 100;
+      if (isNaN(area) || area <= 0) continue;
+      areaCount.set(area, (areaCount.get(area) ?? 0) + 1);
+    }
   }
 
   const types = Array.from(areaCount.entries())
