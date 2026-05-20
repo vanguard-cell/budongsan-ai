@@ -71,6 +71,12 @@ async function searchNearby(x: string, y: string, category: string, radius = 100
   return (data?.documents as KakaoPlace[]) ?? [];
 }
 
+// 버스정류장은 카테고리 코드가 없어서 키워드 검색 사용
+async function searchBusStop(x: string, y: string, radius = 1000) {
+  const data = await kakaoFetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=버스정류장&x=${x}&y=${y}&radius=${radius}&sort=distance&size=3`);
+  return (data?.documents as KakaoPlace[]) ?? [];
+}
+
 function walkMin(distanceM: string) {
   const m = Number(distanceM);
   const min = Math.round(m / 67); // 도보 67m/분 기준
@@ -111,10 +117,10 @@ export async function POST(req: NextRequest) {
 
     const { x, y } = coords;
 
-    // 병렬 조회: 지하철(1000m), 버스정류장(500m), 학교(1000m), 대형마트(1500m), 편의점(500m), 병원(1000m)
+    // 병렬 조회: 지하철(1000m), 버스정류장(키워드검색), 학교(1000m), 대형마트(1500m), 편의점(500m), 병원(1000m)
     const [subwayList, busList, schoolList, martList, cvsList, hospitalList] = await Promise.all([
       searchNearby(x, y, "SW8", 1000), // 지하철역
-      searchNearby(x, y, "BS8", 1000), // 버스정류장
+      searchBusStop(x, y, 1000),        // 버스정류장 (키워드 검색)
       searchNearby(x, y, "SC4", 1000), // 학교
       searchNearby(x, y, "MT1", 1500), // 대형마트 (반경 넓게)
       searchNearby(x, y, "CS2", 500),  // 편의점 (대형마트 없을 때 대체)
