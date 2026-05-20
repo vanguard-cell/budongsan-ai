@@ -214,7 +214,9 @@ export default function Home() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setLocationInfo(data);
-      if (data.summary) setForm(p => ({ ...p, transport: data.summary }));
+      // 교통 자동입력: 지하철 첫 번째만 (짧고 핵심적으로)
+      const mainTransport = data.subway?.[0] || "";
+      if (mainTransport) setForm(p => ({ ...p, transport: mainTransport }));
     } catch (e) { setError(e instanceof Error ? e.message : "위치 조회 오류"); }
     finally { setLocationLoading(false); }
   };
