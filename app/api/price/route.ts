@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     interface RawItem { nm: string; amount: string; deposit: string; monthly: string; area: string; floor: string; year: string; month: string; }
     const results: RawItem[] = [];
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 12; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const ym = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
       const url = `https://apis.data.go.kr/1613000/${api.svc}/${api.op}?LAWD_CD=${lawdCd}&DEAL_YMD=${ym}&serviceKey=${MOLIT_KEY}&numOfRows=100&pageNo=1`;
@@ -126,14 +126,22 @@ export async function POST(req: NextRequest) {
 
         // 단지명 필터: nm이 있을 때만 적용 (단독/다가구는 nm 없으므로 통과)
         if (complexName && nm) {
-          const key = complexName.replace(/\s/g, "").slice(0, 4);
-          if (!nm.includes(key)) continue;
+          // 공백·특수문자 제거 후 비교
+          const normalize = (s: string) => s.replace(/[\s\-_()（）]/g, "").toLowerCase();
+          const searchNm = normalize(complexName);
+          const dataNm = normalize(nm);
+          // 아파트/오피스텔 등 접미사 제거한 핵심 이름 추출
+          const coreName = searchNm.replace(/(아파트|오피스텔|빌라|주상복합|아이파크|더샵|자이|e편한세상)$/, "");
+          // 6글자 이상 매칭 or 핵심이름 포함 여부 확인
+          const key6 = searchNm.slice(0, 6);
+          const matched = dataNm.includes(key6) || (coreName.length >= 4 && dataNm.includes(coreName));
+          if (!matched) continue;
         }
 
-        // 면적 필터 (±5㎡)
+        // 면적 필터 (±10㎡로 완화, 면적 미입력 시 전체 조회)
         const areaNum = parseFloat(area);
         const targetArea = parseFloat(exclusiveArea);
-        if (targetArea && !isNaN(areaNum) && Math.abs(areaNum - targetArea) > 5) continue;
+        if (targetArea && !isNaN(areaNum) && Math.abs(areaNum - targetArea) > 10) continue;
 
         results.push({ nm, amount, deposit, monthly, area, floor, year, month });
       }

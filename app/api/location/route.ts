@@ -66,8 +66,8 @@ async function getBestCoords(location: string, complexName: string): Promise<{ x
   return null;
 }
 
-async function searchNearby(x: string, y: string, category: string, radius = 1500) {
-  const data = await kakaoFetch(`https://dapi.kakao.com/v2/local/search/category.json?category_group_code=${category}&x=${x}&y=${y}&radius=${radius}&sort=distance&size=3`);
+async function searchNearby(x: string, y: string, category: string, radius = 1000, size = 3) {
+  const data = await kakaoFetch(`https://dapi.kakao.com/v2/local/search/category.json?category_group_code=${category}&x=${x}&y=${y}&radius=${radius}&sort=distance&size=${size}`);
   return (data?.documents as KakaoPlace[]) ?? [];
 }
 
@@ -77,9 +77,12 @@ function walkMin(distanceM: string) {
   return min < 1 ? 1 : min;
 }
 
+function fmt(places: KakaoPlace[]) {
+  return places.map(p => `${p.place_name} 도보 ${walkMin(p.distance)}분 (${p.distance}m)`);
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  // { address } (구형) 또는 { location, complexName } (신형) 모두 지원
   const location: string = body.location || body.address || "";
   const complexName: string = body.complexName || "";
   const address = location || complexName;
@@ -88,11 +91,12 @@ export async function POST(req: NextRequest) {
 
   if (!KAKAO_KEY || KAKAO_KEY === "여기에_카카오_키") {
     return NextResponse.json({
-      subway: ["미사역 (5호선) 도보 2분 (130m)", "하남풍산역 (5호선) 도보 12분 (820m)"],
-      school: ["미사강변초등학교 도보 5분 (330m)", "미사중학교 도보 9분 (580m)"],
-      mart: ["이마트 미사점 도보 6분 (400m)", "GS25 미사강변점 도보 2분 (100m)"],
-      hospital: ["미사강변소아과 도보 4분 (260m)", "하남365의원 도보 8분 (510m)"],
-      summary: "미사역(5호선) 도보 2분 초역세권. 이마트·학교·병원 모두 도보 10분 이내.",
+      subway: ["미사역 (5호선) 도보 2분 (130m)"],
+      bus: ["미사강변중앙광장 정류장 도보 1분 (70m)"],
+      school: ["미사강변초등학교 도보 5분 (330m)"],
+      mart: ["GS25 미사강변점 도보 2분 (100m)"],
+      hospital: ["미사강변소아과 도보 4분 (260m)"],
+      summary: "미사역(5호선) 도보 2분 초역세권. 편의점·학교·병원 모두 도보 10분 이내.",
     });
   }
 
@@ -102,30 +106,36 @@ export async function POST(req: NextRequest) {
 
     const { x, y } = coords;
 
-    const [subwayList, schoolList, martList, hospitalList] = await Promise.all([
-      searchNearby(x, y, "SW8"), // 지하철역
-      searchNearby(x, y, "SC4"), // 학교
-      searchNearby(x, y, "MT1"), // 대형마트
-      searchNearby(x, y, "HP8"), // 병원
+    // 병렬 조회: 지하철(1000m), 버스정류장(500m), 학교(1000m), 대형마트(1500m), 편의점(500m), 병원(1000m)
+    const [subwayList, busList, schoolList, martList, cvsList, hospitalList] = await Promise.all([
+      searchNearby(x, y, "SW8", 1000), // 지하철역
+      searchNearby(x, y, "BK9", 500),  // 버스정류장
+      searchNearby(x, y, "SC4", 1000), // 학교
+      searchNearby(x, y, "MT1", 1500), // 대형마트 (반경 넓게)
+      searchNearby(x, y, "CS2", 500),  // 편의점 (대형마트 없을 때 대체)
+      searchNearby(x, y, "HP8", 1000), // 병원
     ]);
 
-    const fmt = (places: KakaoPlace[]) =>
-      places.map(p => `${p.place_name} 도보 ${walkMin(p.distance)}분 (${p.distance}m)`);
-
     const subway = fmt(subwayList);
+    const bus = fmt(busList);
     const school = fmt(schoolList);
-    const mart = fmt(martList);
+    // 대형마트 있으면 우선, 없으면 편의점으로 대체
+    const mart = martList.length > 0 ? fmt(martList) : fmt(cvsList);
     const hospital = fmt(hospitalList);
 
+    // summary: 실제 있는 것만 포함
     const summaryParts: string[] = [];
     if (subway[0]) summaryParts.push(subway[0]);
+    else if (bus[0]) summaryParts.push(`버스 ${bus[0]}`);
     if (mart[0]) summaryParts.push(mart[0]);
     if (school[0]) summaryParts.push(school[0]);
+    if (hospital[0]) summaryParts.push(hospital[0]);
 
-    return NextResponse.json({
-      subway, school, mart, hospital,
-      summary: summaryParts.join(". ") + ". 생활 인프라 우수.",
-    });
+    const summary = summaryParts.length > 0
+      ? summaryParts.join(". ") + "."
+      : "주변 인프라를 직접 확인해주세요.";
+
+    return NextResponse.json({ subway, bus, school, mart, hospital, summary });
   } catch (err) {
     console.error("location error:", err);
     return NextResponse.json({ error: "위치 조회 중 오류가 발생했습니다." }, { status: 500 });
