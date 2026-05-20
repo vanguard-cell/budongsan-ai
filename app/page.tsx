@@ -14,7 +14,7 @@ interface FormData {
   highlights: string; notes: string; complexUnits: string;
 }
 interface Result { feature: string; description: string; blog: string; insta: string; resident: string; investor: string; qna: string; }
-interface LocationInfo { subway: string[]; bus: string[]; school: string[]; mart: string[]; hospital: string[]; kids: string[]; pharmacy: string[]; publicOrg: string[]; academy: string[]; summary: string; }
+interface LocationInfo { subway: string[]; school: string[]; mart: string[]; hospital: string[]; kids: string[]; publicOrg: string[]; academy: string[]; summary: string; }
 interface PriceInfo { trades: { date: string; price?: number; deposit?: number; monthly?: number; area: number; floor: string }[]; avgPrice: number; currentPrice: number; diff: number; pct: number; analysis: string; isRent?: boolean; }
 interface ComplexResult { name: string; address: string; category?: string; x?: string; y?: string; }
 interface ComplexType { area: number; count: number; }
@@ -389,11 +389,6 @@ export default function Home() {
                     {locationInfo.subway[1] && <p>{locationInfo.subway[1]}</p>}
                   </div>
                 )}
-                {locationInfo.bus[0] && (
-                  <div><span className="font-medium text-gray-500">🚌 버스정류장</span>
-                    {locationInfo.bus.slice(0, 2).map((b, i) => <p key={i}>{b}</p>)}
-                  </div>
-                )}
                 {locationInfo.mart[0] && (
                   <div><span className="font-medium text-gray-500">🛒 마트/편의</span>
                     <p>{locationInfo.mart[0]}</p>
@@ -402,16 +397,12 @@ export default function Home() {
                 {locationInfo.school[0] && (
                   <div><span className="font-medium text-gray-500">🏫 학교</span>
                     <p>{locationInfo.school[0]}</p>
+                    {locationInfo.school[1] && <p>{locationInfo.school[1]}</p>}
                   </div>
                 )}
                 {locationInfo.hospital[0] && (
                   <div><span className="font-medium text-gray-500">🏥 병원</span>
                     <p>{locationInfo.hospital[0]}</p>
-                  </div>
-                )}
-                {locationInfo.pharmacy?.[0] && (
-                  <div><span className="font-medium text-gray-500">💊 약국</span>
-                    <p>{locationInfo.pharmacy[0]}</p>
                   </div>
                 )}
                 {locationInfo.kids?.[0] && (
@@ -430,11 +421,12 @@ export default function Home() {
                     <p>{locationInfo.publicOrg[0]}</p>
                   </div>
                 )}
-                {!locationInfo.subway[0] && !locationInfo.bus[0] && !locationInfo.mart[0] && !locationInfo.school[0] && !locationInfo.hospital[0] && (
+                {!locationInfo.subway[0] && !locationInfo.mart[0] && !locationInfo.school[0] && !locationInfo.hospital[0] && (
                   <p className="col-span-2 text-gray-400">주변 인프라 정보를 찾을 수 없습니다.</p>
                 )}
               </div>
-              <p className="text-xs text-blue-600 mt-2 font-medium">→ 교통/역세권 항목에 자동 반영됨</p>
+              <p className="text-xs text-gray-400 mt-2">※ 직선거리 기준 (실제 도보경로와 다를 수 있음)</p>
+              <p className="text-xs text-blue-600 mt-1 font-medium">→ 교통/역세권 항목에 자동 반영됨</p>
             </div>
           )}
 
