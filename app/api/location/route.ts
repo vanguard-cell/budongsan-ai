@@ -65,6 +65,28 @@ async function searchNearby(x: string, y: string, category: string, radius = 100
   return (data?.documents as KakaoPlace[]) ?? [];
 }
 
+// ── 대형 쇼핑시설 브랜드 필터 ──────────────────────────────────────────
+// 포함: 진짜 대형마트 / 백화점 / 아울렛만
+const LARGE_RETAIL_BRANDS = [
+  // 대형마트
+  "이마트", "홈플러스", "롯데마트", "메가마트", "코스트코", "트레이더스",
+  // 백화점
+  "현대백화점", "롯데백화점", "신세계백화점", "갤러리아", "NC백화점", "AK플라자",
+  // 아울렛/복합쇼핑몰
+  "현대아울렛", "롯데아울렛", "신세계아울렛", "프리미엄아울렛",
+  "마리오아울렛", "스타필드", "타임아울렛",
+];
+// 제외: SSM(기업형슈퍼마켓) — MT1 코드로 잡히지만 실제론 소규모
+const SSM_BRANDS = [
+  "GS더프레시", "홈플러스익스프레스", "이마트에브리데이",
+  "롯데슈퍼", "GS슈퍼", "노브랜드",
+];
+
+function isLargeRetail(name: string): boolean {
+  if (SSM_BRANDS.some(b => name.includes(b))) return false;
+  return LARGE_RETAIL_BRANDS.some(b => name.includes(b));
+}
+
 // 아울렛/백화점은 카테고리 코드 없어서 키워드 검색 사용
 async function searchOutlet(x: string, y: string, radius = 2000) {
   const [r1, r2] = await Promise.all([
@@ -173,9 +195,11 @@ export async function POST(req: NextRequest) {
       searchNearby(x, y, "AC5", 1000, 15),  // 학원 (개수 파악용)
     ]);
 
-    // 마트: 대형마트 → 아울렛/백화점 → 없으면 빈 배열 (편의점 제외)
-    const martBaseList = martList.length > 0 ? martList :
-                         outletList.length > 0 ? outletList : [];
+    // 마트: SSM 제외 후 대형마트 → 아울렛/백화점 → 없으면 빈 배열
+    const filteredMart   = martList.filter(p => isLargeRetail(p.place_name));
+    const filteredOutlet = outletList.filter(p => isLargeRetail(p.place_name));
+    const martBaseList = filteredMart.length > 0 ? filteredMart :
+                         filteredOutlet.length > 0 ? filteredOutlet : [];
 
     // 2단계: 각 카테고리 첫 번째 결과에 대해 Tmap 실제 도보 경로 조회 (병렬)
     // 마트는 5km 반경이라 도보 표시 제외 (차로 이동 거리)
