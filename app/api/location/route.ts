@@ -75,21 +75,37 @@ async function searchOutlet(x: string, y: string, radius = 2000) {
   return list.sort((a, b) => Number(a.distance) - Number(b.distance)).slice(0, 3);
 }
 
-// OSRM 공개 서버로 실제 도보 경로 시간 조회 (초 → 분)
+const TMAP_KEY = process.env.TMAP_APP_KEY;
+
+// Tmap 도보 경로 API로 실제 도보 시간 조회 (초 → 분)
 // 실패 시 null 반환 → 직선거리 추정값으로 폴백
 async function getWalkRoute(fromX: string, fromY: string, toX: string, toY: string): Promise<number | null> {
+  if (!TMAP_KEY) return null;
   try {
-    const url = `https://router.project-osrm.org/route/v1/foot/${fromX},${fromY};${toX},${toY}?overview=false`;
-    const res = await fetch(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(3000), // 3초 안에 응답 없으면 포기
-    });
+    const res = await fetch(
+      "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&count=1",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", appKey: TMAP_KEY },
+        body: JSON.stringify({
+          startX: fromX, startY: fromY,
+          endX: toX,   endY: toY,
+          reqCoordType: "WGS84GEO",
+          resCoordType: "WGS84GEO",
+          startName: "출발지",
+          endName: "도착지",
+        }),
+        cache: "no-store",
+        signal: AbortSignal.timeout(4000),
+      }
+    );
     if (!res.ok) return null;
     const data = await res.json();
-    const sec = data?.routes?.[0]?.duration;
+    // 첫 번째 feature(route 요약)의 totalTime(초) 사용
+    const sec = data?.features?.[0]?.properties?.totalTime;
     return sec ? Math.ceil(sec / 60) : null;
   } catch {
-    return null; // 타임아웃 또는 네트워크 오류 → 폴백
+    return null; // 타임아웃 또는 오류 → 폴백
   }
 }
 
