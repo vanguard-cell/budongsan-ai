@@ -425,8 +425,7 @@ export default function Home() {
                   <p className="col-span-2 text-gray-400">주변 인프라 정보를 찾을 수 없습니다.</p>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-2">※ 직선거리 기준 (실제 도보경로와 다를 수 있음)</p>
-              <p className="text-xs text-blue-600 mt-1 font-medium">→ 교통/역세권 항목에 자동 반영됨</p>
+              <p className="text-xs text-blue-600 mt-2 font-medium">→ 교통/역세권 항목에 자동 반영됨</p>
             </div>
           )}
 
