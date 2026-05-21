@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 /* ───────── 타입 ───────── */
 interface AgencyInfo { name: string; rep: string; phone: string; directions: string; intro: string; }
@@ -18,10 +21,28 @@ interface LocationInfo { subway: string[]; school: string[]; mart: string[]; hos
 interface PriceInfo { trades: { date: string; price?: number; deposit?: number; monthly?: number; area: number; floor: string }[]; avgPrice: number; currentPrice: number; diff: number; pct: number; analysis: string; isRent?: boolean; }
 interface ComplexResult { name: string; address: string; category?: string; x?: string; y?: string; }
 interface ComplexType { area: number; count: number; }
-type Tab = "naver" | "blog" | "insta" | "resident" | "investor" | "qna";
+type Tab = "naver" | "blog" | "insta" | "resident" | "investor" | "qna" | "preview";
+
+interface PhotoItem { id: string; preview: string; base64: string; mediaType: string; }
+interface SavedProperty {
+  id: string;
+  savedAt: number;
+  form: FormData;
+  result?: Result | null;
+  locationInfo?: LocationInfo | null;
+  priceInfo?: PriceInfo | null;
+  thumbnail?: string;
+}
+interface Template {
+  id: string;
+  name: string;
+  form: Partial<FormData>;
+}
 
 /* ───────── 상수 ───────── */
 const AGENCY_KEY = "budongsan_agency";
+const HISTORY_KEY = "budongsan_history";
+const TEMPLATES_KEY = "budongsan_templates";
 const PROPERTY_TYPES = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지"];
 const DEAL_TYPES = ["매매", "전세", "월세", "단기임대"];
 const DIRECTIONS = ["남향", "동향", "서향", "북향", "남동향", "남서향", "북동향", "북서향"];
@@ -29,12 +50,28 @@ const HEATINGS = ["지역난방/열병합", "개별난방/도시가스", "중앙
 
 const TABS: { key: Tab; icon: string; label: string; sub: string }[] = [
   { key: "naver",    icon: "🏷️", label: "네이버 등록용",   sub: "바로 붙여넣기" },
+  { key: "preview",  icon: "👁️", label: "네이버 미리보기", sub: "실제 노출 형태" },
   { key: "blog",     icon: "📝", label: "블로그",           sub: "SEO 최적화" },
   { key: "insta",    icon: "📸", label: "인스타그램",       sub: "캡션+해시태그" },
   { key: "resident", icon: "🏡", label: "실거주 고객",      sub: "카톡 메시지" },
   { key: "investor", icon: "📈", label: "투자 고객",        sub: "수익률 중심" },
   { key: "qna",      icon: "💬", label: "문의 답변",        sub: "템플릿 5종" },
 ];
+
+/* ───────── 유틸 ───────── */
+const fileToBase64 = (file: File): Promise<{ base64: string; mediaType: string }> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(",")[1];
+      resolve({ base64, mediaType: file.type });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
 const EXAMPLE_FORM: FormData = {
   propertyType: "오피스텔", dealType: "매매", location: "경기 하남시 미사강변동", complexName: "힐스테이트 에코미사",
@@ -123,9 +160,25 @@ export default function Home() {
   const [typesLoading, setTypesLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // 히스토리/템플릿/사진/PDF 상태
+  const [history, setHistory] = useState<SavedProperty[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [photoAnalyzing, setPhotoAnalyzing] = useState(false);
+  const [photoDetails, setPhotoDetails] = useState<string[]>([]);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const saved = localStorage.getItem(AGENCY_KEY);
     if (saved) { setAgency(JSON.parse(saved)); setAgencySaved(true); }
+    const hist = localStorage.getItem(HISTORY_KEY);
+    if (hist) try { setHistory(JSON.parse(hist)); } catch {}
+    const tpls = localStorage.getItem(TEMPLATES_KEY);
+    if (tpls) try { setTemplates(JSON.parse(tpls)); } catch {}
   }, []);
 
   // 드롭다운 외부 클릭 닫기
@@ -249,27 +302,204 @@ export default function Home() {
     finally { setLoading(false); }
   };
 
+  /* ── 히스토리 저장/불러오기 ── */
+  const saveToHistory = () => {
+    const item: SavedProperty = {
+      id: uid(),
+      savedAt: Date.now(),
+      form,
+      result,
+      locationInfo,
+      priceInfo,
+      thumbnail: photos[0]?.preview,
+    };
+    const next = [item, ...history].slice(0, 50); // 최대 50개
+    setHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    setError("");
+    setTimeout(() => setError(""), 2000);
+    alert("매물이 저장되었습니다.");
+  };
+
+  const loadHistory = (item: SavedProperty) => {
+    setForm(item.form);
+    setResult(item.result ?? null);
+    setLocationInfo(item.locationInfo ?? null);
+    setPriceInfo(item.priceInfo ?? null);
+    setComplexQuery(item.form.complexName ?? "");
+    setSelectedComplex(null);
+    setComplexTypes([]);
+    setPhotos([]);
+    setPhotoDetails([]);
+    setShowHistory(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const deleteHistory = (id: string) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+    const next = history.filter(h => h.id !== id);
+    setHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  };
+
+  /* ── 템플릿 저장/불러오기 ── */
+  const saveAsTemplate = () => {
+    const name = prompt("템플릿 이름을 입력해주세요 (예: 미사강변 30평대 매매)");
+    if (!name) return;
+    // 가격·층수·면적 같은 매물 고유값 제외, 단지·옵션·특이사항 등 공통값만 저장
+    const tplForm: Partial<FormData> = {
+      propertyType: form.propertyType,
+      dealType: form.dealType,
+      location: form.location,
+      complexName: form.complexName,
+      direction: form.direction,
+      heating: form.heating,
+      transport: form.transport,
+      options: form.options,
+      highlights: form.highlights,
+      complexUnits: form.complexUnits,
+    };
+    const tpl: Template = { id: uid(), name, form: tplForm };
+    const next = [tpl, ...templates].slice(0, 30);
+    setTemplates(next);
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next));
+    alert("템플릿이 저장되었습니다.");
+  };
+
+  const loadTemplate = (tpl: Template) => {
+    setForm(p => ({ ...p, ...tpl.form }));
+    setComplexQuery(tpl.form.complexName ?? "");
+    setShowTemplates(false);
+  };
+
+  const deleteTemplate = (id: string) => {
+    if (!confirm("템플릿을 삭제하시겠습니까?")) return;
+    const next = templates.filter(t => t.id !== id);
+    setTemplates(next);
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next));
+  };
+
+  /* ── 사진 업로드 / AI 분석 ── */
+  const onPhotoPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    if (photos.length + files.length > 8) {
+      setError("사진은 최대 8장까지 업로드 가능합니다.");
+      return;
+    }
+    const items: PhotoItem[] = [];
+    for (const f of files) {
+      if (!f.type.startsWith("image/")) continue;
+      if (f.size > 5 * 1024 * 1024) { setError(`${f.name}: 5MB 초과`); continue; }
+      const { base64, mediaType } = await fileToBase64(f);
+      items.push({
+        id: uid(),
+        preview: `data:${mediaType};base64,${base64}`,
+        base64,
+        mediaType,
+      });
+    }
+    setPhotos(p => [...p, ...items]);
+    e.target.value = ""; // 같은 파일 재선택 가능하도록
+  };
+
+  const removePhoto = (id: string) => {
+    setPhotos(p => p.filter(x => x.id !== id));
+  };
+
+  const analyzePhotos = async () => {
+    if (photos.length === 0) { setError("사진을 먼저 업로드해주세요."); return; }
+    setError(""); setPhotoAnalyzing(true); setPhotoDetails([]);
+    try {
+      const res = await fetch("/api/analyze-photos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos: photos.map(p => ({ data: p.base64, mediaType: p.mediaType })) }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.highlights) {
+        setForm(p => ({ ...p, highlights: p.highlights ? `${p.highlights}, ${data.highlights}` : data.highlights }));
+      }
+      setPhotoDetails(data.details ?? []);
+    } catch (e) { setError(e instanceof Error ? e.message : "사진 분석 오류"); }
+    finally { setPhotoAnalyzing(false); }
+  };
+
+  /* ── PDF 내보내기 ── */
+  const exportPDF = async () => {
+    if (!result) { setError("먼저 매물 콘텐츠를 생성해주세요."); return; }
+    if (!previewRef.current) return;
+    setPdfExporting(true);
+    try {
+      // 미리보기 탭으로 전환
+      setActiveTab("preview");
+      await new Promise(r => setTimeout(r, 300));
+      const canvas = await html2canvas(previewRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      let position = 0;
+      let remaining = imgH;
+      pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
+      remaining -= pageH;
+      while (remaining > 0) {
+        position = position - pageH;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
+        remaining -= pageH;
+      }
+      const fname = `매물_${form.complexName || form.location || "안내"}_${new Date().toISOString().slice(0,10)}.pdf`;
+      pdf.save(fname);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "PDF 생성 오류");
+    } finally {
+      setPdfExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
 
         {/* 헤더 */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
             🏠 AI 매물 도우미
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">매물 정보 한 번 입력</h1>
-          <p className="text-gray-500 text-sm mb-3">네이버 등록 문구 + 블로그 + 인스타 + 고객 맞춤 멘트까지 한 번에</p>
-          <button
-            onClick={() => { setForm(EXAMPLE_FORM); setComplexQuery(EXAMPLE_FORM.complexName); setSelectedComplex(null); setComplexTypes([]); }}
-            className="text-sm px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-          >
-            📋 예시 데이터로 채우기
-          </button>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">매물 정보 한 번 입력</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mb-3">네이버 등록 문구 + 블로그 + 인스타 + 고객 맞춤 멘트까지 한 번에</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              onClick={() => { setForm(EXAMPLE_FORM); setComplexQuery(EXAMPLE_FORM.complexName); setSelectedComplex(null); setComplexTypes([]); }}
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              📋 예시 데이터
+            </button>
+            <button
+              onClick={() => setShowHistory(true)}
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              📂 매물 히스토리 ({history.length})
+            </button>
+            <button
+              onClick={() => setShowTemplates(true)}
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              📋 템플릿 ({templates.length})
+            </button>
+          </div>
         </div>
 
         {/* ── STEP 1: 기본 정보 ── */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 mb-4">
+        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
           <SectionHead step="1" title="기본 정보" desc="매물분류, 거래종류, 단지 선택, 타입 선택" />
 
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -435,25 +665,52 @@ export default function Home() {
           {priceInfo && (
             <div className="mt-3 bg-green-50 rounded-2xl p-4 border border-green-100">
               <p className="text-xs font-bold text-green-700 mb-2">📊 시세 비교 분석 결과</p>
-              <div className="flex items-center gap-4 mb-2">
+              <div className="flex flex-wrap items-center gap-3 mb-3">
                 <div className="text-center">
-                  <p className="text-xs text-gray-500">{priceInfo.isRent ? "실거래 평균 보증금" : "실거래 평균"}</p>
-                  <p className="font-bold text-gray-800">{(priceInfo.avgPrice ?? 0).toLocaleString()}만원</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500">{priceInfo.isRent ? "평균 보증금" : "실거래 평균"}</p>
+                  <p className="font-bold text-sm sm:text-base text-gray-800">{(priceInfo.avgPrice ?? 0).toLocaleString()}만원</p>
                 </div>
-                <div className="text-2xl text-gray-300">vs</div>
+                <div className="text-xl text-gray-300">vs</div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-500">현 매물</p>
-                  <p className="font-bold text-gray-800">{(priceInfo.currentPrice ?? 0).toLocaleString()}만원</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500">현 매물</p>
+                  <p className="font-bold text-sm sm:text-base text-gray-800">{(priceInfo.currentPrice ?? 0).toLocaleString()}만원</p>
                 </div>
                 <div className={`text-center ml-auto px-3 py-1.5 rounded-xl ${priceInfo.pct > 0 ? "bg-green-600 text-white" : "bg-red-100 text-red-600"}`}>
-                  <p className="text-xs">{priceInfo.pct > 0 ? "저렴" : "비쌈"}</p>
-                  <p className="font-bold text-lg">{Math.abs(priceInfo.pct ?? 0)}%</p>
+                  <p className="text-[10px] sm:text-xs">{priceInfo.pct > 0 ? "저렴" : "비쌈"}</p>
+                  <p className="font-bold text-base sm:text-lg">{Math.abs(priceInfo.pct ?? 0)}%</p>
                 </div>
               </div>
-              <div className="text-xs text-gray-500">
-                {priceInfo.trades.slice(0, 3).map((t, i) => {
+
+              {/* 실거래가 차트 */}
+              {priceInfo.trades.length > 1 && (
+                <div className="bg-white rounded-xl p-2 mb-2 border border-green-100">
+                  <p className="text-[10px] font-semibold text-gray-500 mb-1 px-1">실거래가 추이 (만원)</p>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <LineChart
+                      data={[...priceInfo.trades]
+                        .reverse()
+                        .map(t => ({ date: t.date, 가격: t.price ?? t.deposit ?? 0, floor: t.floor }))}
+                      margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#6b7280" }} />
+                      <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} tickFormatter={(v) => `${(v/10000).toFixed(1)}억`} />
+                      <Tooltip
+                        formatter={(v) => `${Number(v).toLocaleString()}만원`}
+                        labelStyle={{ fontSize: 11, color: "#374151" }}
+                        contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e5e7eb" }}
+                      />
+                      <ReferenceLine y={priceInfo.currentPrice} stroke="#ef4444" strokeDasharray="4 4" label={{ value: "현 매물", fontSize: 10, fill: "#ef4444", position: "right" }} />
+                      <Line type="monotone" dataKey="가격" stroke="#16a34a" strokeWidth={2} dot={{ r: 4, fill: "#16a34a" }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              <div className="text-[10px] sm:text-xs text-gray-500">
+                {priceInfo.trades.slice(0, 4).map((t, i) => {
                   const amt = t.price ?? t.deposit ?? 0;
-                  return <span key={i} className="mr-3">{t.date} {t.floor} {amt.toLocaleString()}만</span>;
+                  return <span key={i} className="mr-3 inline-block">{t.date} {t.floor} {amt.toLocaleString()}만</span>;
                 })}
               </div>
               <p className="text-xs text-green-600 mt-2 font-medium">→ 투자 포인트 항목에 자동 반영됨</p>
@@ -462,7 +719,7 @@ export default function Home() {
         </div>
 
         {/* ── STEP 2: 가격 + 매물 정보 (통합) ── */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 mb-4">
+        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
           <SectionHead step="2" title="가격 및 매물 정보" desc="가격, 면적, 층수, 구조 등" />
 
           {/* 가격 */}
@@ -528,7 +785,7 @@ export default function Home() {
         </div>
 
         {/* ── STEP 3: 매물 특징 ── */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 mb-4">
+        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
           <SectionHead step="3" title="매물 특징" desc="아는 것만 입력해도 AI가 문구를 만들어드립니다" />
 
           <div className="mb-3"><Label>교통 / 역세권</Label><Input value={form.transport} onChange={sf("transport")} placeholder="예: 미사역 도보 30초 (인프라 분석 시 자동입력)" /></div>
@@ -546,6 +803,68 @@ export default function Home() {
               placeholder="예: 현 임차인 있음 (26년 12월 만기), 반려동물 불가"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
+        </div>
+
+        {/* ── 사진 업로드 → AI 분석 ── */}
+        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
+          <SectionHead step="4" title="매물 사진 (선택)" desc="사진 업로드 → AI가 장점 자동 추출" />
+
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={onPhotoPick}
+            className="hidden"
+          />
+
+          {photos.length === 0 ? (
+            <button
+              onClick={() => photoInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-gray-300 rounded-2xl py-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
+            >
+              <div className="text-3xl mb-1">📷</div>
+              <p className="text-sm font-medium text-gray-700">사진 추가 (최대 8장)</p>
+              <p className="text-xs text-gray-400 mt-1">거실·주방·침실·욕실 등</p>
+            </button>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+                {photos.map(p => (
+                  <div key={p.id} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.preview} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removePhoto(p.id)}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center hover:bg-red-500"
+                    >✕</button>
+                  </div>
+                ))}
+                {photos.length < 8 && (
+                  <button
+                    onClick={() => photoInputRef.current?.click()}
+                    className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-2xl text-gray-400 hover:border-blue-400 hover:text-blue-500"
+                  >+</button>
+                )}
+              </div>
+              <button
+                onClick={analyzePhotos}
+                disabled={photoAnalyzing}
+                className="w-full py-2.5 rounded-xl text-sm font-medium border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+              >
+                {photoAnalyzing ? "🤖 AI 분석 중..." : "✨ AI로 매물 장점 자동 추출"}
+              </button>
+              {photoDetails.length > 0 && (
+                <div className="mt-3 bg-purple-50 rounded-2xl p-4 border border-purple-100">
+                  <p className="text-xs font-bold text-purple-700 mb-2">🤖 AI 사진 분석 결과</p>
+                  <div className="space-y-1 text-xs sm:text-sm text-gray-700">
+                    {photoDetails.map((d, i) => <p key={i}>{d}</p>)}
+                  </div>
+                  <p className="text-xs text-purple-600 mt-2 font-medium">→ 매물 장점 항목에 자동 반영됨</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* ── 중개사무소 정보 ── */}
@@ -585,17 +904,33 @@ export default function Home() {
 
         {/* 생성 버튼 */}
         <button onClick={generate} disabled={loading}
-          className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-2xl text-base transition-colors shadow-lg mb-10">
+          className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-2xl text-sm sm:text-base transition-colors shadow-lg mb-3">
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              AI가 전체 콘텐츠를 작성 중입니다...
+              AI가 작성 중...
             </span>
           ) : "✨ 네이버 문구 + 마케팅 콘텐츠 한 번에 생성"}
         </button>
+
+        {/* 보조 액션 버튼 */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-10">
+          <button onClick={saveToHistory}
+            className="py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+            💾 매물 저장
+          </button>
+          <button onClick={saveAsTemplate}
+            className="py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+            📋 템플릿 저장
+          </button>
+          <button onClick={exportPDF} disabled={!result || pdfExporting}
+            className="col-span-2 sm:col-span-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50 transition-colors">
+            {pdfExporting ? "생성 중..." : "📄 PDF로 저장"}
+          </button>
+        </div>
 
         {/* ── 결과 ── */}
         {result && (
@@ -614,16 +949,16 @@ export default function Home() {
 
             {activeTab === "naver" && (
               <div className="space-y-4">
-                <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+                <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <div><span className="font-semibold text-gray-800">매물특징</span><span className="ml-2 text-xs text-gray-400">네이버 매물특징 입력란에 붙여넣기</span></div>
+                    <div><span className="font-semibold text-gray-800">매물특징</span><span className="ml-2 hidden sm:inline text-xs text-gray-400">네이버 매물특징 입력란에 붙여넣기</span></div>
                     <CopyButton text={result.feature} />
                   </div>
                   <p className="text-sm text-blue-700 font-medium bg-blue-50 rounded-xl px-4 py-3">{result.feature}</p>
                 </div>
-                <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+                <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <div><span className="font-semibold text-gray-800">매물설명</span><span className="ml-2 text-xs text-gray-400">네이버 매물설명 입력란에 붙여넣기</span></div>
+                    <div><span className="font-semibold text-gray-800">매물설명</span><span className="ml-2 hidden sm:inline text-xs text-gray-400">네이버 매물설명 입력란에 붙여넣기</span></div>
                     <CopyButton text={result.description} />
                   </div>
                   <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{result.description}</p>
@@ -631,11 +966,152 @@ export default function Home() {
               </div>
             )}
 
-            {activeTab !== "naver" && (() => {
+            {/* 네이버 스타일 미리보기 */}
+            {activeTab === "preview" && (
+              <div ref={previewRef} className="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-sm">
+                {/* 네이버 부동산 스타일 */}
+                <div className="border-b border-gray-200 pb-4 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
+                    <span>🟢 NAVER 부동산</span>
+                    <span>·</span>
+                    <span>{form.propertyType}</span>
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
+                    {form.complexName || form.location}
+                  </h2>
+                  <div className="flex flex-wrap items-baseline gap-2 mb-2">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${form.dealType === "매매" ? "bg-red-100 text-red-600" : form.dealType === "전세" ? "bg-blue-100 text-blue-600" : "bg-amber-100 text-amber-600"}`}>
+                      {form.dealType}
+                    </span>
+                    <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                      {form.dealType === "매매"
+                        ? (form.price ? `${(Number(form.price)/10000).toFixed(1)}억` : "협의")
+                        : form.dealType === "전세"
+                        ? (form.deposit ? `${(Number(form.deposit)/10000).toFixed(1)}억` : "협의")
+                        : `${form.deposit || "?"}/${form.monthly || "?"}`}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">{form.location}</p>
+                </div>
+
+                {/* 사진 그리드 */}
+                {photos.length > 0 && (
+                  <div className="grid grid-cols-3 gap-1 mb-4 rounded-xl overflow-hidden">
+                    {photos.slice(0, 6).map(p => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={p.id} src={p.preview} alt="" className="aspect-square object-cover" />
+                    ))}
+                  </div>
+                )}
+
+                {/* 핵심 정보 그리드 */}
+                <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm mb-4">
+                  {form.exclusiveArea && (
+                    <div className="bg-gray-50 rounded-lg p-2.5">
+                      <p className="text-[10px] text-gray-400">전용/계약면적</p>
+                      <p className="font-medium text-gray-800">{form.exclusiveArea}㎡{form.contractArea ? ` / ${form.contractArea}㎡` : ""}</p>
+                    </div>
+                  )}
+                  {(form.floor || form.totalFloor) && (
+                    <div className="bg-gray-50 rounded-lg p-2.5">
+                      <p className="text-[10px] text-gray-400">해당층 / 전체층</p>
+                      <p className="font-medium text-gray-800">{form.floor || "?"}층 / {form.totalFloor || "?"}층{form.isDuplex ? " (복층)" : ""}</p>
+                    </div>
+                  )}
+                  {(form.rooms || form.bathrooms) && (
+                    <div className="bg-gray-50 rounded-lg p-2.5">
+                      <p className="text-[10px] text-gray-400">방 / 욕실</p>
+                      <p className="font-medium text-gray-800">{form.rooms || "?"} / {form.bathrooms || "?"}</p>
+                    </div>
+                  )}
+                  {form.direction && (
+                    <div className="bg-gray-50 rounded-lg p-2.5">
+                      <p className="text-[10px] text-gray-400">방향</p>
+                      <p className="font-medium text-gray-800">{form.direction}</p>
+                    </div>
+                  )}
+                  {form.maintenanceFee && (
+                    <div className="bg-gray-50 rounded-lg p-2.5">
+                      <p className="text-[10px] text-gray-400">월 관리비</p>
+                      <p className="font-medium text-gray-800">{form.maintenanceFee}만원</p>
+                    </div>
+                  )}
+                  {form.heating && (
+                    <div className="bg-gray-50 rounded-lg p-2.5">
+                      <p className="text-[10px] text-gray-400">난방</p>
+                      <p className="font-medium text-gray-800">{form.heating}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 매물 특징 태그 */}
+                <div className="mb-4">
+                  <p className="text-xs font-bold text-gray-700 mb-2">매물 특징</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {result.feature.split(",").map((tag, i) => (
+                      <span key={i} className="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">
+                        {tag.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 매물 설명 */}
+                <div className="mb-4">
+                  <p className="text-xs font-bold text-gray-700 mb-2">매물 설명</p>
+                  <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {result.description}
+                  </div>
+                </div>
+
+                {/* 주변 인프라 */}
+                {locationInfo && (
+                  <div className="mb-4">
+                    <p className="text-xs font-bold text-gray-700 mb-2">📍 주변 인프라</p>
+                    <div className="space-y-1 text-xs sm:text-sm text-gray-600">
+                      {locationInfo.subway?.[0] && <p>🚇 {locationInfo.subway[0]}</p>}
+                      {locationInfo.mart?.[0] && <p>🛒 {locationInfo.mart[0]}</p>}
+                      {locationInfo.school?.[0] && <p>🏫 {locationInfo.school[0]}</p>}
+                      {locationInfo.hospital?.[0] && <p>🏥 {locationInfo.hospital[0]}</p>}
+                      {locationInfo.kids?.[0] && <p>👶 {locationInfo.kids[0]}</p>}
+                      {locationInfo.academy?.[0] && <p>📚 {locationInfo.academy[0]}</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* 시세 비교 */}
+                {priceInfo && (
+                  <div className="mb-4 bg-green-50 rounded-xl p-3 sm:p-4 border border-green-100">
+                    <p className="text-xs font-bold text-green-700 mb-2">💰 시세 비교</p>
+                    <div className="text-xs sm:text-sm text-gray-700">
+                      <p>실거래 평균: <span className="font-bold">{priceInfo.avgPrice.toLocaleString()}만원</span></p>
+                      <p>현 매물: <span className="font-bold">{priceInfo.currentPrice.toLocaleString()}만원</span>
+                        <span className={`ml-2 text-xs px-2 py-0.5 rounded ${priceInfo.pct > 0 ? "bg-green-600 text-white" : "bg-red-100 text-red-600"}`}>
+                          {priceInfo.pct > 0 ? "▼" : "▲"} {Math.abs(priceInfo.pct)}%
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 중개사 정보 */}
+                {agencySaved && agency.name && (
+                  <div className="border-t border-gray-200 pt-4 mt-4">
+                    <p className="text-xs font-bold text-gray-700 mb-2">🏢 중개사무소</p>
+                    <p className="text-sm font-semibold text-gray-800">{agency.name}</p>
+                    {agency.rep && <p className="text-xs text-gray-500">대표 {agency.rep}</p>}
+                    {agency.phone && <p className="text-xs text-blue-600 font-medium">📞 {agency.phone}</p>}
+                    {agency.directions && <p className="text-xs text-gray-500 mt-1">{agency.directions}</p>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab !== "naver" && activeTab !== "preview" && (() => {
               const t = TABS.find(t => t.key === activeTab)!;
               const content = result[activeTab as keyof Omit<Result, "feature" | "description">] as string;
               return (
-                <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+                <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <span className="font-semibold text-gray-800">{t.icon} {t.label}</span>
                     <CopyButton text={content} />
@@ -647,6 +1123,78 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* 히스토리 모달 */}
+      {showHistory && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowHistory(false)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h3 className="font-bold text-gray-800">📂 매물 히스토리 ({history.length})</h3>
+              <button onClick={() => setShowHistory(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+            <div className="overflow-y-auto p-4 flex-1">
+              {history.length === 0 ? (
+                <p className="text-center text-gray-400 py-12 text-sm">저장된 매물이 없습니다.<br/>매물 생성 후 &ldquo;💾 매물 저장&rdquo; 버튼을 눌러주세요.</p>
+              ) : (
+                <div className="space-y-2">
+                  {history.map(h => (
+                    <div key={h.id} className="flex items-center gap-3 p-3 rounded-2xl border border-gray-200 hover:border-blue-400 transition-colors">
+                      {h.thumbnail ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={h.thumbnail} alt="" className="w-14 h-14 rounded-xl object-cover shrink-0" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center text-2xl shrink-0">🏠</div>
+                      )}
+                      <button onClick={() => loadHistory(h)} className="flex-1 text-left min-w-0">
+                        <p className="font-medium text-sm text-gray-800 truncate">{h.form.complexName || h.form.location || "(이름 없음)"}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {h.form.dealType} · {h.form.propertyType}
+                          {h.form.exclusiveArea && ` · 전용 ${h.form.exclusiveArea}㎡`}
+                          {h.form.floor && ` · ${h.form.floor}층`}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{new Date(h.savedAt).toLocaleString("ko-KR")}</p>
+                      </button>
+                      <button onClick={() => deleteHistory(h.id)} className="text-gray-300 hover:text-red-500 text-sm px-2 shrink-0">🗑️</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 템플릿 모달 */}
+      {showTemplates && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowTemplates(false)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h3 className="font-bold text-gray-800">📋 템플릿 ({templates.length})</h3>
+              <button onClick={() => setShowTemplates(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+            <div className="overflow-y-auto p-4 flex-1">
+              {templates.length === 0 ? (
+                <p className="text-center text-gray-400 py-12 text-sm">저장된 템플릿이 없습니다.<br/>자주 쓰는 매물 양식을 템플릿으로 저장해보세요.</p>
+              ) : (
+                <div className="space-y-2">
+                  {templates.map(t => (
+                    <div key={t.id} className="flex items-center gap-2 p-3 rounded-2xl border border-gray-200 hover:border-blue-400 transition-colors">
+                      <button onClick={() => loadTemplate(t)} className="flex-1 text-left min-w-0">
+                        <p className="font-medium text-sm text-gray-800 truncate">{t.name}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {t.form.dealType} · {t.form.propertyType}
+                          {t.form.complexName && ` · ${t.form.complexName}`}
+                        </p>
+                      </button>
+                      <button onClick={() => deleteTemplate(t.id)} className="text-gray-300 hover:text-red-500 text-sm px-2 shrink-0">🗑️</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
