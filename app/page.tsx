@@ -239,7 +239,7 @@ export default function Home() {
     if (!form.location) { setError("소재지는 필수입니다."); return; }
     setError(""); setLoading(true); setResult(null);
     try {
-      const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ form, agency: agencySaved ? agency : null }) });
+      const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ form, agency: agencySaved ? agency : null, locationInfo }) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);

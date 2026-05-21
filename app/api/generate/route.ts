@@ -8,7 +8,7 @@ const DEMO_MODE =
 const client = DEMO_MODE ? null : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: NextRequest) {
-  const { form, agency } = await req.json();
+  const { form, agency, locationInfo } = await req.json();
 
   const dealInfo =
     form.dealType === "월세" || form.dealType === "단기임대"
@@ -25,6 +25,17 @@ export async function POST(req: NextRequest) {
     ? `\n[중개사무소] ${agency.name} | 대표 ${agency.rep} | ${agency.phone} | ${agency.directions}\n소개: ${agency.intro}`
     : "";
 
+  // 인프라 데이터 구조화 (locationInfo가 있으면 구조화, 없으면 form.transport 사용)
+  const infraBlock = locationInfo ? [
+    locationInfo.subway?.[0]    ? `  교통(지하철): ${locationInfo.subway.slice(0,2).join(" / ")}` : null,
+    locationInfo.mart?.[0]      ? `  쇼핑(마트/아울렛): ${locationInfo.mart[0]}` : null,
+    locationInfo.school?.[0]    ? `  학교: ${locationInfo.school.slice(0,3).join(", ")}` : null,
+    locationInfo.hospital?.[0]  ? `  병원: ${locationInfo.hospital[0]}` : null,
+    locationInfo.kids?.[0]      ? `  어린이집/유치원: ${locationInfo.kids.slice(0,2).join(", ")}` : null,
+    locationInfo.academy?.[0]   ? `  학원: ${locationInfo.academy[0]}` : null,
+    locationInfo.publicOrg?.[0] ? `  공공기관: ${locationInfo.publicOrg[0]}` : null,
+  ].filter(Boolean).join("\n") : (form.transport ? `  ${form.transport}` : null);
+
   // 값이 있는 필드만 포함
   const fields = [
     `- 매물분류: ${form.propertyType}`,
@@ -36,7 +47,7 @@ export async function POST(req: NextRequest) {
     form.direction ? `- 방향: ${form.direction}` : null,
     form.maintenanceFee ? `- 관리비: ${form.maintenanceFee}만원` : null,
     form.heating ? `- 난방: ${form.heating}` : null,
-    form.transport ? `- 교통/역세권: ${form.transport}` : null,
+    infraBlock ? `- 주변 인프라:\n${infraBlock}` : (form.transport ? `- 교통/역세권: ${form.transport}` : null),
     form.investPoint ? `- 투자 포인트: ${form.investPoint}` : null,
     form.options ? `- 옵션: ${form.options}` : null,
     form.highlights ? `- 매물 장점: ${form.highlights}` : null,
@@ -54,14 +65,17 @@ ${fields}
 아래 형식으로 정확히 출력하세요:
 
 ===매물특징===
-네이버 매물특징 입력란용. 짧은 키워드 5~7개를 쉼표로 구분. 반드시 한 줄.
-규칙: 교통은 "8호선역세권" "다산역도보16분" 처럼 압축 / 거리·미터·주소 나열 절대 금지 / 한 키워드 최대 10자
-✅ 좋은 예: 8호선역세권, 대단지500세대, 지역난방, 남향, 초등학교인근, 즉시입주
-❌ 나쁜 예: 다산역 8호선 도보 16분 (805m). PXG 컴파운드 현대프리미엄아울렛...
+네이버 매물특징 입력란용. 짧은 키워드 5~7개, 쉼표 구분, 반드시 한 줄.
+- 지하철: "OO역세권" 또는 "OO역도보N분" 형태로 압축
+- 쇼핑/학교/병원: "현대아울렛인근", "초등학교도보5분" 형태로 압축
+- 거리(m), 괄호, 긴 주소 절대 금지
+✅ 좋은 예: 8호선다산역세권, 현대아울렛인근, 초중학교도보, 지역난방, 대단지500세대
 
 ===매물설명===
-네이버 매물설명 입력란용. ✅섹션 + *- 불릿. 깔끔하고 간결하게.
-입력된 정보만 사용 / 교통정보는 핵심 1줄로 요약 (긴 목록 나열 금지) / 값 없는 항목 생략 / 400자 내외.
+네이버 매물설명 입력란용. ✅섹션 + *- 불릿. 깔끔하고 읽기 쉽게.
+- 주변 인프라는 항목별로 각각 *- 한 줄씩 (예: *- 🚇 다산역(8호선) 도보 16분)
+- 괄호 안 미터 수치는 생략해도 됨
+- 입력된 정보만 사용 / 값 없는 항목 생략 / 400자 내외
 
 ===블로그===
 네이버/티스토리 블로그 포스팅. 제목 포함. ## 소제목과 이모지 활용. SEO 키워드 자연스럽게 포함. 800자 이상.
