@@ -172,6 +172,16 @@ export default function Home() {
   const previewRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
+  // 매물 정보 가져오기 (Import) 상태
+  const [showImport, setShowImport] = useState(false);
+  const [importImages, setImportImages] = useState<PhotoItem[]>([]);
+  const [importText, setImportText] = useState("");
+  const [importUrl, setImportUrl] = useState("");
+  const [importLoading, setImportLoading] = useState(false);
+  const [importExtracted, setImportExtracted] = useState<Partial<FormData> | null>(null);
+  const [importError, setImportError] = useState("");
+  const importInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const saved = localStorage.getItem(AGENCY_KEY);
     if (saved) { setAgency(JSON.parse(saved)); setAgencySaved(true); }
@@ -436,6 +446,112 @@ export default function Home() {
     finally { setPhotoAnalyzing(false); }
   };
 
+  /* ── 매물 정보 가져오기 (이미지/텍스트/URL → AI 파싱) ── */
+  const onImportImagePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    if (importImages.length + files.length > 5) {
+      setImportError("이미지는 최대 5장까지 첨부 가능합니다.");
+      return;
+    }
+    const items: PhotoItem[] = [];
+    for (const f of files) {
+      if (!f.type.startsWith("image/")) continue;
+      if (f.size > 5 * 1024 * 1024) { setImportError(`${f.name}: 5MB 초과`); continue; }
+      const { base64, mediaType } = await fileToBase64(f);
+      items.push({
+        id: uid(),
+        preview: `data:${mediaType};base64,${base64}`,
+        base64,
+        mediaType,
+      });
+    }
+    setImportImages(p => [...p, ...items]);
+    e.target.value = "";
+  };
+
+  const removeImportImage = (id: string) => {
+    setImportImages(p => p.filter(x => x.id !== id));
+  };
+
+  const resetImport = () => {
+    setImportImages([]);
+    setImportText("");
+    setImportUrl("");
+    setImportExtracted(null);
+    setImportError("");
+  };
+
+  const runImport = async () => {
+    if (importImages.length === 0 && !importText.trim() && !importUrl.trim()) {
+      setImportError("이미지·텍스트·URL 중 하나 이상 입력해주세요.");
+      return;
+    }
+    setImportError("");
+    setImportLoading(true);
+    setImportExtracted(null);
+    try {
+      const res = await fetch("/api/import-listing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          images: importImages.map(p => ({ data: p.base64, mediaType: p.mediaType })),
+          text: importText.trim() || undefined,
+          url: importUrl.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setImportExtracted(data.data);
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : "추출 오류");
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const applyImport = () => {
+    if (!importExtracted) return;
+    const e = importExtracted;
+    // null/undefined 제외하고 string으로 변환해서 form에 병합
+    setForm(prev => {
+      const next = { ...prev };
+      const set = <K extends keyof FormData>(key: K, val: FormData[K] | null | undefined) => {
+        if (val === null || val === undefined || val === "") return;
+        next[key] = val;
+      };
+      const toStr = (v: unknown) => v === null || v === undefined ? "" : String(v);
+      set("propertyType", toStr(e.propertyType) as FormData["propertyType"]);
+      set("dealType",     toStr(e.dealType));
+      set("location",     toStr(e.location));
+      set("complexName",  toStr(e.complexName));
+      set("price",        toStr(e.price));
+      set("deposit",      toStr(e.deposit));
+      set("monthly",      toStr(e.monthly));
+      set("contractArea", toStr(e.contractArea));
+      set("exclusiveArea",toStr(e.exclusiveArea));
+      set("floor",        toStr(e.floor));
+      set("totalFloor",   toStr(e.totalFloor));
+      set("rooms",        toStr(e.rooms));
+      set("bathrooms",    toStr(e.bathrooms));
+      set("direction",    toStr(e.direction));
+      set("maintenanceFee", toStr(e.maintenanceFee));
+      set("heating",      toStr(e.heating));
+      set("options",      toStr(e.options));
+      set("highlights",   toStr(e.highlights));
+      set("notes",        toStr(e.notes));
+      set("complexUnits", toStr(e.complexUnits));
+      if (typeof e.isDuplex === "boolean") next.isDuplex = e.isDuplex;
+      return next;
+    });
+    // 단지명 자동완성 검색용 query에도 반영
+    if (e.complexName) setComplexQuery(String(e.complexName));
+    setShowImport(false);
+    resetImport();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    alert("매물 정보가 양식에 적용되었습니다.\n⚠️ 단지/건물명은 자동완성 목록에서 다시 선택해주세요.");
+  };
+
   /* ── PDF 내보내기 ── */
   const exportPDF = async () => {
     if (!result) { setError("먼저 매물 콘텐츠를 생성해주세요."); return; }
@@ -488,6 +604,13 @@ export default function Home() {
           <p className="text-gray-500 text-xs sm:text-sm mb-3">네이버 등록 문구 + 블로그 + 인스타 + 고객 맞춤 멘트까지 한 번에</p>
           <div className="flex flex-wrap gap-2 justify-center">
             <button
+              onClick={() => setShowImport(true)}
+              title="네이버/매경 스크린샷, 카톡 매물정보, URL 등으로부터 양식 자동 채우기"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
+            >
+              📥 매물 정보 가져오기
+            </button>
+            <button
               onClick={() => { setForm(EXAMPLE_FORM); setComplexQuery(EXAMPLE_FORM.complexName); setSelectedComplex(null); setComplexTypes([]); }}
               title="예시 데이터로 양식을 채워서 기능 테스트"
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
@@ -499,7 +622,7 @@ export default function Home() {
               title="이전에 작성·저장한 매물 목록에서 불러오기"
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
             >
-              📂 매물 히스토리 ({history.length})
+              📂 히스토리 ({history.length})
             </button>
             <button
               onClick={() => setShowTemplates(true)}
@@ -510,7 +633,7 @@ export default function Home() {
             </button>
           </div>
           <p className="text-[11px] text-gray-400 mt-2">
-            💡 매물 히스토리 = 작성한 매물 저장소 / 템플릿 = 단지·옵션 등 공통값 양식
+            💡 매물 정보 가져오기 = 캡쳐·카톡·URL로 자동입력 / 히스토리 = 저장 매물 / 템플릿 = 양식 재활용
           </p>
         </div>
 
@@ -1157,6 +1280,158 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* 매물 정보 가져오기 모달 */}
+      {showImport && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => { setShowImport(false); resetImport(); }}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 shrink-0">
+              <div>
+                <h3 className="font-bold text-gray-800">📥 매물 정보 가져오기</h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">캡처·카톡·URL을 AI가 읽어서 자동 입력</p>
+              </div>
+              <button onClick={() => { setShowImport(false); resetImport(); }} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+
+            <div className="overflow-y-auto p-5 flex-1">
+              {!importExtracted ? (
+                <>
+                  {/* 입력 영역 */}
+                  <div className="space-y-4">
+                    {/* A. 이미지 업로드 */}
+                    <div>
+                      <Label>📸 이미지 (스크린샷 · 매물장 · 광고)</Label>
+                      <p className="text-[11px] text-gray-400 mb-2">네이버·매경 등록 화면 캡처, 손글씨 매물장, 광고 이미지 등 — 최대 5장</p>
+                      <input
+                        ref={importInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={onImportImagePick}
+                        className="hidden"
+                      />
+                      {importImages.length === 0 ? (
+                        <button
+                          onClick={() => importInputRef.current?.click()}
+                          className="w-full border-2 border-dashed border-gray-300 rounded-2xl py-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                        >
+                          <div className="text-2xl mb-1">📷</div>
+                          <p className="text-sm font-medium text-gray-700">이미지 선택</p>
+                        </button>
+                      ) : (
+                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                          {importImages.map(p => (
+                            <div key={p.id} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={p.preview} alt="" className="w-full h-full object-cover" />
+                              <button
+                                onClick={() => removeImportImage(p.id)}
+                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-[10px] flex items-center justify-center hover:bg-red-500"
+                              >✕</button>
+                            </div>
+                          ))}
+                          {importImages.length < 5 && (
+                            <button
+                              onClick={() => importInputRef.current?.click()}
+                              className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-xl text-gray-400 hover:border-blue-400"
+                            >+</button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* B. 텍스트 붙여넣기 */}
+                    <div>
+                      <Label>💬 텍스트 (카톡 매물정보 · 이메일 · 메모)</Label>
+                      <p className="text-[11px] text-gray-400 mb-2">공동중개로 받은 매물 정보, 메모, 광고 텍스트 등을 그대로 붙여넣기</p>
+                      <textarea
+                        value={importText}
+                        onChange={e => setImportText(e.target.value)}
+                        rows={5}
+                        placeholder={`예:\n[힐스테이트 에코미사 39B] 매매 2억9600\n13층/20층 복층, 서향, 관리비 15만원\n미사역 도보 1분, 463세대, 26년12월 만기 임차인 있음`}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      />
+                    </div>
+
+                    {/* D. URL */}
+                    <div>
+                      <Label>🔗 URL (네이버 부동산 등 매물 페이지)</Label>
+                      <p className="text-[11px] text-gray-400 mb-2">⚠️ 네이버는 자동수집을 차단할 수 있음 — 차단 시 스크린샷 권장</p>
+                      <input
+                        value={importUrl}
+                        onChange={e => setImportUrl(e.target.value)}
+                        placeholder="https://land.naver.com/article/..."
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {importError && <p className="text-red-500 text-xs mt-3 text-center">{importError}</p>}
+
+                  <button
+                    onClick={runImport}
+                    disabled={importLoading || (importImages.length === 0 && !importText.trim() && !importUrl.trim())}
+                    className="w-full mt-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold rounded-2xl text-sm transition-colors"
+                  >
+                    {importLoading ? "🤖 AI가 정보 추출 중..." : "✨ AI 추출 시작"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* 추출 결과 미리보기 */}
+                  <p className="text-xs font-bold text-green-700 mb-3">✅ 추출된 정보 — 확인 후 양식에 적용</p>
+                  <div className="space-y-1.5">
+                    {([
+                      ["매물분류", importExtracted.propertyType],
+                      ["거래종류", importExtracted.dealType],
+                      ["소재지", importExtracted.location],
+                      ["단지명", importExtracted.complexName],
+                      ["매매가", importExtracted.price ? `${importExtracted.price}만원` : null],
+                      ["보증금", importExtracted.deposit ? `${importExtracted.deposit}만원` : null],
+                      ["월세",   importExtracted.monthly ? `${importExtracted.monthly}만원` : null],
+                      ["전용면적", importExtracted.exclusiveArea ? `${importExtracted.exclusiveArea}㎡` : null],
+                      ["계약면적", importExtracted.contractArea ? `${importExtracted.contractArea}㎡` : null],
+                      ["층수",   importExtracted.floor ? `${importExtracted.floor}층 / ${importExtracted.totalFloor || "?"}층` : null],
+                      ["방/욕실", importExtracted.rooms ? `${importExtracted.rooms} / ${importExtracted.bathrooms || "?"}` : null],
+                      ["방향",   importExtracted.direction],
+                      ["복층",   importExtracted.isDuplex === true ? "복층" : null],
+                      ["관리비", importExtracted.maintenanceFee ? `${importExtracted.maintenanceFee}만원` : null],
+                      ["난방",   importExtracted.heating],
+                      ["옵션",   importExtracted.options],
+                      ["장점",   importExtracted.highlights],
+                      ["특이사항", importExtracted.notes],
+                      ["세대수", importExtracted.complexUnits ? `${importExtracted.complexUnits}세대` : null],
+                    ] as [string, string | number | null | undefined][])
+                      .filter(([, v]) => v !== null && v !== undefined && v !== "")
+                      .map(([k, v]) => (
+                        <div key={k} className="flex gap-3 text-sm bg-gray-50 rounded-xl px-3 py-2">
+                          <span className="text-gray-500 w-16 sm:w-20 shrink-0 text-xs">{k}</span>
+                          <span className="text-gray-800 font-medium flex-1">{String(v)}</span>
+                        </div>
+                      ))
+                    }
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 mt-5">
+                    <button
+                      onClick={() => setImportExtracted(null)}
+                      className="py-3 rounded-2xl text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                    >
+                      ← 다시 입력
+                    </button>
+                    <button
+                      onClick={applyImport}
+                      className="py-3 rounded-2xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      ✓ 양식에 적용
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 히스토리 모달 */}
       {showHistory && (
