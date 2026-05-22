@@ -1407,7 +1407,11 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {importError && <p className="text-red-500 text-xs mt-3 text-center">{importError}</p>}
+                  {importError && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+                      <p className="text-red-600 text-xs whitespace-pre-wrap break-all">{importError}</p>
+                    </div>
+                  )}
 
                   <button
                     onClick={runImport}
