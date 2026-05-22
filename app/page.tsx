@@ -447,6 +447,44 @@ export default function Home() {
   };
 
   /* ── 매물 정보 가져오기 (이미지/텍스트/URL → AI 파싱) ── */
+  // 클립보드 이미지 추가 (Ctrl+V)
+  const addImportImageFromBlob = async (blob: Blob) => {
+    if (!blob.type.startsWith("image/")) return;
+    if (blob.size > 5 * 1024 * 1024) { setImportError("이미지가 5MB를 초과합니다."); return; }
+    if (importImages.length >= 5) { setImportError("이미지는 최대 5장까지 가능합니다."); return; }
+    const file = new File([blob], `paste-${Date.now()}.png`, { type: blob.type });
+    const { base64, mediaType } = await fileToBase64(file);
+    setImportImages(p => [...p, {
+      id: uid(),
+      preview: `data:${mediaType};base64,${base64}`,
+      base64,
+      mediaType,
+    }]);
+  };
+
+  // 모달 열린 동안 paste 이벤트 처리
+  useEffect(() => {
+    if (!showImport) return;
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      // URL 입력란이나 텍스트 입력란에서는 일반 paste 허용 (이미지만 가로채기)
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const blob = item.getAsFile();
+          if (blob) {
+            e.preventDefault();
+            addImportImageFromBlob(blob);
+          }
+        }
+      }
+    };
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showImport, importImages.length]);
+
   const onImportImagePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
@@ -1301,7 +1339,9 @@ export default function Home() {
                     {/* A. 이미지 업로드 */}
                     <div>
                       <Label>📸 이미지 (스크린샷 · 매물장 · 광고)</Label>
-                      <p className="text-[11px] text-gray-400 mb-2">네이버·매경 등록 화면 캡처, 손글씨 매물장, 광고 이미지 등 — 최대 5장</p>
+                      <p className="text-[11px] text-gray-400 mb-2">
+                        파일 선택 또는 <span className="font-semibold text-blue-600">Ctrl+V로 캡처 바로 붙여넣기</span> — 최대 5장
+                      </p>
                       <input
                         ref={importInputRef}
                         type="file"
@@ -1316,7 +1356,8 @@ export default function Home() {
                           className="w-full border-2 border-dashed border-gray-300 rounded-2xl py-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
                         >
                           <div className="text-2xl mb-1">📷</div>
-                          <p className="text-sm font-medium text-gray-700">이미지 선택</p>
+                          <p className="text-sm font-medium text-gray-700">이미지 선택 또는 Ctrl+V 붙여넣기</p>
+                          <p className="text-[11px] text-gray-400 mt-1">캡처 후 그대로 붙여넣기 가능</p>
                         </button>
                       ) : (
                         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
