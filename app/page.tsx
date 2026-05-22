@@ -296,6 +296,10 @@ export default function Home() {
   const generate = async () => {
     if (!form.location) { setError("소재지는 필수입니다."); return; }
     if (needsComplexSelection) { setError("단지/건물명은 자동완성 목록에서 선택해주세요."); return; }
+    // 인프라 분석 안 했으면 안내 (강제는 아님)
+    if (!locationInfo && selectedComplex) {
+      if (!confirm("📍 주변 인프라 분석을 아직 안 했네요!\n인프라 정보 없이 생성하면 매물설명이 빈약할 수 있습니다.\n\n이대로 생성할까요? (취소 후 인프라 분석 권장)")) return;
+    }
     setError(""); setLoading(true); setResult(null);
     try {
       const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ form, agency: agencySaved ? agency : null, locationInfo }) });

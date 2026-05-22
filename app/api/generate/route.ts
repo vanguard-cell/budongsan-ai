@@ -7,18 +7,29 @@ const DEMO_MODE =
 
 const client = DEMO_MODE ? null : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// 만원 단위 숫자를 "X억 Y,Z00만원" 형식으로 변환
+function formatKRW(manwon: string | number): string {
+  const n = Number(manwon);
+  if (!n || isNaN(n)) return "";
+  const eok = Math.floor(n / 10000);
+  const rest = n % 10000;
+  if (eok > 0 && rest > 0) return `${eok}억 ${rest.toLocaleString()}만원`;
+  if (eok > 0) return `${eok}억원`;
+  return `${rest.toLocaleString()}만원`;
+}
+
 export async function POST(req: NextRequest) {
   const { form, agency, locationInfo } = await req.json();
 
   const dealInfo =
     form.dealType === "월세" || form.dealType === "단기임대"
-      ? `보증금 ${form.deposit || "협의"}만원 / 월세 ${form.monthly || "협의"}만원`
+      ? `보증금 ${form.deposit ? formatKRW(form.deposit) : "협의"} / 월세 ${form.monthly ? formatKRW(form.monthly) : "협의"}`
       : form.dealType === "전세"
-      ? `전세 ${form.deposit || "협의"}만원`
+      ? `전세 ${form.deposit ? formatKRW(form.deposit) : "협의"}`
       : form.price
-      ? `매매가 ${form.price}만원`
+      ? `매매가 ${formatKRW(form.price)}`
       : form.deposit
-      ? `매매가 ${form.deposit}만원`
+      ? `매매가 ${formatKRW(form.deposit)}`
       : "가격 협의";
 
   const agencyBlock = agency?.name
@@ -72,36 +83,46 @@ ${fields}
 ✅ 좋은 예: 8호선다산역세권, 현대아울렛인근, 초중학교도보, 지역난방, 대단지500세대
 
 ===매물설명===
-네이버 매물설명 입력란용. 반드시 아래 2단 구조로 작성:
+네이버 매물설명 입력란용. 반드시 아래 2단 구조 + 깔끔한 포맷:
 
-[1단: 서두 요약]
-"📌 핵심 요약" 헤더 후 2~3문장으로 매물 셀링포인트 압축.
-입지(역세권/교통)·구조(평형/층/방향)·투자포인트 중 가장 강력한 1~2개를 1문장으로 설명.
-독자가 3초 만에 매물 느낌을 파악할 수 있어야 함.
+【포맷 규칙】
+- 불릿은 반드시 "•" 사용 (절대 "*-" 또는 "-" 사용 금지)
+- 가격은 반드시 한국식 자연 표기: "2억 9,600만원" / "5억원" / "3,500만원" — 절대 "29600만원" 식 금지
+- 위에 제공된 dealInfo 값을 그대로 사용해도 됨 (이미 한국식으로 변환됨)
+- 면적은 "전용 84.95㎡(약 25평)" 형태 권장
+- 섹션 사이는 빈 줄로 구분
 
-[2단: 정보 나열]
-"✅" 섹션 헤더 + "*-" 불릿. 아래 순서로:
+【1단: 서두 요약】
+📌 핵심 요약
+2~3문장으로 매물 셀링포인트 압축. 입지·구조·투자포인트 중 가장 강한 1~2개로 후킹.
+예) "미사역 도보 1분 초역세권 복층 오피스텔. 현 임차인 안고 매매로 즉시 월세 수익 발생."
+
+【2단: 정보 나열】
+"✅ 섹션명" 헤더 + "•" 불릿:
 
 ✅ 기본 정보
-*- 거래/가격
-*- 면적, 층수, 방·욕실, 방향, 복층여부
+• 거래/가격: …
+• 면적: 전용 …㎡ / 계약 …㎡
+• 층수: …층 / 전체 …층 (복층여부)
+• 방/욕실, 방향
 
-✅ 주변 인프라 (입력된 모든 항목 활용 - 지하철·마트·학교·병원·어린이집/유치원·학원·공공기관 빠짐없이)
-*- 🚇 지하철 …
-*- 🛒 마트/쇼핑 …
-*- 🏫 학교 …
-*- 🏥 병원 …
-*- 👶 어린이집/유치원 …
-*- 📚 학원 …
-*- 🏛️ 공공기관 …
+✅ 주변 인프라 ★중요★ — 제공된 인프라 정보를 빠짐없이 모두 활용
+• 🚇 지하철: …
+• 🛒 마트/쇼핑: …
+• 🏫 학교: …
+• 🏥 병원: …
+• 👶 어린이집/유치원: …
+• 📚 학원: …
+• 🏛️ 공공기관: …
 
 ✅ 단지 정보
-*- 세대수, 관리비, 난방, 옵션 등
+• 총 …층, …세대
+• 관리비, 난방, 옵션, 주차 등
 
-✅ 매물 특이사항 / 투자 포인트
-*- (있을 때만)
+✅ 매물 포인트
+• 매물 장점·특이사항·투자 포인트 (있을 때만)
 
-규칙: 입력된 정보만 사용 / 값 없는 항목 완전히 생략 / 인프라는 항목 누락 절대 금지 / 600~800자
+규칙: 입력된 정보만 사용 / 값 없는 항목 완전 생략 / 인프라 항목 누락 절대 금지 / 700~900자
 
 ===블로그===
 네이버/티스토리 블로그 포스팅. 제목 포함. ## 소제목과 이모지 활용. SEO 키워드 자연스럽게 포함. 800자 이상.
@@ -122,8 +143,8 @@ ${fields}
     await new Promise((r) => setTimeout(r, 1800));
     const af = agency?.name ? `\n\n📍 ${agency.name} | 대표 ${agency.rep} | ${agency.phone}\n${agency.directions}` : "";
     return NextResponse.json({
-      feature: `${form.dealType}, ${form.transport || "역세권"}, ${form.isDuplex ? "복층" : form.propertyType}, ${form.investPoint ? "수익형" : "실거주"}, 즉시상담`,
-      description: `✅ 현 매물 특징\n*- ${dealInfo}\n*- ${form.transport || "교통 편리"}\n*- ${form.isDuplex ? "복층 구조" : form.propertyType} ${form.floor || ""}층\n${form.investPoint ? `*- ${form.investPoint}\n` : ""}\n✅ ${form.complexName || "단지"} 정보\n*- 총 ${form.totalFloor || ""}층 ${form.complexUnits ? form.complexUnits + "세대" : ""}\n*- 관리비 ${form.maintenanceFee || "별도"}만원 / 난방 ${form.heating || "개별"}\n*- 주차 1대 무료${af}`,
+      feature: `${form.transport ? form.transport.split(" ").slice(0,2).join("") + "역세권" : "역세권"}, ${form.isDuplex ? "복층구조" : form.propertyType}, ${form.investPoint ? "수익형" : "실거주추천"}, 즉시입주, 즉시상담`,
+      description: `📌 핵심 요약\n${form.complexName || form.location}의 ${form.propertyType} ${form.dealType}. ${form.transport || "편리한 교통"}, ${form.isDuplex ? "복층 구조로 공간감 우수" : form.investPoint || "관리 상태 양호"}.\n\n✅ 기본 정보\n• ${dealInfo}\n• 전용 ${form.exclusiveArea || "?"}㎡${form.contractArea ? ` / 계약 ${form.contractArea}㎡` : ""}\n• ${form.floor || "?"}층 / 전체 ${form.totalFloor || "?"}층${form.isDuplex ? " (복층)" : ""}\n${form.direction ? `• 방향: ${form.direction}\n` : ""}\n✅ 주변 인프라\n${form.transport ? `• 🚇 ${form.transport}\n` : ""}\n✅ 단지 정보\n${form.complexUnits ? `• 총 ${form.totalFloor || "?"}층 ${form.complexUnits}세대 대단지\n` : ""}${form.maintenanceFee ? `• 관리비: ${form.maintenanceFee}만원\n` : ""}${form.heating ? `• 난방: ${form.heating}\n` : ""}${form.options ? `• 옵션: ${form.options}\n` : ""}\n${form.investPoint || form.highlights ? `✅ 매물 포인트\n${form.investPoint ? `• ${form.investPoint}\n` : ""}${form.highlights ? `• ${form.highlights}\n` : ""}` : ""}${af}`,
       blog: `# 🏠 ${form.complexName || form.location} ${form.propertyType} — ${form.investPoint ? "수익형 투자 매물 분석" : "실거주 추천 매물"}\n\n안녕하세요, ${agency?.name || "부동산 전문 중개사"}입니다.\n\n오늘은 **${form.location}**에 위치한 ${form.propertyType} 매물을 소개해드립니다.\n\n## 📊 기본 정보\n- 거래: ${dealInfo}\n- 면적: 계약 ${form.contractArea || "-"}㎡ / 전용 ${form.exclusiveArea || "-"}㎡\n- 층수: ${form.floor || "-"}층 / 전체 ${form.totalFloor || "-"}층 ${form.isDuplex ? "(복층)" : ""}\n- 관리비: ${form.maintenanceFee || "별도"}만원 / ${form.heating || "개별"} 난방\n\n## 🚇 입지\n${form.transport || "대중교통 편리한 위치"}\n\n## ✨ 이 매물을 추천하는 이유\n${form.highlights || "채광 우수, 관리 상태 양호"}\n\n${form.investPoint ? `## 💡 투자 포인트\n${form.investPoint}\n\n` : ""}${af ? af + "\n" : ""}#${(form.location || "").replace(/\s/g, "")} #${form.propertyType} #부동산`,
       insta: `📍 ${form.complexName || form.location} ${form.propertyType}\n\n💰 ${dealInfo}\n🏢 ${form.floor || ""}층 ${form.isDuplex ? "(복층) " : ""}/ 전용 ${form.exclusiveArea || ""}㎡\n${form.transport ? `🚇 ${form.transport}\n` : ""}${form.investPoint ? `💡 ${form.investPoint}\n` : ""}✅ 문의 환영합니다!\n\n#${(form.location || "").replace(/\s/g, "")}부동산 #${form.propertyType}매매 #${form.dealType}`,
       resident: `안녕하세요! ${form.complexName || form.location} ${form.propertyType} 안내드립니다 🏠\n\n${form.transport || "교통이 편리한 위치"} 좋고요, ${form.isDuplex ? "복층 구조라 공간 분리가 잘 돼있어서 실거주하기 정말 좋아요." : "깔끔하고 관리 잘 된 물건이에요."}\n\n${form.highlights || "채광도 좋고 조용한 환경이에요."}\n\n한번 보러 오실래요? 편한 시간에 맞춰드릴게요 😊`,
