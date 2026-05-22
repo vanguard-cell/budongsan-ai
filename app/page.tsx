@@ -255,8 +255,12 @@ export default function Home() {
 
   const saveAgency = () => { localStorage.setItem(AGENCY_KEY, JSON.stringify(agency)); setAgencySaved(true); };
 
+  // 단지명을 자동완성으로 선택 안 했으면 차단
+  const needsComplexSelection = !!form.complexName && !selectedComplex;
+
   const analyzeLocation = async () => {
     if (!form.complexName && !form.location) { setError("소재지 또는 단지명을 먼저 입력해주세요."); return; }
+    if (needsComplexSelection) { setError("단지/건물명은 자동완성 목록에서 선택해주세요. (정확도를 위해 필수)"); return; }
     setError(""); setLocationLoading(true); setLocationInfo(null);
     try {
       // 자동완성으로 선택된 경우 정확한 좌표(x,y) 직접 전달
@@ -277,6 +281,7 @@ export default function Home() {
   const analyzePrice = async () => {
     const currentPrice = form.dealType === "매매" ? (form.price || form.deposit) : form.deposit;
     if (!form.location || !currentPrice) { setError("소재지와 가격(매매가 또는 보증금)을 먼저 입력해주세요."); return; }
+    if (needsComplexSelection) { setError("단지/건물명은 자동완성 목록에서 선택해주세요."); return; }
     setError(""); setPriceLoading(true); setPriceInfo(null);
     try {
       const res = await fetch("/api/price", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: form.location, complexName: form.complexName, exclusiveArea: form.exclusiveArea, currentPrice, propertyType: form.propertyType, dealType: form.dealType }) });
@@ -290,6 +295,7 @@ export default function Home() {
 
   const generate = async () => {
     if (!form.location) { setError("소재지는 필수입니다."); return; }
+    if (needsComplexSelection) { setError("단지/건물명은 자동완성 목록에서 선택해주세요."); return; }
     setError(""); setLoading(true); setResult(null);
     try {
       const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ form, agency: agencySaved ? agency : null, locationInfo }) });
@@ -479,23 +485,29 @@ export default function Home() {
           <div className="flex flex-wrap gap-2 justify-center">
             <button
               onClick={() => { setForm(EXAMPLE_FORM); setComplexQuery(EXAMPLE_FORM.complexName); setSelectedComplex(null); setComplexTypes([]); }}
+              title="예시 데이터로 양식을 채워서 기능 테스트"
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
             >
               📋 예시 데이터
             </button>
             <button
               onClick={() => setShowHistory(true)}
+              title="이전에 작성·저장한 매물 목록에서 불러오기"
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
             >
               📂 매물 히스토리 ({history.length})
             </button>
             <button
               onClick={() => setShowTemplates(true)}
+              title="자주 쓰는 단지·옵션 양식 불러오기"
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
             >
               📋 템플릿 ({templates.length})
             </button>
           </div>
+          <p className="text-[11px] text-gray-400 mt-2">
+            💡 매물 히스토리 = 작성한 매물 저장소 / 템플릿 = 단지·옵션 등 공통값 양식
+          </p>
         </div>
 
         {/* ── STEP 1: 기본 정보 ── */}
@@ -524,7 +536,7 @@ export default function Home() {
 
           {/* 단지/건물명 자동완성 */}
           <div className="mb-3" ref={dropdownRef}>
-            <Label required>단지 / 건물명</Label>
+            <Label required>단지 / 건물명 <span className="text-xs font-normal text-gray-400">(자동완성 목록에서 선택 필수)</span></Label>
             <div className="relative">
               <input
                 value={complexQuery}
@@ -535,11 +547,18 @@ export default function Home() {
                   setForm(p => ({ ...p, complexName: e.target.value }));
                 }}
                 placeholder="예: 제이클래스오산대역 — 입력하면 자동검색"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-20"
+                className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 pr-24 ${
+                  needsComplexSelection
+                    ? "border-amber-300 bg-amber-50 focus:ring-amber-400"
+                    : selectedComplex
+                    ? "border-green-300 bg-green-50/40 focus:ring-green-400"
+                    : "border-gray-200 bg-gray-50 focus:ring-blue-500"
+                }`}
               />
               <div className="absolute right-3 top-2.5 flex items-center gap-1">
                 {complexSearching && <span className="text-xs text-gray-400">검색중...</span>}
                 {selectedComplex && <span className="text-xs text-green-500 font-medium">✓ 선택됨</span>}
+                {needsComplexSelection && !complexSearching && <span className="text-xs text-amber-600 font-medium">⚠️ 미선택</span>}
               </div>
 
               {/* 드롭다운 */}
@@ -555,6 +574,11 @@ export default function Home() {
                 </div>
               )}
             </div>
+            {needsComplexSelection && (
+              <p className="text-xs text-amber-600 mt-1.5">
+                ⚠️ 자동완성 목록에서 정확한 단지를 선택해야 시세·인프라 분석이 정확합니다.
+              </p>
+            )}
           </div>
 
           {/* 소재지 (자동입력 or 수동) */}
@@ -599,12 +623,12 @@ export default function Home() {
 
           {/* AI 자동 분석 버튼 */}
           <div className="flex gap-2">
-            <button onClick={analyzeLocation} disabled={locationLoading}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50 transition-colors">
+            <button onClick={analyzeLocation} disabled={locationLoading || needsComplexSelection}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               {locationLoading ? "조회 중..." : "📍 주변 인프라 자동 분석"}
             </button>
-            <button onClick={analyzePrice} disabled={priceLoading}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50 transition-colors">
+            <button onClick={analyzePrice} disabled={priceLoading || needsComplexSelection}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               {priceLoading ? "조회 중..." : "📊 시세 자동 분석"}
             </button>
           </div>
@@ -917,20 +941,26 @@ export default function Home() {
         </button>
 
         {/* 보조 액션 버튼 */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
           <button onClick={saveToHistory}
+            title="지금 작성한 매물 정보를 히스토리에 저장 — 나중에 불러올 수 있음"
             className="py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
             💾 매물 저장
           </button>
           <button onClick={saveAsTemplate}
+            title="단지명·옵션·난방방식 등 공통값만 양식으로 저장 — 다른 매물에 재활용"
             className="py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
             📋 템플릿 저장
           </button>
           <button onClick={exportPDF} disabled={!result || pdfExporting}
+            title="생성된 매물 미리보기를 PDF 파일로 저장 — 고객 안내용"
             className="col-span-2 sm:col-span-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-50 transition-colors">
             {pdfExporting ? "생성 중..." : "📄 PDF로 저장"}
           </button>
         </div>
+        <p className="text-[11px] text-gray-400 text-center mb-10">
+          💾 매물 저장: 이번 매물 보관 · 📋 템플릿 저장: 단지·옵션 양식 재활용 · 📄 PDF: 고객 안내용 출력
+        </p>
 
         {/* ── 결과 ── */}
         {result && (
