@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -669,6 +670,13 @@ export default function Home() {
             >
               📋 템플릿 ({templates.length})
             </button>
+            <Link
+              href="/expiry"
+              title="임대차 계약 만기 알림 보드 — 3개월/2개월 전 자동 분류"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              ⏰ 만기 관리
+            </Link>
           </div>
           <p className="text-[11px] text-gray-400 mt-2">
             💡 매물 정보 가져오기 = 캡쳐·카톡·URL로 자동입력 / 히스토리 = 저장 매물 / 템플릿 = 양식 재활용
