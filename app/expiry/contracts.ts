@@ -22,11 +22,13 @@ export interface Contract {
   createdAt: number;
 }
 
+/** 이전 localStorage 키 — 마이그레이션용으로만 참조 */
 export const STORAGE_KEY = "budongsan_contracts";
 
 export const uid = () =>
   Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
+/** 로컬 백업 데이터 조회 (마이그레이션용) */
 export function loadContracts(): Contract[] {
   if (typeof window === "undefined") return [];
   try {
@@ -37,11 +39,6 @@ export function loadContracts(): Contract[] {
   } catch {
     return [];
   }
-}
-
-export function saveContracts(contracts: Contract[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(contracts));
 }
 
 /* D-day 계산: 만기일까지 남은 일수 (음수면 이미 지남) */

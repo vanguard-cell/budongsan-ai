@@ -1,0 +1,54 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules — 미사금빛 매물 도우미
+ *
+ * 핵심 원칙:
+ *  1) 로그인한 사용자만 접근
+ *  2) 사용자 본인은 자기 user 문서만 읽고 쓸 수 있음
+ *  3) 사무실(agency)은 멤버만 읽고 쓸 수 있음
+ *  4) 계약(contracts)은 그 사무실 멤버만 접근 가능
+ *  5) 다른 사무실 ID를 알아도 접근 불가능 (서버에서 강제)
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── 사용자 본인 문서 ─────────────────────────
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── 사무실 ──────────────────────────────────
+    match /agencies/{agencyId} {
+      // 멤버만 읽기/수정
+      allow read, update: if request.auth != null
+                          && request.auth.uid in resource.data.members;
+
+      // 생성: 본인을 owner + members에 넣어서만 가능
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.owner
+                    && request.auth.uid in request.resource.data.members;
+
+      // 삭제: owner만
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.owner;
+
+      // 멤버 체크 헬퍼 (사무실 안의 모든 서브컬렉션에서 공유)
+      function isMember() {
+        return request.auth != null
+               && request.auth.uid in get(/databases/$(database)/documents/agencies/$(agencyId)).data.members;
+      }
+
+      // ── 사무실 안의 계약 ─────────────────────
+      match /contracts/{contractId} {
+        allow read, create, update, delete: if isMember();
+      }
+
+      // ── 사무실 안의 손님(CRM) ─────────────────
+      match /customers/{customerId} {
+        allow read, create, update, delete: if isMember();
+      }
+    }
+  }
+}

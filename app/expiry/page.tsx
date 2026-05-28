@@ -2,6 +2,16 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import {
+  subscribeContracts,
+  saveContract as fsSaveContract,
+  deleteContract as fsDeleteContract,
+  saveContractsBatch,
+  migrateFromLocalStorage,
+} from "@/lib/contracts-db";
+import UploadModal, { type MergeStrategy } from "./UploadModal";
 import {
   Contract,
   ContractType,
@@ -9,7 +19,6 @@ import {
   NotifyStage,
   Severity,
   loadContracts,
-  saveContracts,
   dDay,
   dDayLabel,
   severityOf,
@@ -28,24 +37,50 @@ import {
 type FilterKey = "all" | Severity;
 
 export default function ExpiryPage() {
+  const router = useRouter();
+  const { user, loading: authLoading, signOut } = useAuth();
+
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [migratedCount, setMigratedCount] = useState<number | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [showClosed, setShowClosed] = useState(false);
   const [query, setQuery] = useState("");
 
   const [editing, setEditing] = useState<Contract | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ contract: Contract; target: ContactTarget } | null>(null);
+  const [showUpload, setShowUpload] = useState(false);
 
-  /* ── 데이터 로드 ── */
+  /* 비로그인 → /login 으로 */
   useEffect(() => {
-    setContracts(loadContracts());
-    setLoaded(true);
-  }, []);
+    if (!authLoading && !user) {
+      router.replace("/login?redirect=/expiry");
+    }
+  }, [authLoading, user, router]);
 
+  /* 데이터 실시간 구독 + 첫 진입 시 localStorage 마이그레이션 */
   useEffect(() => {
-    if (loaded) saveContracts(contracts);
-  }, [contracts, loaded]);
+    if (!user) return;
+    let unsub: (() => void) | undefined;
+
+    (async () => {
+      // 1) localStorage에 남아있는 기존 데이터 마이그레이션 (1회)
+      try {
+        const moved = await migrateFromLocalStorage(user.agencyId);
+        if (moved > 0) setMigratedCount(moved);
+      } catch (e) {
+        console.error("마이그레이션 오류:", e);
+      }
+
+      // 2) 실시간 구독 시작 — 다른 기기에서 변경 시 자동 반영
+      unsub = subscribeContracts(user.agencyId, (list) => {
+        setContracts(list);
+        setLoaded(true);
+      });
+    })();
+
+    return () => { if (unsub) unsub(); };
+  }, [user]);
 
   /* ── 정렬 + 필터 ── */
   const filtered = useMemo(() => {
@@ -78,8 +113,11 @@ export default function ExpiryPage() {
     return result;
   }, [contracts]);
 
-  /* ── CRUD ── */
-  const upsertContract = (c: Contract) => {
+  /* ── CRUD (Firestore) ── */
+  const upsertContract = async (c: Contract) => {
+    if (!user) return;
+    await fsSaveContract(user.agencyId, c);
+    // 실시간 구독이 자동 반영하지만, 즉시 반응 위해 낙관적 업데이트
     setContracts(prev => {
       const idx = prev.findIndex(x => x.id === c.id);
       if (idx === -1) return [...prev, c];
@@ -89,35 +127,82 @@ export default function ExpiryPage() {
     });
   };
 
-  const closeContract = (id: string) => {
+  const closeContract = async (id: string) => {
+    if (!user) return;
     if (!confirm("이 계약을 '종료' 상태로 변경할까요? (삭제는 아니며 종료된 계약 보기에서 확인 가능합니다)")) return;
-    setContracts(prev => prev.map(c => (c.id === id ? { ...c, status: "closed" as const } : c)));
+    const target = contracts.find(c => c.id === id);
+    if (!target) return;
+    await fsSaveContract(user.agencyId, { ...target, status: "closed" });
   };
 
-  const reopenContract = (id: string) => {
-    setContracts(prev => prev.map(c => (c.id === id ? { ...c, status: "active" as const } : c)));
+  const reopenContract = async (id: string) => {
+    if (!user) return;
+    const target = contracts.find(c => c.id === id);
+    if (!target) return;
+    await fsSaveContract(user.agencyId, { ...target, status: "active" });
   };
 
-  const deleteContract = (id: string) => {
+  const deleteContract = async (id: string) => {
+    if (!user) return;
     if (!confirm("이 계약을 영구 삭제할까요? 되돌릴 수 없습니다.")) return;
-    setContracts(prev => prev.filter(c => c.id !== id));
+    await fsDeleteContract(user.agencyId, id);
   };
 
-  const loadSampleData = () => {
+  const loadSampleData = async () => {
+    if (!user) return;
     if (contracts.length > 0) {
       if (!confirm("기존 계약 데이터가 있습니다. 예시 데이터를 추가할까요? (기존 데이터는 유지됩니다)")) return;
     }
-    setContracts(prev => [...prev, ...sampleContracts()]);
+    await saveContractsBatch(user.agencyId, sampleContracts());
   };
 
-  const clearAllData = () => {
+  const clearAllData = async () => {
+    if (!user) return;
     if (!confirm("⚠️ 모든 계약 데이터를 삭제합니다. 정말 진행할까요?")) return;
-    setContracts([]);
+    // 직렬 삭제 (한 사용자 범위라 일반 사용량에서 충분)
+    for (const c of contracts) {
+      await fsDeleteContract(user.agencyId, c.id);
+    }
   };
+
+  const handleUploadConfirm = async (toSave: Contract[], strategy: MergeStrategy) => {
+    if (!user) return;
+    if (strategy === "replace") {
+      // 기존 데이터 전부 삭제 후 일괄 저장
+      for (const c of contracts) {
+        await fsDeleteContract(user.agencyId, c.id);
+      }
+    }
+    await saveContractsBatch(user.agencyId, toSave);
+  };
+
+  /* 인증 처리 중 / 로그인 안 됨 */
+  if (authLoading || !user) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+
+        {/* 사용자 바 */}
+        <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
+          <span>👤 {user.displayName || user.email}</span>
+          <span className="text-gray-300">·</span>
+          <button
+            onClick={() => { if (confirm("로그아웃 하시겠어요?")) signOut(); }}
+            className="hover:text-blue-600 hover:underline"
+          >
+            로그아웃
+          </button>
+        </div>
+
+        {/* 마이그레이션 안내 */}
+        {migratedCount !== null && migratedCount > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-2xl px-3 py-2 mb-4 text-xs text-green-800">
+            ✅ 기존 기기 저장 데이터 {migratedCount}건을 클라우드로 옮겼습니다. 이제 PC·폰에서 같이 보실 수 있어요.
+          </div>
+        )}
 
         {/* 헤더 */}
         <div className="text-center mb-6">
@@ -135,6 +220,12 @@ export default function ExpiryPage() {
             >
               ← 매물 도우미
             </Link>
+            <Link
+              href="/customers"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              👥 손님 관리
+            </Link>
             <button
               onClick={() => setEditing(emptyContract())}
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
@@ -149,11 +240,11 @@ export default function ExpiryPage() {
               🧪 예시 데이터
             </button>
             <button
-              disabled
-              title="한방 엑셀 파일 받으면 컬럼 매핑 추가 예정"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-200 text-gray-400 cursor-not-allowed"
+              onClick={() => setShowUpload(true)}
+              title="한방·4989·자체 엑셀 모두 가능 — 컬럼 매핑 후 일괄 가져오기"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
             >
-              📥 한방 엑셀 업로드 (준비중)
+              📥 엑셀 업로드
             </button>
             {contracts.length > 0 && (
               <button
@@ -237,7 +328,7 @@ export default function ExpiryPage() {
         )}
 
         <p className="text-center text-[11px] text-gray-400 mt-6 leading-relaxed">
-          💡 localStorage에 저장 — 이 기기에서만 보관됩니다. 폰 변경 시 데이터 이전 필요.
+          ☁️ Google Cloud 서울 리전에 암호화 저장 — PC·폰 자동 동기화
         </p>
       </div>
 
@@ -259,6 +350,15 @@ export default function ExpiryPage() {
           contract={smsTarget.contract}
           target={smsTarget.target}
           onClose={() => setSmsTarget(null)}
+        />
+      )}
+
+      {/* 엑셀 업로드 모달 */}
+      {showUpload && (
+        <UploadModal
+          existing={contracts}
+          onClose={() => setShowUpload(false)}
+          onConfirm={handleUploadConfirm}
         />
       )}
     </div>
@@ -504,10 +604,13 @@ function EditModal({
 }: {
   contract: Contract;
   onClose: () => void;
-  onSave: (c: Contract) => void;
+  onSave: (c: Contract) => Promise<void> | void;
 }) {
   const [form, setForm] = useState<Contract>(contract);
-  const isNew = !contract.id || !loadContracts().find(c => c.id === contract.id);
+  // 빈 계약(emptyContract)으로 생성된 항목은 createdAt이 0에 가까운 최근 시점이지만
+  // 사실상 "기존 데이터에 같은 id가 있는지"는 부모가 알고 있으므로,
+  // 단순히 contract.address 같은 필드가 비어있으면 신규로 간주
+  const isNew = !contract.address;
 
   const setField = <K extends keyof Contract>(k: K, v: Contract[K]) =>
     setForm(p => ({ ...p, [k]: v }));
@@ -531,7 +634,9 @@ function EditModal({
     });
   };
 
-  const save = () => {
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
     if (!form.address.trim()) {
       alert("주소를 입력해주세요");
       return;
@@ -540,7 +645,12 @@ function EditModal({
       alert("만기일을 입력해주세요");
       return;
     }
-    onSave({ ...form, id: form.id || uid() });
+    setSaving(true);
+    try {
+      await onSave({ ...form, id: form.id || uid() });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -676,9 +786,10 @@ function EditModal({
           </button>
           <button
             onClick={save}
-            className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+            disabled={saving}
+            className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors"
           >
-            저장
+            {saving ? "저장 중…" : "저장"}
           </button>
         </div>
       </div>
