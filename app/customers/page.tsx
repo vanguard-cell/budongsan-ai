@@ -28,6 +28,9 @@ import {
   uid,
 } from "./customer-types";
 import EditCustomerModal from "./EditCustomerModal";
+import NotifyBell from "../NotifyBell";
+import { subscribeContracts } from "@/lib/contracts-db";
+import type { Contract } from "../expiry/contracts";
 
 type FilterKey = "all" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
 
@@ -36,6 +39,7 @@ export default function CustomersPage() {
   const { user, loading: authLoading, signOut } = useAuth();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
@@ -53,7 +57,8 @@ export default function CustomersPage() {
       setCustomers(list);
       setLoaded(true);
     });
-    return () => unsub();
+    const unsubC = subscribeContracts(user.agencyId, setContracts);
+    return () => { unsub(); unsubC(); };
   }, [user]);
 
   /* 정렬 + 필터 — 후속 연락 일정 빠른 순 */
@@ -153,6 +158,8 @@ export default function CustomersPage() {
 
         {/* 사용자 바 */}
         <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
+          <NotifyBell contracts={contracts} customers={customers} />
+          <span className="text-gray-300">·</span>
           <span>👤 {user.displayName || user.email}</span>
           <span className="text-gray-300">·</span>
           <button onClick={() => { if (confirm("로그아웃 하시겠어요?")) signOut(); }} className="hover:text-blue-600 hover:underline">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import DashboardCards from "./DashboardCards";
 
 /* ───────── 타입 ───────── */
 interface AgencyInfo { name: string; rep: string; phone: string; directions: string; intro: string; }
@@ -635,12 +636,21 @@ export default function Home() {
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
 
         {/* 헤더 */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
-            🏠 AI 매물 도우미
+        <div className="text-center mb-4">
+          <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-2">
+            🏠 미사금빛 매물 도우미
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">매물 정보 한 번 입력</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mb-3">네이버 등록 문구 + 블로그 + 인스타 + 고객 맞춤 멘트까지 한 번에</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">매물·만기·손님 한 곳에서</h1>
+          <p className="text-gray-500 text-xs sm:text-sm">PC·폰 자동 동기화 · 4989 보완용</p>
+        </div>
+
+        {/* ★ 대시보드 카드 — 만기/손님 긴급 알림 + 진입 */}
+        <DashboardCards />
+
+        {/* 매물 문구 생성 헤더 */}
+        <div id="매물도우미" className="text-center mb-4 mt-2 pt-4 border-t border-gray-200">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-1">매물 문구 생성</h2>
+          <p className="text-gray-500 text-xs mb-3">네이버 등록 문구 + 블로그 + 인스타 + 고객 맞춤 멘트까지 한 번에</p>
           <div className="flex flex-wrap gap-2 justify-center">
             <button
               onClick={() => setShowImport(true)}
@@ -670,24 +680,7 @@ export default function Home() {
             >
               📋 템플릿 ({templates.length})
             </button>
-            <Link
-              href="/expiry"
-              title="임대차 계약 만기 알림 보드 — 3개월/2개월 전 자동 분류"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              ⏰ 만기 관리
-            </Link>
-            <Link
-              href="/customers"
-              title="손님 사후관리 — 예산·관심지역·매물 이력·후속 연락 일정"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              👥 손님 관리
-            </Link>
           </div>
-          <p className="text-[11px] text-gray-400 mt-2">
-            💡 매물 정보 가져오기 = 캡쳐·카톡·URL로 자동입력 / 히스토리 = 저장 매물 / 템플릿 = 양식 재활용
-          </p>
         </div>
 
         {/* ── STEP 1: 기본 정보 ── */}

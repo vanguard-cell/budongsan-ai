@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
+    "adm-zip": "^0.5.17",
     "firebase": "^12.13.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
@@ -26,6 +27,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

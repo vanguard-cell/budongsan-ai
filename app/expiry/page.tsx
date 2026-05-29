@@ -12,6 +12,9 @@ import {
   migrateFromLocalStorage,
 } from "@/lib/contracts-db";
 import UploadModal, { type MergeStrategy } from "./UploadModal";
+import NotifyBell from "../NotifyBell";
+import { subscribeCustomers } from "@/lib/customers-db";
+import type { Customer } from "../customers/customer-types";
 import {
   Contract,
   ContractType,
@@ -50,6 +53,14 @@ export default function ExpiryPage() {
   const [editing, setEditing] = useState<Contract | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ contract: Contract; target: ContactTarget } | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+
+  // 알림용 손님 데이터 (가벼운 구독)
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeCustomers(user.agencyId, setCustomers);
+    return () => unsub();
+  }, [user]);
 
   /* 비로그인 → /login 으로 */
   useEffect(() => {
@@ -187,6 +198,8 @@ export default function ExpiryPage() {
 
         {/* 사용자 바 */}
         <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
+          <NotifyBell contracts={contracts} customers={customers} />
+          <span className="text-gray-300">·</span>
           <span>👤 {user.displayName || user.email}</span>
           <span className="text-gray-300">·</span>
           <button
