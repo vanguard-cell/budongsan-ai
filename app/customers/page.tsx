@@ -29,7 +29,9 @@ import {
 } from "./customer-types";
 import EditCustomerModal from "./EditCustomerModal";
 import NotifyBell from "../NotifyBell";
+import ExportModal from "../ExportModal";
 import { subscribeContracts } from "@/lib/contracts-db";
+import { exportCustomers } from "@/lib/export";
 import type { Contract } from "../expiry/contracts";
 
 type FilterKey = "all" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
@@ -44,6 +46,7 @@ export default function CustomersPage() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Customer | null>(null);
+  const [showExport, setShowExport] = useState(false);
 
   /* 로그인 가드 */
   useEffect(() => {
@@ -196,6 +199,13 @@ export default function CustomersPage() {
             >
               🧪 예시 데이터
             </button>
+            <button
+              onClick={() => setShowExport(true)}
+              title="손님 명단을 엑셀로 다운로드 — 백업·세무사 전달 등"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              📤 내보내기
+            </button>
             {customers.length > 0 && (
               <button
                 onClick={clearAll}
@@ -265,6 +275,17 @@ export default function CustomersPage() {
           customer={editing}
           onClose={() => setEditing(null)}
           onSave={async (c) => { await upsert({ ...c, id: c.id || uid() }); setEditing(null); }}
+        />
+      )}
+
+      {/* 내보내기 모달 */}
+      {showExport && (
+        <ExportModal
+          type="customers"
+          totalCount={customers.length}
+          activeCount={customers.filter(c => c.status === "active" || c.status === "matched").length}
+          onClose={() => setShowExport(false)}
+          onExport={(opt) => exportCustomers(customers, opt)}
         />
       )}
     </div>

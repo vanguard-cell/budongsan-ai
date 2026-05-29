@@ -13,7 +13,10 @@ import {
 } from "@/lib/contracts-db";
 import UploadModal, { type MergeStrategy } from "./UploadModal";
 import NotifyBell from "../NotifyBell";
+import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
+import { exportContracts } from "@/lib/export";
+import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
 import {
   Contract,
@@ -53,6 +56,7 @@ export default function ExpiryPage() {
   const [editing, setEditing] = useState<Contract | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ contract: Contract; target: ContactTarget } | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   // 알림용 손님 데이터 (가벼운 구독)
@@ -259,6 +263,13 @@ export default function ExpiryPage() {
             >
               📥 엑셀 업로드
             </button>
+            <button
+              onClick={() => setShowExport(true)}
+              title="현재 데이터를 엑셀로 다운로드 — 백업 또는 다른 프로그램으로 이관용"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              📤 내보내기
+            </button>
             {contracts.length > 0 && (
               <button
                 onClick={clearAllData}
@@ -372,6 +383,18 @@ export default function ExpiryPage() {
           existing={contracts}
           onClose={() => setShowUpload(false)}
           onConfirm={handleUploadConfirm}
+        />
+      )}
+
+      {/* 내보내기 모달 */}
+      {showExport && (
+        <ExportModal
+          type="contracts"
+          totalCount={contracts.length}
+          activeCount={contracts.filter(c => c.status === "active").length}
+          onClose={() => setShowExport(false)}
+          onExport={(opt) => exportContracts(contracts, opt)}
+          onPrintPDF={() => printExpiryBoardHTML(contracts)}
         />
       )}
     </div>
