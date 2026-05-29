@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import DashboardCards from "./DashboardCards";
+import InstallPrompt from "./InstallPrompt";
 
 /* ───────── 타입 ───────── */
 interface AgencyInfo { name: string; rep: string; phone: string; directions: string; intro: string; }
@@ -643,6 +644,9 @@ export default function Home() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">매물·만기·손님 한 곳에서</h1>
           <p className="text-gray-500 text-xs sm:text-sm">PC·폰 자동 동기화 · 4989 보완용</p>
         </div>
+
+        {/* ★ 앱 설치 안내 — 기종 자동 감지 + 시각 가이드 */}
+        <InstallPrompt />
 
         {/* ★ 대시보드 카드 — 만기/손님 긴급 알림 + 진입 */}
         <DashboardCards />
