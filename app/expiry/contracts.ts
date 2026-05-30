@@ -54,9 +54,9 @@ export function dDay(endDate: string): number {
 export type Severity = "danger" | "warning" | "caution" | "safe";
 
 export function severityOf(dday: number): Severity {
-  if (dday <= 30) return "danger";   // 이미 만기 / D-30 이내
-  if (dday <= 60) return "warning";  // D-60 이내 — 묵시적 갱신 위험
-  if (dday <= 90) return "caution";  // D-90 이내 — 어머니 직접 기준
+  if (dday <= 60) return "danger";   // 이미 만기 / D-60 이내 (2개월)
+  if (dday <= 90) return "warning";  // D-90 이내 (3개월) — 묵시적 갱신 위험
+  if (dday <= 120) return "caution"; // D-120 이내 (4개월)
   return "safe";
 }
 

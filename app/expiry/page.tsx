@@ -302,10 +302,10 @@ export default function ExpiryPage() {
 
         {/* 요약 카드 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
-          <SummaryCard label="위험 D-30 이내" count={counts.danger} severity="danger" />
-          <SummaryCard label="주의 D-60 이내" count={counts.warning} severity="warning" />
-          <SummaryCard label="예고 D-90 이내" count={counts.caution} severity="caution" />
-          <SummaryCard label="안전 D-90 초과" count={counts.safe} severity="safe" />
+          <SummaryCard label="위험 D-60 이내" count={counts.danger} severity="danger" />
+          <SummaryCard label="주의 D-90 이내" count={counts.warning} severity="warning" />
+          <SummaryCard label="예고 D-120 이내" count={counts.caution} severity="caution" />
+          <SummaryCard label="안전 D-120 초과" count={counts.safe} severity="safe" />
         </div>
 
         {/* 필터 / 검색 */}
