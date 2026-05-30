@@ -1,7 +1,11 @@
 /**
- * 건의함 / 수정 요청 — Firestore CRUD
+ * 건의함 — 전역 Firestore 컬렉션
  *
- * 경로: /agencies/{agencyId}/feedback/{feedbackId}
+ * 경로: /feedback/{feedbackId}
+ *
+ * - 모든 로그인 사용자가 건의 등록 가능
+ * - 본인은 자기 건의만 조회
+ * - 관리자(ADMIN_EMAIL)는 전체 조회·답변·처리
  */
 
 import {
@@ -12,6 +16,7 @@ import {
   doc,
   query,
   orderBy,
+  where,
   onSnapshot,
   serverTimestamp,
   Timestamp,
@@ -19,20 +24,23 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
+export const ADMIN_EMAIL = "vpfldh87@gmail.com";
+
 export interface FeedbackItem {
   id: string;
   text: string;
   status: "pending" | "done";
   createdAt: number;
   reply: string;
+  submittedBy: {
+    uid: string;
+    email: string;
+    name: string;
+  };
 }
 
-function feedbackCol(agencyId: string) {
-  return collection(db, "agencies", agencyId, "feedback");
-}
-
-function feedbackDoc(agencyId: string, feedbackId: string) {
-  return doc(db, "agencies", agencyId, "feedback", feedbackId);
+function feedbackCol() {
+  return collection(db, "feedback");
 }
 
 function fromDoc(id: string, data: Record<string, unknown>): FeedbackItem {
@@ -46,40 +54,54 @@ function fromDoc(id: string, data: Record<string, unknown>): FeedbackItem {
     status: (data.status as FeedbackItem["status"]) || "pending",
     createdAt,
     reply: (data.reply as string) || "",
+    submittedBy: (data.submittedBy as FeedbackItem["submittedBy"]) || {
+      uid: "",
+      email: "",
+      name: "알 수 없음",
+    },
   };
 }
 
-/** 실시간 구독 */
+/** 실시간 구독 — 관리자는 전체, 일반 사용자는 본인 것만 */
 export function subscribeFeedback(
-  agencyId: string,
+  uid: string,
+  isAdmin: boolean,
   onChange: (items: FeedbackItem[]) => void,
 ): Unsubscribe {
-  const q = query(feedbackCol(agencyId), orderBy("createdAt", "desc"));
+  const q = isAdmin
+    ? query(feedbackCol(), orderBy("createdAt", "desc"))
+    : query(feedbackCol(), where("submittedBy.uid", "==", uid), orderBy("createdAt", "desc"));
+
   return onSnapshot(q, snap => {
     onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>)));
   });
 }
 
 /** 새 건의 등록 */
-export async function addFeedback(agencyId: string, text: string): Promise<void> {
-  await addDoc(feedbackCol(agencyId), {
+export async function addFeedback(
+  uid: string,
+  email: string,
+  name: string,
+  text: string,
+): Promise<void> {
+  await addDoc(feedbackCol(), {
     text,
     status: "pending",
     createdAt: serverTimestamp(),
     reply: "",
+    submittedBy: { uid, email, name },
   });
 }
 
 /** 상태/답변 업데이트 */
 export async function updateFeedback(
-  agencyId: string,
   id: string,
   updates: Partial<Pick<FeedbackItem, "status" | "reply">>,
 ): Promise<void> {
-  await updateDoc(feedbackDoc(agencyId, id), updates);
+  await updateDoc(doc(db, "feedback", id), updates);
 }
 
 /** 삭제 */
-export async function deleteFeedback(agencyId: string, id: string): Promise<void> {
-  await deleteDoc(feedbackDoc(agencyId, id));
+export async function deleteFeedback(id: string): Promise<void> {
+  await deleteDoc(doc(db, "feedback", id));
 }
