@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -695,6 +695,31 @@ function EditModal({
 
   const [saving, setSaving] = useState(false);
 
+  // 주소 자동완성
+  const [addrSuggestions, setAddrSuggestions] = useState<{ name: string; address: string }[]>([]);
+  const [addrLoading, setAddrLoading] = useState(false);
+  const addrTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleAddressChange = (val: string) => {
+    setField("address", val);
+    if (addrTimerRef.current) clearTimeout(addrTimerRef.current);
+    if (val.trim().length < 2) { setAddrSuggestions([]); return; }
+    addrTimerRef.current = setTimeout(async () => {
+      setAddrLoading(true);
+      try {
+        const res = await fetch(`/api/complex-search?q=${encodeURIComponent(val)}`);
+        const data = await res.json();
+        setAddrSuggestions(data.slice(0, 6));
+      } catch { setAddrSuggestions([]); }
+      finally { setAddrLoading(false); }
+    }, 350);
+  };
+
+  const selectAddress = (item: { name: string; address: string }) => {
+    setField("address", `${item.address} ${item.name}`.trim());
+    setAddrSuggestions([]);
+  };
+
   const save = async () => {
     if (!form.address.trim()) {
       alert("주소를 입력해주세요");
@@ -719,12 +744,34 @@ function EditModal({
     <Modal onClose={onClose} title={isNew ? "계약 추가" : "계약 수정"}>
       <div className="space-y-3">
         <Field label="주소" required>
-          <input
-            value={form.address}
-            onChange={e => setField("address", e.target.value)}
-            placeholder="예: 미사강변동 1100 힐스테이트 101동 1902호"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="relative">
+            <input
+              value={form.address}
+              onChange={e => handleAddressChange(e.target.value)}
+              placeholder="단지명 또는 주소 검색 (예: 힐스테이트 미사역)"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoComplete="off"
+            />
+            {addrLoading && (
+              <div className="absolute right-3 top-2.5 text-xs text-gray-400">검색 중…</div>
+            )}
+            {addrSuggestions.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                {addrSuggestions.map((item, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => selectAddress(item)}
+                    className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors"
+                  >
+                    <div className="text-sm font-medium text-gray-800">{item.name}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{item.address}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <p className="text-[11px] text-gray-400 mt-1">검색 후 선택하거나 직접 입력 가능합니다 (동·호수는 직접 추가)</p>
         </Field>
 
         <Field label="계약 종류">
