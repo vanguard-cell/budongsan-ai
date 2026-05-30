@@ -59,7 +59,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          {children}
+          {/* PC에서 사이드바(w-56) 만큼 오른쪽으로 밀기 */}
+          <div className="md:pl-56">
+            {children}
+          </div>
           <BottomNav />
         </AuthProvider>
       </body>
