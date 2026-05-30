@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import DashboardCards from "./DashboardCards";
 import InstallPrompt from "./InstallPrompt";
+import ComplexPickerWidget from "./ComplexPicker";
 
 /* ───────── 타입 ───────── */
 interface AgencyInfo { name: string; rep: string; phone: string; directions: string; intro: string; }
@@ -756,6 +757,11 @@ export default function Home() {
                 ⚠️ 자동완성 목록에서 정확한 단지를 선택해야 시세·인프라 분석이 정확합니다.
               </p>
             )}
+          </div>
+
+          {/* 지역+유형 단지 검색 */}
+          <div className="mb-3">
+            <ComplexPickerWidget onSelect={item => selectComplex(item)} />
           </div>
 
           {/* 소재지 (자동입력 or 수동) */}

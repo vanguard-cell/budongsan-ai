@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import ComplexPickerWidget from "@/app/ComplexPicker";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -775,7 +776,7 @@ function EditModal({
         </Field>
 
         {/* 지역+유형 단지 검색 */}
-        <ComplexPicker onSelect={addr => setField("address", addr)} />
+        <ComplexPickerWidget onSelect={item => setField("address", `${item.address} ${item.name}`.trim())} />
 
         <Field label="계약 종류">
           <div className="grid grid-cols-2 gap-1.5">
