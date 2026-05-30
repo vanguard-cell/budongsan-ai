@@ -771,8 +771,11 @@ function EditModal({
               </div>
             )}
           </div>
-          <p className="text-[11px] text-gray-400 mt-1">검색 후 선택하거나 직접 입력 가능합니다 (동·호수는 직접 추가)</p>
+          <p className="text-[11px] text-gray-400 mt-1">단지명 직접 입력 또는 아래에서 지역+유형으로 검색</p>
         </Field>
+
+        {/* 지역+유형 단지 검색 */}
+        <ComplexPicker onSelect={addr => setField("address", addr)} />
 
         <Field label="계약 종류">
           <div className="grid grid-cols-2 gap-1.5">
@@ -1047,6 +1050,126 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
         </div>
         <div className="p-5">{children}</div>
       </div>
+    </div>
+  );
+}
+
+/* ───────── 지역+유형 단지 검색 ───────── */
+const BUILDING_TYPES = ["아파트", "오피스텔", "빌라", "원룸/투룸", "상가", "사무실"];
+const REGIONS = ["하남시 미사강변동", "하남시 망월동", "하남시 풍산동", "하남시 덕풍동", "하남시 창우동", "직접 입력"];
+
+function ComplexPicker({ onSelect }: { onSelect: (addr: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [region, setRegion] = useState("");
+  const [customRegion, setCustomRegion] = useState("");
+  const [buildingType, setBuildingType] = useState("");
+  const [results, setResults] = useState<{ name: string; address: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const search = async () => {
+    const r = region === "직접 입력" ? customRegion : region;
+    if (!r || !buildingType) return;
+    setLoading(true);
+    setResults([]);
+    try {
+      const q = `${r} ${buildingType}`;
+      const res = await fetch(`/api/complex-search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setResults(data.slice(0, 10));
+    } catch { setResults([]); }
+    finally { setLoading(false); }
+  };
+
+  const pick = (item: { name: string; address: string }) => {
+    onSelect(`${item.address} ${item.name}`.trim());
+    setOpen(false);
+    setResults([]);
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-full py-2 rounded-xl border border-dashed border-blue-300 text-blue-600 text-xs font-medium hover:bg-blue-50 transition-colors"
+      >
+        🔍 지역 · 건물유형으로 단지 검색
+      </button>
+    );
+  }
+
+  return (
+    <div className="border border-blue-200 rounded-2xl p-3 bg-blue-50/40 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-blue-700">🔍 단지 검색</span>
+        <button type="button" onClick={() => setOpen(false)} className="text-xs text-gray-400 hover:text-gray-600">닫기</button>
+      </div>
+
+      {/* 지역 선택 */}
+      <select
+        value={region}
+        onChange={e => setRegion(e.target.value)}
+        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">동네 선택</option>
+        {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+      </select>
+
+      {region === "직접 입력" && (
+        <input
+          value={customRegion}
+          onChange={e => setCustomRegion(e.target.value)}
+          placeholder="예: 성남시 분당구 정자동"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      )}
+
+      {/* 건물 유형 */}
+      <div className="grid grid-cols-3 gap-1.5">
+        {BUILDING_TYPES.map(t => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setBuildingType(t)}
+            className={`py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+              buildingType === t
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-gray-600 border-gray-200 hover:border-blue-400"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={search}
+        disabled={loading || !region || !buildingType}
+        className="w-full py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+      >
+        {loading ? "검색 중…" : "단지 목록 조회"}
+      </button>
+
+      {/* 결과 목록 */}
+      {results.length > 0 && (
+        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+          {results.map((item, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => pick(item)}
+              className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors"
+            >
+              <div className="text-sm font-medium text-gray-800">{item.name}</div>
+              <div className="text-xs text-gray-500 mt-0.5">{item.address}</div>
+            </button>
+          ))}
+        </div>
+      )}
+      {!loading && results.length === 0 && region && buildingType && (
+        <p className="text-xs text-gray-400 text-center py-1">검색 버튼을 눌러 단지를 조회하세요</p>
+      )}
     </div>
   );
 }
