@@ -38,6 +38,11 @@ import {
   telUrl,
   uid,
   sampleContracts,
+  DEFAULT_SMS_TEMPLATES,
+  loadCustomSmsTemplates,
+  saveCustomSmsTemplate,
+  resetCustomSmsTemplate,
+  applyTemplate,
 } from "./contracts";
 
 type FilterKey = "all" | Severity;
@@ -57,6 +62,7 @@ export default function ExpiryPage() {
   const [smsTarget, setSmsTarget] = useState<{ contract: Contract; target: ContactTarget } | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showSmsSettings, setShowSmsSettings] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   // 알림용 손님 데이터 (가벼운 구독)
@@ -228,7 +234,7 @@ export default function ExpiryPage() {
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">임대차 계약 만기 알림 보드</h1>
           <p className="text-gray-500 text-xs sm:text-sm mb-3">
-            만기 3개월 / 2개월 전 자동 분류 — 임차인·임대인에게 바로 연락
+            만기 4개월 / 3개월 / 2개월 전 자동 분류 — 임차인·임대인에게 바로 연락
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
             <Link
@@ -243,6 +249,18 @@ export default function ExpiryPage() {
             >
               👥 손님 관리
             </Link>
+            <Link
+              href="/feedback"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-purple-500 hover:text-purple-600 transition-colors"
+            >
+              📬 건의함
+            </Link>
+            <button
+              onClick={() => setShowSmsSettings(true)}
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              📝 문구 설정
+            </button>
             <button
               onClick={() => setEditing(emptyContract())}
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
@@ -361,8 +379,8 @@ export default function ExpiryPage() {
         <EditModal
           contract={editing}
           onClose={() => setEditing(null)}
-          onSave={c => {
-            upsertContract(c);
+          onSave={async (c) => {
+            await upsertContract(c);
             setEditing(null);
           }}
         />
@@ -384,6 +402,11 @@ export default function ExpiryPage() {
           onClose={() => setShowUpload(false)}
           onConfirm={handleUploadConfirm}
         />
+      )}
+
+      {/* 문구 설정 모달 */}
+      {showSmsSettings && (
+        <SmsTemplateSettingsModal onClose={() => setShowSmsSettings(false)} />
       )}
 
       {/* 내보내기 모달 */}
@@ -684,6 +707,9 @@ function EditModal({
     setSaving(true);
     try {
       await onSave({ ...form, id: form.id || uid() });
+    } catch (e) {
+      console.error("계약 저장 오류:", e);
+      alert("저장 중 오류가 발생했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.");
     } finally {
       setSaving(false);
     }
@@ -843,8 +869,9 @@ function SmsModal({
   target: ContactTarget;
   onClose: () => void;
 }) {
-  const [stage, setStage] = useState<NotifyStage>("3m");
-  const [text, setText] = useState(() => buildSmsTemplate(contract, target, "3m"));
+  const [stage, setStage] = useState<NotifyStage>("4m");
+  const [text, setText] = useState(() => buildSmsTemplate(contract, target, "4m"));
+  const [savedMsg, setSavedMsg] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const changeStage = (s: NotifyStage) => {
@@ -873,7 +900,7 @@ function SmsModal({
 
         <Field label="시점">
           <div className="grid grid-cols-3 gap-1.5">
-            {(["3m", "2m", "1m"] as NotifyStage[]).map(s => (
+            {(["4m", "3m", "2m"] as NotifyStage[]).map(s => (
               <button
                 key={s}
                 onClick={() => changeStage(s)}
@@ -883,7 +910,7 @@ function SmsModal({
                     : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"
                 }`}
               >
-                {s === "3m" ? "3개월 전" : s === "2m" ? "2개월 전" : "1개월 전"}
+                {s === "4m" ? "4개월 전" : s === "3m" ? "3개월 전" : "2개월 전"}
               </button>
             ))}
           </div>
@@ -898,6 +925,23 @@ function SmsModal({
           />
         </Field>
 
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              // 현재 텍스트에서 주소·만기일을 플레이스홀더로 바꿔 저장
+              const tpl = text
+                .replace(new RegExp(contract.address.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "{주소}")
+                .replace(new RegExp(contract.endDate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "{만기일}");
+              saveCustomSmsTemplate(stage, target, tpl);
+              setSavedMsg(true);
+              setTimeout(() => setSavedMsg(false), 2000);
+            }}
+            className="text-[11px] px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+          >
+            {savedMsg ? "✓ 저장됨" : "💾 이 문구를 기본값으로 저장"}
+          </button>
+          <span className="text-[10px] text-gray-400">({target === "tenant" ? "임차인" : "임대인"} {stage === "4m" ? "4개월" : stage === "3m" ? "3개월" : "2개월"} 전 기본값)</span>
+        </div>
         <p className="text-[11px] text-gray-400 leading-relaxed">
           💡 폰에서 [문자 보내기] 클릭 시 문자앱이 열립니다 (번호·문구 자동 입력) — 최종 확인 후 직접 전송하세요.
         </p>
@@ -957,6 +1001,93 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
         <div className="p-5">{children}</div>
       </div>
     </div>
+  );
+}
+
+/* ───────── 문자 문구 설정 모달 ───────── */
+function SmsTemplateSettingsModal({ onClose }: { onClose: () => void }) {
+  const STAGES: NotifyStage[] = ["4m", "3m", "2m"];
+  const STAGE_LABELS: Record<NotifyStage, string> = { "4m": "4개월 전", "3m": "3개월 전", "2m": "2개월 전" };
+  const TARGETS: ContactTarget[] = ["tenant", "landlord"];
+  const TARGET_LABELS: Record<ContactTarget, string> = { tenant: "임차인", landlord: "임대인" };
+
+  const [templates, setTemplates] = useState<Record<string, string>>(() => {
+    const saved = loadCustomSmsTemplates();
+    const merged: Record<string, string> = {};
+    for (const s of STAGES) {
+      for (const t of TARGETS) {
+        const key = `${s}_${t}`;
+        merged[key] = saved[key] ?? DEFAULT_SMS_TEMPLATES[key] ?? "";
+      }
+    }
+    return merged;
+  });
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    for (const s of STAGES) {
+      for (const t of TARGETS) {
+        const key = `${s}_${t}`;
+        saveCustomSmsTemplate(s, t, templates[key]);
+      }
+    }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleReset = (s: NotifyStage, t: ContactTarget) => {
+    const key = `${s}_${t}`;
+    resetCustomSmsTemplate(s, t);
+    setTemplates(prev => ({ ...prev, [key]: DEFAULT_SMS_TEMPLATES[key] ?? "" }));
+  };
+
+  return (
+    <Modal onClose={onClose} title="📝 문자 문구 설정">
+      <div className="space-y-4">
+        <div className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 leading-relaxed">
+          💡 <span className="font-medium text-blue-700">{"{주소}"}</span>와 <span className="font-medium text-blue-700">{"{만기일}"}</span>은 문자 보낼 때 자동으로 실제 값으로 바뀝니다.
+        </div>
+
+        {STAGES.map(s => (
+          <div key={s} className="border border-gray-200 rounded-2xl overflow-hidden">
+            <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
+              📅 {STAGE_LABELS[s]}
+            </div>
+            {TARGETS.map(t => (
+              <div key={t} className="px-4 py-3 border-b last:border-0 border-gray-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-gray-700">{TARGET_LABELS[t]}</span>
+                  <button
+                    onClick={() => handleReset(s, t)}
+                    className="text-[10px] px-2 py-0.5 rounded-full border border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-500 transition-colors"
+                  >
+                    기본값으로 초기화
+                  </button>
+                </div>
+                <textarea
+                  value={templates[`${s}_${t}`]}
+                  onChange={e => setTemplates(prev => ({ ...prev, [`${s}_${t}`]: e.target.value }))}
+                  rows={3}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 leading-relaxed resize-none"
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition-colors">
+            닫기
+          </button>
+          <button
+            onClick={handleSave}
+            className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+          >
+            {saved ? "✓ 저장됨" : "전체 저장"}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

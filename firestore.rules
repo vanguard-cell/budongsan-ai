@@ -49,6 +49,11 @@ service cloud.firestore {
       match /customers/{customerId} {
         allow read, create, update, delete: if isMember();
       }
+
+      // ── 건의함 ───────────────────────────────
+      match /feedback/{feedbackId} {
+        allow read, create, update, delete: if isMember();
+      }
     }
   }
 }

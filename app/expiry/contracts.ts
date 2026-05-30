@@ -3,7 +3,7 @@
 export type ContractType = "전세" | "월세";
 export type ContractStatus = "active" | "closed";
 export type ContactTarget = "tenant" | "landlord";
-export type NotifyStage = "3m" | "2m" | "1m";
+export type NotifyStage = "4m" | "3m" | "2m";
 
 export interface Contract {
   id: string;
@@ -266,30 +266,58 @@ export interface SmsTemplate {
   text: string;
 }
 
-const AGENCY_NAME = "미사금빛공인중개사";
+export const AGENCY_NAME = "미사금빛공인중개사";
+
+/* ── SMS 템플릿 기본값 (플레이스홀더: {주소} {만기일}) ── */
+export const DEFAULT_SMS_TEMPLATES: Record<string, string> = {
+  "4m_tenant":   `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 4개월 남았습니다.\n재계약 의향 있으신지 여쭤봐도 될까요?`,
+  "3m_tenant":   `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 3개월 남았습니다.\n재계약 의향 있으신지 여쭤봐도 될까요?`,
+  "2m_tenant":   `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 2개월 남았습니다.\n묵시적 갱신 전 의향 확인 부탁드립니다.`,
+  "4m_landlord": `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 4개월 남았습니다.\n임차인 재계약 의향 확인 시작하겠습니다. 조건 변동사항 있으시면 알려주세요.`,
+  "3m_landlord": `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 3개월 남았습니다.\n임차인 재계약 의향 확인 시작하겠습니다. 조건 변동사항 있으시면 알려주세요.`,
+  "2m_landlord": `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 2개월 남았습니다.\n임차인 의향 확인 결과 공유드릴 예정입니다. 새 임차인 모집 필요 시 알려주세요.`,
+};
+
+const SMS_TEMPLATE_STORAGE_KEY = "budongsan_sms_templates_v2";
+
+export function loadCustomSmsTemplates(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(SMS_TEMPLATE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+export function saveCustomSmsTemplate(stage: NotifyStage, target: ContactTarget, templateText: string): void {
+  if (typeof window === "undefined") return;
+  const all = loadCustomSmsTemplates();
+  all[`${stage}_${target}`] = templateText;
+  localStorage.setItem(SMS_TEMPLATE_STORAGE_KEY, JSON.stringify(all));
+}
+
+export function resetCustomSmsTemplate(stage: NotifyStage, target: ContactTarget): void {
+  if (typeof window === "undefined") return;
+  const all = loadCustomSmsTemplates();
+  delete all[`${stage}_${target}`];
+  localStorage.setItem(SMS_TEMPLATE_STORAGE_KEY, JSON.stringify(all));
+}
+
+/** 플레이스홀더({주소}, {만기일})를 실제 값으로 치환 */
+export function applyTemplate(template: string, contract: Contract): string {
+  return template
+    .replace(/\{주소\}/g, contract.address)
+    .replace(/\{만기일\}/g, contract.endDate);
+}
 
 export function buildSmsTemplate(
   contract: Contract,
   target: ContactTarget,
   stage: NotifyStage,
 ): string {
-  const name = target === "tenant" ? contract.tenantName : contract.landlordName;
-  const monthsLeft = stage === "3m" ? "약 3개월" : stage === "2m" ? "약 2개월" : "약 1개월";
-  const greeting = `안녕하세요${name ? ` ${name}님` : ""}, ${AGENCY_NAME}입니다.`;
-  const fact = `${contract.address} 계약 만기일이 ${contract.endDate}로 ${monthsLeft} 남았습니다.`;
-
-  let request = "";
-  if (target === "tenant") {
-    if (stage === "3m") request = "재계약 의향 있으신지 여쭤봐도 될까요?";
-    else if (stage === "2m") request = "묵시적 갱신 전 의향 확인 부탁드립니다.";
-    else request = "재계약 또는 이사 일정 확정 부탁드립니다.";
-  } else {
-    if (stage === "3m") request = "임차인 재계약 의향 확인 시작하겠습니다. 조건 변동사항 있으시면 알려주세요.";
-    else if (stage === "2m") request = "임차인 의향 확인 결과 공유드릴 예정입니다. 새 임차인 모집 필요 시 알려주세요.";
-    else request = "후속 절차 진행 일정 안내드리겠습니다.";
-  }
-
-  return `${greeting}\n${fact}\n${request}`;
+  const key = `${stage}_${target}`;
+  const custom = loadCustomSmsTemplates()[key];
+  const templateText = custom ?? DEFAULT_SMS_TEMPLATES[key] ?? "";
+  return applyTemplate(templateText, contract);
 }
 
 /* SMS URL (mobile) — 번호와 본문을 자동 입력 */
