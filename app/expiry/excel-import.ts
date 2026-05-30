@@ -156,9 +156,11 @@ function cleanDate(v: unknown): string {
     if (y < 100) y += 2000;
     const mm = String(parseInt(m1[2], 10)).padStart(2, "0");
     const dd = String(parseInt(m1[3], 10)).padStart(2, "0");
-    return `${y}-${mm}-${dd}`;
+    const result = `${y}-${mm}-${dd}`;
+    // 유효한 날짜인지 최종 확인
+    if (!isNaN(new Date(result).getTime())) return result;
   }
-  return s;
+  return ""; // 파싱 실패 → 빈값 처리
 }
 
 function cleanType(v: unknown): "전세" | "월세" {

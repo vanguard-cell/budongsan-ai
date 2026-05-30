@@ -48,6 +48,7 @@ export function dDay(endDate: string): number {
   today.setHours(0, 0, 0, 0);
   const end = new Date(endDate);
   end.setHours(0, 0, 0, 0);
+  if (isNaN(end.getTime())) return Infinity; // 잘못된 날짜 형식 → 안전으로 처리
   return Math.round((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
