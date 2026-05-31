@@ -66,7 +66,13 @@ export default function PropertiesPage() {
       .filter(p => {
         if (!query.trim()) return true;
         const q = query.toLowerCase();
-        return p.address.toLowerCase().includes(q) || p.ownerName.toLowerCase().includes(q) || p.ownerPhone.includes(q);
+        return p.address.toLowerCase().includes(q)
+            || p.ownerName.toLowerCase().includes(q)
+            || p.ownerPhone.includes(q)
+            || (p.dong || "").includes(q)
+            || (p.ho || "").includes(q)
+            || (p.tenantName || "").toLowerCase().includes(q)
+            || (p.tenantPhone || "").includes(q);
       });
   }, [properties, showClosed, filterType, query]);
 
@@ -316,11 +322,42 @@ function PropertyModal({ property, onClose, onSave }: {
   const addrTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [addrSuggestions, setAddrSuggestions] = useState<{ name: string; address: string }[]>([]);
   const [addrLoading, setAddrLoading] = useState(false);
+  // 단지 선택 후 기본 주소 (동/호수 자동합산용)
+  const [baseAddress, setBaseAddress] = useState(() => {
+    // 기존 수정시: address에서 동/호수 제거한 기본 주소
+    if (property.dong || property.ho) {
+      return property.address
+        .replace(/ ?\d+동/, "").replace(/ ?\d+호/, "").trim();
+    }
+    return property.address;
+  });
 
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
 
+  // 동/호수 변경시 address 자동 업데이트
+  const updateFullAddress = (newBase: string, newDong: string, newHo: string) => {
+    const parts = [newBase.trim(), newDong ? `${newDong}동` : "", newHo ? `${newHo}호` : ""];
+    const full = parts.filter(Boolean).join(" ");
+    setForm(p => ({ ...p, address: full }));
+  };
+
+  const handleDongChange = (val: string) => {
+    setForm(p => {
+      const parts = [baseAddress.trim(), val ? `${val}동` : "", p.ho ? `${p.ho}호` : ""];
+      return { ...p, dong: val, address: parts.filter(Boolean).join(" ") };
+    });
+  };
+
+  const handleHoChange = (val: string) => {
+    setForm(p => {
+      const parts = [baseAddress.trim(), p.dong ? `${p.dong}동` : "", val ? `${val}호` : ""];
+      return { ...p, ho: val, address: parts.filter(Boolean).join(" ") };
+    });
+  };
+
   const handleAddressChange = (val: string) => {
-    set("address", val);
+    setBaseAddress(val);
+    updateFullAddress(val, form.dong, form.ho);
     if (addrTimerRef.current) clearTimeout(addrTimerRef.current);
     if (val.trim().length < 2) { setAddrSuggestions([]); return; }
     addrTimerRef.current = setTimeout(async () => {
@@ -331,6 +368,14 @@ function PropertyModal({ property, onClose, onSave }: {
       } catch { setAddrSuggestions([]); }
       finally { setAddrLoading(false); }
     }, 350);
+  };
+
+  // 단지 검색에서 선택시
+  const selectComplex = (name: string, addr: string) => {
+    const base = `${addr} ${name}`.trim();
+    setBaseAddress(base);
+    updateFullAddress(base, form.dong, form.ho);
+    setAddrSuggestions([]);
   };
 
   const save = async () => {
@@ -375,18 +420,18 @@ function PropertyModal({ property, onClose, onSave }: {
             </div>
           </div>
 
-          {/* 주소 */}
+          {/* 주소 + 동/호수 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">주소 <span className="text-red-400">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">단지명 검색 <span className="text-red-400">*</span></label>
             <div className="relative">
-              <input value={form.address} onChange={e => handleAddressChange(e.target.value)}
+              <input value={baseAddress} onChange={e => handleAddressChange(e.target.value)}
                 placeholder="단지명 또는 주소 검색"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" autoComplete="off" />
               {addrLoading && <div className="absolute right-3 top-2.5 text-xs text-gray-400">검색 중…</div>}
               {addrSuggestions.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                   {addrSuggestions.map((item, i) => (
-                    <button key={i} type="button" onClick={() => { set("address", `${item.address} ${item.name}`.trim()); setAddrSuggestions([]); }}
+                    <button key={i} type="button" onClick={() => selectComplex(item.name, item.address)}
                       className="w-full text-left px-3 py-2.5 hover:bg-emerald-50 border-b last:border-0 border-gray-100 transition-colors">
                       <div className="text-sm font-medium text-gray-800">{item.name}</div>
                       <div className="text-xs text-gray-500">{item.address}</div>
@@ -396,8 +441,27 @@ function PropertyModal({ property, onClose, onSave }: {
               )}
             </div>
             <div className="mt-1.5">
-              <ComplexPickerWidget onSelect={item => set("address", `${item.address} ${item.name}`.trim())} />
+              <ComplexPickerWidget onSelect={item => selectComplex(item.name, item.address)} />
             </div>
+
+            {/* 동 / 호수 — 입력하면 주소에 자동 반영 */}
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">동 번호</label>
+                <input type="text" inputMode="numeric" value={form.dong} onChange={e => handleDongChange(e.target.value)}
+                  placeholder="101" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">호수</label>
+                <input type="text" inputMode="numeric" value={form.ho} onChange={e => handleHoChange(e.target.value)}
+                  placeholder="1902" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+            </div>
+            {form.address && (
+              <div className="mt-1.5 text-xs text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2">
+                📍 저장 주소: <span className="font-medium">{form.address}</span>
+              </div>
+            )}
           </div>
 
           {/* 가격 */}
@@ -416,36 +480,12 @@ function PropertyModal({ property, onClose, onSave }: {
             )}
           </div>
 
-          {/* 동/호수/면적/방수/방향 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">동</label>
-              <input type="text" value={form.dong} onChange={e => set("dong", e.target.value)}
-                placeholder="101" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">호수</label>
-              <input type="text" value={form.ho} onChange={e => set("ho", e.target.value)}
-                placeholder="1902" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-          </div>
+          {/* 면적/방수/방향 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">전용면적 (㎡)</label>
               <input type="text" inputMode="numeric" value={form.area} onChange={e => set("area", e.target.value)}
                 placeholder="84" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">층</label>
-              <input type="text" value={form.floor} onChange={e => set("floor", e.target.value)}
-                placeholder="19" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">방수</label>
-              <input type="text" value={form.rooms} onChange={e => set("rooms", e.target.value)}
-                placeholder="3" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">방향</label>
@@ -455,6 +495,11 @@ function PropertyModal({ property, onClose, onSave }: {
                 {DIRECTIONS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">방수</label>
+            <input type="text" value={form.rooms} onChange={e => set("rooms", e.target.value)}
+              placeholder="3" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
 
           {/* 집주인 */}
