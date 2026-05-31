@@ -22,7 +22,9 @@ export interface Property {
   price: string;       // 매매가 or 보증금 (만원)
   monthly: string;     // 월세 (만원)
   area: string;        // 전용면적 (㎡)
-  floor: string;       // 층
+  dong: string;        // 동
+  ho: string;          // 호수
+  floor: string;       // 층 (레거시, 호환용)
   rooms: string;       // 방수
   direction: string;   // 방향
   ownerName: string;
@@ -36,7 +38,7 @@ export function emptyProperty(): Property {
   return {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
     address: "", propertyType: "아파트", dealType: "월세",
-    price: "", monthly: "", area: "", floor: "", rooms: "",
+    price: "", monthly: "", area: "", dong: "", ho: "", floor: "", rooms: "",
     direction: "", ownerName: "", ownerPhone: "", memo: "",
     status: "active", createdAt: Date.now(),
   };
@@ -58,6 +60,8 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     price:        (d.price        as string) || "",
     monthly:      (d.monthly      as string) || "",
     area:         (d.area         as string) || "",
+    dong:         (d.dong         as string) || "",
+    ho:           (d.ho           as string) || "",
     floor:        (d.floor        as string) || "",
     rooms:        (d.rooms        as string) || "",
     direction:    (d.direction    as string) || "",

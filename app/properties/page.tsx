@@ -214,6 +214,8 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
           </div>
           <div className="text-sm font-semibold text-gray-800 break-all mb-1">{p.address || "—"}</div>
           <div className="text-xs text-gray-500 flex flex-wrap gap-2">
+            {p.dong && <span>{p.dong}동</span>}
+            {p.ho && <span>{p.ho}호</span>}
             {p.area && <span>{p.area}㎡</span>}
             {p.floor && <span>{p.floor}층</span>}
             {p.rooms && <span>방{p.rooms}개</span>}
@@ -391,7 +393,19 @@ function PropertyModal({ property, onClose, onSave }: {
             )}
           </div>
 
-          {/* 면적/층/방수/방향 */}
+          {/* 동/호수/면적/방수/방향 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">동</label>
+              <input type="text" value={form.dong} onChange={e => set("dong", e.target.value)}
+                placeholder="101" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">호수</label>
+              <input type="text" value={form.ho} onChange={e => set("ho", e.target.value)}
+                placeholder="1902" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">전용면적 (㎡)</label>
@@ -401,7 +415,7 @@ function PropertyModal({ property, onClose, onSave }: {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">층</label>
               <input type="text" value={form.floor} onChange={e => set("floor", e.target.value)}
-                placeholder="10" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                placeholder="19" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
