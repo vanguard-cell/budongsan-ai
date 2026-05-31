@@ -10,6 +10,7 @@ import {
 import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import ComplexPickerWidget from "@/app/ComplexPicker";
+import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
 
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"];
 const DEAL_TYPES: DealType[] = ["매매", "전세", "월세"];
@@ -22,6 +23,25 @@ function formatPhone(raw: string): string {
   return raw;
 }
 
+/** 천단위 콤마 — "29600" → "29,600" */
+function fmtNum(s: string): string {
+  if (!s) return "";
+  const n = parseInt(s.replace(/[^\d]/g, ""), 10);
+  if (isNaN(n)) return s;
+  return n.toLocaleString();
+}
+
+/** 한국식 단위 보조 — "29600" → "2억 9,600" */
+function fmtKoreanNum(s: string): string {
+  const n = parseInt((s || "").replace(/[^\d]/g, ""), 10);
+  if (isNaN(n) || n === 0) return "0";
+  const eok = Math.floor(n / 10000);
+  const man = n % 10000;
+  if (eok > 0 && man > 0) return `${eok}억 ${man.toLocaleString()}`;
+  if (eok > 0) return `${eok}억`;
+  return man.toLocaleString();
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -29,6 +49,7 @@ export default function PropertiesPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
+  const [showUpload, setShowUpload] = useState(false);
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
   const [showClosed, setShowClosed] = useState(false);
@@ -57,6 +78,18 @@ export default function PropertiesPage() {
   const close = async (p: Property) => {
     if (!user || !confirm("거래완료 처리할까요?")) return;
     await saveProperty(user.agencyId, { ...p, status: "closed" });
+  };
+
+  const handleUploadConfirm = async (toSave: Property[], strategy: PropMergeStrategy) => {
+    if (!user) return;
+    if (strategy === "replace") {
+      for (const p of properties) {
+        await deleteProperty(user.agencyId, p.id);
+      }
+    }
+    for (const p of toSave) {
+      await saveProperty(user.agencyId, p);
+    }
   };
 
   const filtered = useMemo(() => {
@@ -106,12 +139,21 @@ export default function PropertiesPage() {
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">내 매물 목록</h1>
           <p className="text-gray-500 text-xs sm:text-sm mb-4">등록 매물에서 바로 전화·문자 연결</p>
-          <button
-            onClick={() => setEditing(emptyProperty())}
-            className="px-5 py-2.5 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 text-sm font-semibold hover:bg-emerald-100 transition-colors"
-          >
-            + 매물 등록
-          </button>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              onClick={() => setEditing(emptyProperty())}
+              className="px-5 py-2.5 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 text-sm font-semibold hover:bg-emerald-100 transition-colors"
+            >
+              + 매물 등록
+            </button>
+            <button
+              onClick={() => setShowUpload(true)}
+              title="엑셀 파일에서 한 번에 여러 매물 등록"
+              className="px-4 py-2.5 rounded-full border border-gray-300 text-gray-700 text-sm hover:border-emerald-500 hover:text-emerald-700 transition-colors"
+            >
+              📥 엑셀 업로드
+            </button>
+          </div>
         </div>
 
         {/* 요약 카드 */}
@@ -181,6 +223,14 @@ export default function PropertiesPage() {
           onSave={async p => { await upsert(p); setEditing(null); }}
         />
       )}
+
+      {showUpload && (
+        <PropertiesUploadModal
+          existing={properties}
+          onClose={() => setShowUpload(false)}
+          onConfirm={handleUploadConfirm}
+        />
+      )}
     </div>
   );
 }
@@ -203,9 +253,11 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
 }) {
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
-  const priceStr = p.dealType === "월세" && p.monthly
-    ? `${p.price ? p.price + "/" : ""}${p.monthly}만`
-    : p.price ? `${p.price}만` : "—";
+  const priceStr = p.dealType === "월세"
+    ? (p.price || p.monthly)
+        ? `${p.price ? fmtNum(p.price) : "0"}/${p.monthly ? fmtNum(p.monthly) : "0"}만`
+        : "—"
+    : p.price ? `${fmtNum(p.price)}만` : "—";
 
   const sortedSchedules = [...schedules].sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
 
@@ -468,13 +520,14 @@ function PropertyModal({ property, onClose, onSave }: {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{form.dealType === "매매" ? "매매가" : "보증금"} (만원)</label>
-              <input type="text" inputMode="numeric" value={form.price} onChange={e => set("price", e.target.value.replace(/\D/g,""))}
-                placeholder="29600" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input type="text" inputMode="numeric" value={form.price ? fmtNum(form.price) : ""} onChange={e => set("price", e.target.value.replace(/\D/g,""))}
+                placeholder="29,600" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              {form.price && <div className="mt-1 text-[10px] text-gray-500">≈ {fmtKoreanNum(form.price)}만원</div>}
             </div>
             {form.dealType === "월세" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">월세 (만원)</label>
-                <input type="text" inputMode="numeric" value={form.monthly} onChange={e => set("monthly", e.target.value.replace(/\D/g,""))}
+                <input type="text" inputMode="numeric" value={form.monthly ? fmtNum(form.monthly) : ""} onChange={e => set("monthly", e.target.value.replace(/\D/g,""))}
                   placeholder="70" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
               </div>
             )}

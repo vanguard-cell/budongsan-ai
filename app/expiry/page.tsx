@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import ComplexPickerWidget from "@/app/ComplexPicker";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -238,24 +237,6 @@ export default function ExpiryPage() {
             만기 4개월 / 3개월 / 2개월 전 자동 분류 — 임차인·임대인에게 바로 연락
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
-            <Link
-              href="/"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              ← 매물 도우미
-            </Link>
-            <Link
-              href="/customers"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              👥 손님 관리
-            </Link>
-            <Link
-              href="/feedback"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-purple-500 hover:text-purple-600 transition-colors"
-            >
-              📬 건의함
-            </Link>
             <button
               onClick={() => setShowSmsSettings(true)}
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"

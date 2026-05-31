@@ -56,10 +56,17 @@ export function subscribeCustomers(
 ): Unsubscribe {
   // Firestore는 한 쿼리에 다중 정렬 한계가 있으므로 클라이언트에서 한 번 더 정렬
   const q = query(customersCol(agencyId), orderBy("createdAt", "desc"));
-  return onSnapshot(q, (snap) => {
-    const list = snap.docs.map(d => fromDoc(d.id, d.data()));
-    onChange(list);
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs.map(d => fromDoc(d.id, d.data()));
+      onChange(list);
+    },
+    err => {
+      console.error("[customers] subscribe 실패:", err);
+      onChange([]);
+    },
+  );
 }
 
 export async function saveCustomer(agencyId: string, c: Customer): Promise<void> {

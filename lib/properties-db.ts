@@ -81,7 +81,14 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
 
 export function subscribeProperties(agencyId: string, onChange: (list: Property[]) => void): Unsubscribe {
   const q = query(col(agencyId), orderBy("createdAt", "desc"));
-  return onSnapshot(q, snap => onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>))));
+  return onSnapshot(
+    q,
+    snap => onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>))),
+    err => {
+      console.error("[properties] subscribe 실패:", err);
+      onChange([]);
+    },
+  );
 }
 
 export async function saveProperty(agencyId: string, p: Property): Promise<void> {

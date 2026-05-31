@@ -125,7 +125,7 @@ export default function SchedulePage() {
         if (d !== 0) return d;
         return a.time.localeCompare(b.time);
       });
-  }, [schedules, contracts, customers, filter, showPast]);
+  }, [schedules, contracts, customers, properties, filter, showPast]);
 
   /* 날짜별 그룹 */
   const grouped = useMemo(() => {

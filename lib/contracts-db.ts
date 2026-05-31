@@ -64,9 +64,16 @@ export function subscribeContracts(
   onChange: (contracts: Contract[]) => void,
 ): Unsubscribe {
   const q = query(contractsCol(agencyId), orderBy("endDate", "asc"));
-  return onSnapshot(q, (snap) => {
-    onChange(snap.docs.map(d => fromDoc(d.id, d.data())));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      onChange(snap.docs.map(d => fromDoc(d.id, d.data())));
+    },
+    err => {
+      console.error("[contracts] subscribe 실패:", err);
+      onChange([]);
+    },
+  );
 }
 
 /** 추가/수정 (upsert) */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Customer,
   CustomerSide,
@@ -11,14 +11,16 @@ import {
   DEAL_KIND_LABELS,
   STATUS_LABELS,
 } from "./customer-types";
+import type { Property } from "@/lib/properties-db";
 
 interface Props {
   customer: Customer;
+  properties?: Property[];   // 내 매물장 — 보여드린 매물에서 검색 가능
   onClose: () => void;
   onSave: (c: Customer) => Promise<void> | void;
 }
 
-export default function EditCustomerModal({ customer, onClose, onSave }: Props) {
+export default function EditCustomerModal({ customer, properties = [], onClose, onSave }: Props) {
   const [form, setForm] = useState<Customer>(customer);
   const [saving, setSaving] = useState(false);
   const isNew = !customer.name;
@@ -178,47 +180,13 @@ export default function EditCustomerModal({ customer, onClose, onSave }: Props) 
           ) : (
             <div className="space-y-2">
               {form.shownProperties.map((s, idx) => (
-                <div key={idx} className="border border-gray-200 rounded-xl p-2.5 space-y-1.5 bg-gray-50/50">
-                  <div className="flex gap-1.5">
-                    <input
-                      value={s.address}
-                      onChange={e => updateShown(idx, { address: e.target.value })}
-                      placeholder="매물 주소"
-                      className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      onClick={() => removeShown(idx)}
-                      className="text-[11px] px-2 rounded-lg border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors"
-                      title="삭제"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <input
-                      type="date"
-                      value={s.shownAt}
-                      onChange={e => updateShown(idx, { shownAt: e.target.value })}
-                      className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <select
-                      value={s.reaction}
-                      onChange={e => updateShown(idx, { reaction: e.target.value as ShownProperty["reaction"] })}
-                      className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">반응 선택</option>
-                      <option value="positive">👍 좋아함</option>
-                      <option value="neutral">😐 보통</option>
-                      <option value="negative">👎 별로</option>
-                    </select>
-                  </div>
-                  <input
-                    value={s.note}
-                    onChange={e => updateShown(idx, { note: e.target.value })}
-                    placeholder="메모 (선택)"
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                <ShownPropertyRow
+                  key={idx}
+                  shown={s}
+                  properties={properties}
+                  onChange={(patch) => updateShown(idx, patch)}
+                  onRemove={() => removeShown(idx)}
+                />
               ))}
             </div>
           )}
@@ -248,6 +216,98 @@ export default function EditCustomerModal({ customer, onClose, onSave }: Props) 
         </div>
       </div>
     </Modal>
+  );
+}
+
+/* ── 보여드린 매물 한 행 — 내 매물장 자동완성 검색 ── */
+function ShownPropertyRow({
+  shown: s, properties, onChange, onRemove,
+}: {
+  shown: ShownProperty;
+  properties: Property[];
+  onChange: (patch: Partial<ShownProperty>) => void;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const suggestions = useMemo(() => {
+    const base = properties.filter(p => p.status === "active");
+    if (!s.address.trim()) return base.slice(0, 6);
+    const q = s.address.toLowerCase();
+    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 6);
+  }, [s.address, properties]);
+
+  const select = (p: Property) => {
+    onChange({ address: p.address });
+    setOpen(false);
+  };
+
+  return (
+    <div className="border border-gray-200 rounded-xl p-2.5 space-y-1.5 bg-gray-50/50 relative">
+      <div className="flex gap-1.5">
+        <div className="flex-1 relative">
+          <input
+            value={s.address}
+            onChange={e => { onChange({ address: e.target.value }); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 200)}
+            placeholder="매물 주소 — 내 매물장에서 검색 또는 직접 입력"
+            className="w-full border border-emerald-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          {open && suggestions.length > 0 && (
+            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-40 overflow-y-auto">
+              <div className="px-2 py-1 bg-emerald-50 text-[10px] text-emerald-700 font-medium border-b border-emerald-100">
+                🏘️ 내 매물장에서 선택
+              </div>
+              {suggestions.map(p => (
+                <button
+                  key={p.id} type="button"
+                  onMouseDown={e => { e.preventDefault(); select(p); }}
+                  className="w-full text-left px-2 py-1.5 hover:bg-emerald-50 border-b last:border-0 border-gray-100 text-xs"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">{p.dealType}</span>
+                    <span className="font-medium text-gray-800 truncate">{p.address}</span>
+                  </div>
+                  <div className="text-[10px] text-gray-500 mt-0.5 truncate">{p.propertyType}{p.price ? ` · ${p.price}만` : ""}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={onRemove}
+          className="text-[11px] px-2 rounded-lg border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors"
+          title="삭제"
+        >
+          ✕
+        </button>
+      </div>
+      <div className="flex gap-1.5">
+        <input
+          type="date"
+          value={s.shownAt}
+          onChange={e => onChange({ shownAt: e.target.value })}
+          className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <select
+          value={s.reaction}
+          onChange={e => onChange({ reaction: e.target.value as ShownProperty["reaction"] })}
+          className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">반응 선택</option>
+          <option value="positive">👍 좋아함</option>
+          <option value="neutral">😐 보통</option>
+          <option value="negative">👎 별로</option>
+        </select>
+      </div>
+      <input
+        value={s.note}
+        onChange={e => onChange({ note: e.target.value })}
+        placeholder="메모 (선택)"
+        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
   );
 }
 

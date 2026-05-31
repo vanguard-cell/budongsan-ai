@@ -31,6 +31,7 @@ import EditCustomerModal from "./EditCustomerModal";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import { subscribeContracts } from "@/lib/contracts-db";
+import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { exportCustomers } from "@/lib/export";
 import type { Contract } from "../expiry/contracts";
 
@@ -42,6 +43,7 @@ export default function CustomersPage() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
@@ -61,7 +63,8 @@ export default function CustomersPage() {
       setLoaded(true);
     });
     const unsubC = subscribeContracts(user.agencyId, setContracts);
-    return () => { unsub(); unsubC(); };
+    const unsubP = subscribeProperties(user.agencyId, setProperties);
+    return () => { unsub(); unsubC(); unsubP(); };
   }, [user]);
 
   /* 정렬 + 필터 — 후속 연락 일정 빠른 순 */
@@ -273,6 +276,7 @@ export default function CustomersPage() {
       {editing && (
         <EditCustomerModal
           customer={editing}
+          properties={properties}
           onClose={() => setEditing(null)}
           onSave={async (c) => { await upsert({ ...c, id: c.id || uid() }); setEditing(null); }}
         />
