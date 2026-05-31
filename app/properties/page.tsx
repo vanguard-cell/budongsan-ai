@@ -7,6 +7,7 @@ import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
   type Property, type PropertyType, type DealType,
 } from "@/lib/properties-db";
+import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import ComplexPickerWidget from "@/app/ComplexPicker";
 
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"];
@@ -24,6 +25,7 @@ export default function PropertiesPage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
   const [query, setQuery] = useState("");
@@ -36,8 +38,9 @@ export default function PropertiesPage() {
 
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeProperties(user.agencyId, list => { setProperties(list); setLoaded(true); });
-    return () => unsub();
+    const u1 = subscribeProperties(user.agencyId, list => { setProperties(list); setLoaded(true); });
+    const u2 = subscribeSchedules(user.agencyId, setSchedules);
+    return () => { u1(); u2(); };
   }, [user]);
 
   const upsert = async (p: Property) => {
@@ -153,6 +156,7 @@ export default function PropertiesPage() {
               <PropertyCard
                 key={p.id}
                 property={p}
+                schedules={schedules.filter(s => s.propertyId === p.id)}
                 onEdit={() => setEditing({ ...p })}
                 onClose={() => close(p)}
                 onDelete={() => remove(p.id)}
@@ -174,18 +178,29 @@ export default function PropertiesPage() {
   );
 }
 
+const STYPE_COLORS: Record<string, string> = {
+  "집보기": "bg-blue-100 text-blue-700",
+  "계약":   "bg-purple-100 text-purple-700",
+  "잔금":   "bg-orange-100 text-orange-700",
+  "기타":   "bg-gray-100 text-gray-600",
+};
+
 /* ── 매물 카드 ── */
-function PropertyCard({ property: p, onEdit, onClose, onDelete, onReopen }: {
+function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen }: {
   property: Property;
+  schedules: Schedule[];
   onEdit: () => void;
   onClose: () => void;
   onDelete: () => void;
   onReopen: () => void;
 }) {
+  const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
   const priceStr = p.dealType === "월세" && p.monthly
     ? `${p.price ? p.price + "/" : ""}${p.monthly}만`
     : p.price ? `${p.price}만` : "—";
+
+  const sortedSchedules = [...schedules].sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
 
   return (
     <div className={`rounded-2xl border p-3 sm:p-4 ${isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : "bg-white border-gray-200 shadow-sm"}`}>
@@ -224,6 +239,32 @@ function PropertyCard({ property: p, onEdit, onClose, onDelete, onReopen }: {
           )}
         </div>
       </div>
+
+      {/* 스케줄 이력 */}
+      {schedules.length > 0 && (
+        <div className="mt-3">
+          <button
+            onClick={() => setShowHistory(v => !v)}
+            className="flex items-center gap-1.5 text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+          >
+            📅 스케줄 이력 {schedules.length}건
+            <span className="text-[10px]">{showHistory ? "▲" : "▼"}</span>
+          </button>
+          {showHistory && (
+            <div className="mt-2 space-y-1.5">
+              {sortedSchedules.map(s => (
+                <div key={s.id} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs ${s.status === "done" ? "bg-gray-50 text-gray-400" : "bg-blue-50 text-gray-700"}`}>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${STYPE_COLORS[s.scheduleType]}`}>{s.scheduleType}</span>
+                  <span className="font-medium">{new Date(s.date + "T00:00:00").toLocaleDateString("ko-KR", { month: "short", day: "numeric", weekday: "short" })}</span>
+                  <span>{s.time}</span>
+                  {s.visitorName && <span className="text-gray-500">· {s.visitorName}</span>}
+                  {s.status === "done" && <span className="ml-auto text-[10px] text-green-600">완료</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors">수정</button>

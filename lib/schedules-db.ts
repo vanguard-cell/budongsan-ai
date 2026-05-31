@@ -20,6 +20,8 @@ export interface Schedule {
   visitorName: string;
   visitorPhone: string;
   propertyAddress: string;
+  propertyId?: string;   // 연결된 매물 ID
+  customerId?: string;   // 연결된 손님 ID
   scheduleType: ScheduleType;
   memo: string;
   status: ScheduleStatus;
@@ -52,6 +54,8 @@ function fromDoc(id: string, d: Record<string, unknown>): Schedule {
     visitorName:     (d.visitorName     as string) || "",
     visitorPhone:    (d.visitorPhone    as string) || "",
     propertyAddress: (d.propertyAddress as string) || "",
+    propertyId:      (d.propertyId      as string) || undefined,
+    customerId:      (d.customerId      as string) || undefined,
     scheduleType:    (d.scheduleType    as ScheduleType) || "집보기",
     memo:            (d.memo            as string) || "",
     status:          (d.status          as ScheduleStatus) || "scheduled",

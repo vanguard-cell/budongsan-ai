@@ -7,6 +7,9 @@ import {
   subscribeSchedules, saveSchedule, deleteSchedule, emptySchedule,
   type Schedule, type ScheduleType,
 } from "@/lib/schedules-db";
+import { subscribeProperties, type Property } from "@/lib/properties-db";
+import { subscribeCustomers } from "@/lib/customers-db";
+import type { Customer } from "@/app/customers/customer-types";
 
 const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약", "잔금", "기타"];
 
@@ -35,6 +38,8 @@ export default function SchedulePage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Schedule | null>(null);
   const [showPast, setShowPast] = useState(false);
@@ -45,8 +50,10 @@ export default function SchedulePage() {
 
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeSchedules(user.agencyId, list => { setSchedules(list); setLoaded(true); });
-    return () => unsub();
+    const u1 = subscribeSchedules(user.agencyId, list => { setSchedules(list); setLoaded(true); });
+    const u2 = subscribeProperties(user.agencyId, setProperties);
+    const u3 = subscribeCustomers(user.agencyId, setCustomers);
+    return () => { u1(); u2(); u3(); };
   }, [user]);
 
   const upsert = async (s: Schedule) => {
@@ -68,7 +75,6 @@ export default function SchedulePage() {
     return schedules.filter(s => showPast ? true : (s.status !== "done" && isFuture(s.date)));
   }, [schedules, showPast]);
 
-  // 날짜별 그룹
   const grouped = useMemo(() => {
     const map: Record<string, Schedule[]> = {};
     for (const s of filtered) {
@@ -86,14 +92,12 @@ export default function SchedulePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
 
-        {/* 사용자 바 */}
         <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
           <span>👤 {user.displayName || user.email}</span>
           <span className="text-gray-300">·</span>
           <button onClick={() => { if (confirm("로그아웃?")) signOut(); }} className="hover:text-blue-600 hover:underline">로그아웃</button>
         </div>
 
-        {/* 헤더 */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
             📅 스케줄 관리
@@ -108,14 +112,12 @@ export default function SchedulePage() {
           </button>
         </div>
 
-        {/* 오늘 알림 */}
         {todayCount > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 mb-4 text-sm text-blue-800 font-medium">
             📌 오늘 약속 {todayCount}건이 있습니다
           </div>
         )}
 
-        {/* 필터 */}
         <div className="flex items-center justify-end mb-3">
           <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
             <input type="checkbox" checked={showPast} onChange={e => setShowPast(e.target.checked)} className="accent-blue-600" />
@@ -123,7 +125,6 @@ export default function SchedulePage() {
           </label>
         </div>
 
-        {/* 목록 */}
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : grouped.length === 0 ? (
@@ -139,7 +140,6 @@ export default function SchedulePage() {
           <div className="space-y-4">
             {grouped.map(([date, items]) => (
               <div key={date}>
-                {/* 날짜 헤더 */}
                 <div className={`flex items-center gap-2 mb-2 ${isToday(date) ? "text-blue-700" : "text-gray-500"}`}>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isToday(date) ? "bg-blue-100" : "bg-gray-100"}`}>
                     {isToday(date) ? "오늘" : new Date(date + "T00:00:00").toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
@@ -147,12 +147,12 @@ export default function SchedulePage() {
                   <div className="flex-1 h-px bg-gray-200" />
                   <span className="text-[11px]">{items.length}건</span>
                 </div>
-
                 <div className="space-y-2">
                   {items.map(s => (
                     <ScheduleCard
                       key={s.id}
                       schedule={s}
+                      properties={properties}
                       onEdit={() => setEditing({ ...s })}
                       onDone={() => done(s)}
                       onDelete={() => remove(s.id)}
@@ -168,6 +168,8 @@ export default function SchedulePage() {
       {editing && (
         <ScheduleModal
           schedule={editing}
+          properties={properties}
+          customers={customers}
           onClose={() => setEditing(null)}
           onSave={async s => { await upsert(s); setEditing(null); }}
         />
@@ -177,17 +179,19 @@ export default function SchedulePage() {
 }
 
 /* ── 스케줄 카드 ── */
-function ScheduleCard({ schedule: s, onEdit, onDone, onDelete }: {
+function ScheduleCard({ schedule: s, properties, onEdit, onDone, onDelete }: {
   schedule: Schedule;
+  properties: Property[];
   onEdit: () => void;
   onDone: () => void;
   onDelete: () => void;
 }) {
   const isDone = s.status === "done";
+  const linkedProp = s.propertyId ? properties.find(p => p.id === s.propertyId) : null;
+
   return (
     <div className={`rounded-2xl border p-3 sm:p-4 ${isDone ? "bg-gray-50/60 border-gray-200 opacity-60" : "bg-white border-gray-200 shadow-sm"}`}>
       <div className="flex items-start gap-3">
-        {/* 시간 */}
         <div className={`flex-shrink-0 w-14 text-center rounded-xl py-2 ${isDone ? "bg-gray-100" : "bg-blue-50"}`}>
           <div className={`text-sm font-bold ${isDone ? "text-gray-400" : "text-blue-700"}`}>{s.time}</div>
         </div>
@@ -196,8 +200,23 @@ function ScheduleCard({ schedule: s, onEdit, onDone, onDelete }: {
           <div className="flex flex-wrap items-center gap-1.5 mb-1">
             <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${TYPE_COLORS[s.scheduleType]}`}>{s.scheduleType}</span>
             {isDone && <span className="text-[11px] px-1.5 py-0.5 rounded bg-green-100 text-green-700">완료</span>}
+            {linkedProp && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                🏘️ 매물연결
+              </span>
+            )}
           </div>
           <div className="text-sm font-semibold text-gray-800 break-all">{s.propertyAddress || "매물 주소 미입력"}</div>
+
+          {/* 연결된 매물 정보 */}
+          {linkedProp && (
+            <div className="mt-1 text-[11px] text-emerald-700 bg-emerald-50 rounded px-2 py-1">
+              {linkedProp.dealType} {linkedProp.propertyType}
+              {linkedProp.price ? ` · ${linkedProp.price}만` : ""}
+              {linkedProp.area ? ` · ${linkedProp.area}㎡` : ""}
+              {linkedProp.ownerName ? ` · 집주인 ${linkedProp.ownerName}` : ""}
+            </div>
+          )}
 
           {s.visitorPhone && (
             <div className="mt-1.5 flex items-center gap-2 text-xs">
@@ -227,14 +246,60 @@ function ScheduleCard({ schedule: s, onEdit, onDone, onDelete }: {
 }
 
 /* ── 스케줄 등록/수정 모달 ── */
-function ScheduleModal({ schedule, onClose, onSave }: {
+function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   schedule: Schedule;
+  properties: Property[];
+  customers: Customer[];
   onClose: () => void;
   onSave: (s: Schedule) => Promise<void>;
 }) {
   const [form, setForm] = useState<Schedule>(schedule);
   const [saving, setSaving] = useState(false);
+
+  // 매물 검색
+  const [propQuery, setPropQuery] = useState("");
+  const [showPropList, setShowPropList] = useState(false);
+
+  // 손님 검색
+  const [custQuery, setCustQuery] = useState("");
+  const [showCustList, setShowCustList] = useState(false);
+
   const set = <K extends keyof Schedule>(k: K, v: Schedule[K]) => setForm(p => ({ ...p, [k]: v }));
+
+  // 매물 필터링 (활성 매물만, 주소 기준)
+  const filteredProps = useMemo(() => {
+    if (!propQuery.trim()) return properties.filter(p => p.status === "active").slice(0, 8);
+    const q = propQuery.toLowerCase();
+    return properties
+      .filter(p => p.status === "active" && p.address.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [propQuery, properties]);
+
+  // 손님 필터링 (이름·전화번호)
+  const filteredCusts = useMemo(() => {
+    if (!custQuery.trim()) return customers.slice(0, 8);
+    const q = custQuery.toLowerCase();
+    return customers
+      .filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q))
+      .slice(0, 8);
+  }, [custQuery, customers]);
+
+  // 매물 선택
+  const selectProperty = (p: Property) => {
+    set("propertyAddress", p.address);
+    set("propertyId", p.id);
+    setPropQuery(p.address);
+    setShowPropList(false);
+  };
+
+  // 손님 선택
+  const selectCustomer = (c: Customer) => {
+    set("visitorName", c.name);
+    set("visitorPhone", c.phone);
+    set("customerId", c.id);
+    setCustQuery(c.name);
+    setShowCustList(false);
+  };
 
   const save = async () => {
     if (!form.propertyAddress.trim()) { alert("매물 주소를 입력해주세요"); return; }
@@ -247,14 +312,14 @@ function ScheduleModal({ schedule, onClose, onSave }: {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[92vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-3xl">
           <h2 className="text-base font-semibold">{!schedule.propertyAddress ? "일정 추가" : "일정 수정"}</h2>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 text-lg">✕</button>
         </div>
-        <div className="p-5 space-y-3">
+        <div className="p-5 space-y-4">
 
-          {/* 종류 */}
+          {/* 일정 종류 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">일정 종류</label>
             <div className="grid grid-cols-4 gap-1.5">
@@ -281,24 +346,95 @@ function ScheduleModal({ schedule, onClose, onSave }: {
             </div>
           </div>
 
-          {/* 매물 주소 */}
+          {/* ── 매물 연결 ── */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">매물 주소 <span className="text-red-400">*</span></label>
-            <input value={form.propertyAddress} onChange={e => set("propertyAddress", e.target.value)}
-              placeholder="예: 힐스테이트 미사역 101동 1902호"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              매물 연결 <span className="text-red-400">*</span>
+              {form.propertyId && <span className="ml-2 text-[11px] text-emerald-600 font-normal">🏘️ 연결됨</span>}
+            </label>
+
+            {/* 내 매물에서 검색 */}
+            {properties.length > 0 && (
+              <div className="relative mb-2">
+                <input
+                  value={propQuery}
+                  onChange={e => { setPropQuery(e.target.value); setShowPropList(true); }}
+                  onFocus={() => setShowPropList(true)}
+                  placeholder="🔍 내 매물에서 검색 (단지명·주소)"
+                  className="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  autoComplete="off"
+                />
+                {showPropList && filteredProps.length > 0 && (
+                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                    {filteredProps.map(p => (
+                      <button key={p.id} type="button"
+                        onMouseDown={e => { e.preventDefault(); selectProperty(p); }}
+                        className="w-full text-left px-3 py-2.5 hover:bg-emerald-50 border-b last:border-0 border-gray-100 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">{p.dealType}</span>
+                          <span className="text-sm font-medium text-gray-800 truncate">{p.address}</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {p.propertyType} {p.price ? `· ${p.price}만` : ""} {p.ownerName ? `· 집주인 ${p.ownerName}` : ""}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 직접 입력 */}
+            <input
+              value={form.propertyAddress}
+              onChange={e => { set("propertyAddress", e.target.value); set("propertyId", undefined); }}
+              placeholder="직접 입력: 힐스테이트 미사역 101동 1902호"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
 
-          {/* 방문자 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">방문자 이름</label>
-              <input value={form.visitorName} onChange={e => set("visitorName", e.target.value)}
-                placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">연락처</label>
-              <input type="tel" value={form.visitorPhone} onChange={e => set("visitorPhone", e.target.value)}
+          {/* ── 방문자 연결 ── */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              방문자
+              {form.customerId && <span className="ml-2 text-[11px] text-blue-600 font-normal">👥 손님연결</span>}
+            </label>
+
+            {/* 기존 손님에서 검색 */}
+            {customers.length > 0 && (
+              <div className="relative mb-2">
+                <input
+                  value={custQuery}
+                  onChange={e => { setCustQuery(e.target.value); setShowCustList(true); }}
+                  onFocus={() => setShowCustList(true)}
+                  placeholder="🔍 기존 손님에서 검색 (이름·연락처)"
+                  className="w-full border border-blue-200 rounded-xl px-3 py-2.5 text-sm bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  autoComplete="off"
+                />
+                {showCustList && filteredCusts.length > 0 && (
+                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                    {filteredCusts.map(c => (
+                      <button key={c.id} type="button"
+                        onMouseDown={e => { e.preventDefault(); selectCustomer(c); }}
+                        className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-800">{c.name}</span>
+                          <span className="text-xs text-gray-500">{formatPhone(c.phone)}</span>
+                          {c.vip && <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">VIP</span>}
+                        </div>
+                        {c.preferredArea && <div className="text-xs text-gray-400 mt-0.5">희망: {c.preferredArea}</div>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 직접 입력 */}
+            <div className="grid grid-cols-2 gap-2">
+              <input value={form.visitorName} onChange={e => { set("visitorName", e.target.value); set("customerId", undefined); }}
+                placeholder="이름" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="tel" value={form.visitorPhone} onChange={e => { set("visitorPhone", e.target.value); set("customerId", undefined); }}
                 placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
