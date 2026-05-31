@@ -7,6 +7,7 @@ import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
   type Property, type PropertyType, type DealType,
 } from "@/lib/properties-db";
+import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import ComplexPickerWidget from "@/app/ComplexPicker";
 
@@ -202,6 +203,11 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
 
   const sortedSchedules = [...schedules].sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
 
+  // 임차인 만기 D-day
+  const leaseDD = p.leaseEndDate ? dDay(p.leaseEndDate) : null;
+  const leaseUrgent = leaseDD !== null && leaseDD <= 60;
+  const leaseCaution = leaseDD !== null && leaseDD <= 120;
+
   return (
     <div className={`rounded-2xl border p-3 sm:p-4 ${isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : "bg-white border-gray-200 shadow-sm"}`}>
       <div className="flex items-start gap-3">
@@ -210,6 +216,11 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">{p.dealType}</span>
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.propertyType}</span>
             {isClosed && <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">거래완료</span>}
+            {leaseDD !== null && (
+              <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${leaseUrgent ? "bg-red-100 text-red-700" : leaseCaution ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"}`}>
+                ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
+              </span>
+            )}
             <span className="text-sm font-bold text-gray-900 truncate">{priceStr}</span>
           </div>
           <div className="text-sm font-semibold text-gray-800 break-all mb-1">{p.address || "—"}</div>
@@ -233,6 +244,18 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
               >
                 문자
               </a>
+            </div>
+          )}
+
+          {/* 임차인 연락처 */}
+          {p.tenantPhone && (
+            <div className="mt-2 flex items-center gap-2 text-xs">
+              <span className="text-orange-600 shrink-0">임차인 {p.tenantName || ""}</span>
+              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
+              <a
+                href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
+                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto"
+              >문자</a>
             </div>
           )}
 
@@ -446,6 +469,29 @@ function PropertyModal({ property, onClose, onSave }: {
               <input type="tel" value={form.ownerPhone} onChange={e => set("ownerPhone", e.target.value)}
                 placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
+          </div>
+
+          {/* 임차인 (전세/월세 세입자) */}
+          <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40">
+            <div className="text-xs font-semibold text-orange-700 mb-2">🏠 현재 임차인 (전세·월세 세입자)</div>
+            <div className="grid grid-cols-2 gap-3 mb-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">임차인 이름</label>
+                <input value={form.tenantName} onChange={e => set("tenantName", e.target.value)}
+                  placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">임차인 연락처</label>
+                <input type="tel" value={form.tenantPhone} onChange={e => set("tenantPhone", e.target.value)}
+                  placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">전세·월세 만기일</label>
+              <input type="date" value={form.leaseEndDate} onChange={e => set("leaseEndDate", e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+            </div>
+            <p className="text-[10px] text-orange-600 mt-2">📌 만기일 입력 시 스케줄에서 자동으로 만기 알림 표시</p>
           </div>
 
           {/* 메모 */}

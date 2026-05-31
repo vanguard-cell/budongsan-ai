@@ -25,6 +25,7 @@ interface UnifiedItem {
   schedule?: Schedule;
   contract?: Contract;
   customer?: Customer;
+  property?: Property; // 내 매물 임대만기
 }
 
 const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약", "잔금", "기타"];
@@ -87,14 +88,26 @@ export default function SchedulePage() {
       items.push({ key: `s-${s.id}`, source: "schedule", date: s.date, time: s.time, schedule: s });
     }
 
-    // ② 만기 (D-120 이내 활성 계약)
+    // ② 만기관리 계약 (D-120 이내 활성 계약)
     for (const c of contracts) {
       if (c.status !== "active") continue;
       if (!c.endDate) continue;
       const dd = dDay(c.endDate);
-      if (dd > 120) continue; // D-120 초과는 제외
-      if (!showPast && dd < -30) continue; // 30일 이상 지난 만기 제외
+      if (dd > 120) continue;
+      if (!showPast && dd < -30) continue;
       items.push({ key: `e-${c.id}`, source: "expiry", date: c.endDate, time: "", contract: c });
+    }
+
+    // ② 내 매물 임대만기 (leaseEndDate 입력된 매물)
+    for (const p of properties) {
+      if (!p.leaseEndDate || p.status !== "active") continue;
+      const dd = dDay(p.leaseEndDate);
+      if (dd > 120) continue;
+      if (!showPast && dd < -30) continue;
+      // 만기관리에 같은 주소 계약이 있으면 중복 제외
+      const duplicate = contracts.some(c => c.status === "active" && c.address === p.address && c.endDate === p.leaseEndDate);
+      if (duplicate) continue;
+      items.push({ key: `pe-${p.id}`, source: "expiry", date: p.leaseEndDate, time: "", property: p });
     }
 
     // ③ 손님 후속연락
@@ -246,6 +259,8 @@ export default function SchedulePage() {
                                onDelete={() => remove(item.schedule!.id)} />;
                     if (item.source === "expiry" && item.contract)
                       return <ExpiryCard key={item.key} contract={item.contract} />;
+                    if (item.source === "expiry" && item.property)
+                      return <PropertyLeaseCard key={item.key} property={item.property} />;
                     if (item.source === "followup" && item.customer)
                       return <FollowUpCard key={item.key} customer={item.customer} />;
                     return null;
@@ -349,6 +364,43 @@ function ExpiryCard({ contract: c }: { contract: Contract }) {
             </div>
           )}
           <div className="mt-1 text-[11px] text-gray-500">만기일 {c.endDate} · 보증금 {c.deposit || "—"}만{c.monthly ? ` / 월세 ${c.monthly}만` : ""}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 내 매물 임대만기 카드 ── */
+function PropertyLeaseCard({ property: p }: { property: Property }) {
+  const dd = p.leaseEndDate ? dDay(p.leaseEndDate) : 0;
+  const isOver = dd < 0;
+  const isUrgent = dd <= 60;
+  const bgColor = isOver ? "bg-red-50 border-red-200" : isUrgent ? "bg-orange-50 border-orange-200" : "bg-yellow-50 border-yellow-200";
+  const badgeColor = isOver ? "bg-red-100 text-red-700" : isUrgent ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700";
+  const ddLabel = isOver ? `${-dd}일 지남` : dd === 0 ? "오늘만기" : `D-${dd}`;
+
+  return (
+    <div className={`rounded-2xl border p-3 sm:p-4 ${bgColor}`}>
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 w-14 text-center rounded-xl py-2 bg-white/70">
+          <div className="text-[10px] text-orange-500 font-medium">임대만기</div>
+          <div className={`text-xs font-bold ${isOver ? "text-red-600" : isUrgent ? "text-orange-600" : "text-yellow-700"}`}>{ddLabel}</div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 mb-1">
+            <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${badgeColor}`}>🏘️ 내 매물 만기</span>
+            <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.dealType}</span>
+          </div>
+          <div className="text-sm font-semibold text-gray-800 break-all">{p.address}</div>
+          {p.tenantPhone && (
+            <div className="mt-1.5 flex items-center gap-2 text-xs">
+              <span className="text-gray-500 shrink-0">임차인 {p.tenantName || ""}</span>
+              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
+              <a href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기(${p.leaseEndDate}) 관련하여 연락드립니다.`)}`}
+                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto">문자</a>
+            </div>
+          )}
+          <div className="mt-1 text-[11px] text-gray-500">만기일 {p.leaseEndDate}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>
         </div>
       </div>
     </div>

@@ -29,6 +29,9 @@ export interface Property {
   direction: string;   // 방향
   ownerName: string;
   ownerPhone: string;
+  tenantName: string;    // 임차인 이름
+  tenantPhone: string;   // 임차인 연락처
+  leaseEndDate: string;  // 현재 임대차 만기일 (YYYY-MM-DD)
   memo: string;
   status: PropertyStatus;
   createdAt: number;
@@ -39,7 +42,8 @@ export function emptyProperty(): Property {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
     address: "", propertyType: "아파트", dealType: "월세",
     price: "", monthly: "", area: "", dong: "", ho: "", floor: "", rooms: "",
-    direction: "", ownerName: "", ownerPhone: "", memo: "",
+    direction: "", ownerName: "", ownerPhone: "",
+    tenantName: "", tenantPhone: "", leaseEndDate: "", memo: "",
     status: "active", createdAt: Date.now(),
   };
 }
@@ -67,6 +71,9 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     direction:    (d.direction    as string) || "",
     ownerName:    (d.ownerName    as string) || "",
     ownerPhone:   (d.ownerPhone   as string) || "",
+    tenantName:   (d.tenantName   as string) || "",
+    tenantPhone:  (d.tenantPhone  as string) || "",
+    leaseEndDate: (d.leaseEndDate as string) || "",
     memo:         (d.memo         as string) || "",
     status:       (d.status       as PropertyStatus) || "active",
   };
