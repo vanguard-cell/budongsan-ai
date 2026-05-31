@@ -50,6 +50,16 @@ service cloud.firestore {
         allow read, create, update, delete: if isMember();
       }
 
+      // ── 내 매물 ──────────────────────────────
+      match /properties/{propertyId} {
+        allow read, create, update, delete: if isMember();
+      }
+
+      // ── 스케줄 ──────────────────────────────
+      match /schedules/{scheduleId} {
+        allow read, create, update, delete: if isMember();
+      }
+
     }
   }
 

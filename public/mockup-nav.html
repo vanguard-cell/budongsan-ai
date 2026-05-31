@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>UI 목업</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, sans-serif; background: #f8fafc; display: flex; gap: 24px; padding: 24px; justify-content: center; flex-wrap: wrap; }
+
+  .phone {
+    width: 390px;
+    height: 780px;
+    background: white;
+    border-radius: 40px;
+    border: 8px solid #1e293b;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-label {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+  }
+
+  /* 상단 상태바 */
+  .statusbar {
+    height: 44px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* 콘텐츠 영역 */
+  .content {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    background: linear-gradient(to bottom right, #f8fafc, #eff6ff);
+  }
+
+  /* 하단 탭바 */
+  .tabbar {
+    height: 80px;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px 12px;
+    flex-shrink: 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+  }
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    padding: 8px 4px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: #eff6ff;
+  }
+  .tab-icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+  .tab-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: #94a3b8;
+  }
+  .tab.active .tab-label {
+    color: #2563eb;
+    font-weight: 700;
+  }
+  .tab-badge {
+    position: relative;
+  }
+  .tab-badge::after {
+    content: '3';
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 16px;
+    text-align: center;
+  }
+
+  /* 카드들 */
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: #1e293b; }
+  .card-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .badge-red { display: inline-block; background: #fef2f2; color: #dc2626; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; border: 1px solid #fecaca; }
+  .badge-blue { display: inline-block; background: #eff6ff; color: #2563eb; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; border: 1px solid #bfdbfe; }
+  .badge-orange { display: inline-block; background: #fff7ed; color: #ea580c; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; border: 1px solid #fed7aa; }
+  .row { display: flex; justify-content: space-between; align-items: center; }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .page-header h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1e293b;
+  }
+  .page-header p {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .stat-card { background: white; border-radius: 14px; padding: 12px; border: 1px solid #e2e8f0; text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 800; color: #1e293b; }
+  .stat-label { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  .arrow { color: #cbd5e1; font-size: 12px; }
+
+  /* 현재 탭 표시선 */
+  .tab.active::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: #2563eb;
+    border-radius: 50%;
+    margin-bottom: 2px;
+  }
+
+  .wrapper { display: flex; flex-direction: column; align-items: center; }
+  h3.desc {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 10px;
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- 화면 1: 만기 관리 탭 활성 -->
+<div class="wrapper">
+  <div class="phone-label">📱 만기 관리 탭</div>
+  <div class="phone">
+    <div class="statusbar">
+      <span>9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="content">
+      <div class="page-header">
+        <h2>⏰ 만기 관리</h2>
+        <p>임대차 계약 만기 알림 보드</p>
+      </div>
+      <div class="grid2">
+        <div class="stat-card" style="border-color:#fecaca; background:#fef2f2;">
+          <div class="stat-num" style="color:#dc2626;">225</div>
+          <div class="stat-label">위험 D-60</div>
+        </div>
+        <div class="stat-card" style="border-color:#fed7aa; background:#fff7ed;">
+          <div class="stat-num" style="color:#ea580c;">6</div>
+          <div class="stat-label">주의 D-90</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div>
+            <span class="badge-red">위험</span>
+            <span class="card-title" style="margin-left:6px; font-size:12px;">힐스테이트 미사역 101동</span>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="card-sub" style="margin-top:6px;">만기 2026-06-15 · D-15</div>
+        <div style="margin-top:6px; display:flex; gap:6px;">
+          <span style="font-size:10px; color:#2563eb;">📞 임차인</span>
+          <span style="font-size:10px; color:#2563eb;">📞 임대인</span>
+          <span style="font-size:10px; background:#eff6ff; color:#2563eb; padding:1px 8px; border-radius:20px; border:1px solid #bfdbfe;">문자</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div>
+            <span class="badge-orange">주의</span>
+            <span class="card-title" style="margin-left:6px; font-size:12px;">망월동 공공주택 1023호</span>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="card-sub" style="margin-top:6px;">만기 2026-08-01 · D-62</div>
+        <div style="margin-top:6px; display:flex; gap:6px;">
+          <span style="font-size:10px; color:#2563eb;">📞 임차인</span>
+          <span style="font-size:10px; color:#2563eb;">📞 임대인</span>
+          <span style="font-size:10px; background:#eff6ff; color:#2563eb; padding:1px 8px; border-radius:20px; border:1px solid #bfdbfe;">문자</span>
+        </div>
+      </div>
+      <div class="card" style="opacity:0.5;">
+        <div class="row">
+          <div>
+            <span class="badge-blue">안전</span>
+            <span class="card-title" style="margin-left:6px; font-size:12px;">미사강변동 오벨리스크 613호</span>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="card-sub" style="margin-top:4px;">만기 2026-12-20 · D-204</div>
+      </div>
+    </div>
+    <div class="tabbar">
+      <div class="tab">
+        <div class="tab-icon">🏠</div>
+        <div class="tab-label">매물</div>
+      </div>
+      <div class="tab active">
+        <div class="tab-icon tab-badge">⏰</div>
+        <div class="tab-label" style="color:#2563eb;">만기</div>
+      </div>
+      <div class="tab">
+        <div class="tab-icon">👥</div>
+        <div class="tab-label">손님</div>
+      </div>
+      <div class="tab">
+        <div class="tab-icon">📬</div>
+        <div class="tab-label">건의함</div>
+      </div>
+    </div>
+  </div>
+  <h3 class="desc">만기 탭 선택 시<br>하단 탭이 항상 고정</h3>
+</div>
+
+<!-- 화면 2: 매물 도우미 탭 -->
+<div class="wrapper">
+  <div class="phone-label">📱 매물 도우미 탭</div>
+  <div class="phone">
+    <div class="statusbar">
+      <span>9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="content">
+      <div class="page-header">
+        <h2>🏠 매물 도우미</h2>
+        <p>AI 문구 자동 생성</p>
+      </div>
+      <div class="card" style="background:linear-gradient(135deg,#2563eb,#1d4ed8); border:none; color:white; margin-bottom:12px;">
+        <div style="font-size:13px; font-weight:700; color:white; margin-bottom:4px;">✨ AI 문구 생성</div>
+        <div style="font-size:11px; color:#bfdbfe;">매물 정보 입력 → 네이버·블로그·인스타 문구 자동 생성</div>
+        <div style="margin-top:10px; background:rgba(255,255,255,0.15); border-radius:10px; padding:8px 12px; font-size:11px; color:white;">매물 분류 · 거래 종류 · 단지명 입력...</div>
+      </div>
+      <div class="section-title">저장된 매물</div>
+      <div class="card">
+        <div class="row">
+          <div>
+            <div class="card-title">힐스테이트 미사역 101동 1902호</div>
+            <div class="card-sub">월세 · 5000/130만 · 저장 2일 전</div>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div>
+            <div class="card-title">망월동 공공주택 1023호</div>
+            <div class="card-sub">전세 · 22,770만 · 저장 5일 전</div>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+      </div>
+    </div>
+    <div class="tabbar">
+      <div class="tab active">
+        <div class="tab-icon">🏠</div>
+        <div class="tab-label" style="color:#2563eb;">매물</div>
+      </div>
+      <div class="tab">
+        <div class="tab-icon">⏰</div>
+        <div class="tab-label">만기</div>
+      </div>
+      <div class="tab">
+        <div class="tab-icon">👥</div>
+        <div class="tab-label">손님</div>
+      </div>
+      <div class="tab">
+        <div class="tab-icon">📬</div>
+        <div class="tab-label">건의함</div>
+      </div>
+    </div>
+  </div>
+  <h3 class="desc">매물 탭 선택 시<br>어느 탭이든 한 번에 이동</h3>
+</div>
+
+<!-- 화면 3: 건의함 탭 -->
+<div class="wrapper">
+  <div class="phone-label">📱 건의함 탭</div>
+  <div class="phone">
+    <div class="statusbar">
+      <span>9:41</span>
+      <span>●●●</span>
+    </div>
+    <div class="content">
+      <div class="page-header">
+        <h2>📬 건의함</h2>
+        <p>수정 요청 / 건의사항</p>
+      </div>
+      <div class="card" style="border-color:#e9d5ff; background:#faf5ff;">
+        <div style="font-size:12px; color:#7c3aed; font-weight:700; margin-bottom:8px;">✏️ 새 건의사항</div>
+        <div style="background:#f3f4f6; border-radius:10px; padding:10px; font-size:11px; color:#94a3b8;">
+          불편한 점이나 바꿔줬으면 하는 것을 적어주세요...
+        </div>
+        <div style="text-align:right; margin-top:8px;">
+          <span style="background:#7c3aed; color:white; font-size:11px; font-weight:700; padding:6px 14px; border-radius:20px;">등록하기</span>
+        </div>
+      </div>
+      <div class="section-title">내가 보낸 건의</div>
+      <div class="card">
+        <div class="row" style="margin-bottom:6px;">
+          <span style="background:#fef3c7; color:#d97706; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;">⏳ 대기중</span>
+          <span style="font-size:10px; color:#94a3b8;">5월 30일 오후 7:24</span>
+        </div>
+        <div style="font-size:12px; color:#374151;">주소 검색해서 올려 주는 기능 첨부요</div>
+      </div>
+      <div class="card" style="border-color:#d1fae5; background:#f0fdf4;">
+        <div class="row" style="margin-bottom:6px;">
+          <span style="background:#d1fae5; color:#059669; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;">✅ 처리완료</span>
+          <span style="font-size:10px; color:#94a3b8;">5월 28일</span>
+        </div>
+        <div style="font-size:12px; color:#374151;">만기 알림 개월수 변경 요청</div>
+        <div style="margin-top:6px; background:#eff6ff; border-radius:8px; padding:6px 10px; font-size:10px; color:#2563eb;">
+          💬 4/3/2개월로 변경 완료했습니다!
+        </div>
+      </div>
+    </div>
+    <div class="tabbar">
+      <div class="tab">
+        <div class="tab-icon">🏠</div>
+        <div class="tab-label">매물</div>
+      </div>
+      <div class="tab">
+        <div class="tab-icon">⏰</div>
+        <div class="tab-label">만기</div>
+      </div>
+      <div class="tab">
+        <div class="tab-icon">👥</div>
+        <div class="tab-label">손님</div>
+      </div>
+      <div class="tab active">
+        <div class="tab-icon">📬</div>
+        <div class="tab-label" style="color:#2563eb;">건의함</div>
+      </div>
+    </div>
+  </div>
+  <h3 class="desc">건의함 탭 선택 시<br>처리완료 시 답변도 확인 가능</h3>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+"use client";
+import Link from "next/link";
+
+const ITEMS = [
+  { href: "/",         icon: "✨", label: "AI 문구 생성",  desc: "네이버·블로그·인스타 문구 자동 생성" },
+  { href: "/feedback", icon: "📬", label: "건의함",        desc: "수정 요청 및 건의사항 전달" },
+];
+
+export default function MorePage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
+      <div className="max-w-lg mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 bg-gray-700 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
+            ··· 더보기
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">기타 메뉴</h1>
+        </div>
+        <div className="space-y-3">
+          {ITEMS.map(item => (
+            <Link key={item.href} href={item.href}
+              className="flex items-center gap-4 bg-white rounded-2xl border border-gray-200 p-4 hover:border-blue-400 hover:shadow-sm transition-all">
+              <span className="text-3xl">{item.icon}</span>
+              <div>
+                <div className="text-sm font-semibold text-gray-900">{item.label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{item.desc}</div>
+              </div>
+              <span className="ml-auto text-gray-400">›</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
