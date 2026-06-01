@@ -13,6 +13,7 @@ import { subscribeContracts } from "@/lib/contracts-db";
 import { dDay } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import type { Contract } from "@/app/expiry/contracts";
+import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 
 /* ── 타입 ── */
 type SourceFilter = "all" | "schedule" | "expiry" | "followup";
@@ -62,6 +63,7 @@ export default function SchedulePage() {
   const [editing,    setEditing]    = useState<Schedule | null>(null);
   const [filter,     setFilter]     = useState<SourceFilter>("all");
   const [showPast,   setShowPast]   = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/schedule");
@@ -120,12 +122,38 @@ export default function SchedulePage() {
 
     return items
       .filter(i => filter === "all" || i.source === filter)
+      .filter(i => !selectedDate || i.date === selectedDate)
       .sort((a, b) => {
         const d = a.date.localeCompare(b.date);
         if (d !== 0) return d;
         return a.time.localeCompare(b.time);
       });
-  }, [schedules, contracts, customers, properties, filter, showPast]);
+  }, [schedules, contracts, customers, properties, filter, showPast, selectedDate]);
+
+  /* 캘린더용 — 필터 + 날짜 선택 무시한 전체 일정 (지난 일정 포함 표시) */
+  const calendarItems = useMemo<CalendarItem[]>(() => {
+    const items: CalendarItem[] = [];
+    for (const s of schedules) {
+      if (s.status === "cancelled") continue;
+      items.push({ date: s.date, source: "schedule" });
+    }
+    for (const c of contracts) {
+      if (c.status !== "active" || !c.endDate) continue;
+      items.push({ date: c.endDate, source: "expiry" });
+    }
+    for (const p of properties) {
+      if (!p.leaseEndDate || p.status !== "active") continue;
+      const dup = contracts.some(c => c.status === "active" && c.address === p.address && c.endDate === p.leaseEndDate);
+      if (dup) continue;
+      items.push({ date: p.leaseEndDate, source: "expiry" });
+    }
+    for (const cu of customers) {
+      if (!cu.nextFollowUp) continue;
+      if (cu.status === "closed" || cu.status === "lost") continue;
+      items.push({ date: cu.nextFollowUp, source: "followup" });
+    }
+    return items;
+  }, [schedules, contracts, customers, properties]);
 
   /* 날짜별 그룹 */
   const grouped = useMemo(() => {
@@ -190,10 +218,29 @@ export default function SchedulePage() {
           </button>
         </div>
 
+        {/* 월별 캘린더 — 한눈에 보기 */}
+        <MonthCalendar
+          items={calendarItems}
+          onSelectDate={setSelectedDate}
+          selectedDate={selectedDate}
+        />
+
         {/* 오늘 알림 */}
-        {todayCount > 0 && (
+        {todayCount > 0 && !selectedDate && (
           <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 mb-4 text-sm text-blue-800 font-medium">
             📌 오늘 일정 {todayCount}건
+          </div>
+        )}
+
+        {/* 선택된 날짜 표시 */}
+        {selectedDate && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 mb-4 flex items-center justify-between">
+            <span className="text-sm text-blue-800 font-medium">
+              📅 {new Date(selectedDate + "T00:00:00").toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" })} 일정
+            </span>
+            <button onClick={() => setSelectedDate(null)} className="text-xs px-2.5 py-1 rounded-full bg-white border border-blue-200 text-blue-700 hover:bg-blue-100">
+              전체 보기
+            </button>
           </div>
         )}
 

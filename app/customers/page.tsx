@@ -30,6 +30,7 @@ import {
 import EditCustomerModal from "./EditCustomerModal";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
+import CustomersUploadModal, { type CustMergeStrategy } from "./CustomersUploadModal";
 import { subscribeContracts } from "@/lib/contracts-db";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { exportCustomers } from "@/lib/export";
@@ -49,6 +50,7 @@ export default function CustomersPage() {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Customer | null>(null);
   const [showExport, setShowExport] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
 
   /* 로그인 가드 */
   useEffect(() => {
@@ -154,6 +156,14 @@ export default function CustomersPage() {
     for (const c of customers) await fsDeleteCustomer(user.agencyId, c.id);
   };
 
+  const handleUploadConfirm = async (toSave: Customer[], strategy: CustMergeStrategy) => {
+    if (!user) return;
+    if (strategy === "replace") {
+      for (const c of customers) await fsDeleteCustomer(user.agencyId, c.id);
+    }
+    await saveCustomersBatch(user.agencyId, toSave);
+  };
+
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
@@ -201,6 +211,13 @@ export default function CustomersPage() {
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
             >
               🧪 예시 데이터
+            </button>
+            <button
+              onClick={() => setShowUpload(true)}
+              title="엑셀에서 손님 명단 일괄 업로드"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              📥 엑셀 업로드
             </button>
             <button
               onClick={() => setShowExport(true)}
@@ -290,6 +307,15 @@ export default function CustomersPage() {
           activeCount={customers.filter(c => c.status === "active" || c.status === "matched").length}
           onClose={() => setShowExport(false)}
           onExport={(opt) => exportCustomers(customers, opt)}
+        />
+      )}
+
+      {/* 엑셀 업로드 모달 */}
+      {showUpload && (
+        <CustomersUploadModal
+          existing={customers}
+          onClose={() => setShowUpload(false)}
+          onConfirm={handleUploadConfirm}
         />
       )}
     </div>

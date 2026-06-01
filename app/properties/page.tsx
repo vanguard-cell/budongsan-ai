@@ -11,6 +11,8 @@ import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import ComplexPickerWidget from "@/app/ComplexPicker";
 import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
+import ExportModal from "../ExportModal";
+import { exportProperties } from "@/lib/export";
 
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"];
 const DEAL_TYPES: DealType[] = ["매매", "전세", "월세"];
@@ -50,6 +52,7 @@ export default function PropertiesPage() {
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
   const [showClosed, setShowClosed] = useState(false);
@@ -153,6 +156,13 @@ export default function PropertiesPage() {
             >
               📥 엑셀 업로드
             </button>
+            <button
+              onClick={() => setShowExport(true)}
+              title="현재 매물을 엑셀로 다운로드 — 백업/다른 시스템 이관"
+              className="px-4 py-2.5 rounded-full border border-gray-300 text-gray-700 text-sm hover:border-emerald-500 hover:text-emerald-700 transition-colors"
+            >
+              📤 내보내기
+            </button>
           </div>
         </div>
 
@@ -229,6 +239,16 @@ export default function PropertiesPage() {
           existing={properties}
           onClose={() => setShowUpload(false)}
           onConfirm={handleUploadConfirm}
+        />
+      )}
+
+      {showExport && (
+        <ExportModal
+          type="properties"
+          totalCount={properties.length}
+          activeCount={properties.filter(p => p.status === "active").length}
+          onClose={() => setShowExport(false)}
+          onExport={(opt) => exportProperties(properties, opt)}
         />
       )}
     </div>
