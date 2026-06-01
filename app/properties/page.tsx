@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
+  sampleProperties, savePropertiesBatch,
   type Property, type PropertyType, type DealType,
 } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
@@ -95,6 +96,20 @@ export default function PropertiesPage() {
     }
   };
 
+  const loadSamples = async () => {
+    if (!user) return;
+    if (properties.length > 0) {
+      if (!confirm("기존 매물이 있습니다. 예시 데이터를 추가할까요? (기존 데이터는 유지됩니다)")) return;
+    }
+    await savePropertiesBatch(user.agencyId, sampleProperties());
+  };
+
+  const clearAll = async () => {
+    if (!user) return;
+    if (!confirm("⚠️ 모든 매물 데이터를 삭제합니다. 정말 진행할까요?")) return;
+    for (const p of properties) await deleteProperty(user.agencyId, p.id);
+  };
+
   const filtered = useMemo(() => {
     return properties
       .filter(p => showClosed ? p.status === "closed" : p.status === "active")
@@ -163,6 +178,22 @@ export default function PropertiesPage() {
             >
               📤 내보내기
             </button>
+            <button
+              onClick={loadSamples}
+              title="예시 매물 6건 추가 (테스트용)"
+              className="px-4 py-2.5 rounded-full border border-gray-300 text-gray-700 text-sm hover:border-emerald-500 hover:text-emerald-700 transition-colors"
+            >
+              🧪 예시 데이터
+            </button>
+            {properties.length > 0 && (
+              <button
+                onClick={clearAll}
+                title="모든 매물 데이터 삭제"
+                className="px-4 py-2.5 rounded-full border border-gray-300 text-gray-500 text-sm hover:border-red-400 hover:text-red-600 transition-colors"
+              >
+                🗑️ 전체 삭제
+              </button>
+            )}
           </div>
         </div>
 
