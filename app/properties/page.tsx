@@ -503,7 +503,7 @@ export default function PropertiesPage() {
               return (
                 <button
                   key={t}
-                  onClick={() => setFilterPropType(t)}
+                  onClick={() => { setFilterPropType(t); setFilterType("all"); }}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     filterPropType === t
                       ? "bg-emerald-600 text-white border-emerald-600 font-semibold"
@@ -591,16 +591,40 @@ export default function PropertiesPage() {
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center">
-            <div className="text-5xl mb-3">🏘️</div>
-            <div className="text-base font-semibold text-gray-900 mb-1">
-              {properties.filter(p => p.status === "active").length === 0 ? "등록된 매물이 없습니다" : "조건에 맞는 매물이 없습니다"}
-            </div>
-            <div className="text-xs text-gray-500 mb-4">매물 등록 버튼을 눌러 추가해보세요</div>
-            <button onClick={() => setEditing(emptyProperty())} className="text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
-              + 첫 매물 등록
-            </button>
-          </div>
+          (() => {
+            const hasActive = properties.filter(p => p.status === "active").length > 0;
+            const filtersOn = filterPropType !== "all" || filterType !== "all" || priceRange !== "all" || query.trim() !== "";
+            // 매물은 있는데 필터 때문에 0건 → 초기화 안내
+            if (hasActive && filtersOn) {
+              return (
+                <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center">
+                  <div className="text-5xl mb-3">🔍</div>
+                  <div className="text-base font-semibold text-gray-900 mb-1">조건에 맞는 매물이 없습니다</div>
+                  <div className="text-xs text-gray-500 mb-4">
+                    {filterPropType !== "all" && <span className="inline-block px-1.5 py-0.5 mx-0.5 rounded bg-emerald-50 text-emerald-700">{filterPropType}</span>}
+                    {filterType !== "all" && <span className="inline-block px-1.5 py-0.5 mx-0.5 rounded bg-emerald-50 text-emerald-700">{filterType}</span>}
+                    {priceRange !== "all" && <span className="inline-block px-1.5 py-0.5 mx-0.5 rounded bg-emerald-50 text-emerald-700">가격대</span>}
+                    {" "}조건이 겹쳐서 결과가 없어요
+                  </div>
+                  <button
+                    onClick={() => { setFilterPropType("all"); setFilterType("all"); setPriceRange("all"); setQuery(""); }}
+                    className="text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
+                    ↺ 필터 초기화
+                  </button>
+                </div>
+              );
+            }
+            return (
+              <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center">
+                <div className="text-5xl mb-3">🏘️</div>
+                <div className="text-base font-semibold text-gray-900 mb-1">등록된 매물이 없습니다</div>
+                <div className="text-xs text-gray-500 mb-4">매물 등록 버튼을 눌러 추가해보세요</div>
+                <button onClick={() => setEditing(emptyProperty())} className="text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
+                  + 첫 매물 등록
+                </button>
+              </div>
+            );
+          })()
         ) : (
           <div className="space-y-2.5">
             {filtered.map(p => (
