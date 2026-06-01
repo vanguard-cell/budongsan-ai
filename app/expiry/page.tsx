@@ -574,19 +574,19 @@ function ContractRow({
         </div>
       </div>
 
-      {/* 액션 버튼 */}
+      {/* 액션 버튼 — 색 구분감 강화: 수정(회) / 손님(파) / 매물복귀(녹) / 종료(주황) / 삭제(빨) */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button
           onClick={onEdit}
-          className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+          className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors"
         >
-          수정
+          ✏️ 수정
         </button>
         {onJumpCustomer && (
           <button
             onClick={onJumpCustomer}
             title="연결된 손님 보기 (손님관리로 이동)"
-            className="text-[11px] px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
           >
             👥 손님 보기
           </button>
@@ -595,7 +595,7 @@ function ContractRow({
           <button
             onClick={onReopenAsProperty}
             title="재모집 — 매물 관리로 되돌립니다 (계약 정보는 이력 보존)"
-            className="text-[11px] px-2.5 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 font-semibold hover:bg-emerald-100 transition-colors"
           >
             🔄 매물로 되돌리기
           </button>
@@ -603,23 +603,23 @@ function ContractRow({
         {isClosed ? (
           <button
             onClick={onReopen}
-            className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-purple-300 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
           >
-            진행중으로 복구
+            ↩️ 진행중으로 복구
           </button>
         ) : (
           <button
             onClick={onClose}
-            className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-600 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-orange-300 bg-orange-50 text-orange-700 font-semibold hover:bg-orange-100 transition-colors"
           >
-            종료
+            ⏹️ 종료
           </button>
         )}
         <button
           onClick={onDelete}
-          className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors"
+          className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors ml-auto"
         >
-          삭제
+          🗑️ 삭제
         </button>
       </div>
     </div>

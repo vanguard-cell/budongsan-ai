@@ -550,36 +550,36 @@ function CustomerRow({
         </div>
       </div>
 
-      {/* 액션 */}
+      {/* 액션 — 색 구분감 강화 */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
-        <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-          수정
+        <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+          ✏️ 수정
         </button>
         {c.status === "active" && (
           <>
-            <button onClick={() => onChangeStatus("matched")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-600 transition-colors">
-              매칭으로
+            <button onClick={() => onChangeStatus("matched")} className="text-[11px] px-2.5 py-1 rounded-full border border-green-300 bg-green-50 text-green-700 font-semibold hover:bg-green-100 transition-colors">
+              🤝 매칭으로
             </button>
-            <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-              거래 완료
+            <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors">
+              ✅ 거래 완료
             </button>
-            <button onClick={() => onChangeStatus("lost")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:border-orange-400 hover:text-orange-600 transition-colors">
-              이탈
+            <button onClick={() => onChangeStatus("lost")} className="text-[11px] px-2.5 py-1 rounded-full border border-orange-300 bg-orange-50 text-orange-700 font-semibold hover:bg-orange-100 transition-colors">
+              ⚠️ 이탈
             </button>
           </>
         )}
         {c.status === "matched" && (
-          <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-            거래 완료
+          <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors">
+            ✅ 거래 완료
           </button>
         )}
         {(c.status === "lost" || c.status === "closed") && (
-          <button onClick={() => onChangeStatus("active")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-            다시 진행 중으로
+          <button onClick={() => onChangeStatus("active")} className="text-[11px] px-2.5 py-1 rounded-full border border-purple-300 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors">
+            ↩️ 다시 진행 중으로
           </button>
         )}
-        <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors ml-auto">
-          삭제
+        <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors ml-auto">
+          🗑️ 삭제
         </button>
       </div>
     </div>
