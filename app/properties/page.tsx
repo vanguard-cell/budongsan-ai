@@ -67,6 +67,20 @@ export default function PropertiesPage() {
   const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
   // 정렬: 등록순(newest) / 금액 낮은순(price_asc) / 금액 높은순(price_desc)
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
+  // 가격대 빠른 필터 (만원 기준)
+  const [priceRange, setPriceRange] = useState<"all" | "u1" | "1to2" | "2to3" | "3to5" | "o5">("all");
+  // 즐겨찾기 (localStorage)
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("property_pins") || "[]")); } catch { return new Set(); }
+  });
+  const togglePin = (id: string) => {
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("property_pins", JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/properties");
@@ -212,13 +226,28 @@ export default function PropertiesPage() {
             || (p.ho || "").includes(q)
             || (p.tenantName || "").toLowerCase().includes(q)
             || (p.tenantPhone || "").includes(q);
+      })
+      .filter(p => {
+        if (priceRange === "all") return true;
+        const n = priceNum(p);
+        if (priceRange === "u1")    return n < 10000;
+        if (priceRange === "1to2")  return n >= 10000 && n < 20000;
+        if (priceRange === "2to3")  return n >= 20000 && n < 30000;
+        if (priceRange === "3to5")  return n >= 30000 && n < 50000;
+        if (priceRange === "o5")    return n >= 50000;
+        return true;
       });
 
-    // 정렬
-    if (sortBy === "price_asc")  return [...result].sort((a, b) => priceNum(a) - priceNum(b));
-    if (sortBy === "price_desc") return [...result].sort((a, b) => priceNum(b) - priceNum(a));
-    return [...result].sort((a, b) => b.createdAt - a.createdAt); // newest
-  }, [properties, showClosed, filterType, query, viewMode, sortBy]);
+    // 정렬 (즐겨찾기는 항상 상단)
+    const sorted = sortBy === "price_asc"  ? [...result].sort((a, b) => priceNum(a) - priceNum(b))
+                 : sortBy === "price_desc" ? [...result].sort((a, b) => priceNum(b) - priceNum(a))
+                 : [...result].sort((a, b) => b.createdAt - a.createdAt);
+    return sorted.sort((a, b) => {
+      const ap = pinnedIds.has(a.id) ? 0 : 1;
+      const bp = pinnedIds.has(b.id) ? 0 : 1;
+      return ap - bp;
+    });
+  }, [properties, showClosed, filterType, query, viewMode, sortBy, priceRange, pinnedIds]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -394,6 +423,28 @@ export default function PropertiesPage() {
             onChange={e => setQuery(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
           />
+          {/* 가격대 빠른 필터 */}
+          <div className="flex items-center gap-1 mt-2 flex-wrap">
+            <span className="text-[11px] text-gray-500 shrink-0">가격대</span>
+            {([
+              { key: "all",   label: "전체" },
+              { key: "u1",    label: "1억↓" },
+              { key: "1to2",  label: "1~2억" },
+              { key: "2to3",  label: "2~3억" },
+              { key: "3to5",  label: "3~5억" },
+              { key: "o5",    label: "5억↑" },
+            ] as const).map(r => (
+              <button key={r.key} onClick={() => setPriceRange(r.key)}
+                className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+                  priceRange === r.key
+                    ? "bg-emerald-600 text-white border-emerald-600 font-semibold"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
+                }`}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+
           {/* 정렬 */}
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             <span className="text-[11px] text-gray-500 shrink-0">정렬</span>
@@ -440,6 +491,8 @@ export default function PropertiesPage() {
                 key={p.id}
                 property={p}
                 schedules={schedules.filter(s => s.propertyId === p.id)}
+                isPinned={pinnedIds.has(p.id)}
+                onPin={() => togglePin(p.id)}
                 onEdit={() => setEditing({ ...p })}
                 onClose={() => close(p)}
                 onDelete={() => remove(p.id)}
@@ -504,9 +557,11 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen, onProgress, onSendToExpiry, onCloneSameComplex }: {
+function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onSendToExpiry, onCloneSameComplex }: {
   property: Property;
   schedules: Schedule[];
+  isPinned: boolean;
+  onPin: () => void;
   onEdit: () => void;
   onClose: () => void;
   onDelete: () => void;
@@ -517,6 +572,7 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
 }) {
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
+  const naverMapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(p.address)}`;
   const priceStr = p.dealType === "월세"
     ? (p.price || p.monthly)
         ? `${p.price ? fmtNum(p.price) : "0"}/${p.monthly ? fmtNum(p.monthly) : "0"}만`
@@ -537,7 +593,7 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
   const balanceOverdue = hasBalanceDate && p.balanceDate <= today;
 
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : balanceOverdue ? "bg-white border-red-300 shadow-sm ring-2 ring-red-100" : "bg-white border-gray-200 shadow-sm"}`}>
+    <div className={`rounded-2xl border p-3 sm:p-4 ${isPinned && !isClosed ? "border-yellow-300 ring-2 ring-yellow-100" : isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : balanceOverdue ? "bg-white border-red-300 shadow-sm ring-2 ring-red-100" : "bg-white border-gray-200 shadow-sm"}`}>
       {/* 잔금일 경과 카드 내 빨간 배너 */}
       {balanceOverdue && !isClosed && (
         <div className="mb-2 -mt-1 -mx-1 px-2 py-1.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2 text-[11px]">
@@ -548,7 +604,9 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
       )}
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+          {/* 즐겨찾기 + 지도 버튼 (카드 우상단) */}
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 flex-1">
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">{p.dealType}</span>
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.propertyType}</span>
             {isClosed && <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">거래완료</span>}
@@ -560,7 +618,21 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
                 ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
               </span>
             )}
-            <span className="text-sm font-bold text-gray-900 truncate">{priceStr}</span>
+              <span className="text-sm font-bold text-gray-900 truncate">{priceStr}</span>
+            </div>
+            {/* 즐겨찾기 + 지도 버튼 */}
+            <div className="flex items-center gap-1 shrink-0">
+              <a href={naverMapUrl} target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition-colors text-sm"
+                title="네이버 지도로 보기">
+                🗺️
+              </a>
+              <button onClick={onPin}
+                className={`w-8 h-8 flex items-center justify-center rounded-full border transition-colors text-sm ${isPinned ? "bg-yellow-400 border-yellow-400 text-white" : "bg-gray-50 border-gray-200 text-gray-400 hover:bg-yellow-50 hover:border-yellow-300"}`}
+                title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}>
+                ⭐
+              </button>
+            </div>
           </div>
           <div className="text-sm font-semibold text-gray-800 break-all mb-1">{p.address || "—"}</div>
           <div className="text-xs text-gray-500 flex flex-wrap gap-2">
