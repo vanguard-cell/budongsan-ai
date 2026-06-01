@@ -1,6 +1,6 @@
 /* 계약 데이터 모델 + localStorage 헬퍼 */
 
-export type ContractType = "전세" | "월세";
+export type ContractType = "전세" | "월세" | "매매";
 export type ContractStatus = "active" | "closed";
 export type ContactTarget = "tenant" | "landlord";
 export type NotifyStage = "4m" | "3m" | "2m";
@@ -17,6 +17,12 @@ export interface Contract {
   tenantPhone: string;
   landlordName: string;
   landlordPhone: string;
+  // 매물에서 이전된 경우 보존되는 계약 진행 정보
+  contractDate?: string;    // 계약일
+  downPaymentDate?: string; // 중도금일
+  balanceDate?: string;     // 잔금일
+  linkedCustomerId?: string; // 손님 관리 연결 ID
+  fromPropertyId?: string;   // 어떤 매물에서 이전됐는지 (이력)
   memo: string;
   status: ContractStatus;
   createdAt: number;

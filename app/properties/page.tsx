@@ -10,6 +10,8 @@ import {
 } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
+import { moveToContract } from "@/lib/contracts-db";
+import { upsertTenantAsCustomer } from "@/lib/customers-db";
 import ComplexPickerWidget from "@/app/ComplexPicker";
 import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
 import ExportModal from "../ExportModal";
@@ -52,11 +54,13 @@ export default function PropertiesPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
+  const [progressing, setProgressing] = useState<Property | null>(null);   // 계약 진행 모달
   const [showUpload, setShowUpload] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
   const [showClosed, setShowClosed] = useState(false);
+  const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/properties");
@@ -83,6 +87,45 @@ export default function PropertiesPage() {
     if (!user || !confirm("거래완료 처리할까요?")) return;
     await saveProperty(user.agencyId, { ...p, status: "closed" });
   };
+
+  /**
+   * 만기로 보내기 — Property→Contract 이동
+   * - 임차인 정보 있으면 손님 관리에 자동 등록 (전화번호 중복 체크)
+   * - Property 삭제 + Contract 생성
+   */
+  const sendToExpiry = async (p: Property) => {
+    if (!user) return;
+    const label = p.dealType === "매매" ? "거래완료 처리하고 만기 관리로 이동할까요?" : "이 매물을 만기 관리로 옮길까요? (내 매물에서는 사라집니다)";
+    if (!confirm(label)) return;
+    try {
+      // 임차인 자동 등록 (전·월세만, 임차인 정보 있을 때)
+      let linkedCustomerId: string | undefined = p.linkedTenantId;
+      if (p.dealType !== "매매" && (p.tenantName || p.tenantPhone)) {
+        const id = await upsertTenantAsCustomer(user.agencyId, {
+          name: p.tenantName,
+          phone: p.tenantPhone,
+          propertyAddress: p.address,
+          contractDate: p.contractDate,
+        });
+        linkedCustomerId = id || linkedCustomerId;
+      }
+      await moveToContract(user.agencyId, p, linkedCustomerId);
+    } catch (e) {
+      console.error("[sendToExpiry] 실패:", e);
+      alert("만기 관리로 이동 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 잔금일 경과 매물 (active + 잔금일 today 이전 + 아직 닫지 않은 알림)
+  const balanceOverdue = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return properties.filter(p =>
+      p.status === "active"
+      && p.balanceDate
+      && p.balanceDate <= today
+      && !dismissedAlertIds.has(p.id),
+    );
+  }, [properties, dismissedAlertIds]);
 
   const handleUploadConfirm = async (toSave: Property[], strategy: PropMergeStrategy) => {
     if (!user) return;
@@ -197,6 +240,46 @@ export default function PropertiesPage() {
           </div>
         </div>
 
+        {/* 잔금일 경과 알림 — 만기 관리로 이동 권유 */}
+        {balanceOverdue.length > 0 && (
+          <div className="mb-4 rounded-2xl border-2 border-red-300 bg-red-50 p-3 sm:p-4">
+            <div className="flex items-start gap-2 mb-2">
+              <span className="text-lg">🔔</span>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-red-700">잔금일이 지난 매물 {balanceOverdue.length}건</div>
+                <div className="text-xs text-red-600 mt-0.5">계약이 완료된 매물입니다. 만기 관리로 옮기시겠어요?</div>
+              </div>
+            </div>
+            <div className="space-y-1.5 mt-2">
+              {balanceOverdue.map(p => {
+                const daysOver = Math.max(0, Math.round((Date.now() - new Date(p.balanceDate).getTime()) / 86400000));
+                return (
+                  <div key={p.id} className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-red-200">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 shrink-0">{p.dealType}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium text-gray-800 truncate">{p.address}</div>
+                      <div className="text-[10px] text-red-600">잔금일 {p.balanceDate} ({daysOver}일 지남)</div>
+                    </div>
+                    <button
+                      onClick={() => sendToExpiry(p)}
+                      className="text-[11px] px-2.5 py-1 rounded-full bg-red-600 text-white font-semibold hover:bg-red-700 shrink-0"
+                    >
+                      만기로 보내기
+                    </button>
+                    <button
+                      onClick={() => setDismissedAlertIds(s => new Set(s).add(p.id))}
+                      title="이번 세션에서 숨기기"
+                      className="text-[10px] text-gray-400 hover:text-gray-600 shrink-0"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 요약 카드 */}
         <div className="grid grid-cols-4 gap-2 mb-4">
           {(["all", "매매", "전세", "월세"] as const).map(t => (
@@ -251,6 +334,8 @@ export default function PropertiesPage() {
                 onClose={() => close(p)}
                 onDelete={() => remove(p.id)}
                 onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
+                onProgress={() => setProgressing({ ...p })}
+                onSendToExpiry={() => sendToExpiry(p)}
               />
             ))}
           </div>
@@ -262,6 +347,33 @@ export default function PropertiesPage() {
           property={editing}
           onClose={() => setEditing(null)}
           onSave={async p => { await upsert(p); setEditing(null); }}
+        />
+      )}
+
+      {progressing && (
+        <ContractProgressModal
+          property={progressing}
+          onClose={() => setProgressing(null)}
+          onSave={async (updated) => {
+            if (!user) return;
+            // 임차인 정보 입력됐으면 손님 관리에 자동 등록
+            let linkedTenantId = updated.linkedTenantId;
+            if (updated.dealType !== "매매" && (updated.tenantName || updated.tenantPhone)) {
+              try {
+                const id = await upsertTenantAsCustomer(user.agencyId, {
+                  name: updated.tenantName,
+                  phone: updated.tenantPhone,
+                  propertyAddress: updated.address,
+                  contractDate: updated.contractDate,
+                });
+                if (id) linkedTenantId = id;
+              } catch (e) {
+                console.error("[upsertTenant] 실패:", e);
+              }
+            }
+            await saveProperty(user.agencyId, { ...updated, linkedTenantId });
+            setProgressing(null);
+          }}
         />
       )}
 
@@ -294,13 +406,15 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen }: {
+function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen, onProgress, onSendToExpiry }: {
   property: Property;
   schedules: Schedule[];
   onEdit: () => void;
   onClose: () => void;
   onDelete: () => void;
   onReopen: () => void;
+  onProgress: () => void;
+  onSendToExpiry: () => void;
 }) {
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
@@ -317,14 +431,31 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
   const leaseUrgent = leaseDD !== null && leaseDD <= 60;
   const leaseCaution = leaseDD !== null && leaseDD <= 120;
 
+  // 계약 진행 상태
+  const hasContractDate = !!p.contractDate;
+  const hasBalanceDate = !!p.balanceDate;
+  const today = new Date().toISOString().slice(0, 10);
+  const balanceOverdue = hasBalanceDate && p.balanceDate <= today;
+
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : "bg-white border-gray-200 shadow-sm"}`}>
+    <div className={`rounded-2xl border p-3 sm:p-4 ${isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : balanceOverdue ? "bg-white border-red-300 shadow-sm ring-2 ring-red-100" : "bg-white border-gray-200 shadow-sm"}`}>
+      {/* 잔금일 경과 카드 내 빨간 배너 */}
+      {balanceOverdue && !isClosed && (
+        <div className="mb-2 -mt-1 -mx-1 px-2 py-1.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2 text-[11px]">
+          <span>🔔</span>
+          <span className="text-red-700 font-medium">잔금일이 지났습니다 ({p.balanceDate})</span>
+          <button onClick={onSendToExpiry} className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-semibold hover:bg-red-700">만기 관리로 →</button>
+        </div>
+      )}
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">{p.dealType}</span>
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.propertyType}</span>
             {isClosed && <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">거래완료</span>}
+            {hasContractDate && !isClosed && (
+              <span className="text-[11px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">📝 계약진행중</span>
+            )}
             {leaseDD !== null && (
               <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${leaseUrgent ? "bg-red-100 text-red-700" : leaseCaution ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"}`}>
                 ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
@@ -368,6 +499,27 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
             </div>
           )}
 
+          {/* 계약 진행 날짜 (있을 때만) */}
+          {(p.contractDate || p.downPaymentDate || p.balanceDate) && !isClosed && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {p.contractDate && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                  📝 계약일 {p.contractDate}
+                </span>
+              )}
+              {p.downPaymentDate && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200">
+                  💰 중도금 {p.downPaymentDate}
+                </span>
+              )}
+              {p.balanceDate && (
+                <span className={`text-[10px] px-2 py-0.5 rounded-full border ${balanceOverdue ? "bg-red-50 text-red-700 border-red-200" : "bg-orange-50 text-orange-700 border-orange-200"}`}>
+                  💵 잔금일 {p.balanceDate}
+                </span>
+              )}
+            </div>
+          )}
+
           {p.memo && (
             <div className="mt-1.5 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-1 border border-gray-100">💬 {p.memo}</div>
           )}
@@ -402,6 +554,24 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
 
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors">수정</button>
+        {!isClosed && (
+          <button
+            onClick={onProgress}
+            title={hasContractDate ? "계약 진행 정보 수정" : "계약 체결 → 4개 날짜 입력"}
+            className={`text-[11px] px-2.5 py-1 rounded-full border font-medium transition-colors ${hasContractDate ? "border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100" : "border-purple-300 bg-white text-purple-700 hover:bg-purple-50"}`}
+          >
+            📝 {hasContractDate ? "계약 정보 수정" : "계약 진행"}
+          </button>
+        )}
+        {!isClosed && hasBalanceDate && (
+          <button
+            onClick={onSendToExpiry}
+            title="만기 관리로 옮김 (내 매물에서 사라집니다)"
+            className="text-[11px] px-2.5 py-1 rounded-full border-2 border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors"
+          >
+            만기로 보내기 →
+          </button>
+        )}
         {isClosed ? (
           <button onClick={onReopen} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">진행중으로 복구</button>
         ) : (
@@ -654,6 +824,114 @@ function PropertyModal({ property, onClose, onSave }: {
           <div className="flex gap-2 pt-2">
             <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50">취소</button>
             <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60">
+              {saving ? "저장 중…" : "저장"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 계약 진행 모달 — 4개 날짜 + 임차인 정보 ── */
+function ContractProgressModal({ property, onClose, onSave }: {
+  property: Property;
+  onClose: () => void;
+  onSave: (p: Property) => Promise<void>;
+}) {
+  const [form, setForm] = useState<Property>(property);
+  const [saving, setSaving] = useState(false);
+  const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
+
+  const today = new Date().toISOString().slice(0, 10);
+  const balanceOverdueLocal = !!form.balanceDate && form.balanceDate <= today;
+
+  const save = async () => {
+    if (!form.contractDate && !form.balanceDate) {
+      if (!confirm("계약일·잔금일이 비어있습니다. 그래도 저장할까요?")) return;
+    }
+    setSaving(true);
+    try {
+      await onSave(form);
+    } catch {
+      alert("저장 중 오류가 발생했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-3xl">
+          <div>
+            <h2 className="text-base font-semibold">📝 계약 진행</h2>
+            <p className="text-[10px] text-gray-500 mt-0.5">{form.address}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 text-lg">✕</button>
+        </div>
+
+        <div className="p-5 space-y-3">
+          <div className="rounded-xl bg-purple-50 border border-purple-200 p-3 text-[11px] text-purple-700">
+            💡 계약 체결 시 날짜를 입력하면 스케줄에 자동으로 표시됩니다.<br />
+            잔금일이 지나면 자동으로 만기 관리로 이동 가능합니다.
+          </div>
+
+          {/* 4개 날짜 */}
+          <div className="space-y-2.5">
+            <div>
+              <label className="block text-sm font-medium text-purple-700 mb-1">📝 계약일</label>
+              <input type="date" value={form.contractDate} onChange={e => set("contractDate", e.target.value)}
+                className="w-full border border-purple-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-400" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-pink-700 mb-1">💰 중도금일 <span className="text-gray-400 text-xs font-normal">(선택)</span></label>
+              <input type="date" value={form.downPaymentDate} onChange={e => set("downPaymentDate", e.target.value)}
+                className="w-full border border-pink-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-400" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-red-700 mb-1">💵 잔금일 <span className="text-red-500 text-xs">★</span></label>
+              <input type="date" value={form.balanceDate} onChange={e => set("balanceDate", e.target.value)}
+                className="w-full border border-red-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-400" />
+              <p className="text-[10px] text-red-600 mt-1">⚠️ 이 날짜 지나면 자동 알림 → 만기 관리로 이동 가능</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-orange-700 mb-1">⏰ 임대만기일 <span className="text-gray-400 text-xs font-normal">(전·월세만)</span></label>
+              <input type="date" value={form.leaseEndDate} onChange={e => set("leaseEndDate", e.target.value)}
+                className="w-full border border-orange-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+            </div>
+          </div>
+
+          {/* 임차인 정보 (전·월세) */}
+          {form.dealType !== "매매" && (
+            <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40">
+              <div className="text-xs font-semibold text-orange-700 mb-2">🏠 임차인 정보</div>
+              <p className="text-[10px] text-orange-600 mb-2">입력하면 손님 관리에 자동 등록됩니다 (전화번호 중복 시 기존 손님에 매물 추가)</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">이름</label>
+                  <input value={form.tenantName} onChange={e => set("tenantName", e.target.value)}
+                    placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">연락처</label>
+                  <input type="tel" value={form.tenantPhone} onChange={e => set("tenantPhone", e.target.value)}
+                    placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {balanceOverdueLocal && (
+            <div className="rounded-xl bg-red-50 border-2 border-red-300 p-3">
+              <div className="text-xs font-bold text-red-700 mb-1">🔔 잔금일이 이미 지났습니다</div>
+              <div className="text-[11px] text-red-600">저장 후 카드의 &quot;만기로 보내기&quot; 버튼을 누르면 만기 관리로 이동됩니다.</div>
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50">취소</button>
+            <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:opacity-60">
               {saving ? "저장 중…" : "저장"}
             </button>
           </div>

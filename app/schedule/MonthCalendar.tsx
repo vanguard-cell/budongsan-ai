@@ -11,7 +11,7 @@
 
 import { useMemo, useState } from "react";
 
-export type CalendarSource = "expiry" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
+export type CalendarSource = "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
 
 export interface CalendarItem {
   date: string;                          // YYYY-MM-DD
@@ -26,14 +26,12 @@ interface Props {
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 export const SOURCE_COLORS: Record<CalendarSource, string> = {
-  expiry:          "bg-orange-500",
   appointment:     "bg-blue-500",
   contractDate:    "bg-purple-500",
   downPaymentDate: "bg-pink-500",
   balanceDate:     "bg-red-500",
 };
 export const SOURCE_LABELS: Record<CalendarSource, string> = {
-  expiry:          "만기일",
   appointment:     "약속",
   contractDate:    "계약일",
   downPaymentDate: "중도금일",

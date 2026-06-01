@@ -9,15 +9,14 @@ import {
 } from "@/lib/schedules-db";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeCustomers } from "@/lib/customers-db";
-import { subscribeContracts } from "@/lib/contracts-db";
 import { dDay } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
-import type { Contract } from "@/app/expiry/contracts";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 
 /* ── 타입 ── */
-type SourceFilter = "all" | "expiry" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
+type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
 type ItemSource   = Exclude<SourceFilter, "all">;
+type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate";
 
 interface UnifiedItem {
   key: string;
@@ -25,9 +24,9 @@ interface UnifiedItem {
   date: string;       // YYYY-MM-DD (정렬 기준)
   time: string;
   schedule?: Schedule;
-  contract?: Contract;
   customer?: Customer;
-  property?: Property; // 내 매물 임대만기
+  property?: Property;
+  propertyKind?: PropertyDateKind;  // Property에서 어느 날짜인지
 }
 
 const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약일", "중도금일", "잔금일", "기타"];
@@ -66,7 +65,6 @@ export default function SchedulePage() {
   const { user, loading: authLoading, signOut } = useAuth();
 
   const [schedules,  setSchedules]  = useState<Schedule[]>([]);
-  const [contracts,  setContracts]  = useState<Contract[]>([]);
   const [customers,  setCustomers]  = useState<Customer[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loaded,     setLoaded]     = useState(false);
@@ -82,13 +80,12 @@ export default function SchedulePage() {
   useEffect(() => {
     if (!user) return;
     const u1 = subscribeSchedules(user.agencyId,  list => { setSchedules(list);  setLoaded(true); });
-    const u2 = subscribeContracts(user.agencyId,  setContracts);
-    const u3 = subscribeCustomers(user.agencyId,  setCustomers);
-    const u4 = subscribeProperties(user.agencyId, setProperties);
-    return () => { u1(); u2(); u3(); u4(); };
+    const u2 = subscribeCustomers(user.agencyId,  setCustomers);
+    const u3 = subscribeProperties(user.agencyId, setProperties);
+    return () => { u1(); u2(); u3(); };
   }, [user]);
 
-  /* 통합 아이템 생성 */
+  /* 통합 아이템 생성 — 만기일 제거, Property의 4개 날짜 추가 */
   const unified = useMemo<UnifiedItem[]>(() => {
     const items: UnifiedItem[] = [];
 
@@ -101,26 +98,19 @@ export default function SchedulePage() {
       items.push({ key: `s-${s.id}`, source: src, date: s.date, time: s.time, schedule: s });
     }
 
-    // ② 만기관리 계약 (D-120 이내 활성 계약)
-    for (const c of contracts) {
-      if (c.status !== "active") continue;
-      if (!c.endDate) continue;
-      const dd = dDay(c.endDate);
-      if (dd > 120) continue;
-      if (!showPast && dd < -30) continue;
-      items.push({ key: `e-${c.id}`, source: "expiry", date: c.endDate, time: "", contract: c });
-    }
-
-    // ② 내 매물 임대만기 (leaseEndDate 입력된 매물)
+    // ② 내 매물의 계약 진행 날짜 (계약일·중도금일·잔금일)
     for (const p of properties) {
-      if (!p.leaseEndDate || p.status !== "active") continue;
-      const dd = dDay(p.leaseEndDate);
-      if (dd > 120) continue;
-      if (!showPast && dd < -30) continue;
-      // 만기관리에 같은 주소 계약이 있으면 중복 제외
-      const duplicate = contracts.some(c => c.status === "active" && c.address === p.address && c.endDate === p.leaseEndDate);
-      if (duplicate) continue;
-      items.push({ key: `pe-${p.id}`, source: "expiry", date: p.leaseEndDate, time: "", property: p });
+      if (p.status !== "active") continue;
+      const dates: { kind: PropertyDateKind; date: string; source: ItemSource }[] = [
+        { kind: "contractDate",    date: p.contractDate,    source: "contractDate" },
+        { kind: "downPaymentDate", date: p.downPaymentDate, source: "downPaymentDate" },
+        { kind: "balanceDate",     date: p.balanceDate,     source: "balanceDate" },
+      ];
+      for (const { kind, date, source } of dates) {
+        if (!date) continue;
+        if (!showPast && !isFuture(date)) continue;
+        items.push({ key: `p-${p.id}-${kind}`, source, date, time: "", property: p, propertyKind: kind });
+      }
     }
 
     // ③ 손님 후속연락 — "약속" 카테고리로 통합
@@ -139,7 +129,7 @@ export default function SchedulePage() {
         if (d !== 0) return d;
         return a.time.localeCompare(b.time);
       });
-  }, [schedules, contracts, customers, properties, filter, showPast, selectedDate]);
+  }, [schedules, customers, properties, filter, showPast, selectedDate]);
 
   /* 캘린더용 — 필터 + 날짜 선택 무시한 전체 일정 (지난 일정 포함 표시) */
   const calendarItems = useMemo<CalendarItem[]>(() => {
@@ -148,15 +138,11 @@ export default function SchedulePage() {
       if (s.status === "cancelled") continue;
       items.push({ date: s.date, source: scheduleTypeToSource(s.scheduleType) });
     }
-    for (const c of contracts) {
-      if (c.status !== "active" || !c.endDate) continue;
-      items.push({ date: c.endDate, source: "expiry" });
-    }
     for (const p of properties) {
-      if (!p.leaseEndDate || p.status !== "active") continue;
-      const dup = contracts.some(c => c.status === "active" && c.address === p.address && c.endDate === p.leaseEndDate);
-      if (dup) continue;
-      items.push({ date: p.leaseEndDate, source: "expiry" });
+      if (p.status !== "active") continue;
+      if (p.contractDate)    items.push({ date: p.contractDate,    source: "contractDate" });
+      if (p.downPaymentDate) items.push({ date: p.downPaymentDate, source: "downPaymentDate" });
+      if (p.balanceDate)     items.push({ date: p.balanceDate,     source: "balanceDate" });
     }
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
@@ -164,7 +150,7 @@ export default function SchedulePage() {
       items.push({ date: cu.nextFollowUp, source: "appointment" });
     }
     return items;
-  }, [schedules, contracts, customers, properties]);
+  }, [schedules, customers, properties]);
 
   /* 날짜별 그룹 */
   const grouped = useMemo(() => {
@@ -181,7 +167,6 @@ export default function SchedulePage() {
   /* 필터별 카운트 */
   const counts = useMemo(() => ({
     all:             unified.length,
-    expiry:          unified.filter(i => i.source === "expiry").length,
     appointment:     unified.filter(i => i.source === "appointment").length,
     contractDate:    unified.filter(i => i.source === "contractDate").length,
     downPaymentDate: unified.filter(i => i.source === "downPaymentDate").length,
@@ -222,7 +207,7 @@ export default function SchedulePage() {
             📅 스케줄 관리
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">통합 일정</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mb-4">만기일·약속·계약일·중도금일·잔금일 한눈에</p>
+          <p className="text-gray-500 text-xs sm:text-sm mb-4">약속·계약일·중도금일·잔금일 한눈에 (만기일은 만기관리)</p>
           <div className="flex flex-wrap gap-1.5 justify-center">
             <button
               onClick={() => setEditing(emptySchedule())}
@@ -277,11 +262,10 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* 필터 탭 — 6개 (2줄) */}
-        <div className="grid grid-cols-3 gap-1.5 mb-4">
+        {/* 필터 탭 — 5개 */}
+        <div className="grid grid-cols-5 gap-1.5 mb-4">
           {([
             { key: "all",             icon: "📋", label: "전체",     color: "bg-blue-600" },
-            { key: "expiry",          icon: "⏰", label: "만기일",   color: "bg-orange-600" },
             { key: "appointment",     icon: "👥", label: "약속",     color: "bg-blue-600" },
             { key: "contractDate",    icon: "📝", label: "계약일",   color: "bg-purple-600" },
             { key: "downPaymentDate", icon: "💰", label: "중도금일", color: "bg-pink-600" },
@@ -343,10 +327,8 @@ export default function SchedulePage() {
                                onEdit={() => setEditing({ ...item.schedule! })}
                                onDone={() => done(item.schedule!)}
                                onDelete={() => remove(item.schedule!.id)} />;
-                    if (item.contract)
-                      return <ExpiryCard key={item.key} contract={item.contract} />;
-                    if (item.property)
-                      return <PropertyLeaseCard key={item.key} property={item.property} />;
+                    if (item.property && item.propertyKind)
+                      return <PropertyDateCard key={item.key} property={item.property} kind={item.propertyKind} />;
                     if (item.customer)
                       return <FollowUpCard key={item.key} customer={item.customer} />;
                     return null;
@@ -419,74 +401,50 @@ function ScheduleCard({ schedule: s, properties, onEdit, onDone, onDelete }: {
   );
 }
 
-/* ── 만기 카드 ── */
-function ExpiryCard({ contract: c }: { contract: Contract }) {
-  const dd = dDay(c.endDate);
-  const isOver = dd < 0;
-  const isUrgent = dd <= 60;
-  const bgColor = isOver ? "bg-red-50 border-red-200" : isUrgent ? "bg-orange-50 border-orange-200" : "bg-yellow-50 border-yellow-200";
-  const badgeColor = isOver ? "bg-red-100 text-red-700" : isUrgent ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700";
-  const ddLabel = isOver ? `${-dd}일 지남` : dd === 0 ? "오늘만기" : `D-${dd}`;
+/* ── 내 매물 계약 진행 날짜 카드 (계약일·중도금일·잔금일) ── */
+function PropertyDateCard({ property: p, kind }: { property: Property; kind: PropertyDateKind }) {
+  const date =
+    kind === "contractDate"    ? p.contractDate
+    : kind === "downPaymentDate" ? p.downPaymentDate
+    : p.balanceDate;
+
+  const kindMeta: Record<PropertyDateKind, { label: string; icon: string; mainColor: string; badgeColor: string; bgColor: string }> = {
+    contractDate:    { label: "계약일",   icon: "📝", mainColor: "text-purple-600", badgeColor: "bg-purple-100 text-purple-700", bgColor: "bg-purple-50 border-purple-200" },
+    downPaymentDate: { label: "중도금일", icon: "💰", mainColor: "text-pink-600",   badgeColor: "bg-pink-100 text-pink-700",     bgColor: "bg-pink-50 border-pink-200" },
+    balanceDate:     { label: "잔금일",   icon: "🔑", mainColor: "text-red-600",    badgeColor: "bg-red-100 text-red-700",       bgColor: "bg-red-50 border-red-200" },
+  };
+  const m = kindMeta[kind];
+
+  const dd = dDay(date);
+  const ddLabel = dd === Infinity ? "—" : dd < 0 ? `${-dd}일전` : dd === 0 ? "오늘" : `D-${dd}`;
 
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${bgColor}`}>
+    <div className={`rounded-2xl border p-3 sm:p-4 ${m.bgColor}`}>
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 w-14 text-center rounded-xl py-2 bg-white/70">
-          <div className="text-[10px] text-orange-500 font-medium">만기</div>
-          <div className={`text-xs font-bold ${isOver ? "text-red-600" : isUrgent ? "text-orange-600" : "text-yellow-700"}`}>{ddLabel}</div>
+          <div className={`text-[10px] font-medium ${m.mainColor}`}>{m.label}</div>
+          <div className={`text-xs font-bold ${m.mainColor}`}>{ddLabel}</div>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5 mb-1">
-            <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${badgeColor}`}>⏰ 만기</span>
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{c.type}</span>
-          </div>
-          <div className="text-sm font-semibold text-gray-800 break-all">{c.address}</div>
-          {c.tenantPhone && (
-            <div className="mt-1.5 flex items-center gap-2 text-xs">
-              <span className="text-gray-500 shrink-0">임차인 {c.tenantName}</span>
-              <a href={`tel:${c.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(c.tenantPhone)}</a>
-              <a href={`sms:${c.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${c.tenantName ? ` ${c.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${c.address} 계약 만기(${c.endDate}) 관련하여 연락드립니다.`)}`}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto">문자</a>
-            </div>
-          )}
-          <div className="mt-1 text-[11px] text-gray-500">만기일 {c.endDate} · 보증금 {c.deposit || "—"}만{c.monthly ? ` / 월세 ${c.monthly}만` : ""}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── 내 매물 임대만기 카드 ── */
-function PropertyLeaseCard({ property: p }: { property: Property }) {
-  const dd = p.leaseEndDate ? dDay(p.leaseEndDate) : 0;
-  const isOver = dd < 0;
-  const isUrgent = dd <= 60;
-  const bgColor = isOver ? "bg-red-50 border-red-200" : isUrgent ? "bg-orange-50 border-orange-200" : "bg-yellow-50 border-yellow-200";
-  const badgeColor = isOver ? "bg-red-100 text-red-700" : isUrgent ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700";
-  const ddLabel = isOver ? `${-dd}일 지남` : dd === 0 ? "오늘만기" : `D-${dd}`;
-
-  return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${bgColor}`}>
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-14 text-center rounded-xl py-2 bg-white/70">
-          <div className="text-[10px] text-orange-500 font-medium">임대만기</div>
-          <div className={`text-xs font-bold ${isOver ? "text-red-600" : isUrgent ? "text-orange-600" : "text-yellow-700"}`}>{ddLabel}</div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 mb-1">
-            <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${badgeColor}`}>🏘️ 내 매물 만기</span>
+            <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${m.badgeColor}`}>{m.icon} {m.label}</span>
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.dealType}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">🏘️ 내 매물</span>
           </div>
           <div className="text-sm font-semibold text-gray-800 break-all">{p.address}</div>
-          {p.tenantPhone && (
+          {p.ownerPhone && (
             <div className="mt-1.5 flex items-center gap-2 text-xs">
-              <span className="text-gray-500 shrink-0">임차인 {p.tenantName || ""}</span>
-              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
-              <a href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기(${p.leaseEndDate}) 관련하여 연락드립니다.`)}`}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto">문자</a>
+              <span className="text-gray-500 shrink-0">집주인 {p.ownerName || ""}</span>
+              <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.ownerPhone)}</a>
             </div>
           )}
-          <div className="mt-1 text-[11px] text-gray-500">만기일 {p.leaseEndDate}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>
+          {p.tenantPhone && (
+            <div className="mt-1 flex items-center gap-2 text-xs">
+              <span className="text-gray-500 shrink-0">임차인 {p.tenantName || ""}</span>
+              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
+            </div>
+          )}
+          <div className="mt-1 text-[11px] text-gray-500">{m.label} {date}</div>
         </div>
       </div>
     </div>

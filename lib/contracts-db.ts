@@ -20,7 +20,9 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Contract } from "@/app/expiry/contracts";
+import type { Contract, ContractType } from "@/app/expiry/contracts";
+import type { Property } from "./properties-db";
+import { deleteProperty } from "./properties-db";
 
 function contractsCol(agencyId: string) {
   return collection(db, "agencies", agencyId, "contracts");
@@ -45,6 +47,11 @@ function fromDoc(id: string, data: Record<string, unknown>): Contract {
     tenantPhone: (data.tenantPhone as string) || "",
     landlordName: (data.landlordName as string) || "",
     landlordPhone: (data.landlordPhone as string) || "",
+    contractDate:     (data.contractDate     as string) || undefined,
+    downPaymentDate:  (data.downPaymentDate  as string) || undefined,
+    balanceDate:      (data.balanceDate      as string) || undefined,
+    linkedCustomerId: (data.linkedCustomerId as string) || undefined,
+    fromPropertyId:   (data.fromPropertyId   as string) || undefined,
     memo: (data.memo as string) || "",
     status: (data.status as Contract["status"]) || "active",
     createdAt,
@@ -97,6 +104,55 @@ export async function saveContractsBatch(agencyId: string, contracts: Contract[]
 /** 삭제 */
 export async function deleteContract(agencyId: string, contractId: string): Promise<void> {
   await deleteDoc(contractDoc(agencyId, contractId));
+}
+
+/**
+ * Property → Contract 변환
+ * 잔금일 경과 또는 사용자가 "만기로 보내기" 누르면 호출
+ */
+export function propertyToContract(p: Property, linkedCustomerId?: string): Contract {
+  const type: ContractType =
+    p.dealType === "매매" ? "매매"
+    : p.dealType === "전세" ? "전세"
+    : "월세";
+
+  return {
+    id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
+    address: p.address,
+    type,
+    deposit: p.price,
+    monthly: p.monthly,
+    startDate: p.contractDate || "",
+    endDate: p.leaseEndDate || "",
+    tenantName: p.tenantName,
+    tenantPhone: p.tenantPhone,
+    landlordName: p.ownerName,
+    landlordPhone: p.ownerPhone,
+    contractDate: p.contractDate || undefined,
+    downPaymentDate: p.downPaymentDate || undefined,
+    balanceDate: p.balanceDate || undefined,
+    linkedCustomerId,
+    fromPropertyId: p.id,
+    memo: p.memo,
+    status: "active",
+    createdAt: Date.now(),
+  };
+}
+
+/**
+ * 매물 → 만기 관리 이전 (잔금 완료된 매물)
+ * 1. Property를 Contract로 변환하여 저장
+ * 2. 원본 Property 삭제
+ */
+export async function moveToContract(
+  agencyId: string,
+  property: Property,
+  linkedCustomerId?: string,
+): Promise<Contract> {
+  const contract = propertyToContract(property, linkedCustomerId ?? property.linkedTenantId);
+  await saveContract(agencyId, contract);
+  await deleteProperty(agencyId, property.id);
+  return contract;
 }
 
 /** localStorage → Firestore 마이그레이션 (첫 로그인 시 1회) */

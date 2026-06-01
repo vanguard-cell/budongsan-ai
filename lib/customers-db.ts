@@ -11,6 +11,7 @@ import {
   doc,
   setDoc,
   deleteDoc,
+  getDocs,
   query,
   orderBy,
   onSnapshot,
@@ -20,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Customer, ShownProperty, CustomerSide, DealKind, CustomerStatus } from "@/app/customers/customer-types";
+import { uid as newCustomerId } from "@/app/customers/customer-types";
 
 function customersCol(agencyId: string) {
   return collection(db, "agencies", agencyId, "customers");
@@ -86,4 +88,79 @@ export async function saveCustomersBatch(agencyId: string, customers: Customer[]
 
 export async function deleteCustomer(agencyId: string, customerId: string): Promise<void> {
   await deleteDoc(customerDoc(agencyId, customerId));
+}
+
+/** 전화번호 정규화 — 숫자만 남김 */
+function normalizePhone(p: string): string {
+  return (p || "").replace(/\D/g, "");
+}
+
+/**
+ * 임차인 정보로 손님 관리에 자동 등록 또는 기존 손님 매칭
+ * - 전화번호 기준 중복 체크
+ * - 있으면: 기존 손님 ID 반환, shownProperties에 매물 주소 추가
+ * - 없으면: 신규 손님 생성 후 ID 반환
+ *
+ * @returns 손님 ID (linkedTenantId로 매물에 저장)
+ */
+export async function upsertTenantAsCustomer(
+  agencyId: string,
+  args: {
+    name: string;
+    phone: string;
+    propertyAddress: string;
+    contractDate?: string;
+  },
+): Promise<string | null> {
+  const { name, phone, propertyAddress, contractDate } = args;
+  // 임차인 정보 없으면 등록 스킵
+  if (!name && !phone) return null;
+
+  const normPhone = normalizePhone(phone);
+  const shownAt = contractDate || new Date().toISOString().slice(0, 10);
+  const newShown: ShownProperty = {
+    address: propertyAddress,
+    shownAt,
+    reaction: "positive",
+    note: "계약 체결 (매물 등록 시 자동 추가)",
+  };
+
+  // 기존 손님 중복 체크 (전화번호 기준)
+  if (normPhone) {
+    const snap = await getDocs(customersCol(agencyId));
+    for (const docSnap of snap.docs) {
+      const existing = fromDoc(docSnap.id, docSnap.data());
+      if (normalizePhone(existing.phone) === normPhone) {
+        // 이미 같은 매물이 shownProperties에 있는지 확인
+        const already = existing.shownProperties.some(s => s.address === propertyAddress);
+        const merged: Customer = {
+          ...existing,
+          status: "closed",
+          shownProperties: already ? existing.shownProperties : [...existing.shownProperties, newShown],
+        };
+        await saveCustomer(agencyId, merged);
+        return existing.id;
+      }
+    }
+  }
+
+  // 신규 손님 생성 (계약 체결된 임차인)
+  const newCustomer: Customer = {
+    id: newCustomerId(),
+    name,
+    phone,
+    side: "tenant",
+    dealKind: "live",
+    vip: false,
+    budget: "",
+    preferredArea: "",
+    moveInDate: contractDate || "",
+    status: "closed",
+    nextFollowUp: "",
+    shownProperties: [newShown],
+    memo: "매물 등록 시 자동 생성된 손님",
+    createdAt: Date.now(),
+  };
+  await saveCustomer(agencyId, newCustomer);
+  return newCustomer.id;
 }
