@@ -84,7 +84,21 @@ export default function PropertiesPage() {
   };
 
   const close = async (p: Property) => {
-    if (!user || !confirm("거래완료 처리할까요?")) return;
+    if (!user) return;
+    // 매매는 거래완료 = 만기 관리로 이동 (사용자 결정: Q1 답변)
+    if (p.dealType === "매매") {
+      if (!confirm(`${p.address}\n\n매매 거래완료 처리하시겠어요?\n→ 만기 관리(거래 이력)로 이동됩니다.`)) return;
+      try {
+        await moveToContract(user.agencyId, p);
+        setTimeout(() => alert("✅ 매매 거래완료 — 만기 관리로 이동되었습니다."), 100);
+      } catch (e) {
+        console.error("[close-매매] 실패:", e);
+        alert("처리 중 오류가 발생했습니다.");
+      }
+      return;
+    }
+    // 전·월세: 단순히 광고 종료 (status: closed). 만기 관리는 "만기로 보내기" 별도 버튼으로
+    if (!confirm("거래완료 처리할까요? (광고 종료, 만기 관리로 이동은 [만기로 보내기] 버튼 사용)")) return;
     await saveProperty(user.agencyId, { ...p, status: "closed" });
   };
 
@@ -575,7 +589,17 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
         {isClosed ? (
           <button onClick={onReopen} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">진행중으로 복구</button>
         ) : (
-          <button onClick={onClose} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-600 transition-colors">거래완료</button>
+          <button
+            onClick={onClose}
+            title={p.dealType === "매매" ? "매매 거래 완료 → 만기 관리로 이동" : "광고 종료 (만기 관리는 별도 [만기로 보내기] 버튼)"}
+            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+              p.dealType === "매매"
+                ? "border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100"
+                : "border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-600"
+            }`}
+          >
+            {p.dealType === "매매" ? "거래완료 → 만기 이동" : "광고 종료"}
+          </button>
         )}
         <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors">삭제</button>
       </div>
@@ -850,9 +874,31 @@ function ContractProgressModal({ property, onClose, onSave }: {
     if (!form.contractDate && !form.balanceDate) {
       if (!confirm("계약일·잔금일이 비어있습니다. 그래도 저장할까요?")) return;
     }
+    // 날짜 순서 검증 — 계약일 ≤ 중도금일 ≤ 잔금일
+    const errors: string[] = [];
+    if (form.contractDate && form.downPaymentDate && form.contractDate > form.downPaymentDate) {
+      errors.push(`• 중도금일(${form.downPaymentDate})이 계약일(${form.contractDate})보다 빠릅니다`);
+    }
+    if (form.contractDate && form.balanceDate && form.contractDate > form.balanceDate) {
+      errors.push(`• 잔금일(${form.balanceDate})이 계약일(${form.contractDate})보다 빠릅니다`);
+    }
+    if (form.downPaymentDate && form.balanceDate && form.downPaymentDate > form.balanceDate) {
+      errors.push(`• 잔금일(${form.balanceDate})이 중도금일(${form.downPaymentDate})보다 빠릅니다`);
+    }
+    if (errors.length > 0) {
+      alert("⚠️ 날짜 순서가 잘못되었습니다:\n\n" + errors.join("\n") + "\n\n순서: 계약일 ≤ 중도금일 ≤ 잔금일");
+      return;
+    }
     setSaving(true);
     try {
       await onSave(form);
+      // 임차인 자동등록 알림 (저장 성공 시)
+      if (form.dealType !== "매매" && (form.tenantName || form.tenantPhone)) {
+        // alert 대신 짧은 confirm 형태로 안내 (자동 확인)
+        setTimeout(() => {
+          alert(`✅ 저장 완료\n\n임차인 "${form.tenantName || form.tenantPhone}"이(가) 손님관리에 자동 등록되었습니다.\n(손님관리 > 매칭 또는 전체 탭에서 확인)`);
+        }, 100);
+      }
     } catch {
       alert("저장 중 오류가 발생했습니다.");
     } finally {

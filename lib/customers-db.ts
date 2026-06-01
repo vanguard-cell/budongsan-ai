@@ -135,7 +135,8 @@ export async function upsertTenantAsCustomer(
         const already = existing.shownProperties.some(s => s.address === propertyAddress);
         const merged: Customer = {
           ...existing,
-          status: "closed",
+          // 매칭 상태로 (계약 체결된 임차인 — 만기까지 관리 대상)
+          status: existing.status === "closed" || existing.status === "lost" ? "matched" : existing.status,
           shownProperties: already ? existing.shownProperties : [...existing.shownProperties, newShown],
         };
         await saveCustomer(agencyId, merged);
@@ -144,7 +145,7 @@ export async function upsertTenantAsCustomer(
     }
   }
 
-  // 신규 손님 생성 (계약 체결된 임차인)
+  // 신규 손님 생성 (계약 체결된 임차인 — 매칭 상태로)
   const newCustomer: Customer = {
     id: newCustomerId(),
     name,
@@ -155,10 +156,10 @@ export async function upsertTenantAsCustomer(
     budget: "",
     preferredArea: "",
     moveInDate: contractDate || "",
-    status: "closed",
+    status: "matched",   // 매칭 = "전체" 필터에 보임. closed였을 땐 "완료" 탭에서만 보였음
     nextFollowUp: "",
     shownProperties: [newShown],
-    memo: "매물 등록 시 자동 생성된 손님",
+    memo: "매물 등록 시 자동 생성된 손님 (계약 체결)",
     createdAt: Date.now(),
   };
   await saveCustomer(agencyId, newCustomer);
