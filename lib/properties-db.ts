@@ -202,7 +202,12 @@ export function subscribeProperties(agencyId: string, onChange: (list: Property[
 
 export async function saveProperty(agencyId: string, p: Property): Promise<void> {
   const { id, ...rest } = p;
-  await setDoc(ref(agencyId, id), { ...rest, updatedAt: serverTimestamp(), createdAt: rest.createdAt || Date.now() });
+  const payload: Record<string, unknown> = { ...rest, updatedAt: serverTimestamp(), createdAt: rest.createdAt || Date.now() };
+  // Firestore는 undefined 값을 거부 → 제거
+  for (const k of Object.keys(payload)) {
+    if (payload[k] === undefined) delete payload[k];
+  }
+  await setDoc(ref(agencyId, id), payload);
 }
 
 export async function deleteProperty(agencyId: string, id: string): Promise<void> {
