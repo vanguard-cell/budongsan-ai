@@ -83,6 +83,30 @@ export default function PropertiesPage() {
     await deleteProperty(user.agencyId, id);
   };
 
+  /**
+   * 같은 단지의 다른 호수 빠른 등록
+   * - 단지명(주소 - 동호수 제외)·매물유형·거래종류는 복사
+   * - 동호수·임대인·가격·면적·방향 등은 비움 (호별로 다름)
+   */
+  const cloneSameComplex = (p: Property) => {
+    const baseAddress = p.address
+      .replace(/ ?\d+동/g, "")
+      .replace(/ ?\d+호/g, "")
+      .replace(/ ?제\d+층/g, "")
+      .replace(/ ?제[\d-]+호/g, "")
+      .trim();
+    setEditing({
+      ...emptyProperty(),
+      address: baseAddress,
+      propertyType: p.propertyType,
+      dealType: p.dealType,
+      // 가격은 비슷한 경우가 많아 참고값으로 복사 (수정 가능)
+      price: "",
+      monthly: "",
+      memo: "",
+    });
+  };
+
   const close = async (p: Property) => {
     if (!user) return;
     // 매매는 거래완료 = 만기 관리로 이동 (사용자 결정: Q1 답변)
@@ -401,6 +425,7 @@ export default function PropertiesPage() {
                 onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
                 onProgress={() => setProgressing({ ...p })}
                 onSendToExpiry={() => sendToExpiry(p)}
+                onCloneSameComplex={() => cloneSameComplex(p)}
               />
             ))}
           </div>
@@ -472,7 +497,7 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen, onProgress, onSendToExpiry }: {
+function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen, onProgress, onSendToExpiry, onCloneSameComplex }: {
   property: Property;
   schedules: Schedule[];
   onEdit: () => void;
@@ -481,6 +506,7 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
   onReopen: () => void;
   onProgress: () => void;
   onSendToExpiry: () => void;
+  onCloneSameComplex: () => void;
 }) {
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
@@ -618,9 +644,18 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
         </div>
       )}
 
-      {/* 액션 — 색 구분감 강화: 수정(회) / 계약(보) / 만기(빨) / 종료(주황) / 복구(파) / 삭제(빨) */}
+      {/* 액션 — 색 구분감 강화: 수정(회) / 같은단지(에메랄드) / 계약(보) / 만기(빨) / 종료(주황) / 복구(파) / 삭제(빨) */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors">✏️ 수정</button>
+        {!isClosed && (
+          <button
+            onClick={onCloneSameComplex}
+            title={`같은 단지에 다른 호수 빠른 등록 — 단지명·유형은 복사, 동호수·임대인·가격만 입력`}
+            className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 font-semibold hover:bg-teal-100 transition-colors"
+          >
+            📋 같은 단지 추가
+          </button>
+        )}
         {!isClosed && (
           <button
             onClick={onProgress}
