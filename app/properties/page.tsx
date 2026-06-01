@@ -1230,10 +1230,12 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
             </div>
           </div>
 
-          {/* 임차인 정보 — 손님관리 검색 연동 */}
-          {form.dealType !== "매매" && (
+          {/* 계약 상대방 정보 — 매매=매수인 / 전월세=임차인, 손님관리 검색 연동 */}
+          {(() => {
+            const partyLabel = form.dealType === "매매" ? "매수인" : "임차인";
+            return (
             <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-2">
-              <div className="text-xs font-semibold text-orange-700">🏠 임차인 (손님관리에서 불러오기)</div>
+              <div className="text-xs font-semibold text-orange-700">🤝 {partyLabel} (손님관리에서 불러오기)</div>
 
               {/* 손님 검색 드롭다운 */}
               {customers.length > 0 && (
@@ -1272,23 +1274,24 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
               {/* 직접 입력 */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">이름</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{partyLabel} 이름</label>
                   <input value={form.tenantName}
-                    onChange={e => { set("tenantName", e.target.value); set("linkedTenantId", undefined); setCustQuery(e.target.value); }}
+                    onChange={e => { set("tenantName", e.target.value); set("linkedTenantId", ""); setCustQuery(e.target.value); }}
                     placeholder="홍길동"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">연락처</label>
                   <input type="tel" value={form.tenantPhone}
-                    onChange={e => { set("tenantPhone", e.target.value); set("linkedTenantId", undefined); }}
+                    onChange={e => { set("tenantPhone", e.target.value); set("linkedTenantId", ""); }}
                     placeholder="010-0000-0000"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
               </div>
               <p className="text-[10px] text-orange-600">💡 손님관리에 등록된 손님을 검색하거나 직접 입력하세요</p>
             </div>
-          )}
+            );
+          })()}
 
           {balanceOverdueLocal && (
             <div className="rounded-xl bg-red-50 border-2 border-red-300 p-3">
