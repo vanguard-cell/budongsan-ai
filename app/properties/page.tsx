@@ -67,6 +67,7 @@ export default function PropertiesPage() {
   const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
   // 정렬: 등록순(newest) / 금액 낮은순(price_asc) / 금액 높은순(price_desc)
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
+  const [showCommission, setShowCommission] = useState(false); // 수수료 상세 모달
   // 가격대 빠른 필터 (만원 기준)
   const [priceRange, setPriceRange] = useState<"all" | "u1" | "1to2" | "2to3" | "3to5" | "o5">("all");
   // 즐겨찾기 (localStorage)
@@ -265,21 +266,29 @@ export default function PropertiesPage() {
   // 월별 수수료 매출 — 잔금일(balanceDate) 기준, 거래완료 포함 전체 집계
   const commissionStats = useMemo(() => {
     const thisMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const thisYear = new Date().toISOString().slice(0, 4);  // YYYY
     const byMonth: Record<string, number> = {};
+    const itemsByMonth: Record<string, Property[]> = {}; // 월별 매물 상세
     let thisMonthTotal = 0;
     let pendingTotal = 0; // 잔금일 미래 = 예정 매출
+    let thisYearTotal = 0;
+    let grandTotal = 0;
     const today = new Date().toISOString().slice(0, 10);
     for (const p of properties) {
       const amt = parseInt((p.commission || "0").replace(/\D/g, ""), 10) || 0;
       if (amt === 0 || !p.balanceDate) continue;
       const month = p.balanceDate.slice(0, 7);
       byMonth[month] = (byMonth[month] || 0) + amt;
+      (itemsByMonth[month] ||= []).push(p);
       if (month === thisMonth) thisMonthTotal += amt;
+      if (p.balanceDate.slice(0, 4) === thisYear) thisYearTotal += amt;
       if (p.balanceDate >= today) pendingTotal += amt;
+      grandTotal += amt;
     }
-    // 최근 6개월 내림차순
-    const months = Object.keys(byMonth).sort().reverse().slice(0, 6);
-    return { thisMonthTotal, pendingTotal, byMonth, months };
+    // 미리보기는 최근 6개월, 전체 월은 상세 모달에서
+    const allMonths = Object.keys(byMonth).sort().reverse();
+    const months = allMonths.slice(0, 6);
+    return { thisMonthTotal, pendingTotal, thisYearTotal, grandTotal, byMonth, itemsByMonth, months, allMonths };
   }, [properties]);
 
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
@@ -425,17 +434,26 @@ export default function PropertiesPage() {
         {!showClosed && viewMode === "contracted" && (
           <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5">
             <div className="flex items-center justify-between mb-2.5">
-              <div className="text-xs font-bold text-emerald-800">💰 중개 수수료 매출</div>
-              <span className="text-[10px] text-emerald-600">잔금일 기준</span>
+              <div className="text-xs font-bold text-emerald-800">💰 중개 수수료 매출 <span className="text-[10px] font-normal text-emerald-600">· 잔금일 기준</span></div>
+              {commissionStats.allMonths.length > 0 && (
+                <button onClick={() => setShowCommission(true)}
+                  className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors">
+                  📊 상세보기
+                </button>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-2.5">
+            <div className="grid grid-cols-3 gap-2 mb-2.5">
               <div className="bg-white rounded-xl p-2.5 border border-emerald-100">
-                <div className="text-[10px] text-gray-500">이번 달 매출</div>
-                <div className="text-lg font-bold text-emerald-700">{fmtNum(String(commissionStats.thisMonthTotal))}<span className="text-xs font-normal text-gray-400 ml-0.5">만</span></div>
+                <div className="text-[10px] text-gray-500">이번 달</div>
+                <div className="text-base font-bold text-emerald-700">{fmtNum(String(commissionStats.thisMonthTotal))}<span className="text-[10px] font-normal text-gray-400 ml-0.5">만</span></div>
               </div>
               <div className="bg-white rounded-xl p-2.5 border border-emerald-100">
-                <div className="text-[10px] text-gray-500">예정 매출 (잔금 전)</div>
-                <div className="text-lg font-bold text-blue-600">{fmtNum(String(commissionStats.pendingTotal))}<span className="text-xs font-normal text-gray-400 ml-0.5">만</span></div>
+                <div className="text-[10px] text-gray-500">올해 누계</div>
+                <div className="text-base font-bold text-emerald-700">{fmtNum(String(commissionStats.thisYearTotal))}<span className="text-[10px] font-normal text-gray-400 ml-0.5">만</span></div>
+              </div>
+              <div className="bg-white rounded-xl p-2.5 border border-emerald-100">
+                <div className="text-[10px] text-gray-500">예정 (잔금 전)</div>
+                <div className="text-base font-bold text-blue-600">{fmtNum(String(commissionStats.pendingTotal))}<span className="text-[10px] font-normal text-gray-400 ml-0.5">만</span></div>
               </div>
             </div>
             {commissionStats.months.length > 0 ? (
@@ -602,6 +620,10 @@ export default function PropertiesPage() {
           onClose={() => setShowExport(false)}
           onExport={(opt) => exportProperties(properties, opt)}
         />
+      )}
+
+      {showCommission && (
+        <CommissionDetailModal stats={commissionStats} onClose={() => setShowCommission(false)} />
       )}
 
     </div>
@@ -1281,6 +1303,100 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
               {saving ? "저장 중…" : "저장"}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 수수료 매출 상세 모달 ── */
+function CommissionDetailModal({ stats, onClose }: {
+  stats: {
+    thisMonthTotal: number; pendingTotal: number; thisYearTotal: number; grandTotal: number;
+    byMonth: Record<string, number>; itemsByMonth: Record<string, Property[]>;
+    months: string[]; allMonths: string[];
+  };
+  onClose: () => void;
+}) {
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  // 연도별 그룹
+  const byYear = useMemo(() => {
+    const map: Record<string, { total: number; months: string[] }> = {};
+    for (const m of stats.allMonths) {
+      const y = m.slice(0, 4);
+      if (!map[y]) map[y] = { total: 0, months: [] };
+      map[y].total += stats.byMonth[m];
+      map[y].months.push(m);
+    }
+    return map;
+  }, [stats]);
+  const years = Object.keys(byYear).sort().reverse();
+  const cnum = (p: Property) => parseInt((p.commission || "0").replace(/\D/g, ""), 10) || 0;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-3xl z-10">
+          <h2 className="text-base font-semibold">📊 수수료 매출 상세</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 text-lg">✕</button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* 총 요약 */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+              <div className="text-[10px] text-gray-500">올해 누계</div>
+              <div className="text-lg font-bold text-emerald-700">{fmtNum(String(stats.thisYearTotal))}<span className="text-xs font-normal text-gray-400 ml-0.5">만</span></div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="text-[10px] text-gray-500">전체 누계</div>
+              <div className="text-lg font-bold text-gray-700">{fmtNum(String(stats.grandTotal))}<span className="text-xs font-normal text-gray-400 ml-0.5">만</span></div>
+            </div>
+          </div>
+
+          {stats.allMonths.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">집계된 수수료가 없습니다</p>
+          ) : (
+            years.map(y => (
+              <div key={y}>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <span className="text-sm font-bold text-gray-800">{y}년</span>
+                  <span className="text-sm font-bold text-emerald-700">{fmtNum(String(byYear[y].total))}만</span>
+                </div>
+                <div className="space-y-2">
+                  {byYear[y].months.map(m => {
+                    const [, mo] = m.split("-");
+                    const isThis = m === thisMonth;
+                    const items = [...(stats.itemsByMonth[m] || [])].sort((a, b) => cnum(b) - cnum(a));
+                    return (
+                      <div key={m} className={`rounded-xl border ${isThis ? "border-emerald-300 bg-emerald-50/50" : "border-gray-200 bg-white"}`}>
+                        <div className={`flex items-center justify-between px-3 py-2 ${isThis ? "text-emerald-800 font-semibold" : "text-gray-700"}`}>
+                          <span className="text-sm">{parseInt(mo, 10)}월{isThis ? " (이번 달)" : ""} · {items.length}건</span>
+                          <span className="text-sm font-bold">{fmtNum(String(stats.byMonth[m]))}만</span>
+                        </div>
+                        <div className="border-t border-gray-100 divide-y divide-gray-50">
+                          {items.map(p => (
+                            <div key={p.id} className="flex items-center justify-between px-3 py-2 text-xs">
+                              <div className="min-w-0 flex-1">
+                                <div className="text-gray-800 truncate">{p.address}</div>
+                                <div className="text-[10px] text-gray-400">
+                                  {p.dealType} · 잔금 {p.balanceDate}
+                                  {p.status === "closed" && <span className="ml-1 text-gray-500">· 거래완료</span>}
+                                </div>
+                              </div>
+                              <span className="text-emerald-700 font-semibold ml-2 shrink-0">{fmtNum(p.commission)}만</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+
+          <p className="text-[10px] text-gray-400 text-center">잔금일 기준 집계 · 거래완료 매물 포함</p>
         </div>
       </div>
     </div>
