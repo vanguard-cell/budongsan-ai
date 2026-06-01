@@ -167,6 +167,48 @@ export default function PropertiesPage() {
     for (const p of properties) await deleteProperty(user.agencyId, p.id);
   };
 
+  /**
+   * 기존 매물 임차인 일괄 손님등록
+   * - 전·월세 매물 중 임차인 정보 있는 것
+   * - linkedTenantId 없는 매물만 (이미 연동된 것 제외)
+   */
+  const migrateTenantsToCustomers = async () => {
+    if (!user) return;
+    const targets = properties.filter(p =>
+      p.dealType !== "매매"
+      && (p.tenantName || p.tenantPhone)
+      && !p.linkedTenantId
+    );
+    if (targets.length === 0) {
+      alert("일괄 등록할 임차인이 없습니다.\n(이미 모두 손님관리에 연동돼 있거나 임차인 정보가 비어있음)");
+      return;
+    }
+    if (!confirm(`${targets.length}건의 매물 임차인을 손님관리에 일괄 등록할까요?\n\n(전화번호 중복은 자동 매칭. 손님관리 매칭 탭에서 확인 가능)`)) return;
+
+    let ok = 0;
+    let fail = 0;
+    for (const p of targets) {
+      try {
+        const id = await upsertTenantAsCustomer(user.agencyId, {
+          name: p.tenantName,
+          phone: p.tenantPhone,
+          propertyAddress: p.address,
+          contractDate: p.contractDate,
+        });
+        if (id) {
+          await saveProperty(user.agencyId, { ...p, linkedTenantId: id });
+          ok++;
+        } else {
+          fail++;
+        }
+      } catch (e) {
+        console.error("[migrate] 실패:", p.address, e);
+        fail++;
+      }
+    }
+    alert(`✅ 일괄 등록 완료\n\n성공: ${ok}건\n실패: ${fail}건\n\n손님관리 > 매칭 또는 전체 탭에서 확인하세요.`);
+  };
+
   const filtered = useMemo(() => {
     return properties
       .filter(p => showClosed ? p.status === "closed" : p.status === "active")
@@ -242,6 +284,15 @@ export default function PropertiesPage() {
             >
               🧪 예시 데이터
             </button>
+            {properties.some(p => p.dealType !== "매매" && (p.tenantName || p.tenantPhone) && !p.linkedTenantId) && (
+              <button
+                onClick={migrateTenantsToCustomers}
+                title="기존 매물의 임차인을 손님관리에 일괄 등록 (이미 연동된 것은 제외)"
+                className="px-4 py-2.5 rounded-full border-2 border-blue-300 bg-blue-50 text-blue-700 text-sm font-semibold hover:bg-blue-100 transition-colors"
+              >
+                🔄 기존 임차인 → 손님관리
+              </button>
+            )}
             {properties.length > 0 && (
               <button
                 onClick={clearAll}

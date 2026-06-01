@@ -206,3 +206,37 @@ export async function saveProperty(agencyId: string, p: Property): Promise<void>
 export async function deleteProperty(agencyId: string, id: string): Promise<void> {
   await deleteDoc(ref(agencyId, id));
 }
+
+/**
+ * Contract → Property 역변환 (재모집)
+ * 만기 후 갱신 안 함 → 다시 매물로 광고 시작
+ * - dealType은 type에서 매핑 (전세/월세/매매)
+ * - 가격은 보증금/월세 유지
+ * - 임차인 정보는 비움 (새로 모집)
+ * - 만기일은 다음 계약 시 입력
+ */
+export function contractBackToProperty(c: {
+  address: string;
+  type: "전세" | "월세" | "매매";
+  deposit: string;
+  monthly: string;
+  landlordName: string;
+  landlordPhone: string;
+  memo: string;
+}): Property {
+  return {
+    id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+    address: c.address,
+    propertyType: "아파트", // 기본값 — 사용자가 수정 가능
+    dealType: c.type,
+    price: c.deposit,
+    monthly: c.monthly,
+    area: "", dong: "", ho: "", floor: "", rooms: "", direction: "",
+    ownerName: c.landlordName,
+    ownerPhone: c.landlordPhone,
+    tenantName: "", tenantPhone: "", leaseEndDate: "",
+    contractDate: "", downPaymentDate: "", balanceDate: "",
+    memo: c.memo ? `${c.memo}\n[재모집] 만기관리에서 복귀` : "[재모집] 만기관리에서 복귀",
+    status: "active", createdAt: Date.now(),
+  };
+}

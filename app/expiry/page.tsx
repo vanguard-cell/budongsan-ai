@@ -15,6 +15,7 @@ import UploadModal, { type MergeStrategy } from "./UploadModal";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
+import { saveProperty, contractBackToProperty } from "@/lib/properties-db";
 import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
@@ -167,6 +168,30 @@ export default function ExpiryPage() {
     if (!user) return;
     if (!confirm("이 계약을 영구 삭제할까요? 되돌릴 수 없습니다.")) return;
     await fsDeleteContract(user.agencyId, id);
+  };
+
+  /**
+   * 만기관리 → 매물 관리로 되돌리기 (재모집)
+   * - Contract를 closed로 변경 (이력 보존)
+   * - Property로 새로 생성하여 광고 시작
+   */
+  const jumpReopenAsProperty = async (c: Contract) => {
+    if (!user) return;
+    if (!confirm(
+      `${c.address}\n\n매물 관리로 되돌릴까요? (재모집)\n→ 새 매물로 광고 시작\n→ 이 만기 카드는 '종료'로 보존됩니다`,
+    )) return;
+    try {
+      const prop = contractBackToProperty({
+        address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
+        landlordName: c.landlordName, landlordPhone: c.landlordPhone, memo: c.memo,
+      });
+      await saveProperty(user.agencyId, prop);
+      await fsSaveContract(user.agencyId, { ...c, status: "closed" });
+      alert("✅ 매물 관리에 새 매물로 등록되었습니다. 새 임차인 모집을 시작하세요.");
+    } catch (e) {
+      console.error("[reopenAsProperty] 실패:", e);
+      alert("처리 중 오류가 발생했습니다.");
+    }
   };
 
   const loadSampleData = async () => {
@@ -346,6 +371,10 @@ export default function ExpiryPage() {
                 onReopen={() => reopenContract(c.id)}
                 onDelete={() => deleteContract(c.id)}
                 onSms={target => setSmsTarget({ contract: c, target })}
+                onJumpCustomer={c.linkedCustomerId && customers.some(cu => cu.id === c.linkedCustomerId)
+                  ? () => router.push(`/customers?focus=${c.linkedCustomerId}`)
+                  : undefined}
+                onReopenAsProperty={() => jumpReopenAsProperty(c)}
               />
             ))}
           </div>
@@ -466,6 +495,8 @@ function ContractRow({
   onReopen,
   onDelete,
   onSms,
+  onJumpCustomer,
+  onReopenAsProperty,
 }: {
   contract: Contract;
   dday: number;
@@ -475,6 +506,8 @@ function ContractRow({
   onReopen: () => void;
   onDelete: () => void;
   onSms: (target: ContactTarget) => void;
+  onJumpCustomer?: () => void;        // 연결된 손님 점프
+  onReopenAsProperty?: () => void;    // 매물로 되돌리기 (재모집)
 }) {
   const cls = severityClasses(severity);
   const isClosed = c.status === "closed";
@@ -545,6 +578,24 @@ function ContractRow({
         >
           수정
         </button>
+        {onJumpCustomer && (
+          <button
+            onClick={onJumpCustomer}
+            title="연결된 손님 보기 (손님관리로 이동)"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition-colors"
+          >
+            👥 손님 보기
+          </button>
+        )}
+        {onReopenAsProperty && !isClosed && (
+          <button
+            onClick={onReopenAsProperty}
+            title="재모집 — 매물 관리로 되돌립니다 (계약 정보는 이력 보존)"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 transition-colors"
+          >
+            🔄 매물로 되돌리기
+          </button>
+        )}
         {isClosed ? (
           <button
             onClick={onReopen}
