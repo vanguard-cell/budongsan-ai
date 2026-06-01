@@ -36,6 +36,7 @@ export interface Property {
   contractDate: string;    // 계약일 (YYYY-MM-DD)
   downPaymentDate: string; // 중도금일 (YYYY-MM-DD)
   balanceDate: string;     // 잔금일 (YYYY-MM-DD) — 이 날짜 지나면 만기 관리로 이동
+  commission: string;      // 중개 수수료 (만원) — 월별 매출 집계용
   linkedTenantId?: string; // 손님 관리에 자동 등록된 임차인 ID
   memo: string;
   status: PropertyStatus;
@@ -49,7 +50,7 @@ export function emptyProperty(): Property {
     price: "", monthly: "", area: "", dong: "", ho: "", floor: "", rooms: "",
     direction: "", ownerName: "", ownerPhone: "",
     tenantName: "", tenantPhone: "", leaseEndDate: "",
-    contractDate: "", downPaymentDate: "", balanceDate: "",
+    contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
     memo: "",
     status: "active", createdAt: Date.now(),
   };
@@ -77,7 +78,7 @@ export function sampleProperties(): Property[] {
       rooms: "3", direction: "남향",
       ownerName: "김국환", ownerPhone: "010-5205-1111",
       tenantName: "", tenantPhone: "", leaseEndDate: "",
-      contractDate: "", downPaymentDate: "", balanceDate: "",
+      contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
       memo: "급매 · 협의 가능",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 14,
     },
@@ -90,7 +91,7 @@ export function sampleProperties(): Property[] {
       ownerName: "최재현", ownerPhone: "010-2480-4444",
       tenantName: "권다솜", tenantPhone: "010-9242-3333",
       leaseEndDate: dateOffset(45),  // D-45 만기 임박
-      contractDate: "", downPaymentDate: "", balanceDate: "",
+      contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
       memo: "임차인 재계약 의향 확인 필요",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 365,
     },
@@ -103,7 +104,7 @@ export function sampleProperties(): Property[] {
       ownerName: "정우성", ownerPhone: "010-5033-2222",
       tenantName: "조현민", tenantPhone: "010-7924-1111",
       leaseEndDate: dateOffset(85),  // D-85 예고
-      contractDate: "", downPaymentDate: "", balanceDate: "",
+      contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
       memo: "묵시적 갱신 주의 — 협상 시작",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 300,
     },
@@ -115,7 +116,7 @@ export function sampleProperties(): Property[] {
       rooms: "1", direction: "서향",
       ownerName: "정수영", ownerPhone: "010-9109-6666",
       tenantName: "", tenantPhone: "", leaseEndDate: "",
-      contractDate: "", downPaymentDate: "", balanceDate: "",
+      contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
       memo: "즉시 입주 가능",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 7,
     },
@@ -128,7 +129,7 @@ export function sampleProperties(): Property[] {
       ownerName: "최령", ownerPhone: "010-5210-8888",
       tenantName: "민완규(카페)", tenantPhone: "010-5380-7777",
       leaseEndDate: dateOffset(220),  // D-220 안전
-      contractDate: "", downPaymentDate: "", balanceDate: "",
+      contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
       memo: "1층 코너 / 카페 운영중",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 200,
     },
@@ -140,7 +141,7 @@ export function sampleProperties(): Property[] {
       rooms: "3", direction: "남향",
       ownerName: "조서영", ownerPhone: "010-9205-0000",
       tenantName: "", tenantPhone: "", leaseEndDate: "",
-      contractDate: "", downPaymentDate: "", balanceDate: "",
+      contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
       memo: "거래 완료 — 입주 완료",
       status: "closed", createdAt: now - 1000 * 60 * 60 * 24 * 90,
     },
@@ -180,6 +181,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     contractDate:    (d.contractDate    as string) || "",
     downPaymentDate: (d.downPaymentDate as string) || "",
     balanceDate:     (d.balanceDate     as string) || "",
+    commission:      (d.commission      as string) || "",
     linkedTenantId:  (d.linkedTenantId  as string) || undefined,
     memo:         (d.memo         as string) || "",
     status:       (d.status       as PropertyStatus) || "active",
@@ -235,7 +237,7 @@ export function contractBackToProperty(c: {
     ownerName: c.landlordName,
     ownerPhone: c.landlordPhone,
     tenantName: "", tenantPhone: "", leaseEndDate: "",
-    contractDate: "", downPaymentDate: "", balanceDate: "",
+    contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
     memo: c.memo ? `${c.memo}\n[재모집] 만기관리에서 복귀` : "[재모집] 만기관리에서 복귀",
     status: "active", createdAt: Date.now(),
   };

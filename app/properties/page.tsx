@@ -262,6 +262,26 @@ export default function PropertiesPage() {
     };
   }, [properties]);
 
+  // 월별 수수료 매출 — 잔금일(balanceDate) 기준, 거래완료 포함 전체 집계
+  const commissionStats = useMemo(() => {
+    const thisMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const byMonth: Record<string, number> = {};
+    let thisMonthTotal = 0;
+    let pendingTotal = 0; // 잔금일 미래 = 예정 매출
+    const today = new Date().toISOString().slice(0, 10);
+    for (const p of properties) {
+      const amt = parseInt((p.commission || "0").replace(/\D/g, ""), 10) || 0;
+      if (amt === 0 || !p.balanceDate) continue;
+      const month = p.balanceDate.slice(0, 7);
+      byMonth[month] = (byMonth[month] || 0) + amt;
+      if (month === thisMonth) thisMonthTotal += amt;
+      if (p.balanceDate >= today) pendingTotal += amt;
+    }
+    // 최근 6개월 내림차순
+    const months = Object.keys(byMonth).sort().reverse().slice(0, 6);
+    return { thisMonthTotal, pendingTotal, byMonth, months };
+  }, [properties]);
+
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
 
   return (
@@ -392,12 +412,46 @@ export default function PropertiesPage() {
             >
               <div className="text-left">
                 <div className="text-xs font-medium opacity-80">🤝 계약진행중</div>
-                <div className="text-[11px] opacity-70">임차인 있는 매물</div>
+                <div className="text-[11px] opacity-70">계약일 입력한 매물</div>
               </div>
               <div className={`text-2xl font-bold ml-2 ${viewMode === "contracted" ? "text-white" : "text-blue-600"}`}>
                 {counts.contracted}
               </div>
             </button>
+          </div>
+        )}
+
+        {/* 수수료 매출 요약 — 계약진행중 탭에서만 */}
+        {!showClosed && viewMode === "contracted" && (commissionStats.thisMonthTotal > 0 || commissionStats.pendingTotal > 0 || commissionStats.months.length > 0) && (
+          <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="text-xs font-bold text-emerald-800">💰 중개 수수료 매출</div>
+              <span className="text-[10px] text-emerald-600">잔금일 기준</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-2.5">
+              <div className="bg-white rounded-xl p-2.5 border border-emerald-100">
+                <div className="text-[10px] text-gray-500">이번 달 매출</div>
+                <div className="text-lg font-bold text-emerald-700">{fmtNum(String(commissionStats.thisMonthTotal))}<span className="text-xs font-normal text-gray-400 ml-0.5">만</span></div>
+              </div>
+              <div className="bg-white rounded-xl p-2.5 border border-emerald-100">
+                <div className="text-[10px] text-gray-500">예정 매출 (잔금 전)</div>
+                <div className="text-lg font-bold text-blue-600">{fmtNum(String(commissionStats.pendingTotal))}<span className="text-xs font-normal text-gray-400 ml-0.5">만</span></div>
+              </div>
+            </div>
+            {commissionStats.months.length > 0 && (
+              <div className="space-y-1">
+                {commissionStats.months.map(m => {
+                  const [y, mo] = m.split("-");
+                  const isThis = m === new Date().toISOString().slice(0, 7);
+                  return (
+                    <div key={m} className={`flex items-center justify-between text-xs px-2 py-1 rounded-lg ${isThis ? "bg-emerald-100 font-semibold text-emerald-800" : "text-gray-600"}`}>
+                      <span>{y}년 {parseInt(mo, 10)}월{isThis ? " (이번 달)" : ""}</span>
+                      <span>{fmtNum(String(commissionStats.byMonth[m]))}만</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -659,15 +713,21 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             </div>
           )}
 
-          {/* 임차인 연락처 */}
-          {p.tenantPhone && (
+          {/* 임차인 정보 (이름 또는 전화 중 하나라도 있으면 표시) */}
+          {(p.tenantName || p.tenantPhone) && (
             <div className="mt-2 flex items-center gap-2 text-xs">
               <span className="text-orange-600 shrink-0">임차인 {p.tenantName || ""}</span>
-              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
-              <a
-                href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto"
-              >문자</a>
+              {p.tenantPhone ? (
+                <>
+                  <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
+                  <a
+                    href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
+                    className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto"
+                  >문자</a>
+                </>
+              ) : (
+                <span className="text-gray-400 text-[10px]">연락처 미입력</span>
+              )}
             </div>
           )}
 
@@ -687,6 +747,11 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
               {p.balanceDate && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full border ${balanceOverdue ? "bg-red-50 text-red-700 border-red-200" : "bg-orange-50 text-orange-700 border-orange-200"}`}>
                   💵 잔금일 {p.balanceDate}
+                </span>
+              )}
+              {p.commission && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                  💵 수수료 {fmtNum(p.commission)}만
                 </span>
               )}
             </div>
@@ -1128,6 +1193,14 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
               <label className="block text-sm font-medium text-orange-700 mb-1">⏰ 임대만기일 <span className="text-gray-400 text-xs font-normal">(전·월세만)</span></label>
               <input type="date" value={form.leaseEndDate} onChange={e => set("leaseEndDate", e.target.value)}
                 className="w-full border border-orange-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-emerald-700 mb-1">💵 중개 수수료 (만원)</label>
+              <input type="text" inputMode="numeric" value={form.commission}
+                onChange={e => set("commission", e.target.value.replace(/\D/g, ""))}
+                placeholder="300"
+                className="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+              <p className="text-[10px] text-emerald-600 mt-1">📊 잔금일 기준으로 월별 매출에 합산됩니다</p>
             </div>
           </div>
 
