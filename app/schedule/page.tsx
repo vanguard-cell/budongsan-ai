@@ -200,15 +200,15 @@ export default function SchedulePage() {
         {/* 필터 탭 */}
         <div className="grid grid-cols-4 gap-1.5 mb-4">
           {([
-            { key: "all",      icon: "📋", label: "전체" },
-            { key: "schedule", icon: "📅", label: "약속" },
-            { key: "expiry",   icon: "⏰", label: "만기" },
-            { key: "followup", icon: "👥", label: "손님" },
+            { key: "all",      icon: "📋", label: "전체",   activeClass: "bg-blue-600 text-white border-blue-600",      inactiveClass: "bg-white border-gray-200 text-gray-600 hover:border-blue-300" },
+            { key: "schedule", icon: "📅", label: "약속",   activeClass: "bg-blue-500 text-white border-blue-500",      inactiveClass: "bg-blue-50 border-blue-200 text-blue-700 hover:border-blue-400" },
+            { key: "expiry",   icon: "⏰", label: "만기",   activeClass: "bg-orange-500 text-white border-orange-500",  inactiveClass: "bg-orange-50 border-orange-200 text-orange-700 hover:border-orange-400" },
+            { key: "followup", icon: "👥", label: "손님",   activeClass: "bg-emerald-600 text-white border-emerald-600", inactiveClass: "bg-emerald-50 border-emerald-200 text-emerald-700 hover:border-emerald-400" },
           ] as const).map(tab => (
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key)}
-              className={`rounded-2xl border py-2.5 text-center transition-colors ${filter === tab.key ? "bg-blue-600 text-white border-blue-600 font-semibold" : "bg-white border-gray-200 text-gray-600 hover:border-blue-300"}`}
+              className={`rounded-2xl border py-2.5 text-center transition-colors font-semibold ${filter === tab.key ? tab.activeClass : tab.inactiveClass}`}
             >
               <div className="text-base leading-none">{tab.icon}</div>
               <div className="text-[10px] mt-1">{tab.label}</div>

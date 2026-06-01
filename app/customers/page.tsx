@@ -134,6 +134,9 @@ export default function CustomersPage() {
 
   const changeStatus = async (c: Customer, status: Customer["status"]) => {
     if (!user) return;
+    if (status === "lost") {
+      if (!confirm(`${c.name || "이 손님"}을(를) 이탈 처리할까요?\n이탈 처리 후에는 상단 [이탈] 필터에서 다시 확인하고 복구할 수 있습니다.`)) return;
+    }
     await fsSaveCustomer(user.agencyId, { ...c, status });
   };
 

@@ -32,6 +32,8 @@ export default function PropertiesPage() {
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
   const [showClosed, setShowClosed] = useState(false);
+  // 계약진행중 탭: "available"=계약없음, "contracted"=임차인있음(계약진행중)
+  const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/properties");
@@ -59,9 +61,35 @@ export default function PropertiesPage() {
     await saveProperty(user.agencyId, { ...p, status: "closed" });
   };
 
+  // 잔금완료 = 거래완료 처리 (만기 매물 자동 연동은 leaseEndDate로)
+  const finalizeContract = async (p: Property) => {
+    if (!user || !confirm("잔금 완료 처리할까요?\n매물이 거래완료로 이동되고, 만기일이 있으면 스케줄에서 만기 알림이 표시됩니다.")) return;
+    await saveProperty(user.agencyId, { ...p, status: "closed" });
+  };
+
+  // 계약없음 = tenantName/tenantPhone 모두 비어있는 active 매물
+  // 계약진행중 = tenantName 또는 tenantPhone이 있는 active 매물
+  const isContracted = (p: Property) => !!(p.tenantName || p.tenantPhone);
+
   const filtered = useMemo(() => {
+    if (showClosed) {
+      return properties
+        .filter(p => p.status === "closed")
+        .filter(p => filterType === "all" || p.dealType === filterType)
+        .filter(p => {
+          if (!query.trim()) return true;
+          const q = query.toLowerCase();
+          return p.address.toLowerCase().includes(q)
+              || p.ownerName.toLowerCase().includes(q)
+              || p.ownerPhone.includes(q)
+              || (p.dong || "").includes(q) || (p.ho || "").includes(q)
+              || (p.tenantName || "").toLowerCase().includes(q)
+              || (p.tenantPhone || "").includes(q);
+        });
+    }
     return properties
-      .filter(p => showClosed ? p.status === "closed" : p.status === "active")
+      .filter(p => p.status === "active")
+      .filter(p => viewMode === "available" ? !isContracted(p) : isContracted(p))
       .filter(p => filterType === "all" || p.dealType === filterType)
       .filter(p => {
         if (!query.trim()) return true;
@@ -74,12 +102,16 @@ export default function PropertiesPage() {
             || (p.tenantName || "").toLowerCase().includes(q)
             || (p.tenantPhone || "").includes(q);
       });
-  }, [properties, showClosed, filterType, query]);
+  }, [properties, showClosed, filterType, query, viewMode]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
+    const available = active.filter(p => !isContracted(p));
+    const contracted = active.filter(p => isContracted(p));
     return {
       all: active.length,
+      available: available.length,
+      contracted: contracted.length,
       매매: active.filter(p => p.dealType === "매매").length,
       전세: active.filter(p => p.dealType === "전세").length,
       월세: active.filter(p => p.dealType === "월세").length,
@@ -113,6 +145,28 @@ export default function PropertiesPage() {
             + 매물 등록
           </button>
         </div>
+
+        {/* 계약 상태 탭 */}
+        {!showClosed && (
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <button
+              onClick={() => setViewMode("available")}
+              className={`rounded-2xl border py-3 text-center transition-colors ${viewMode === "available" ? "bg-emerald-600 text-white border-emerald-600" : "bg-white border-gray-200 hover:border-emerald-400"}`}
+            >
+              <div className="text-base font-bold">{counts.available}</div>
+              <div className="text-[11px] mt-0.5 opacity-90">📋 매물 관리</div>
+              <div className="text-[10px] opacity-70">계약 없는 매물</div>
+            </button>
+            <button
+              onClick={() => setViewMode("contracted")}
+              className={`rounded-2xl border py-3 text-center transition-colors ${viewMode === "contracted" ? "bg-blue-600 text-white border-blue-600" : "bg-white border-gray-200 hover:border-blue-400"}`}
+            >
+              <div className="text-base font-bold">{counts.contracted}</div>
+              <div className="text-[11px] mt-0.5 opacity-90">🤝 계약진행중</div>
+              <div className="text-[10px] opacity-70">임차인 있는 매물</div>
+            </button>
+          </div>
+        )}
 
         {/* 요약 카드 */}
         <div className="grid grid-cols-4 gap-2 mb-4">
@@ -164,8 +218,10 @@ export default function PropertiesPage() {
                 key={p.id}
                 property={p}
                 schedules={schedules.filter(s => s.propertyId === p.id)}
+                isContractedView={viewMode === "contracted" && !showClosed}
                 onEdit={() => setEditing({ ...p })}
                 onClose={() => close(p)}
+                onFinalize={() => finalizeContract(p)}
                 onDelete={() => remove(p.id)}
                 onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
               />
@@ -193,11 +249,13 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen }: {
+function PropertyCard({ property: p, schedules, isContractedView, onEdit, onClose, onFinalize, onDelete, onReopen }: {
   property: Property;
   schedules: Schedule[];
+  isContractedView?: boolean;
   onEdit: () => void;
   onClose: () => void;
+  onFinalize: () => void;
   onDelete: () => void;
   onReopen: () => void;
 }) {
@@ -301,6 +359,11 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
         <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors">수정</button>
         {isClosed ? (
           <button onClick={onReopen} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">진행중으로 복구</button>
+        ) : isContractedView ? (
+          <>
+            <button onClick={onFinalize} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors font-medium">💰 잔금 완료</button>
+            <button onClick={onClose} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-600 transition-colors">거래완료</button>
+          </>
         ) : (
           <button onClick={onClose} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-600 transition-colors">거래완료</button>
         )}
