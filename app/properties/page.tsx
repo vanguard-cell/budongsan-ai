@@ -202,8 +202,9 @@ export default function PropertiesPage() {
   };
 
 
-  // 임차인 있으면 "계약진행중", 없으면 "매물관리"
-  const isContracted = (p: Property) => !!(p.tenantName || p.tenantPhone);
+  // 계약진행중 = "계약 진행" 모달에서 contractDate/중도금/잔금일을 입력한 매물
+  // (tenantName/tenantPhone은 일반 매물 등록에도 쓰이므로 기준으로 쓰지 않음)
+  const isContracted = (p: Property) => !!(p.contractDate || p.downPaymentDate || p.balanceDate);
 
   // 매물 대표 금액 (만원 int) — 매매/전세=price, 월세=보증금
   const priceNum = (p: Property) => parseInt((p.price || "0").replace(/\D/g, ""), 10) || 0;
@@ -572,7 +573,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
 }) {
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
-  const naverMapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(p.address)}`;
+  const mapUrl = `https://map.kakao.com/?q=${encodeURIComponent(p.address)}`;
   const priceStr = p.dealType === "월세"
     ? (p.price || p.monthly)
         ? `${p.price ? fmtNum(p.price) : "0"}/${p.monthly ? fmtNum(p.monthly) : "0"}만`
@@ -622,7 +623,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             </div>
             {/* 즐겨찾기 + 지도 버튼 */}
             <div className="flex items-center gap-1 shrink-0">
-              <a href={naverMapUrl} target="_blank" rel="noopener noreferrer"
+              <a href={mapUrl} target="_blank" rel="noopener noreferrer"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition-colors text-sm"
                 title="네이버 지도로 보기">
                 🗺️
