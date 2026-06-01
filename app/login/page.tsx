@@ -13,6 +13,31 @@ export default function LoginPage() {
   );
 }
 
+/** 인앱 브라우저 감지 — Google이 OAuth 차단하는 환경 */
+function detectInAppBrowser(): { isInApp: boolean; appName: string } {
+  if (typeof window === "undefined") return { isInApp: false, appName: "" };
+  const ua = window.navigator.userAgent.toLowerCase();
+  const patterns: Array<{ key: string; name: string }> = [
+    { key: "kakaotalk",   name: "카카오톡" },
+    { key: "naver(",      name: "네이버" },
+    { key: "naverapp",    name: "네이버" },
+    { key: "inapp",       name: "네이버" },
+    { key: "fb_iab",      name: "페이스북" },
+    { key: "fbav",        name: "페이스북" },
+    { key: "fban",        name: "페이스북" },
+    { key: "instagram",   name: "인스타그램" },
+    { key: "line/",       name: "라인" },
+    { key: "band/",       name: "밴드" },
+    { key: "kakaostory",  name: "카카오스토리" },
+    { key: "daumapps",    name: "다음" },
+    { key: "everytimeapp",name: "에브리타임" },
+  ];
+  for (const { key, name } of patterns) {
+    if (ua.includes(key)) return { isInApp: true, appName: name };
+  }
+  return { isInApp: false, appName: "" };
+}
+
 function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -25,11 +50,54 @@ function LoginInner() {
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [inAppInfo, setInAppInfo] = useState<{ isInApp: boolean; appName: string }>({ isInApp: false, appName: "" });
+  const [copied, setCopied] = useState(false);
 
   // 이미 로그인됐으면 리다이렉트
   useEffect(() => {
     if (!loading && user) router.replace(redirect);
   }, [loading, user, redirect, router]);
+
+  // 인앱 브라우저 감지
+  useEffect(() => {
+    setInAppInfo(detectInAppBrowser());
+  }, []);
+
+  const copyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+      const el = document.createElement("textarea");
+      el.value = window.location.href;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const openExternalBrowser = () => {
+    const url = window.location.href;
+    const ua = navigator.userAgent.toLowerCase();
+    // 카카오톡: 외부 브라우저 열기 스킴 지원
+    if (ua.includes("kakaotalk")) {
+      window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(url)}`;
+      return;
+    }
+    // Android Chrome intent
+    if (/android/i.test(ua)) {
+      window.location.href = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;end`;
+      return;
+    }
+    // iOS Safari: 직접 열기 안 됨 → 클립보드 복사 + 안내
+    copyUrl();
+    alert("URL이 복사되었습니다.\n\nSafari를 열고 주소창에 붙여넣기(꾹 누르기 → 붙여넣기) 해주세요.");
+  };
 
   const handleGoogle = async () => {
     setErr(null);
@@ -86,14 +154,48 @@ function LoginInner() {
           </p>
         </div>
 
+        {/* 인앱 브라우저 경고 배너 */}
+        {inAppInfo.isInApp && (
+          <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 mb-4">
+            <div className="flex items-start gap-2 mb-2">
+              <span className="text-xl">⚠️</span>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-amber-800">{inAppInfo.appName} 앱 안에서는 Google 로그인이 차단됩니다</div>
+                <div className="text-[11px] text-amber-700 mt-1 leading-relaxed">
+                  Google 보안 정책 (403 disallowed_useragent)으로 카카오톡·네이버·인스타 등 앱 내부 브라우저에서는 Google 로그인이 막혀 있습니다.<br/>
+                  <strong>Safari/Chrome 등 일반 브라우저</strong>에서 열어주세요.
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5 mt-3">
+              <button
+                onClick={openExternalBrowser}
+                className="w-full py-2.5 rounded-xl bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700"
+              >
+                🌐 외부 브라우저로 열기
+              </button>
+              <button
+                onClick={copyUrl}
+                className="w-full py-2 rounded-xl border-2 border-amber-400 bg-white text-amber-700 text-xs font-medium hover:bg-amber-50"
+              >
+                {copied ? "✅ URL 복사됨" : "📋 URL 복사 (Safari 주소창에 붙여넣기)"}
+              </button>
+            </div>
+            <p className="text-[10px] text-amber-600 mt-2 text-center leading-snug">
+              💡 아래 이메일 로그인은 인앱에서도 동작합니다
+            </p>
+          </div>
+        )}
+
         <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-5 space-y-3">
           {/* 구글 로그인 */}
           <button
             onClick={handleGoogle}
-            disabled={busy}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-blue-400 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+            disabled={busy || inAppInfo.isInApp}
+            title={inAppInfo.isInApp ? `${inAppInfo.appName} 인앱 브라우저에서는 사용 불가 — 외부 브라우저로 열어주세요` : undefined}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-blue-400 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <GoogleIcon /> Google로 계속하기
+            <GoogleIcon /> Google로 계속하기 {inAppInfo.isInApp && <span className="text-[10px] text-red-500">(인앱 차단)</span>}
           </button>
 
           {/* 카카오 (준비중) */}
