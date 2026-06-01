@@ -16,11 +16,12 @@ import type { Contract } from "@/app/expiry/contracts";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 
 /* ── 타입 ── */
-type SourceFilter = "all" | "schedule" | "expiry" | "followup";
+type SourceFilter = "all" | "expiry" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
+type ItemSource   = Exclude<SourceFilter, "all">;
 
 interface UnifiedItem {
   key: string;
-  source: "schedule" | "expiry" | "followup";
+  source: ItemSource;
   date: string;       // YYYY-MM-DD (정렬 기준)
   time: string;
   schedule?: Schedule;
@@ -29,13 +30,22 @@ interface UnifiedItem {
   property?: Property; // 내 매물 임대만기
 }
 
-const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약", "잔금", "기타"];
+const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약일", "중도금일", "잔금일", "기타"];
 const TYPE_COLORS: Record<ScheduleType, string> = {
-  "집보기": "bg-blue-100 text-blue-700",
-  "계약":   "bg-purple-100 text-purple-700",
-  "잔금":   "bg-orange-100 text-orange-700",
-  "기타":   "bg-gray-100 text-gray-600",
+  "집보기":   "bg-blue-100 text-blue-700",
+  "계약일":   "bg-purple-100 text-purple-700",
+  "중도금일": "bg-pink-100 text-pink-700",
+  "잔금일":   "bg-red-100 text-red-700",
+  "기타":     "bg-gray-100 text-gray-600",
 };
+
+/** schedule.scheduleType → 필터 분류 (계약/중도금/잔금은 별도, 집보기/기타는 약속) */
+function scheduleTypeToSource(t: ScheduleType): ItemSource {
+  if (t === "계약일")   return "contractDate";
+  if (t === "중도금일") return "downPaymentDate";
+  if (t === "잔금일")   return "balanceDate";
+  return "appointment"; // 집보기·기타
+}
 
 function formatPhone(raw: string): string {
   const d = raw.replace(/\D/g, "");
@@ -82,12 +92,13 @@ export default function SchedulePage() {
   const unified = useMemo<UnifiedItem[]>(() => {
     const items: UnifiedItem[] = [];
 
-    // ① 약속 (수동 등록)
+    // ① 사용자가 등록한 일정 (집보기·계약일·중도금일·잔금일·기타)
     for (const s of schedules) {
       if (s.status === "cancelled") continue;
       if (!showPast && s.status === "done") continue;
       if (!showPast && !isFuture(s.date)) continue;
-      items.push({ key: `s-${s.id}`, source: "schedule", date: s.date, time: s.time, schedule: s });
+      const src = scheduleTypeToSource(s.scheduleType);
+      items.push({ key: `s-${s.id}`, source: src, date: s.date, time: s.time, schedule: s });
     }
 
     // ② 만기관리 계약 (D-120 이내 활성 계약)
@@ -112,12 +123,12 @@ export default function SchedulePage() {
       items.push({ key: `pe-${p.id}`, source: "expiry", date: p.leaseEndDate, time: "", property: p });
     }
 
-    // ③ 손님 후속연락
+    // ③ 손님 후속연락 — "약속" 카테고리로 통합
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
       if (cu.status === "closed" || cu.status === "lost") continue;
       if (!showPast && !isFuture(cu.nextFollowUp)) continue;
-      items.push({ key: `f-${cu.id}`, source: "followup", date: cu.nextFollowUp, time: "", customer: cu });
+      items.push({ key: `f-${cu.id}`, source: "appointment", date: cu.nextFollowUp, time: "", customer: cu });
     }
 
     return items
@@ -135,7 +146,7 @@ export default function SchedulePage() {
     const items: CalendarItem[] = [];
     for (const s of schedules) {
       if (s.status === "cancelled") continue;
-      items.push({ date: s.date, source: "schedule" });
+      items.push({ date: s.date, source: scheduleTypeToSource(s.scheduleType) });
     }
     for (const c of contracts) {
       if (c.status !== "active" || !c.endDate) continue;
@@ -150,7 +161,7 @@ export default function SchedulePage() {
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
       if (cu.status === "closed" || cu.status === "lost") continue;
-      items.push({ date: cu.nextFollowUp, source: "followup" });
+      items.push({ date: cu.nextFollowUp, source: "appointment" });
     }
     return items;
   }, [schedules, contracts, customers, properties]);
@@ -169,10 +180,12 @@ export default function SchedulePage() {
 
   /* 필터별 카운트 */
   const counts = useMemo(() => ({
-    all:      unified.length,
-    schedule: unified.filter(i => i.source === "schedule").length,
-    expiry:   unified.filter(i => i.source === "expiry").length,
-    followup: unified.filter(i => i.source === "followup").length,
+    all:             unified.length,
+    expiry:          unified.filter(i => i.source === "expiry").length,
+    appointment:     unified.filter(i => i.source === "appointment").length,
+    contractDate:    unified.filter(i => i.source === "contractDate").length,
+    downPaymentDate: unified.filter(i => i.source === "downPaymentDate").length,
+    balanceDate:     unified.filter(i => i.source === "balanceDate").length,
   }), [unified]);
 
   const upsert = async (s: Schedule) => {
@@ -209,13 +222,33 @@ export default function SchedulePage() {
             📅 스케줄 관리
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">통합 일정</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mb-4">만기·손님·약속 한눈에</p>
-          <button
-            onClick={() => setEditing(emptySchedule())}
-            className="px-5 py-2.5 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 text-sm font-semibold hover:bg-blue-100 transition-colors"
-          >
-            + 약속 추가
-          </button>
+          <p className="text-gray-500 text-xs sm:text-sm mb-4">만기일·약속·계약일·중도금일·잔금일 한눈에</p>
+          <div className="flex flex-wrap gap-1.5 justify-center">
+            <button
+              onClick={() => setEditing(emptySchedule())}
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
+            >
+              + 약속
+            </button>
+            <button
+              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "계약일" })}
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-purple-400 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
+            >
+              + 계약일
+            </button>
+            <button
+              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "중도금일" })}
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-pink-400 bg-pink-50 text-pink-700 font-semibold hover:bg-pink-100 transition-colors"
+            >
+              + 중도금일
+            </button>
+            <button
+              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "잔금일" })}
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-red-400 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors"
+            >
+              + 잔금일
+            </button>
+          </div>
         </div>
 
         {/* 월별 캘린더 — 한눈에 보기 */}
@@ -244,18 +277,24 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* 필터 탭 */}
-        <div className="grid grid-cols-4 gap-1.5 mb-4">
+        {/* 필터 탭 — 6개 (2줄) */}
+        <div className="grid grid-cols-3 gap-1.5 mb-4">
           {([
-            { key: "all",      icon: "📋", label: "전체" },
-            { key: "schedule", icon: "📅", label: "약속" },
-            { key: "expiry",   icon: "⏰", label: "만기" },
-            { key: "followup", icon: "👥", label: "손님" },
+            { key: "all",             icon: "📋", label: "전체",     color: "bg-blue-600" },
+            { key: "expiry",          icon: "⏰", label: "만기일",   color: "bg-orange-600" },
+            { key: "appointment",     icon: "👥", label: "약속",     color: "bg-blue-600" },
+            { key: "contractDate",    icon: "📝", label: "계약일",   color: "bg-purple-600" },
+            { key: "downPaymentDate", icon: "💰", label: "중도금일", color: "bg-pink-600" },
+            { key: "balanceDate",     icon: "🔑", label: "잔금일",   color: "bg-red-600" },
           ] as const).map(tab => (
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key)}
-              className={`rounded-2xl border py-2.5 text-center transition-colors ${filter === tab.key ? "bg-blue-600 text-white border-blue-600 font-semibold" : "bg-white border-gray-200 text-gray-600 hover:border-blue-300"}`}
+              className={`rounded-2xl border py-2.5 text-center transition-colors ${
+                filter === tab.key
+                  ? `${tab.color} text-white border-transparent font-semibold`
+                  : "bg-white border-gray-200 text-gray-600 hover:border-blue-300"
+              }`}
             >
               <div className="text-base leading-none">{tab.icon}</div>
               <div className="text-[10px] mt-1">{tab.label}</div>
@@ -299,16 +338,16 @@ export default function SchedulePage() {
 
                 <div className="space-y-2">
                   {items.map(item => {
-                    if (item.source === "schedule" && item.schedule)
+                    if (item.schedule)
                       return <ScheduleCard key={item.key} schedule={item.schedule} properties={properties}
                                onEdit={() => setEditing({ ...item.schedule! })}
                                onDone={() => done(item.schedule!)}
                                onDelete={() => remove(item.schedule!.id)} />;
-                    if (item.source === "expiry" && item.contract)
+                    if (item.contract)
                       return <ExpiryCard key={item.key} contract={item.contract} />;
-                    if (item.source === "expiry" && item.property)
+                    if (item.property)
                       return <PropertyLeaseCard key={item.key} property={item.property} />;
-                    if (item.source === "followup" && item.customer)
+                    if (item.customer)
                       return <FollowUpCard key={item.key} customer={item.customer} />;
                     return null;
                   })}
@@ -548,10 +587,10 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
           {/* 종류 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">일정 종류</label>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-5 gap-1.5">
               {SCHEDULE_TYPES.map(t => (
                 <button key={t} type="button" onClick={() => set("scheduleType", t)}
-                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${form.scheduleType === t ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"}`}>{t}</button>
+                  className={`py-2 rounded-xl text-[11px] font-medium border transition-colors ${form.scheduleType === t ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"}`}>{t}</button>
               ))}
             </div>
           </div>

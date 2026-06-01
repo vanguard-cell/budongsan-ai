@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-export type ScheduleType = "집보기" | "계약" | "잔금" | "기타";
+export type ScheduleType = "집보기" | "계약일" | "중도금일" | "잔금일" | "기타";
 export type ScheduleStatus = "scheduled" | "done" | "cancelled";
 
 export interface Schedule {
@@ -47,6 +47,10 @@ function ref(agencyId: string, id: string) {
 }
 function fromDoc(id: string, d: Record<string, unknown>): Schedule {
   const createdAt = d.createdAt instanceof Timestamp ? d.createdAt.toMillis() : (d.createdAt as number) || Date.now();
+  // 레거시 타입 마이그레이션: "계약" → "계약일", "잔금" → "잔금일"
+  let rawType = (d.scheduleType as string) || "집보기";
+  if (rawType === "계약") rawType = "계약일";
+  if (rawType === "잔금") rawType = "잔금일";
   return {
     id, createdAt,
     date:            (d.date            as string) || "",
@@ -56,7 +60,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Schedule {
     propertyAddress: (d.propertyAddress as string) || "",
     propertyId:      (d.propertyId      as string) || undefined,
     customerId:      (d.customerId      as string) || undefined,
-    scheduleType:    (d.scheduleType    as ScheduleType) || "집보기",
+    scheduleType:    rawType as ScheduleType,
     memo:            (d.memo            as string) || "",
     status:          (d.status          as ScheduleStatus) || "scheduled",
   };

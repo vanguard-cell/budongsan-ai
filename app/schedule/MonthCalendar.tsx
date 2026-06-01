@@ -11,9 +11,11 @@
 
 import { useMemo, useState } from "react";
 
+export type CalendarSource = "expiry" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
+
 export interface CalendarItem {
   date: string;                          // YYYY-MM-DD
-  source: "schedule" | "expiry" | "followup";
+  source: CalendarSource;
 }
 
 interface Props {
@@ -23,15 +25,19 @@ interface Props {
 }
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const SOURCE_COLORS = {
-  schedule: "bg-blue-500",
-  expiry:   "bg-orange-500",
-  followup: "bg-purple-500",
+export const SOURCE_COLORS: Record<CalendarSource, string> = {
+  expiry:          "bg-orange-500",
+  appointment:     "bg-blue-500",
+  contractDate:    "bg-purple-500",
+  downPaymentDate: "bg-pink-500",
+  balanceDate:     "bg-red-500",
 };
-const SOURCE_LABELS = {
-  schedule: "약속",
-  expiry:   "만기",
-  followup: "후속",
+export const SOURCE_LABELS: Record<CalendarSource, string> = {
+  expiry:          "만기일",
+  appointment:     "약속",
+  contractDate:    "계약일",
+  downPaymentDate: "중도금일",
+  balanceDate:     "잔금일",
 };
 
 function pad(n: number): string { return String(n).padStart(2, "0"); }
@@ -80,10 +86,10 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate }: Pro
 
   // 날짜별 소스 카운트
   const dateMap = useMemo(() => {
-    const map: Record<string, { schedule: number; expiry: number; followup: number; total: number }> = {};
+    const map: Record<string, Partial<Record<CalendarSource, number>> & { total: number }> = {};
     for (const item of items) {
-      if (!map[item.date]) map[item.date] = { schedule: 0, expiry: 0, followup: 0, total: 0 };
-      map[item.date][item.source]++;
+      if (!map[item.date]) map[item.date] = { total: 0 };
+      map[item.date][item.source] = (map[item.date][item.source] || 0) + 1;
       map[item.date].total++;
     }
     return map;
@@ -154,10 +160,12 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate }: Pro
             >
               <span className={`text-xs font-semibold ${isSelected ? "text-white" : baseColor}`}>{day}</span>
               {info && (
-                <div className="flex gap-0.5 mt-0.5">
-                  {info.schedule > 0 && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : SOURCE_COLORS.schedule}`}></span>}
-                  {info.expiry > 0 && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : SOURCE_COLORS.expiry}`}></span>}
-                  {info.followup > 0 && <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : SOURCE_COLORS.followup}`}></span>}
+                <div className="flex flex-wrap gap-0.5 mt-0.5 justify-center max-w-full">
+                  {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(src =>
+                    (info[src] || 0) > 0 ? (
+                      <span key={src} className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : SOURCE_COLORS[src]}`}></span>
+                    ) : null
+                  )}
                 </div>
               )}
               {info && info.total > 1 && (
@@ -171,9 +179,9 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate }: Pro
       </div>
 
       {/* 범례 + 액션 */}
-      <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-gray-100">
-        <div className="flex items-center gap-3 text-[11px]">
-          {(["schedule", "expiry", "followup"] as const).map(s => (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 pt-3 border-t border-gray-100">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+          {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(s => (
             <div key={s} className="flex items-center gap-1">
               <span className={`w-2 h-2 rounded-full ${SOURCE_COLORS[s]}`}></span>
               <span className="text-gray-600">{SOURCE_LABELS[s]}</span>
