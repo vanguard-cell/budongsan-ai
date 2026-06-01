@@ -12,7 +12,7 @@
 import { useEffect, useState } from "react";
 import type { ExportFormat, ExportOptions, ExportScope } from "@/lib/export";
 
-export type ExportType = "contracts" | "customers";
+export type ExportType = "contracts" | "customers" | "properties";
 
 interface Props {
   type: ExportType;
@@ -48,7 +48,7 @@ export default function ExportModal({
     }
   };
 
-  const label = type === "contracts" ? "계약" : "손님";
+  const label = type === "contracts" ? "계약" : type === "customers" ? "손님" : "매물";
   const targetCount = scope === "active" ? activeCount : totalCount;
 
   return (

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import ComplexPickerWidget from "@/app/ComplexPicker";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -16,6 +15,7 @@ import UploadModal, { type MergeStrategy } from "./UploadModal";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
+import { saveProperty, contractBackToProperty } from "@/lib/properties-db";
 import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
@@ -170,6 +170,34 @@ export default function ExpiryPage() {
     await fsDeleteContract(user.agencyId, id);
   };
 
+  /**
+   * 만기관리 → 매물 관리로 되돌리기 (재모집)
+   * - Contract를 closed로 변경 (이력 보존)
+   * - Property로 새로 생성하여 광고 시작
+   */
+  const jumpReopenAsProperty = async (c: Contract) => {
+    if (!user) return;
+    if (!confirm(
+      `${c.address}\n\n매물 관리로 되돌릴까요? (재모집)\n→ 새 매물로 광고 시작\n→ 이 만기 카드는 '종료'로 보존됩니다\n→ 매물 관리 페이지로 이동합니다`,
+    )) return;
+    try {
+      const prop = contractBackToProperty({
+        address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
+        landlordName: c.landlordName, landlordPhone: c.landlordPhone, memo: c.memo,
+      });
+      // 1. 새 매물 저장
+      await saveProperty(user.agencyId, prop);
+      // 2. 원 계약을 closed로 (이력 보존)
+      await fsSaveContract(user.agencyId, { ...c, status: "closed" });
+      // 3. 매물 관리 페이지로 자동 이동 — 사용자가 결과 즉시 확인
+      router.push("/properties");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[reopenAsProperty] 실패:", e);
+      alert(`처리 중 오류가 발생했습니다.\n\n${msg}\n\n권한 오류라면 Firebase Console에서 Rules 재배포가 필요할 수 있습니다.`);
+    }
+  };
+
   const loadSampleData = async () => {
     if (!user) return;
     if (contracts.length > 0) {
@@ -238,24 +266,6 @@ export default function ExpiryPage() {
             만기 4개월 / 3개월 / 2개월 전 자동 분류 — 임차인·임대인에게 바로 연락
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
-            <Link
-              href="/"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              ← 매물 도우미
-            </Link>
-            <Link
-              href="/customers"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              👥 손님 관리
-            </Link>
-            <Link
-              href="/feedback"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-purple-500 hover:text-purple-600 transition-colors"
-            >
-              📬 건의함
-            </Link>
             <button
               onClick={() => setShowSmsSettings(true)}
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
@@ -365,6 +375,10 @@ export default function ExpiryPage() {
                 onReopen={() => reopenContract(c.id)}
                 onDelete={() => deleteContract(c.id)}
                 onSms={target => setSmsTarget({ contract: c, target })}
+                onJumpCustomer={c.linkedCustomerId && customers.some(cu => cu.id === c.linkedCustomerId)
+                  ? () => router.push(`/customers?focus=${c.linkedCustomerId}`)
+                  : undefined}
+                onReopenAsProperty={() => jumpReopenAsProperty(c)}
               />
             ))}
           </div>
@@ -485,6 +499,8 @@ function ContractRow({
   onReopen,
   onDelete,
   onSms,
+  onJumpCustomer,
+  onReopenAsProperty,
 }: {
   contract: Contract;
   dday: number;
@@ -494,6 +510,8 @@ function ContractRow({
   onReopen: () => void;
   onDelete: () => void;
   onSms: (target: ContactTarget) => void;
+  onJumpCustomer?: () => void;        // 연결된 손님 점프
+  onReopenAsProperty?: () => void;    // 매물로 되돌리기 (재모집)
 }) {
   const cls = severityClasses(severity);
   const isClosed = c.status === "closed";
@@ -556,34 +574,52 @@ function ContractRow({
         </div>
       </div>
 
-      {/* 액션 버튼 */}
+      {/* 액션 버튼 — 색 구분감 강화: 수정(회) / 손님(파) / 매물복귀(녹) / 종료(주황) / 삭제(빨) */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button
           onClick={onEdit}
-          className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+          className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors"
         >
-          수정
+          ✏️ 수정
         </button>
+        {onJumpCustomer && (
+          <button
+            onClick={onJumpCustomer}
+            title="연결된 손님 보기 (손님관리로 이동)"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
+          >
+            👥 손님 보기
+          </button>
+        )}
+        {onReopenAsProperty && !isClosed && (
+          <button
+            onClick={onReopenAsProperty}
+            title="재모집 — 매물 관리로 되돌립니다 (계약 정보는 이력 보존)"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 font-semibold hover:bg-emerald-100 transition-colors"
+          >
+            🔄 매물로 되돌리기
+          </button>
+        )}
         {isClosed ? (
           <button
             onClick={onReopen}
-            className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-purple-300 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
           >
-            진행중으로 복구
+            ↩️ 진행중으로 복구
           </button>
         ) : (
           <button
             onClick={onClose}
-            className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-600 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-orange-300 bg-orange-50 text-orange-700 font-semibold hover:bg-orange-100 transition-colors"
           >
-            종료
+            ⏹️ 종료
           </button>
         )}
         <button
           onClick={onDelete}
-          className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors"
+          className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors ml-auto"
         >
-          삭제
+          🗑️ 삭제
         </button>
       </div>
     </div>

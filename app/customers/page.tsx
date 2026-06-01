@@ -28,9 +28,12 @@ import {
   uid,
 } from "./customer-types";
 import EditCustomerModal from "./EditCustomerModal";
+import KakaoParseModal from "./KakaoParseModal";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
+import CustomersUploadModal, { type CustMergeStrategy } from "./CustomersUploadModal";
 import { subscribeContracts } from "@/lib/contracts-db";
+import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { exportCustomers } from "@/lib/export";
 import type { Contract } from "../expiry/contracts";
 
@@ -38,15 +41,34 @@ type FilterKey = "all" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
 
 export default function CustomersPage() {
   const router = useRouter();
+
+  // ?focus=<customerId> 들어오면 해당 카드로 스크롤 + 강조 (Suspense 회피용 직접 읽기)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const focusId = new URLSearchParams(window.location.search).get("focus");
+    if (!focusId) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById(`customer-${focusId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-4", "ring-blue-300");
+        setTimeout(() => el.classList.remove("ring-4", "ring-blue-300"), 2400);
+      }
+    }, 800);  // 데이터 로딩 대기
+    return () => clearTimeout(t);
+  }, []);
   const { user, loading: authLoading, signOut } = useAuth();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Customer | null>(null);
   const [showExport, setShowExport] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [showKakaoParse, setShowKakaoParse] = useState(false);
 
   /* 로그인 가드 */
   useEffect(() => {
@@ -61,7 +83,8 @@ export default function CustomersPage() {
       setLoaded(true);
     });
     const unsubC = subscribeContracts(user.agencyId, setContracts);
-    return () => { unsub(); unsubC(); };
+    const unsubP = subscribeProperties(user.agencyId, setProperties);
+    return () => { unsub(); unsubC(); unsubP(); };
   }, [user]);
 
   /* 정렬 + 필터 — 후속 연락 일정 빠른 순 */
@@ -154,6 +177,14 @@ export default function CustomersPage() {
     for (const c of customers) await fsDeleteCustomer(user.agencyId, c.id);
   };
 
+  const handleUploadConfirm = async (toSave: Customer[], strategy: CustMergeStrategy) => {
+    if (!user) return;
+    if (strategy === "replace") {
+      for (const c of customers) await fsDeleteCustomer(user.agencyId, c.id);
+    }
+    await saveCustomersBatch(user.agencyId, toSave);
+  };
+
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
@@ -196,11 +227,25 @@ export default function CustomersPage() {
               + 손님 추가
             </button>
             <button
+              onClick={() => setShowKakaoParse(true)}
+              title="카톡/문자 대화를 붙여넣으면 AI가 자동으로 손님 정보 추출"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-yellow-400 bg-yellow-50 text-yellow-700 font-semibold hover:bg-yellow-100 transition-colors"
+            >
+              📩 카톡 붙여넣기
+            </button>
+            <button
               onClick={loadSamples}
               title="예시 손님 5건 추가"
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
             >
               🧪 예시 데이터
+            </button>
+            <button
+              onClick={() => setShowUpload(true)}
+              title="엑셀에서 손님 명단 일괄 업로드"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
+            >
+              📥 엑셀 업로드
             </button>
             <button
               onClick={() => setShowExport(true)}
@@ -258,6 +303,7 @@ export default function CustomersPage() {
               <CustomerRow
                 key={c.id}
                 customer={c}
+                properties={properties}
                 dday={d}
                 severity={s}
                 onEdit={() => setEditing({ ...c })}
@@ -276,8 +322,21 @@ export default function CustomersPage() {
       {editing && (
         <EditCustomerModal
           customer={editing}
+          properties={properties}
           onClose={() => setEditing(null)}
           onSave={async (c) => { await upsert({ ...c, id: c.id || uid() }); setEditing(null); }}
+        />
+      )}
+
+      {/* 카톡 파싱 모달 — AI가 대화에서 손님 정보 추출 */}
+      {showKakaoParse && (
+        <KakaoParseModal
+          onClose={() => setShowKakaoParse(false)}
+          onSave={async (c) => {
+            await upsert({ ...c, id: c.id || uid() });
+            setShowKakaoParse(false);
+            alert(`✅ 손님 "${c.name || c.phone || "(이름없음)"}"이(가) 등록되었습니다.`);
+          }}
         />
       )}
 
@@ -289,6 +348,15 @@ export default function CustomersPage() {
           activeCount={customers.filter(c => c.status === "active" || c.status === "matched").length}
           onClose={() => setShowExport(false)}
           onExport={(opt) => exportCustomers(customers, opt)}
+        />
+      )}
+
+      {/* 엑셀 업로드 모달 */}
+      {showUpload && (
+        <CustomersUploadModal
+          existing={customers}
+          onClose={() => setShowUpload(false)}
+          onConfirm={handleUploadConfirm}
         />
       )}
     </div>
@@ -330,10 +398,11 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
 
 /* ───── 손님 행 ───── */
 function CustomerRow({
-  customer: c, dday, severity,
+  customer: c, properties, dday, severity,
   onEdit, onDelete, onChangeStatus,
 }: {
   customer: Customer;
+  properties: Property[];
   dday: number;
   severity: FollowUpSeverity;
   onEdit: () => void;
@@ -342,6 +411,19 @@ function CustomerRow({
 }) {
   const cls = followUpClasses(severity);
   const isInactive = c.status === "lost" || c.status === "closed";
+  const [showShown, setShowShown] = useState(false);
+
+  // shownProperties와 내 매물 매칭 — address 비교 (정확/부분 매칭)
+  const matchProperty = (shownAddr: string): Property | null => {
+    if (!shownAddr) return null;
+    // 정확 매칭 우선
+    const exact = properties.find(p => p.address === shownAddr);
+    if (exact) return exact;
+    // 부분 매칭 (동/호수 차이 등)
+    const norm = (s: string) => s.replace(/\s/g, "").toLowerCase();
+    const sn = norm(shownAddr);
+    return properties.find(p => norm(p.address).includes(sn) || sn.includes(norm(p.address))) || null;
+  };
 
   const buildSmsBody = () => {
     const greeting = `안녕하세요, 미사금빛공인중개사입니다.`;
@@ -352,7 +434,7 @@ function CustomerRow({
   };
 
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${isInactive ? "bg-gray-50/60 border-gray-200 opacity-70" : cls.row}`}>
+    <div id={`customer-${c.id}`} className={`rounded-2xl border p-3 sm:p-4 transition-all ${isInactive ? "bg-gray-50/60 border-gray-200 opacity-70" : cls.row}`}>
       <div className="flex items-start gap-3">
         {/* 후속 D-day 배지 */}
         <div className="flex-shrink-0">
@@ -385,9 +467,68 @@ function CustomerRow({
             {c.moveInDate && <div>📅 입주 가능: <span className="text-gray-800">{c.moveInDate}</span></div>}
             {c.nextFollowUp && <div>🔔 후속 예정: <span className="text-gray-800">{c.nextFollowUp}</span></div>}
             {c.shownProperties.length > 0 && (
-              <div>🏠 보여드린 매물 <span className="font-semibold text-blue-600">{c.shownProperties.length}건</span></div>
+              <div>
+                <button
+                  onClick={() => setShowShown(v => !v)}
+                  className="text-left hover:text-blue-700 transition-colors"
+                  title="클릭하면 내 매물 연동 정보가 표시됩니다"
+                >
+                  🏠 보여드린 매물 <span className="font-semibold text-blue-600 underline decoration-dotted">{c.shownProperties.length}건</span>
+                  <span className="ml-1 text-[10px] text-gray-400">{showShown ? "▲" : "▼"}</span>
+                </button>
+              </div>
             )}
           </div>
+
+          {/* 보여드린 매물 펼침 — 내 매물장 연동 */}
+          {showShown && c.shownProperties.length > 0 && (
+            <div className="mt-2 space-y-1.5 bg-blue-50/40 rounded-xl p-2 border border-blue-100">
+              {c.shownProperties.map((sp, idx) => {
+                const matched = matchProperty(sp.address);
+                const reactionEmoji = sp.reaction === "positive" ? "😊" : sp.reaction === "negative" ? "😕" : sp.reaction === "neutral" ? "😐" : "";
+                return (
+                  <div key={idx} className="bg-white rounded-lg p-2 border border-gray-200">
+                    <div className="flex items-start gap-1.5">
+                      <span className="text-[10px] text-gray-400 shrink-0 mt-0.5">{sp.shownAt || "—"}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {matched ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium shrink-0">🔗 내 매물장</span>
+                          ) : (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0" title="내 매물 관리에 없는 외부 매물">외부매물</span>
+                          )}
+                          {reactionEmoji && <span className="text-[11px]">{reactionEmoji}</span>}
+                        </div>
+                        <div className="text-[11px] text-gray-800 font-medium break-all mt-0.5">{sp.address || "(주소 없음)"}</div>
+                        {matched && (
+                          <div className="text-[10px] text-emerald-700 mt-0.5">
+                            {matched.dealType} · {matched.propertyType}
+                            {matched.price ? ` · ${matched.dealType === "월세" ? `${matched.price}/${matched.monthly || 0}만` : `${matched.price}만`}` : ""}
+                            {matched.ownerName ? ` · 집주인 ${matched.ownerName}` : ""}
+                          </div>
+                        )}
+                        {sp.note && (
+                          <div className="text-[10px] text-gray-500 mt-0.5">💬 {sp.note}</div>
+                        )}
+                      </div>
+                      {matched && (
+                        <a
+                          href={`/properties#${matched.id}`}
+                          className="text-[10px] px-1.5 py-0.5 rounded-full border border-emerald-300 text-emerald-700 hover:bg-emerald-50 shrink-0"
+                          title="내 매물 관리로 이동"
+                        >
+                          →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="text-[10px] text-blue-600 text-center pt-1">
+                💡 매물 정보 수정은 "수정" 버튼에서, 내 매물장에서 자동완성 검색 가능
+              </div>
+            </div>
+          )}
 
           {/* 연락처 */}
           {c.phone && (
@@ -412,36 +553,36 @@ function CustomerRow({
         </div>
       </div>
 
-      {/* 액션 */}
+      {/* 액션 — 색 구분감 강화 */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
-        <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-          수정
+        <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+          ✏️ 수정
         </button>
         {c.status === "active" && (
           <>
-            <button onClick={() => onChangeStatus("matched")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-600 transition-colors">
-              매칭으로
+            <button onClick={() => onChangeStatus("matched")} className="text-[11px] px-2.5 py-1 rounded-full border border-green-300 bg-green-50 text-green-700 font-semibold hover:bg-green-100 transition-colors">
+              🤝 매칭으로
             </button>
-            <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-              거래 완료
+            <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors">
+              ✅ 거래 완료
             </button>
-            <button onClick={() => onChangeStatus("lost")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:border-orange-400 hover:text-orange-600 transition-colors">
-              이탈
+            <button onClick={() => onChangeStatus("lost")} className="text-[11px] px-2.5 py-1 rounded-full border border-orange-300 bg-orange-50 text-orange-700 font-semibold hover:bg-orange-100 transition-colors">
+              ⚠️ 이탈
             </button>
           </>
         )}
         {c.status === "matched" && (
-          <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-            거래 완료
+          <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors">
+            ✅ 거래 완료
           </button>
         )}
         {(c.status === "lost" || c.status === "closed") && (
-          <button onClick={() => onChangeStatus("active")} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-            다시 진행 중으로
+          <button onClick={() => onChangeStatus("active")} className="text-[11px] px-2.5 py-1 rounded-full border border-purple-300 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors">
+            ↩️ 다시 진행 중으로
           </button>
         )}
-        <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors ml-auto">
-          삭제
+        <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors ml-auto">
+          🗑️ 삭제
         </button>
       </div>
     </div>

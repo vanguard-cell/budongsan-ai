@@ -5,7 +5,7 @@
  * 만기 관리(계약 추가/수정) + 매물 도우미 공용 컴포넌트
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export interface ComplexResult {
   name: string;
@@ -60,30 +60,55 @@ const REGION_DATA: Record<string, Record<string, string[]>> = {
 
 interface Props {
   onSelect: (item: ComplexResult) => void;
+  /** 외부 폼에서 이미 선택한 매물 유형 — 전달 시 내부 건물유형 선택 UI 숨김 */
+  externalBuildingType?: string;
 }
 
-export default function ComplexPicker({ onSelect }: Props) {
+/** 매물 유형(8종) → 단지 검색에 쓰는 건물유형(6종) 매핑 */
+function mapPropertyTypeToBuilding(t: string | undefined): string {
+  if (!t) return "";
+  if (BUILDING_TYPES.includes(t)) return t;       // 아파트·오피스텔·상가·사무실
+  if (t === "빌라/다세대") return "빌라";
+  if (t === "원룸/투룸")  return "원룸/투룸";
+  if (t === "토지")       return "";              // 토지는 단지 검색 불가
+  return "";
+}
+
+export default function ComplexPicker({ onSelect, externalBuildingType }: Props) {
+  const mappedExternal = mapPropertyTypeToBuilding(externalBuildingType);
+  const hideTypeUI = !!mappedExternal;
+
   const [open, setOpen] = useState(false);
   const [sido, setSido] = useState("경기도");
   const [sigungu, setSigungu] = useState("하남시");
   const [dong, setDong] = useState("");
-  const [buildingType, setBuildingType] = useState("");
+  const [buildingType, setBuildingType] = useState(mappedExternal || "");
   const [results, setResults] = useState<ComplexResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   const sigunguList = Object.keys(REGION_DATA[sido] ?? {});
   const dongList = REGION_DATA[sido]?.[sigungu] ?? [];
 
+  // 부모의 buildingType이 바뀌면 내부 state 동기화
+  useEffect(() => {
+    if (mappedExternal && buildingType !== mappedExternal) {
+      setBuildingType(mappedExternal);
+      setResults([]);  // 유형 바뀌면 이전 결과 초기화
+    }
+  }, [mappedExternal, buildingType]);
+
   const search = async () => {
+    const effectiveBT = mappedExternal || buildingType;
     const location = [sido, sigungu, dong].filter(Boolean).join(" ");
-    if (!sigungu || !buildingType) return;
+    if (!sigungu || !effectiveBT) return;
     setLoading(true);
     setResults([]);
     try {
-      const q = `${location} ${buildingType}`;
-      const res = await fetch(`/api/complex-search?q=${encodeURIComponent(q)}`);
+      const q = `${location} ${effectiveBT}`;
+      // pages=3으로 최대 45건 조회 (자동완성은 기본 1페이지)
+      const res = await fetch(`/api/complex-search?q=${encodeURIComponent(q)}&pages=3`);
       const data: ComplexResult[] = await res.json();
-      setResults(data.slice(0, 12));
+      setResults(data);
     } catch {
       setResults([]);
     } finally {
@@ -151,23 +176,30 @@ export default function ComplexPicker({ onSelect }: Props) {
         </select>
       </div>
 
-      {/* 건물 유형 */}
-      <div className="grid grid-cols-3 gap-1.5">
-        {BUILDING_TYPES.map(t => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => { setBuildingType(t); setResults([]); }}
-            className={`py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-              buildingType === t
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-600 border-gray-200 hover:border-blue-400"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      {/* 건물 유형 — 외부에서 받았으면 안내만 표시 */}
+      {hideTypeUI ? (
+        <div className="rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs text-blue-700">
+          🏘️ 매물 유형: <span className="font-semibold">{mappedExternal}</span>
+          <span className="text-gray-400 ml-1">(위에서 선택한 유형으로 검색)</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-1.5">
+          {BUILDING_TYPES.map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => { setBuildingType(t); setResults([]); }}
+              className={`py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                buildingType === t
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-blue-400"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
 
       <button
         type="button"
@@ -180,19 +212,22 @@ export default function ComplexPicker({ onSelect }: Props) {
 
       {/* 결과 목록 */}
       {results.length > 0 && (
-        <div className="border border-gray-200 rounded-xl overflow-hidden bg-white max-h-48 overflow-y-auto">
-          {results.map((item, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => pick(item)}
-              className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors"
-            >
-              <div className="text-sm font-medium text-gray-800">{item.name}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{item.address}</div>
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="text-[10px] text-gray-500 text-right -mb-1">총 {results.length}건</div>
+          <div className="border border-gray-200 rounded-xl overflow-hidden bg-white max-h-80 overflow-y-auto">
+            {results.map((item, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => pick(item)}
+                className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors"
+              >
+                <div className="text-sm font-medium text-gray-800">{item.name}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{item.address}</div>
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {!loading && results.length === 0 && sigungu && buildingType && (

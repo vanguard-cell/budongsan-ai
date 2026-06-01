@@ -53,8 +53,9 @@ export default function FeedbackPage() {
       );
       setText("");
     } catch (e) {
-      alert("등록 중 오류가 발생했습니다. 다시 시도해주세요.");
-      console.error(e);
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[feedback] 등록 실패:", e);
+      alert(`등록 중 오류가 발생했습니다.\n\n${msg}\n\n다시 시도해주세요.`);
     } finally {
       setSubmitting(false);
     }

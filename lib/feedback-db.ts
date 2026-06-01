@@ -62,7 +62,12 @@ function fromDoc(id: string, data: Record<string, unknown>): FeedbackItem {
   };
 }
 
-/** 실시간 구독 — 관리자는 전체, 일반 사용자는 본인 것만 */
+/** 실시간 구독 — 관리자는 전체, 일반 사용자는 본인 것만
+ *
+ * 주의: where + orderBy 조합은 Firestore에서 복합 인덱스가 필요하므로
+ * 일반 사용자 쿼리는 where만 사용하고 클라이언트에서 정렬한다.
+ * (사용자별 글은 보통 수십 건 이하라 클라 정렬 부담 없음)
+ */
 export function subscribeFeedback(
   uid: string,
   isAdmin: boolean,
@@ -70,11 +75,21 @@ export function subscribeFeedback(
 ): Unsubscribe {
   const q = isAdmin
     ? query(feedbackCol(), orderBy("createdAt", "desc"))
-    : query(feedbackCol(), where("submittedBy.uid", "==", uid), orderBy("createdAt", "desc"));
+    : query(feedbackCol(), where("submittedBy.uid", "==", uid));
 
-  return onSnapshot(q, snap => {
-    onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>)));
-  });
+  return onSnapshot(
+    q,
+    snap => {
+      const items = snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>));
+      // 클라이언트 정렬 — 최신순
+      items.sort((a, b) => b.createdAt - a.createdAt);
+      onChange(items);
+    },
+    err => {
+      console.error("[feedback] subscribe 실패:", err);
+      onChange([]);
+    },
+  );
 }
 
 /** 새 건의 등록 */

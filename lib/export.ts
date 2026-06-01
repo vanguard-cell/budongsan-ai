@@ -18,6 +18,7 @@ import {
   followUpDDay,
   followUpDDayLabel,
 } from "@/app/customers/customer-types";
+import type { Property } from "@/lib/properties-db";
 
 export type ExportScope = "active" | "all";
 export type ExportFormat = "xlsx" | "csv";
@@ -190,6 +191,71 @@ export function exportCustomers(customers: Customer[], opt: ExportOptions): { co
       { wch: 12 }, // 등록일
     ];
     XLSX.utils.book_append_sheet(wb, ws, "손님관리");
+    XLSX.writeFile(wb, filename);
+  }
+  return { count: rows.length, filename };
+}
+
+/* ───────── 매물 → 엑셀 row 변환 ───────── */
+function propertiesToRows(properties: Property[], maskPersonal: boolean) {
+  return properties.map(p => ({
+    "주소":          p.address,
+    "매물유형":      p.propertyType,
+    "거래종류":      p.dealType,
+    "매매가/보증금(만원)": p.price,
+    "월세(만원)":     p.monthly,
+    "전용면적(㎡)":   p.area,
+    "동":            p.dong,
+    "호수":          p.ho,
+    "방수":          p.rooms,
+    "방향":          p.direction,
+    "집주인":        maskPersonal ? maskName(p.ownerName) : p.ownerName,
+    "집주인 전화":   maskPersonal ? maskPhone(p.ownerPhone) : p.ownerPhone,
+    "임차인":        maskPersonal ? maskName(p.tenantName) : p.tenantName,
+    "임차인 전화":   maskPersonal ? maskPhone(p.tenantPhone) : p.tenantPhone,
+    "임대만기일":    p.leaseEndDate,
+    "상태":          p.status === "active" ? "진행중" : "거래완료",
+    "메모":          p.memo,
+    "등록일":        new Date(p.createdAt).toISOString().slice(0, 10),
+  }));
+}
+
+/* ───────── 매물 내보내기 ───────── */
+export function exportProperties(properties: Property[], opt: ExportOptions): { count: number; filename: string } {
+  const filtered = opt.scope === "active"
+    ? properties.filter(p => p.status === "active")
+    : properties;
+  const rows = propertiesToRows(filtered, opt.maskPersonal);
+
+  const filename = `내매물_${opt.scope === "active" ? "진행중" : "전체"}_${ymd()}.${opt.format}`;
+
+  if (opt.format === "csv") {
+    const csv = arrayToCSV(rows);
+    downloadFile("﻿" + csv, filename, "text/csv;charset=utf-8");
+  } else {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [
+      { wch: 40 }, // 주소
+      { wch: 12 }, // 매물유형
+      { wch: 8 },  // 거래종류
+      { wch: 14 }, // 가격
+      { wch: 10 }, // 월세
+      { wch: 10 }, // 면적
+      { wch: 6 },  // 동
+      { wch: 6 },  // 호수
+      { wch: 6 },  // 방수
+      { wch: 8 },  // 방향
+      { wch: 10 }, // 집주인
+      { wch: 16 }, // 집주인 전화
+      { wch: 10 }, // 임차인
+      { wch: 16 }, // 임차인 전화
+      { wch: 12 }, // 임대만기일
+      { wch: 8 },  // 상태
+      { wch: 24 }, // 메모
+      { wch: 12 }, // 등록일
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, "내매물");
     XLSX.writeFile(wb, filename);
   }
   return { count: rows.length, filename };
