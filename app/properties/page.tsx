@@ -11,7 +11,8 @@ import {
 import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import { moveToContract } from "@/lib/contracts-db";
-import { upsertTenantAsCustomer } from "@/lib/customers-db";
+import { subscribeCustomers } from "@/lib/customers-db";
+import type { Customer } from "@/app/customers/customer-types";
 import ComplexPickerWidget from "@/app/ComplexPicker";
 import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
 import ExportModal from "../ExportModal";
@@ -52,6 +53,7 @@ export default function PropertiesPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
   const [progressing, setProgressing] = useState<Property | null>(null);   // 계약 진행 모달
@@ -72,7 +74,8 @@ export default function PropertiesPage() {
     if (!user) return;
     const u1 = subscribeProperties(user.agencyId, list => { setProperties(list); setLoaded(true); });
     const u2 = subscribeSchedules(user.agencyId, setSchedules);
-    return () => { u1(); u2(); };
+    const u3 = subscribeCustomers(user.agencyId, setCustomers);
+    return () => { u1(); u2(); u3(); };
   }, [user]);
 
   const upsert = async (p: Property) => {
@@ -138,18 +141,7 @@ export default function PropertiesPage() {
     const label = p.dealType === "매매" ? "거래완료 처리하고 만기 관리로 이동할까요?" : "이 매물을 만기 관리로 옮길까요? (내 매물에서는 사라집니다)";
     if (!confirm(label)) return;
     try {
-      // 임차인 자동 등록 (전·월세만, 임차인 정보 있을 때)
-      let linkedCustomerId: string | undefined = p.linkedTenantId;
-      if (p.dealType !== "매매" && (p.tenantName || p.tenantPhone)) {
-        const id = await upsertTenantAsCustomer(user.agencyId, {
-          name: p.tenantName,
-          phone: p.tenantPhone,
-          propertyAddress: p.address,
-          contractDate: p.contractDate,
-        });
-        linkedCustomerId = id || linkedCustomerId;
-      }
-      await moveToContract(user.agencyId, p, linkedCustomerId);
+      await moveToContract(user.agencyId, p, p.linkedTenantId);
     } catch (e) {
       console.error("[sendToExpiry] 실패:", e);
       alert("만기 관리로 이동 중 오류가 발생했습니다.");
@@ -193,47 +185,6 @@ export default function PropertiesPage() {
     for (const p of properties) await deleteProperty(user.agencyId, p.id);
   };
 
-  /**
-   * 기존 매물 임차인 일괄 손님등록
-   * - 전·월세 매물 중 임차인 정보 있는 것
-   * - linkedTenantId 없는 매물만 (이미 연동된 것 제외)
-   */
-  const migrateTenantsToCustomers = async () => {
-    if (!user) return;
-    const targets = properties.filter(p =>
-      p.dealType !== "매매"
-      && (p.tenantName || p.tenantPhone)
-      && !p.linkedTenantId
-    );
-    if (targets.length === 0) {
-      alert("일괄 등록할 임차인이 없습니다.\n(이미 모두 손님관리에 연동돼 있거나 임차인 정보가 비어있음)");
-      return;
-    }
-    if (!confirm(`${targets.length}건의 매물 임차인을 손님관리에 일괄 등록할까요?\n\n(전화번호 중복은 자동 매칭. 손님관리 매칭 탭에서 확인 가능)`)) return;
-
-    let ok = 0;
-    let fail = 0;
-    for (const p of targets) {
-      try {
-        const id = await upsertTenantAsCustomer(user.agencyId, {
-          name: p.tenantName,
-          phone: p.tenantPhone,
-          propertyAddress: p.address,
-          contractDate: p.contractDate,
-        });
-        if (id) {
-          await saveProperty(user.agencyId, { ...p, linkedTenantId: id });
-          ok++;
-        } else {
-          fail++;
-        }
-      } catch (e) {
-        console.error("[migrate] 실패:", p.address, e);
-        fail++;
-      }
-    }
-    alert(`✅ 일괄 등록 완료\n\n성공: ${ok}건\n실패: ${fail}건\n\n손님관리 > 매칭 또는 전체 탭에서 확인하세요.`);
-  };
 
   // 임차인 있으면 "계약진행중", 없으면 "매물관리"
   const isContracted = (p: Property) => !!(p.tenantName || p.tenantPhone);
@@ -319,15 +270,6 @@ export default function PropertiesPage() {
             >
               🧪 예시 데이터
             </button>
-            {properties.some(p => p.dealType !== "매매" && (p.tenantName || p.tenantPhone) && !p.linkedTenantId) && (
-              <button
-                onClick={migrateTenantsToCustomers}
-                title="기존 매물의 임차인을 손님관리에 일괄 등록 (이미 연동된 것은 제외)"
-                className="px-4 py-2.5 rounded-full border-2 border-blue-300 bg-blue-50 text-blue-700 text-sm font-semibold hover:bg-blue-100 transition-colors"
-              >
-                🔄 기존 임차인 → 손님관리
-              </button>
-            )}
             {properties.length > 0 && (
               <button
                 onClick={clearAll}
@@ -380,24 +322,41 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        {/* 계약 상태 탭 (거래완료 보기가 꺼진 상태에서만) */}
+        {/* 계약 상태 탭 */}
         {!showClosed && (
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="flex rounded-2xl overflow-hidden border border-gray-200 mb-4 shadow-sm">
             <button
               onClick={() => setViewMode("available")}
-              className={`rounded-2xl border py-3 text-center transition-colors ${viewMode === "available" ? "bg-emerald-600 text-white border-emerald-600" : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"}`}
+              className={`flex-1 flex items-center justify-between px-4 py-3.5 transition-all ${
+                viewMode === "available"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white text-gray-600 hover:bg-emerald-50"
+              }`}
             >
-              <div className="text-base font-bold">{counts.available}</div>
-              <div className="text-[11px] mt-0.5">📋 매물 관리</div>
-              <div className="text-[10px] opacity-70">계약 없는 매물</div>
+              <div className="text-left">
+                <div className="text-xs font-medium opacity-80">매물 관리</div>
+                <div className="text-[11px] opacity-70">계약 없는 매물</div>
+              </div>
+              <div className={`text-2xl font-bold ml-2 ${viewMode === "available" ? "text-white" : "text-emerald-600"}`}>
+                {counts.available}
+              </div>
             </button>
+            <div className="w-px bg-gray-200" />
             <button
               onClick={() => setViewMode("contracted")}
-              className={`rounded-2xl border py-3 text-center transition-colors ${viewMode === "contracted" ? "bg-blue-600 text-white border-blue-600" : "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"}`}
+              className={`flex-1 flex items-center justify-between px-4 py-3.5 transition-all ${
+                viewMode === "contracted"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-600 hover:bg-blue-50"
+              }`}
             >
-              <div className="text-base font-bold">{counts.contracted}</div>
-              <div className="text-[11px] mt-0.5">🤝 계약진행중</div>
-              <div className="text-[10px] opacity-70">임차인 있는 매물</div>
+              <div className="text-left">
+                <div className="text-xs font-medium opacity-80">🤝 계약진행중</div>
+                <div className="text-[11px] opacity-70">임차인 있는 매물</div>
+              </div>
+              <div className={`text-2xl font-bold ml-2 ${viewMode === "contracted" ? "text-white" : "text-blue-600"}`}>
+                {counts.contracted}
+              </div>
             </button>
           </div>
         )}
@@ -476,25 +435,11 @@ export default function PropertiesPage() {
       {progressing && (
         <ContractProgressModal
           property={progressing}
+          customers={customers}
           onClose={() => setProgressing(null)}
           onSave={async (updated) => {
             if (!user) return;
-            // 임차인 정보 입력됐으면 손님 관리에 자동 등록
-            let linkedTenantId = updated.linkedTenantId;
-            if (updated.dealType !== "매매" && (updated.tenantName || updated.tenantPhone)) {
-              try {
-                const id = await upsertTenantAsCustomer(user.agencyId, {
-                  name: updated.tenantName,
-                  phone: updated.tenantPhone,
-                  propertyAddress: updated.address,
-                  contractDate: updated.contractDate,
-                });
-                if (id) linkedTenantId = id;
-              } catch (e) {
-                console.error("[upsertTenant] 실패:", e);
-              }
-            }
-            await saveProperty(user.agencyId, { ...updated, linkedTenantId });
+            await saveProperty(user.agencyId, { ...updated });
             setProgressing(null);
           }}
         />
@@ -982,14 +927,33 @@ function PropertyModal({ property, onClose, onSave }: {
 }
 
 /* ── 계약 진행 모달 — 4개 날짜 + 임차인 정보 ── */
-function ContractProgressModal({ property, onClose, onSave }: {
+function ContractProgressModal({ property, customers, onClose, onSave }: {
   property: Property;
+  customers: Customer[];
   onClose: () => void;
   onSave: (p: Property) => Promise<void>;
 }) {
   const [form, setForm] = useState<Property>(property);
   const [saving, setSaving] = useState(false);
+  const [custQuery, setCustQuery] = useState("");
+  const [showCustList, setShowCustList] = useState(false);
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
+
+  // 손님 검색 (이름 또는 전화번호)
+  const filteredCustomers = useMemo(() => {
+    if (!custQuery.trim()) return customers.slice(0, 8);
+    const q = custQuery.toLowerCase().replace(/\D/g, "") || custQuery.toLowerCase();
+    return customers.filter(c =>
+      c.name.toLowerCase().includes(custQuery.toLowerCase()) ||
+      c.phone.replace(/\D/g, "").includes(q)
+    ).slice(0, 8);
+  }, [custQuery, customers]);
+
+  const selectCustomer = (c: Customer) => {
+    setForm(prev => ({ ...prev, tenantName: c.name, tenantPhone: c.phone, linkedTenantId: c.id }));
+    setCustQuery(c.name);
+    setShowCustList(false);
+  };
 
   const today = new Date().toISOString().slice(0, 10);
   const balanceOverdueLocal = !!form.balanceDate && form.balanceDate <= today;
@@ -1016,13 +980,6 @@ function ContractProgressModal({ property, onClose, onSave }: {
     setSaving(true);
     try {
       await onSave(form);
-      // 임차인 자동등록 알림 (저장 성공 시)
-      if (form.dealType !== "매매" && (form.tenantName || form.tenantPhone)) {
-        // alert 대신 짧은 confirm 형태로 안내 (자동 확인)
-        setTimeout(() => {
-          alert(`✅ 저장 완료\n\n임차인 "${form.tenantName || form.tenantPhone}"이(가) 손님관리에 자동 등록되었습니다.\n(손님관리 > 매칭 또는 전체 탭에서 확인)`);
-        }, 100);
-      }
     } catch {
       alert("저장 중 오류가 발생했습니다.");
     } finally {
@@ -1072,23 +1029,63 @@ function ContractProgressModal({ property, onClose, onSave }: {
             </div>
           </div>
 
-          {/* 임차인 정보 (전·월세) */}
+          {/* 임차인 정보 — 손님관리 검색 연동 */}
           {form.dealType !== "매매" && (
-            <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40">
-              <div className="text-xs font-semibold text-orange-700 mb-2">🏠 임차인 정보</div>
-              <p className="text-[10px] text-orange-600 mb-2">입력하면 손님 관리에 자동 등록됩니다 (전화번호 중복 시 기존 손님에 매물 추가)</p>
+            <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-2">
+              <div className="text-xs font-semibold text-orange-700">🏠 임차인 (손님관리에서 불러오기)</div>
+
+              {/* 손님 검색 드롭다운 */}
+              {customers.length > 0 && (
+                <div className="relative">
+                  <input
+                    value={custQuery}
+                    onChange={e => { setCustQuery(e.target.value); setShowCustList(true); }}
+                    onFocus={() => setShowCustList(true)}
+                    placeholder="🔍 손님 이름 또는 전화번호 검색"
+                    autoComplete="off"
+                    className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  {form.linkedTenantId && (
+                    <span className="absolute right-3 top-2 text-[10px] text-blue-600 font-medium">👥 연결됨</span>
+                  )}
+                  {showCustList && filteredCustomers.length > 0 && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-40 overflow-y-auto">
+                      {filteredCustomers.map(c => (
+                        <button key={c.id} type="button"
+                          onMouseDown={e => { e.preventDefault(); selectCustomer(c); }}
+                          className="w-full text-left px-3 py-2.5 hover:bg-orange-50 border-b last:border-0 border-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-800">{c.name}</span>
+                            <span className="text-xs text-gray-500">{c.phone}</span>
+                            {c.vip && <span className="text-[10px] px-1 py-0.5 rounded bg-yellow-100 text-yellow-700">VIP</span>}
+                          </div>
+                          {c.preferredArea && <div className="text-xs text-gray-400 mt-0.5">희망: {c.preferredArea}</div>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 직접 입력 */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">이름</label>
-                  <input value={form.tenantName} onChange={e => set("tenantName", e.target.value)}
-                    placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                  <input value={form.tenantName}
+                    onChange={e => { set("tenantName", e.target.value); set("linkedTenantId", undefined); setCustQuery(e.target.value); }}
+                    placeholder="홍길동"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">연락처</label>
-                  <input type="tel" value={form.tenantPhone} onChange={e => set("tenantPhone", e.target.value)}
-                    placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                  <input type="tel" value={form.tenantPhone}
+                    onChange={e => { set("tenantPhone", e.target.value); set("linkedTenantId", undefined); }}
+                    placeholder="010-0000-0000"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
               </div>
+              <p className="text-[10px] text-orange-600">💡 손님관리에 등록된 손님을 검색하거나 직접 입력하세요</p>
             </div>
           )}
 
