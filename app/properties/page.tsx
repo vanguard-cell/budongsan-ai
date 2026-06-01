@@ -789,7 +789,10 @@ function PropertyModal({ property, onClose, onSave }: {
               )}
             </div>
             <div className="mt-1.5">
-              <ComplexPickerWidget onSelect={item => selectComplex(item.name, item.address)} />
+              <ComplexPickerWidget
+                onSelect={item => selectComplex(item.name, item.address)}
+                externalBuildingType={form.propertyType}
+              />
             </div>
 
             {/* 동 / 호수 — 입력하면 주소에 자동 반영 */}
