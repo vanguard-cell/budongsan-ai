@@ -265,19 +265,19 @@ export default function SchedulePage() {
         {/* 필터 탭 — 5개 */}
         <div className="grid grid-cols-5 gap-1.5 mb-4">
           {([
-            { key: "all",             icon: "📋", label: "전체",     color: "bg-blue-600" },
-            { key: "appointment",     icon: "👥", label: "약속",     color: "bg-blue-600" },
-            { key: "contractDate",    icon: "📝", label: "계약일",   color: "bg-purple-600" },
-            { key: "downPaymentDate", icon: "💰", label: "중도금일", color: "bg-pink-600" },
-            { key: "balanceDate",     icon: "🔑", label: "잔금일",   color: "bg-red-600" },
+            { key: "all",             icon: "📋", label: "전체",     activeColor: "bg-blue-600",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
+            { key: "appointment",     icon: "👥", label: "약속",     activeColor: "bg-blue-500",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
+            { key: "contractDate",    icon: "📝", label: "계약일",   activeColor: "bg-purple-600",  inactiveColor: "bg-purple-50 border-purple-200 text-purple-700" },
+            { key: "downPaymentDate", icon: "💰", label: "중도금일", activeColor: "bg-pink-600",    inactiveColor: "bg-pink-50 border-pink-200 text-pink-700" },
+            { key: "balanceDate",     icon: "🔑", label: "잔금일",   activeColor: "bg-red-600",     inactiveColor: "bg-red-50 border-red-200 text-red-700" },
           ] as const).map(tab => (
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key)}
-              className={`rounded-2xl border py-2.5 text-center transition-colors ${
+              className={`rounded-2xl border py-2.5 text-center transition-colors font-medium ${
                 filter === tab.key
-                  ? `${tab.color} text-white border-transparent font-semibold`
-                  : "bg-white border-gray-200 text-gray-600 hover:border-blue-300"
+                  ? `${tab.activeColor} text-white border-transparent font-semibold`
+                  : `${tab.inactiveColor} hover:opacity-80`
               }`}
             >
               <div className="text-base leading-none">{tab.icon}</div>

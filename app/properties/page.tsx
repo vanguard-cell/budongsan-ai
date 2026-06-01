@@ -61,6 +61,8 @@ export default function PropertiesPage() {
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
   const [showClosed, setShowClosed] = useState(false);
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
+  // 계약진행중 탭: "available"=계약없음, "contracted"=임차인있음(계약진행중)
+  const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/properties");
@@ -233,9 +235,16 @@ export default function PropertiesPage() {
     alert(`✅ 일괄 등록 완료\n\n성공: ${ok}건\n실패: ${fail}건\n\n손님관리 > 매칭 또는 전체 탭에서 확인하세요.`);
   };
 
+  // 임차인 있으면 "계약진행중", 없으면 "매물관리"
+  const isContracted = (p: Property) => !!(p.tenantName || p.tenantPhone);
+
   const filtered = useMemo(() => {
-    return properties
-      .filter(p => showClosed ? p.status === "closed" : p.status === "active")
+    const baseList = showClosed
+      ? properties.filter(p => p.status === "closed")
+      : properties.filter(p => p.status === "active")
+          .filter(p => viewMode === "available" ? !isContracted(p) : isContracted(p));
+
+    return baseList
       .filter(p => filterType === "all" || p.dealType === filterType)
       .filter(p => {
         if (!query.trim()) return true;
@@ -248,12 +257,14 @@ export default function PropertiesPage() {
             || (p.tenantName || "").toLowerCase().includes(q)
             || (p.tenantPhone || "").includes(q);
       });
-  }, [properties, showClosed, filterType, query]);
+  }, [properties, showClosed, filterType, query, viewMode]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
     return {
       all: active.length,
+      available: active.filter(p => !isContracted(p)).length,
+      contracted: active.filter(p => isContracted(p)).length,
       매매: active.filter(p => p.dealType === "매매").length,
       전세: active.filter(p => p.dealType === "전세").length,
       월세: active.filter(p => p.dealType === "월세").length,
@@ -366,6 +377,28 @@ export default function PropertiesPage() {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* 계약 상태 탭 (거래완료 보기가 꺼진 상태에서만) */}
+        {!showClosed && (
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <button
+              onClick={() => setViewMode("available")}
+              className={`rounded-2xl border py-3 text-center transition-colors ${viewMode === "available" ? "bg-emerald-600 text-white border-emerald-600" : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"}`}
+            >
+              <div className="text-base font-bold">{counts.available}</div>
+              <div className="text-[11px] mt-0.5">📋 매물 관리</div>
+              <div className="text-[10px] opacity-70">계약 없는 매물</div>
+            </button>
+            <button
+              onClick={() => setViewMode("contracted")}
+              className={`rounded-2xl border py-3 text-center transition-colors ${viewMode === "contracted" ? "bg-blue-600 text-white border-blue-600" : "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"}`}
+            >
+              <div className="text-base font-bold">{counts.contracted}</div>
+              <div className="text-[11px] mt-0.5">🤝 계약진행중</div>
+              <div className="text-[10px] opacity-70">임차인 있는 매물</div>
+            </button>
           </div>
         )}
 
