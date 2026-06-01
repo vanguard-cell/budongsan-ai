@@ -178,19 +178,23 @@ export default function ExpiryPage() {
   const jumpReopenAsProperty = async (c: Contract) => {
     if (!user) return;
     if (!confirm(
-      `${c.address}\n\n매물 관리로 되돌릴까요? (재모집)\n→ 새 매물로 광고 시작\n→ 이 만기 카드는 '종료'로 보존됩니다`,
+      `${c.address}\n\n매물 관리로 되돌릴까요? (재모집)\n→ 새 매물로 광고 시작\n→ 이 만기 카드는 '종료'로 보존됩니다\n→ 매물 관리 페이지로 이동합니다`,
     )) return;
     try {
       const prop = contractBackToProperty({
         address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
         landlordName: c.landlordName, landlordPhone: c.landlordPhone, memo: c.memo,
       });
+      // 1. 새 매물 저장
       await saveProperty(user.agencyId, prop);
+      // 2. 원 계약을 closed로 (이력 보존)
       await fsSaveContract(user.agencyId, { ...c, status: "closed" });
-      alert("✅ 매물 관리에 새 매물로 등록되었습니다. 새 임차인 모집을 시작하세요.");
+      // 3. 매물 관리 페이지로 자동 이동 — 사용자가 결과 즉시 확인
+      router.push("/properties");
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
       console.error("[reopenAsProperty] 실패:", e);
-      alert("처리 중 오류가 발생했습니다.");
+      alert(`처리 중 오류가 발생했습니다.\n\n${msg}\n\n권한 오류라면 Firebase Console에서 Rules 재배포가 필요할 수 있습니다.`);
     }
   };
 

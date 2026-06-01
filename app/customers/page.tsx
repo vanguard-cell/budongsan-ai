@@ -28,6 +28,7 @@ import {
   uid,
 } from "./customer-types";
 import EditCustomerModal from "./EditCustomerModal";
+import KakaoParseModal from "./KakaoParseModal";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import CustomersUploadModal, { type CustMergeStrategy } from "./CustomersUploadModal";
@@ -67,6 +68,7 @@ export default function CustomersPage() {
   const [editing, setEditing] = useState<Customer | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [showKakaoParse, setShowKakaoParse] = useState(false);
 
   /* 로그인 가드 */
   useEffect(() => {
@@ -222,6 +224,13 @@ export default function CustomersPage() {
               + 손님 추가
             </button>
             <button
+              onClick={() => setShowKakaoParse(true)}
+              title="카톡/문자 대화를 붙여넣으면 AI가 자동으로 손님 정보 추출"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-yellow-400 bg-yellow-50 text-yellow-700 font-semibold hover:bg-yellow-100 transition-colors"
+            >
+              📩 카톡 붙여넣기
+            </button>
+            <button
               onClick={loadSamples}
               title="예시 손님 5건 추가"
               className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
@@ -313,6 +322,18 @@ export default function CustomersPage() {
           properties={properties}
           onClose={() => setEditing(null)}
           onSave={async (c) => { await upsert({ ...c, id: c.id || uid() }); setEditing(null); }}
+        />
+      )}
+
+      {/* 카톡 파싱 모달 — AI가 대화에서 손님 정보 추출 */}
+      {showKakaoParse && (
+        <KakaoParseModal
+          onClose={() => setShowKakaoParse(false)}
+          onSave={async (c) => {
+            await upsert({ ...c, id: c.id || uid() });
+            setShowKakaoParse(false);
+            alert(`✅ 손님 "${c.name || c.phone || "(이름없음)"}"이(가) 등록되었습니다.`);
+          }}
         />
       )}
 
