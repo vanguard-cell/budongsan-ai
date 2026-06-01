@@ -65,6 +65,8 @@ export default function PropertiesPage() {
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   // 계약진행중 탭: "available"=계약없음, "contracted"=임차인있음(계약진행중)
   const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
+  // 정렬: 등록순(newest) / 금액 낮은순(price_asc) / 금액 높은순(price_desc)
+  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/properties");
@@ -189,13 +191,16 @@ export default function PropertiesPage() {
   // 임차인 있으면 "계약진행중", 없으면 "매물관리"
   const isContracted = (p: Property) => !!(p.tenantName || p.tenantPhone);
 
+  // 매물 대표 금액 (만원 int) — 매매/전세=price, 월세=보증금
+  const priceNum = (p: Property) => parseInt((p.price || "0").replace(/\D/g, ""), 10) || 0;
+
   const filtered = useMemo(() => {
     const baseList = showClosed
       ? properties.filter(p => p.status === "closed")
       : properties.filter(p => p.status === "active")
           .filter(p => viewMode === "available" ? !isContracted(p) : isContracted(p));
 
-    return baseList
+    const result = baseList
       .filter(p => filterType === "all" || p.dealType === filterType)
       .filter(p => {
         if (!query.trim()) return true;
@@ -208,7 +213,12 @@ export default function PropertiesPage() {
             || (p.tenantName || "").toLowerCase().includes(q)
             || (p.tenantPhone || "").includes(q);
       });
-  }, [properties, showClosed, filterType, query, viewMode]);
+
+    // 정렬
+    if (sortBy === "price_asc")  return [...result].sort((a, b) => priceNum(a) - priceNum(b));
+    if (sortBy === "price_desc") return [...result].sort((a, b) => priceNum(b) - priceNum(a));
+    return [...result].sort((a, b) => b.createdAt - a.createdAt); // newest
+  }, [properties, showClosed, filterType, query, viewMode, sortBy]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -384,10 +394,29 @@ export default function PropertiesPage() {
             onChange={e => setQuery(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
           />
-          <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
-            <input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} className="accent-emerald-600" />
-            거래완료 매물 보기
-          </label>
+          {/* 정렬 */}
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            <span className="text-[11px] text-gray-500 shrink-0">정렬</span>
+            {([
+              { key: "newest",     label: "📅 최신순" },
+              { key: "price_asc",  label: "💰 금액 낮은순" },
+              { key: "price_desc", label: "💰 금액 높은순" },
+            ] as const).map(s => (
+              <button key={s.key} onClick={() => setSortBy(s.key)}
+                className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+                  sortBy === s.key
+                    ? "bg-emerald-600 text-white border-emerald-600 font-semibold"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
+                }`}>
+                {s.label}
+              </button>
+            ))}
+            <div className="flex-1" />
+            <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+              <input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} className="accent-emerald-600" />
+              거래완료 보기
+            </label>
+          </div>
         </div>
 
         {/* 목록 */}
