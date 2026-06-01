@@ -61,6 +61,7 @@ export default function PropertiesPage() {
   const [showExport, setShowExport] = useState(false);
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
+  const [filterPropType, setFilterPropType] = useState<"all" | PropertyType>("all"); // 대분류: 매물 유형
   const [showClosed, setShowClosed] = useState(false);
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   // 계약진행중 탭: "available"=계약없음, "contracted"=임차인있음(계약진행중)
@@ -217,6 +218,7 @@ export default function PropertiesPage() {
           .filter(p => viewMode === "available" ? !isContracted(p) : isContracted(p));
 
     const result = baseList
+      .filter(p => filterPropType === "all" || p.propertyType === filterPropType)
       .filter(p => filterType === "all" || p.dealType === filterType)
       .filter(p => {
         if (!query.trim()) return true;
@@ -249,7 +251,7 @@ export default function PropertiesPage() {
       const bp = pinnedIds.has(b.id) ? 0 : 1;
       return ap - bp;
     });
-  }, [properties, showClosed, filterType, query, viewMode, sortBy, priceRange, pinnedIds]);
+  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -262,6 +264,17 @@ export default function PropertiesPage() {
       월세: active.filter(p => p.dealType === "월세").length,
     };
   }, [properties]);
+
+  // 매물 유형별 개수 (대분류 칩) — 현재 탭(매물관리/계약진행중) 기준
+  const propTypeCounts = useMemo(() => {
+    const base = showClosed
+      ? properties.filter(p => p.status === "closed")
+      : properties.filter(p => p.status === "active")
+          .filter(p => viewMode === "available" ? !isContracted(p) : isContracted(p));
+    const map: Record<string, number> = { all: base.length };
+    for (const t of PROPERTY_TYPES) map[t] = base.filter(p => p.propertyType === t).length;
+    return map;
+  }, [properties, showClosed, viewMode]);
 
   // 월별 수수료 매출 — 잔금일(balanceDate) 기준, 거래완료 포함 전체 집계
   const commissionStats = useMemo(() => {
@@ -477,7 +490,34 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        {/* 요약 카드 */}
+        {/* 대분류: 매물 유형 필터 */}
+        <div className="mb-3">
+          <div className="text-[11px] text-gray-500 mb-1.5 ml-1">🏢 매물 유형</div>
+          <div className="flex gap-1.5 flex-wrap">
+            {(["all", ...PROPERTY_TYPES] as const).map(t => {
+              const cnt = propTypeCounts[t] ?? 0;
+              const label = t === "all" ? "전체"
+                : t === "빌라/다세대" ? "빌라"
+                : t === "원룸/투룸" ? "원룸"
+                : t;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setFilterPropType(t)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    filterPropType === t
+                      ? "bg-emerald-600 text-white border-emerald-600 font-semibold"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
+                  }`}
+                >
+                  {label} <span className={filterPropType === t ? "opacity-90" : "text-gray-400"}>{cnt}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 중분류: 거래종류 요약 카드 */}
         <div className="grid grid-cols-4 gap-2 mb-4">
           {(["all", "매매", "전세", "월세"] as const).map(t => (
             <button
