@@ -421,8 +421,8 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        {/* 수수료 매출 요약 — 계약진행중 탭에서만 */}
-        {!showClosed && viewMode === "contracted" && (commissionStats.thisMonthTotal > 0 || commissionStats.pendingTotal > 0 || commissionStats.months.length > 0) && (
+        {/* 수수료 매출 요약 — 계약진행중 탭에서 항상 표시 */}
+        {!showClosed && viewMode === "contracted" && (
           <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5">
             <div className="flex items-center justify-between mb-2.5">
               <div className="text-xs font-bold text-emerald-800">💰 중개 수수료 매출</div>
@@ -438,7 +438,7 @@ export default function PropertiesPage() {
                 <div className="text-lg font-bold text-blue-600">{fmtNum(String(commissionStats.pendingTotal))}<span className="text-xs font-normal text-gray-400 ml-0.5">만</span></div>
               </div>
             </div>
-            {commissionStats.months.length > 0 && (
+            {commissionStats.months.length > 0 ? (
               <div className="space-y-1">
                 {commissionStats.months.map(m => {
                   const [y, mo] = m.split("-");
@@ -451,6 +451,10 @@ export default function PropertiesPage() {
                   );
                 })}
               </div>
+            ) : (
+              <p className="text-[11px] text-emerald-700 bg-white rounded-xl px-3 py-2 border border-emerald-100">
+                💡 [계약 정보 수정]에서 <b>수수료</b>와 <b>잔금일</b>을 입력하면 월별 매출이 집계됩니다.
+              </p>
             )}
           </div>
         )}
