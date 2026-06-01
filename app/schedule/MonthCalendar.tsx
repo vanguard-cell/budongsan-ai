@@ -37,6 +37,13 @@ export const SOURCE_LABELS: Record<CalendarSource, string> = {
   downPaymentDate: "중도금일",
   balanceDate:     "잔금일",
 };
+/** 글자까지 덮는 알약 형태 범례용 — 배경+텍스트+테두리 일체형 */
+export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
+  appointment:     "bg-blue-100   text-blue-700   border-blue-200",
+  contractDate:    "bg-purple-100 text-purple-700 border-purple-200",
+  downPaymentDate: "bg-pink-100   text-pink-700   border-pink-200",
+  balanceDate:     "bg-red-100    text-red-700    border-red-200",
+};
 
 function pad(n: number): string { return String(n).padStart(2, "0"); }
 function todayStr(): string {
@@ -176,13 +183,13 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate }: Pro
         })}
       </div>
 
-      {/* 범례 + 액션 */}
+      {/* 범례 + 액션 — 알약 형태로 색상 구분감 강화 */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 pt-3 border-t border-gray-100">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
           {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(s => (
-            <div key={s} className="flex items-center gap-1">
-              <span className={`w-2 h-2 rounded-full ${SOURCE_COLORS[s]}`}></span>
-              <span className="text-gray-600">{SOURCE_LABELS[s]}</span>
+            <div key={s} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium ${SOURCE_PILL_CLASSES[s]}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${SOURCE_COLORS[s]}`}></span>
+              {SOURCE_LABELS[s]}
             </div>
           ))}
         </div>

@@ -12,6 +12,7 @@ import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import { moveToContract } from "@/lib/contracts-db";
 import { upsertTenantAsCustomer } from "@/lib/customers-db";
+import AdFormatsModal from "./AdFormatsModal";
 import ComplexPickerWidget from "@/app/ComplexPicker";
 import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
 import ExportModal from "../ExportModal";
@@ -55,6 +56,7 @@ export default function PropertiesPage() {
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
   const [progressing, setProgressing] = useState<Property | null>(null);   // 계약 진행 모달
+  const [adFormatting, setAdFormatting] = useState<Property | null>(null); // 광고 양식 생성 모달
   const [showUpload, setShowUpload] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [query, setQuery] = useState("");
@@ -401,6 +403,7 @@ export default function PropertiesPage() {
                 onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
                 onProgress={() => setProgressing({ ...p })}
                 onSendToExpiry={() => sendToExpiry(p)}
+                onAdFormat={() => setAdFormatting(p)}
               />
             ))}
           </div>
@@ -459,6 +462,13 @@ export default function PropertiesPage() {
           onExport={(opt) => exportProperties(properties, opt)}
         />
       )}
+
+      {adFormatting && (
+        <AdFormatsModal
+          property={adFormatting}
+          onClose={() => setAdFormatting(null)}
+        />
+      )}
     </div>
   );
 }
@@ -471,7 +481,7 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen, onProgress, onSendToExpiry }: {
+function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReopen, onProgress, onSendToExpiry, onAdFormat }: {
   property: Property;
   schedules: Schedule[];
   onEdit: () => void;
@@ -480,6 +490,7 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
   onReopen: () => void;
   onProgress: () => void;
   onSendToExpiry: () => void;
+  onAdFormat: () => void;
 }) {
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
@@ -619,6 +630,15 @@ function PropertyCard({ property: p, schedules, onEdit, onClose, onDelete, onReo
 
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors">수정</button>
+        {!isClosed && (
+          <button
+            onClick={onAdFormat}
+            title="네이버·직방·다방·카톡·SMS·블로그 양식 자동 생성 — 클릭 한 번 복사"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-amber-300 bg-amber-50 text-amber-700 font-medium hover:bg-amber-100 transition-colors"
+          >
+            📤 광고 양식
+          </button>
+        )}
         {!isClosed && (
           <button
             onClick={onProgress}
