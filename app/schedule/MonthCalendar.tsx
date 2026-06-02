@@ -37,12 +37,26 @@ export const SOURCE_LABELS: Record<CalendarSource, string> = {
   downPaymentDate: "중도금일",
   balanceDate:     "잔금일",
 };
+/** 캘린더 셀 안에 표시할 짧은 라벨 — 1글자 (작은 셀에 들어가도록) */
+export const SOURCE_SHORT_LABELS: Record<CalendarSource, string> = {
+  appointment:     "약",
+  contractDate:    "계",
+  downPaymentDate: "중",
+  balanceDate:     "잔",
+};
 /** 글자까지 덮는 알약 형태 범례용 — 배경+텍스트+테두리 일체형 */
 export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
   appointment:     "bg-blue-100   text-blue-700   border-blue-200",
   contractDate:    "bg-purple-100 text-purple-700 border-purple-200",
   downPaymentDate: "bg-pink-100   text-pink-700   border-pink-200",
   balanceDate:     "bg-red-100    text-red-700    border-red-200",
+};
+/** 캘린더 셀 안 미니 알약용 — 테두리 없이 배경+텍스트만 (좁은 공간) */
+export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
+  appointment:     "bg-blue-100   text-blue-700",
+  contractDate:    "bg-purple-100 text-purple-700",
+  downPaymentDate: "bg-pink-100   text-pink-700",
+  balanceDate:     "bg-red-100    text-red-700",
 };
 
 function pad(n: number): string { return String(n).padStart(2, "0"); }
@@ -165,18 +179,25 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate }: Pro
             >
               <span className={`text-xs font-semibold ${isSelected ? "text-white" : baseColor}`}>{day}</span>
               {info && (
-                <div className="flex flex-wrap gap-0.5 mt-0.5 justify-center max-w-full">
-                  {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(src =>
-                    (info[src] || 0) > 0 ? (
-                      <span key={src} className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : SOURCE_COLORS[src]}`}></span>
-                    ) : null
-                  )}
+                <div className="flex flex-wrap gap-0.5 mt-0.5 justify-center items-center max-w-full px-0.5">
+                  {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(src => {
+                    const cnt = info[src] || 0;
+                    if (cnt === 0) return null;
+                    return (
+                      <span
+                        key={src}
+                        className={`text-[9px] leading-none font-bold px-1 py-0.5 rounded-md ${
+                          isSelected
+                            ? "bg-white/30 text-white"
+                            : SOURCE_CELL_CLASSES[src]
+                        }`}
+                        title={`${SOURCE_LABELS[src]} ${cnt}건`}
+                      >
+                        {SOURCE_SHORT_LABELS[src]}{cnt > 1 ? cnt : ""}
+                      </span>
+                    );
+                  })}
                 </div>
-              )}
-              {info && info.total > 1 && (
-                <span className={`absolute bottom-1 text-[8px] font-bold ${isSelected ? "text-white" : "text-gray-500"}`}>
-                  {info.total}건
-                </span>
               )}
             </button>
           );
