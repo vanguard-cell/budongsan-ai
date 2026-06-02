@@ -174,26 +174,26 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate }: Pro
             <button
               key={`${date}-${idx}`}
               onClick={() => onSelectDate(isSelected ? null : date)}
-              className={`relative aspect-square rounded-xl flex flex-col items-center justify-start pt-1.5 transition-all ${cellCls}`}
+              className={`relative min-h-[3.5rem] rounded-xl flex flex-col items-center justify-start pt-1.5 pb-1 transition-all ${cellCls}`}
               title={info ? `${date} · 일정 ${info.total}건` : date}
             >
               <span className={`text-xs font-semibold ${isSelected ? "text-white" : baseColor}`}>{day}</span>
               {info && (
-                <div className="flex flex-wrap gap-0.5 mt-0.5 justify-center items-center max-w-full px-0.5">
+                <div className="flex flex-col gap-0.5 mt-1 items-stretch w-full px-1">
                   {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(src => {
                     const cnt = info[src] || 0;
                     if (cnt === 0) return null;
                     return (
                       <span
                         key={src}
-                        className={`text-[9px] leading-none font-bold px-1 py-0.5 rounded-md ${
+                        className={`text-[9px] leading-tight font-semibold px-1 py-0.5 rounded text-center truncate ${
                           isSelected
                             ? "bg-white/30 text-white"
                             : SOURCE_CELL_CLASSES[src]
                         }`}
                         title={`${SOURCE_LABELS[src]} ${cnt}건`}
                       >
-                        {SOURCE_SHORT_LABELS[src]}{cnt > 1 ? cnt : ""}
+                        {SOURCE_LABELS[src]}{cnt > 1 ? ` ${cnt}` : ""}
                       </span>
                     );
                   })}
