@@ -3,17 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// 메인 5개 탭
+// 메인 5개 탭 — 모바일
 const MAIN_TABS = [
+  { href: "/dashboard",  icon: "🏠", label: "홈" },
   { href: "/properties", icon: "🏘️", label: "내 매물" },
   { href: "/expiry",     icon: "⏰", label: "만기" },
   { href: "/customers",  icon: "👥", label: "손님" },
-  { href: "/schedule",   icon: "📅", label: "스케줄" },
   { href: "/more",       icon: "···", label: "더보기" },
 ];
 
-// 사이드바 전체 메뉴
+// 사이드바 전체 메뉴 — PC
 const SIDEBAR_TABS = [
+  { href: "/dashboard",  icon: "🏠", label: "홈" },
   { href: "/properties", icon: "🏘️", label: "내 매물 관리" },
   { href: "/expiry",     icon: "⏰", label: "만기 관리" },
   { href: "/customers",  icon: "👥", label: "손님 관리" },

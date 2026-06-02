@@ -1,8 +1,28 @@
 @import "tailwindcss";
 
+/* Tailwind v4 다크모드 — .dark 클래스 토글 방식 (시스템 + 수동 토글 모두 지원) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  /* 라이트 모드 토큰 */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0b1c30;
+  --surface: #ffffff;
+  --surface-muted: #f8fafc;
+  --border: #e5e7eb;
+  --text-primary: #0b1c30;
+  --text-muted: #6b7280;
+}
+
+.dark {
+  /* 다크 모드 토큰 */
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --surface: #1e293b;
+  --surface-muted: #0f172a;
+  --border: #334155;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
 }
 
 @theme inline {
@@ -12,17 +32,30 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* 한국어 친화 폰트 */
+  font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Segoe UI', Arial, sans-serif;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Material Symbols 폰트 — 대시보드 사이드바 등에서 사용 */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* 스파크라인 차트 애니메이션 (대시보드 KPI) */
+.sparkline-svg {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: sparkline-dash 1.5s ease-in-out forwards;
+}
+@keyframes sparkline-dash {
+  to { stroke-dashoffset: 0; }
 }
 
 /* ─────────── 한국어 캘린더 (KoreanDatePicker) ─────────── */
