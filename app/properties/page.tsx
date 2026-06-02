@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
-  sampleProperties, savePropertiesBatch, nextDateByCycle, MANAGE_TAGS,
-  type Property, type PropertyType, type DealType, type Occupancy, type ManageCycle,
+  sampleProperties, savePropertiesBatch,
+  type Property, type PropertyType, type DealType, type Occupancy,
 } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
@@ -1243,81 +1243,22 @@ function PropertyModal({ property, onClose, onSave }: {
             <p className="text-[10px] text-orange-600 mt-2">📌 만기일 입력 시 스케줄에서 자동으로 만기 알림 표시</p>
           </div>
 
-          {/* 입주 상태 + 정기 관리 (만기일 없는 매물 관리용) */}
-          <div className="border border-indigo-200 rounded-2xl p-3 bg-indigo-50/40 space-y-2.5">
-            <div className="text-xs font-semibold text-indigo-700">🏘️ 입주 상태 · 정기 관리</div>
-
-            {/* 입주 상태 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">입주 상태</label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {([
-                  { v: "", label: "미설정" },
-                  { v: "tenant", label: "임대중" },
-                  { v: "owner", label: "주인거주" },
-                  { v: "vacant", label: "공실" },
-                ] as const).map(o => (
-                  <button key={o.v} type="button" onClick={() => set("occupancy", o.v as Occupancy)}
-                    className={`py-1.5 rounded-xl text-xs font-medium border transition-colors ${form.occupancy === o.v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
-                    {o.label}
-                  </button>
-                ))}
-              </div>
+          {/* 입주 상태 — 주인거주·공실 분류 (집주인/공실 필터 기준) */}
+          <div className="border border-indigo-200 rounded-2xl p-3 bg-indigo-50/40">
+            <label className="block text-xs font-semibold text-indigo-700 mb-2">🏘️ 입주 상태</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {([
+                { v: "", label: "미설정" },
+                { v: "owner", label: "주인거주" },
+                { v: "vacant", label: "공실" },
+              ] as const).map(o => (
+                <button key={o.v} type="button" onClick={() => set("occupancy", o.v as Occupancy)}
+                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${form.occupancy === o.v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
+                  {o.label}
+                </button>
+              ))}
             </div>
-
-            {/* 반복 주기 — 선택 시 다음 관리일 자동 계산 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">관리 주기</label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {([
-                  { v: "", label: "직접지정" },
-                  { v: "3m", label: "3개월마다" },
-                  { v: "6m", label: "6개월마다" },
-                  { v: "12m", label: "1년마다" },
-                ] as const).map(c => (
-                  <button key={c.v} type="button"
-                    onClick={() => {
-                      const cycle = c.v as ManageCycle;
-                      // 주기 선택 시 오늘 기준 다음 관리일 자동 설정 ("직접지정"은 날짜 유지)
-                      setForm(prev => ({
-                        ...prev,
-                        manageCycle: cycle,
-                        nextManageDate: cycle ? nextDateByCycle(new Date().toISOString().slice(0,10), cycle) : prev.nextManageDate,
-                      }));
-                    }}
-                    className={`py-1.5 rounded-xl text-[11px] font-medium border transition-colors ${form.manageCycle === c.v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 다음 관리일 — 자동 계산되며 직접 수정도 가능 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                다음 관리일 {form.manageCycle && <span className="text-[10px] text-indigo-500 font-normal">· 주기 자동 설정됨 (수정 가능)</span>}
-              </label>
-              <input type="date" value={form.nextManageDate} onChange={e => set("nextManageDate", e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-            </div>
-
-            {/* 관리 태그 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">관리 태그</label>
-              <div className="flex gap-1.5 flex-wrap">
-                {MANAGE_TAGS.map(tag => {
-                  const on = form.manageTags.includes(tag);
-                  return (
-                    <button key={tag} type="button"
-                      onClick={() => set("manageTags", on ? form.manageTags.filter(t => t !== tag) : [...form.manageTags, tag])}
-                      className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${on ? "bg-indigo-600 text-white border-indigo-600 font-semibold" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
-                      {on ? "✓ " : ""}{tag}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <p className="text-[10px] text-indigo-600">📌 주인거주·공실 등 만기일 없는 매물도 관리일 지정 시 스케줄에 알림이 떠요</p>
+            <p className="text-[10px] text-indigo-600 mt-2">📌 주인거주·공실로 지정하면 목록에서 [🏠 집주인/공실] 필터로 모아볼 수 있어요</p>
           </div>
 
           {/* 메모 */}
