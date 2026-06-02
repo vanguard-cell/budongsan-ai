@@ -18,7 +18,7 @@ import {
   onAuthStateChanged,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 export interface AppUser {
@@ -56,6 +56,11 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
 
   if (userSnap.exists()) {
     const data = userSnap.data();
+    // 활동 기록 — 마지막 접속 시각 + 누적 접속 횟수 (유료전환용 사용량 데이터)
+    updateDoc(userRef, {
+      lastLoginAt: serverTimestamp(),
+      loginCount: increment(1),
+    }).catch(e => console.error("[auth] 활동 기록 실패:", e));
     return {
       uid: fbUser.uid,
       email: fbUser.email,
@@ -82,6 +87,8 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
     photoURL: fbUser.photoURL,
     agencyId,
     createdAt: serverTimestamp(),
+    lastLoginAt: serverTimestamp(),
+    loginCount: 1,
   });
 
   return {

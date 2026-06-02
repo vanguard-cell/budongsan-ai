@@ -14,15 +14,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // 전역 관리자 — 사용량 분석을 위해 전체 읽기 가능
+    function isGlobalAdmin() {
+      return request.auth != null && request.auth.token.email == "vpfldh87@gmail.com";
+    }
+
     // ── 사용자 본인 문서 ─────────────────────────
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // 본인은 읽기/쓰기, 관리자는 전체 읽기 (유저 현황 조회)
+      allow read: if (request.auth != null && request.auth.uid == userId) || isGlobalAdmin();
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
     // ── 사무실 ──────────────────────────────────
     match /agencies/{agencyId} {
-      // 멤버만 읽기/수정
-      allow read, update: if request.auth != null
+      // 멤버 또는 관리자 읽기, 멤버만 수정
+      allow read: if (request.auth != null && request.auth.uid in resource.data.members) || isGlobalAdmin();
+      allow update: if request.auth != null
                           && request.auth.uid in resource.data.members;
 
       // 생성: 본인을 owner + members에 넣어서만 가능
@@ -42,22 +50,26 @@ service cloud.firestore {
 
       // ── 사무실 안의 계약 ─────────────────────
       match /contracts/{contractId} {
-        allow read, create, update, delete: if isMember();
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update, delete: if isMember();
       }
 
       // ── 사무실 안의 손님(CRM) ─────────────────
       match /customers/{customerId} {
-        allow read, create, update, delete: if isMember();
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update, delete: if isMember();
       }
 
       // ── 내 매물 ──────────────────────────────
       match /properties/{propertyId} {
-        allow read, create, update, delete: if isMember();
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update, delete: if isMember();
       }
 
       // ── 스케줄 ──────────────────────────────
       match /schedules/{scheduleId} {
-        allow read, create, update, delete: if isMember();
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update, delete: if isMember();
       }
 
     }

@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import { ADMIN_EMAIL } from "@/lib/admin-db";
 
 const ITEMS = [
   { href: "/schedule", icon: "📅", label: "스케줄",        desc: "약속·계약일·중도금·잔금 통합 캘린더" },
@@ -8,7 +10,11 @@ const ITEMS = [
   { href: "/feedback", icon: "📬", label: "건의함",        desc: "수정 요청 및 건의사항 전달" },
 ];
 
+const ADMIN_ITEM = { href: "/admin", icon: "📊", label: "유저 사용 현황", desc: "전체 유저 접속·데이터량 (관리자 전용)" };
+
 export default function MorePage() {
+  const { user } = useAuth();
+  const items = user?.email === ADMIN_EMAIL ? [...ITEMS, ADMIN_ITEM] : ITEMS;
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
       <div className="max-w-lg mx-auto px-4 py-8">
@@ -19,7 +25,7 @@ export default function MorePage() {
           <h1 className="text-xl font-bold text-gray-900">기타 메뉴</h1>
         </div>
         <div className="space-y-3">
-          {ITEMS.map(item => (
+          {items.map(item => (
             <Link key={item.href} href={item.href}
               className="flex items-center gap-4 bg-white rounded-2xl border border-gray-200 p-4 hover:border-blue-400 hover:shadow-sm transition-all">
               <span className="text-3xl">{item.icon}</span>
