@@ -1266,38 +1266,40 @@ function PropertyModal({ property, onClose, onSave }: {
               </div>
             </div>
 
-            {/* 다음 관리일 + 주기 */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">다음 관리일</label>
-                <input type="date" value={form.nextManageDate} onChange={e => set("nextManageDate", e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">반복 주기</label>
-                <select value={form.manageCycle} onChange={e => set("manageCycle", e.target.value as ManageCycle)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                  <option value="">없음</option>
-                  <option value="3m">3개월마다</option>
-                  <option value="6m">6개월마다</option>
-                  <option value="12m">1년마다</option>
-                </select>
+            {/* 반복 주기 — 선택 시 다음 관리일 자동 계산 */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">관리 주기</label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {([
+                  { v: "", label: "직접지정" },
+                  { v: "3m", label: "3개월마다" },
+                  { v: "6m", label: "6개월마다" },
+                  { v: "12m", label: "1년마다" },
+                ] as const).map(c => (
+                  <button key={c.v} type="button"
+                    onClick={() => {
+                      const cycle = c.v as ManageCycle;
+                      // 주기 선택 시 오늘 기준 다음 관리일 자동 설정 ("직접지정"은 날짜 유지)
+                      setForm(prev => ({
+                        ...prev,
+                        manageCycle: cycle,
+                        nextManageDate: cycle ? nextDateByCycle(new Date().toISOString().slice(0,10), cycle) : prev.nextManageDate,
+                      }));
+                    }}
+                    className={`py-1.5 rounded-xl text-[11px] font-medium border transition-colors ${form.manageCycle === c.v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
+                    {c.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* 빠른 날짜 버튼 */}
-            <div className="flex gap-1.5 flex-wrap">
-              {([
-                { label: "3개월 후", cycle: "3m" as ManageCycle },
-                { label: "6개월 후", cycle: "6m" as ManageCycle },
-                { label: "1년 후", cycle: "12m" as ManageCycle },
-              ]).map(b => (
-                <button key={b.cycle} type="button"
-                  onClick={() => set("nextManageDate", nextDateByCycle(new Date().toISOString().slice(0,10), b.cycle))}
-                  className="text-[10px] px-2 py-1 rounded-full border border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50">
-                  {b.label}
-                </button>
-              ))}
+            {/* 다음 관리일 — 자동 계산되며 직접 수정도 가능 */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                다음 관리일 {form.manageCycle && <span className="text-[10px] text-indigo-500 font-normal">· 주기 자동 설정됨 (수정 가능)</span>}
+              </label>
+              <input type="date" value={form.nextManageDate} onChange={e => set("nextManageDate", e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
             </div>
 
             {/* 관리 태그 */}
