@@ -176,13 +176,8 @@ export default function ComplexPicker({ onSelect, externalBuildingType }: Props)
         </select>
       </div>
 
-      {/* 건물 유형 — 외부에서 받았으면 안내만 표시 */}
-      {hideTypeUI ? (
-        <div className="rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs text-blue-700">
-          🏘️ 매물 유형: <span className="font-semibold">{mappedExternal}</span>
-          <span className="text-gray-400 ml-1">(위에서 선택한 유형으로 검색)</span>
-        </div>
-      ) : (
+      {/* 건물 유형 — 외부에서 받았으면 UI 완전 숨김 (자동 사용) */}
+      {!hideTypeUI && (
         <div className="grid grid-cols-3 gap-1.5">
           {BUILDING_TYPES.map(t => (
             <button

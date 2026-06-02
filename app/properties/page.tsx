@@ -108,8 +108,9 @@ export default function PropertiesPage() {
 
   /**
    * 같은 단지의 다른 호수 빠른 등록
-   * - 단지명(주소 - 동호수 제외)·매물유형·거래종류는 복사
-   * - 동호수·임대인·가격·면적·방향 등은 비움 (호별로 다름)
+   * - 단지 공통 정보 인계: 주소(동/호 제외), 매물유형, 거래종류, 면적, 방수, 방향
+   * - 호별로 다른 정보는 비움: 동호수, 임대인·임차인, 가격, 계약일자, 메모
+   *   → 단지 내 매물 빠르게 여러 건 등록 가능
    */
   const cloneSameComplex = (p: Property) => {
     const baseAddress = p.address
@@ -120,13 +121,15 @@ export default function PropertiesPage() {
       .trim();
     setEditing({
       ...emptyProperty(),
-      address: baseAddress,
+      // 단지 공통 — 매물끼리 같은 정보 유지
+      address:      baseAddress,
       propertyType: p.propertyType,
-      dealType: p.dealType,
-      // 가격은 비슷한 경우가 많아 참고값으로 복사 (수정 가능)
-      price: "",
-      monthly: "",
-      memo: "",
+      dealType:     p.dealType,
+      area:         p.area,
+      rooms:        p.rooms,
+      direction:    p.direction,
+      // 호별 다른 정보는 빈 채로 → 사용자 입력
+      // dong, ho, ownerName, ownerPhone, tenantName/Phone, price, monthly, memo 등
     });
   };
 
@@ -1014,6 +1017,15 @@ function PropertyModal({ property, onClose, onSave }: {
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 text-lg">✕</button>
         </div>
         <div className="p-5 space-y-3">
+
+          {/* 같은 단지 빠른 등록 안내 (신규 등록 시만) */}
+          {isNew && (
+            <div className="rounded-xl bg-teal-50 border border-teal-200 p-2.5 text-[11px] text-teal-700 leading-relaxed">
+              💡 <strong>같은 단지에 여러 매물</strong>이 있으신가요?<br />
+              먼저 한 건 등록 후, 그 매물 카드의 <strong>📋 같은 단지 추가</strong> 버튼을 누르면<br />
+              단지명·유형·면적·방향이 자동 복사되어 동/호수만 입력하면 됩니다.
+            </div>
+          )}
 
           {/* 매물 유형 + 거래 종류 */}
           <div>
