@@ -7,7 +7,9 @@ export type NotifyStage = "4m" | "3m" | "2m";
 
 export interface Contract {
   id: string;
-  address: string;        // 건물명 + 동호수
+  address: string;        // 단지명 + 동호수 (호환성 위해 통합 보관)
+  dong?: string;          // 동 번호 (예: "101")
+  ho?: string;            // 호수 (예: "1902")
   type: ContractType;
   deposit: string;        // 보증금 (만원, 문자열로 보관해서 빈값 허용)
   monthly: string;        // 월세 (만원)

@@ -43,6 +43,8 @@ function fromDoc(id: string, data: Record<string, unknown>): Contract {
     monthly: (data.monthly as string) || "",
     startDate: (data.startDate as string) || "",
     endDate: (data.endDate as string) || "",
+    dong: (data.dong as string) || undefined,
+    ho:   (data.ho   as string) || undefined,
     tenantName: (data.tenantName as string) || "",
     tenantPhone: (data.tenantPhone as string) || "",
     landlordName: (data.landlordName as string) || "",
@@ -119,6 +121,8 @@ export function propertyToContract(p: Property, linkedCustomerId?: string): Cont
   return {
     id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
     address: p.address,
+    dong: p.dong || undefined,
+    ho: p.ho || undefined,
     type,
     deposit: p.price,
     monthly: p.monthly,

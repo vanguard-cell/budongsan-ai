@@ -171,6 +171,28 @@ export default function ExpiryPage() {
   };
 
   /**
+   * 같은 단지 다른 호수 빠른 계약 등록
+   * - 단지명(주소에서 동/호 제외)과 거래종류·임대인 정보 인계
+   * - 임차인·동·호·가격·날짜는 비움 (호별로 다름)
+   */
+  const cloneSameComplex = (c: Contract) => {
+    const baseAddress = (c.address || "")
+      .replace(/ ?\d+동/g, "")
+      .replace(/ ?\d+호/g, "")
+      .replace(/ ?제\d+층/g, "")
+      .replace(/ ?제[\d-]+호/g, "")
+      .trim();
+    setEditing({
+      ...emptyContract(),
+      address: baseAddress,
+      type: c.type,
+      // 임대인은 같은 단지에서 같을 수도 있어 인계 (필요시 수정 가능)
+      landlordName: c.landlordName,
+      landlordPhone: c.landlordPhone,
+    });
+  };
+
+  /**
    * 만기관리 → 매물 관리로 되돌리기 (재모집)
    * - Contract를 closed로 변경 (이력 보존)
    * - Property로 새로 생성하여 광고 시작
@@ -379,6 +401,7 @@ export default function ExpiryPage() {
                   ? () => router.push(`/customers?focus=${c.linkedCustomerId}`)
                   : undefined}
                 onReopenAsProperty={() => jumpReopenAsProperty(c)}
+                onCloneSameComplex={() => cloneSameComplex(c)}
               />
             ))}
           </div>
@@ -501,6 +524,7 @@ function ContractRow({
   onSms,
   onJumpCustomer,
   onReopenAsProperty,
+  onCloneSameComplex,
 }: {
   contract: Contract;
   dday: number;
@@ -512,6 +536,7 @@ function ContractRow({
   onSms: (target: ContactTarget) => void;
   onJumpCustomer?: () => void;        // 연결된 손님 점프
   onReopenAsProperty?: () => void;    // 매물로 되돌리기 (재모집)
+  onCloneSameComplex?: () => void;    // 같은 단지 다른 호수 빠른 등록
 }) {
   const cls = severityClasses(severity);
   const isClosed = c.status === "closed";
@@ -574,7 +599,7 @@ function ContractRow({
         </div>
       </div>
 
-      {/* 액션 버튼 — 색 구분감 강화: 수정(회) / 손님(파) / 매물복귀(녹) / 종료(주황) / 삭제(빨) */}
+      {/* 액션 버튼 — 색 구분감 강화: 수정(회) / 같은단지(청록) / 손님(파) / 매물복귀(녹) / 종료(주황) / 삭제(빨) */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button
           onClick={onEdit}
@@ -582,6 +607,15 @@ function ContractRow({
         >
           ✏️ 수정
         </button>
+        {!isClosed && onCloneSameComplex && (
+          <button
+            onClick={onCloneSameComplex}
+            title="같은 단지에 다른 호수 빠른 등록 — 단지명·종류·임대인 인계, 동/호·임차인·가격만 입력"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 font-semibold hover:bg-teal-100 transition-colors"
+          >
+            📋 같은 단지 추가
+          </button>
+        )}
         {onJumpCustomer && (
           <button
             onClick={onJumpCustomer}
@@ -702,7 +736,19 @@ function EditModal({
   onClose: () => void;
   onSave: (c: Contract) => Promise<void> | void;
 }) {
-  const [form, setForm] = useState<Contract>(contract);
+  const [form, setForm] = useState<Contract>(() => {
+    // 동/호가 별도 필드에 없고 주소에만 있는 레거시 데이터 — 진입 시 자동 추출
+    if (!contract.dong && !contract.ho && contract.address) {
+      const dongMatch = contract.address.match(/(\d+)동/);
+      const hoMatch   = contract.address.match(/(\d+)호/);
+      return {
+        ...contract,
+        dong: dongMatch?.[1] || "",
+        ho:   hoMatch?.[1]   || "",
+      };
+    }
+    return contract;
+  });
   // 빈 계약(emptyContract)으로 생성된 항목은 createdAt이 0에 가까운 최근 시점이지만
   // 사실상 "기존 데이터에 같은 id가 있는지"는 부모가 알고 있으므로,
   // 단순히 contract.address 같은 필드가 비어있으면 신규로 간주
@@ -766,9 +812,16 @@ function EditModal({
       alert("만기일을 입력해주세요");
       return;
     }
+    // 동/호가 주소에 안 들어있으면 자동 합산 — "단지명 101동 1902호" 형태로 저장
+    let mergedAddress = form.address.trim();
+    const dongStr = form.dong ? `${form.dong}동` : "";
+    const hoStr = form.ho ? `${form.ho}호` : "";
+    if (dongStr && !mergedAddress.includes(dongStr)) mergedAddress += " " + dongStr;
+    if (hoStr && !mergedAddress.includes(hoStr))   mergedAddress += " " + hoStr;
+    mergedAddress = mergedAddress.replace(/\s+/g, " ").trim();
     setSaving(true);
     try {
-      await onSave({ ...form, id: form.id || uid() });
+      await onSave({ ...form, address: mergedAddress, id: form.id || uid() });
     } catch (e) {
       console.error("계약 저장 오류:", e);
       alert("저장 중 오류가 발생했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.");
@@ -810,6 +863,30 @@ function EditModal({
           </div>
           <p className="text-[11px] text-gray-400 mt-1">단지명 직접 입력 또는 아래에서 지역+유형으로 검색</p>
         </Field>
+
+        {/* 동/호수 — 별도 필드로 분리 (매물 관리와 동일) */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="동 번호">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={form.dong || ""}
+              onChange={e => setField("dong", e.target.value)}
+              placeholder="101"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </Field>
+          <Field label="호수">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={form.ho || ""}
+              onChange={e => setField("ho", e.target.value)}
+              placeholder="1902"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </Field>
+        </div>
 
         {/* 지역+유형 단지 검색 */}
         <ComplexPickerWidget onSelect={item => setField("address", `${item.address} ${item.name}`.trim())} />
