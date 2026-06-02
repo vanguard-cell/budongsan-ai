@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
-  sampleProperties, savePropertiesBatch,
-  type Property, type PropertyType, type DealType,
+  sampleProperties, savePropertiesBatch, nextDateByCycle, MANAGE_TAGS,
+  type Property, type PropertyType, type DealType, type Occupancy, type ManageCycle,
 } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
@@ -791,6 +791,10 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
   const today = new Date().toISOString().slice(0, 10);
   const balanceOverdue = hasBalanceDate && p.balanceDate <= today;
 
+  // 정기 관리일 D-day
+  const manageDD = p.nextManageDate ? dDay(p.nextManageDate) : null;
+  const OCC_LABEL: Record<string, string> = { tenant: "임대중", owner: "주인거주", vacant: "공실" };
+
   return (
     <div className={`rounded-2xl border p-3 sm:p-4 ${isPinned && !isClosed ? "border-yellow-300 ring-2 ring-yellow-100" : isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : balanceOverdue ? "bg-white border-red-300 shadow-sm ring-2 ring-red-100" : "bg-white border-gray-200 shadow-sm"}`}>
       {/* 잔금일 경과 카드 내 빨간 배너 */}
@@ -815,6 +819,14 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             {leaseDD !== null && (
               <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${leaseUrgent ? "bg-red-100 text-red-700" : leaseCaution ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"}`}>
                 ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
+              </span>
+            )}
+            {p.occupancy && p.occupancy !== "tenant" && (
+              <span className="text-[11px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-medium">{OCC_LABEL[p.occupancy]}</span>
+            )}
+            {manageDD !== null && !isClosed && (
+              <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${manageDD < 0 ? "bg-red-100 text-red-700" : manageDD <= 7 ? "bg-orange-100 text-orange-700" : "bg-indigo-100 text-indigo-700"}`}>
+                📞 관리 {manageDD < 0 ? `${-manageDD}일지남` : manageDD === 0 ? "오늘" : `D-${manageDD}`}
               </span>
             )}
               <span className="text-sm font-bold text-gray-900 truncate">{priceStr}</span>
@@ -1220,6 +1232,81 @@ function PropertyModal({ property, onClose, onSave }: {
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
             </div>
             <p className="text-[10px] text-orange-600 mt-2">📌 만기일 입력 시 스케줄에서 자동으로 만기 알림 표시</p>
+          </div>
+
+          {/* 입주 상태 + 정기 관리 (만기일 없는 매물 관리용) */}
+          <div className="border border-indigo-200 rounded-2xl p-3 bg-indigo-50/40 space-y-2.5">
+            <div className="text-xs font-semibold text-indigo-700">🏘️ 입주 상태 · 정기 관리</div>
+
+            {/* 입주 상태 */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">입주 상태</label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {([
+                  { v: "", label: "미설정" },
+                  { v: "tenant", label: "임대중" },
+                  { v: "owner", label: "주인거주" },
+                  { v: "vacant", label: "공실" },
+                ] as const).map(o => (
+                  <button key={o.v} type="button" onClick={() => set("occupancy", o.v as Occupancy)}
+                    className={`py-1.5 rounded-xl text-xs font-medium border transition-colors ${form.occupancy === o.v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 다음 관리일 + 주기 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">다음 관리일</label>
+                <input type="date" value={form.nextManageDate} onChange={e => set("nextManageDate", e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">반복 주기</label>
+                <select value={form.manageCycle} onChange={e => set("manageCycle", e.target.value as ManageCycle)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  <option value="">없음</option>
+                  <option value="3m">3개월마다</option>
+                  <option value="6m">6개월마다</option>
+                  <option value="12m">1년마다</option>
+                </select>
+              </div>
+            </div>
+
+            {/* 빠른 날짜 버튼 */}
+            <div className="flex gap-1.5 flex-wrap">
+              {([
+                { label: "3개월 후", cycle: "3m" as ManageCycle },
+                { label: "6개월 후", cycle: "6m" as ManageCycle },
+                { label: "1년 후", cycle: "12m" as ManageCycle },
+              ]).map(b => (
+                <button key={b.cycle} type="button"
+                  onClick={() => set("nextManageDate", nextDateByCycle(new Date().toISOString().slice(0,10), b.cycle))}
+                  className="text-[10px] px-2 py-1 rounded-full border border-indigo-200 text-indigo-700 bg-white hover:bg-indigo-50">
+                  {b.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 관리 태그 */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">관리 태그</label>
+              <div className="flex gap-1.5 flex-wrap">
+                {MANAGE_TAGS.map(tag => {
+                  const on = form.manageTags.includes(tag);
+                  return (
+                    <button key={tag} type="button"
+                      onClick={() => set("manageTags", on ? form.manageTags.filter(t => t !== tag) : [...form.manageTags, tag])}
+                      className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${on ? "bg-indigo-600 text-white border-indigo-600 font-semibold" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
+                      {on ? "✓ " : ""}{tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <p className="text-[10px] text-indigo-600">📌 주인거주·공실 등 만기일 없는 매물도 관리일 지정 시 스케줄에 알림이 떠요</p>
           </div>
 
           {/* 메모 */}

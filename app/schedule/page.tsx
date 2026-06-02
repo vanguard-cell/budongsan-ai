@@ -16,7 +16,7 @@ import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 /* ── 타입 ── */
 type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
 type ItemSource   = Exclude<SourceFilter, "all">;
-type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate";
+type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate" | "manage";
 
 interface UnifiedItem {
   key: string;
@@ -113,6 +113,14 @@ export default function SchedulePage() {
       }
     }
 
+    // ②-2 내 매물 정기 관리일 (주인거주·공실 등 만기 없는 매물) — "약속"으로 통합
+    for (const p of properties) {
+      if (p.status !== "active") continue;
+      if (!p.nextManageDate) continue;
+      if (!showPast && !isFuture(p.nextManageDate)) continue;
+      items.push({ key: `pm-${p.id}`, source: "appointment", date: p.nextManageDate, time: "", property: p, propertyKind: "manage" });
+    }
+
     // ③ 손님 후속연락 — "약속" 카테고리로 통합
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
@@ -143,6 +151,7 @@ export default function SchedulePage() {
       if (p.contractDate)    items.push({ date: p.contractDate,    source: "contractDate" });
       if (p.downPaymentDate) items.push({ date: p.downPaymentDate, source: "downPaymentDate" });
       if (p.balanceDate)     items.push({ date: p.balanceDate,     source: "balanceDate" });
+      if (p.nextManageDate)  items.push({ date: p.nextManageDate,  source: "appointment" });
     }
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
@@ -406,12 +415,14 @@ function PropertyDateCard({ property: p, kind }: { property: Property; kind: Pro
   const date =
     kind === "contractDate"    ? p.contractDate
     : kind === "downPaymentDate" ? p.downPaymentDate
-    : p.balanceDate;
+    : kind === "balanceDate"   ? p.balanceDate
+    : p.nextManageDate;
 
   const kindMeta: Record<PropertyDateKind, { label: string; icon: string; mainColor: string; badgeColor: string; bgColor: string }> = {
     contractDate:    { label: "계약일",   icon: "📝", mainColor: "text-purple-600", badgeColor: "bg-purple-100 text-purple-700", bgColor: "bg-purple-50 border-purple-200" },
     downPaymentDate: { label: "중도금일", icon: "💰", mainColor: "text-pink-600",   badgeColor: "bg-pink-100 text-pink-700",     bgColor: "bg-pink-50 border-pink-200" },
     balanceDate:     { label: "잔금일",   icon: "🔑", mainColor: "text-red-600",    badgeColor: "bg-red-100 text-red-700",       bgColor: "bg-red-50 border-red-200" },
+    manage:          { label: "관리",     icon: "📞", mainColor: "text-indigo-600", badgeColor: "bg-indigo-100 text-indigo-700", bgColor: "bg-indigo-50 border-indigo-200" },
   };
   const m = kindMeta[kind];
 

@@ -13,6 +13,10 @@ import { db } from "./firebase";
 export type PropertyType = "아파트" | "오피스텔" | "빌라/다세대" | "원룸/투룸" | "상가" | "사무실" | "토지" | "기타";
 export type DealType = "매매" | "전세" | "월세";
 export type PropertyStatus = "active" | "closed";
+/** 입주 상태 — "" 미설정 / tenant 임대중 / owner 주인거주 / vacant 공실 */
+export type Occupancy = "" | "tenant" | "owner" | "vacant";
+/** 정기 관리 주기 — "" 없음 / 3m·6m·12m */
+export type ManageCycle = "" | "3m" | "6m" | "12m";
 
 export interface Property {
   id: string;
@@ -38,9 +42,26 @@ export interface Property {
   balanceDate: string;     // 잔금일 (YYYY-MM-DD) — 이 날짜 지나면 만기 관리로 이동
   commission: string;      // 중개 수수료 (만원) — 월별 매출 집계용
   linkedTenantId?: string; // 손님 관리에 자동 등록된 임차인 ID
+  // 입주 상태 + 정기 관리 (주인 실거주 등 만기일 없는 매물 관리용)
+  occupancy: Occupancy;        // 입주 상태
+  nextManageDate: string;      // 다음 관리(연락) 예정일 — 직접 지정 (YYYY-MM-DD)
+  manageCycle: ManageCycle;    // 반복 주기 — 완료 시 다음 날짜 자동 계산
+  manageTags: string[];        // 관리 태그 (매도의향/임대전환검토 등)
   memo: string;
   status: PropertyStatus;
   createdAt: number;
+}
+
+/** 관리 태그 프리셋 */
+export const MANAGE_TAGS = ["매도의향", "임대전환검토", "장기거주", "리모델링예정", "연락주의"] as const;
+
+/** 다음 관리일 자동 계산 — 기준일 + 주기 */
+export function nextDateByCycle(fromDate: string, cycle: ManageCycle): string {
+  if (!cycle || !fromDate) return "";
+  const months = cycle === "3m" ? 3 : cycle === "6m" ? 6 : 12;
+  const d = new Date(fromDate + "T00:00:00");
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
 }
 
 export function emptyProperty(): Property {
@@ -51,6 +72,7 @@ export function emptyProperty(): Property {
     direction: "", ownerName: "", ownerPhone: "",
     tenantName: "", tenantPhone: "", leaseEndDate: "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
+    occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
     memo: "",
     status: "active", createdAt: Date.now(),
   };
@@ -79,6 +101,7 @@ export function sampleProperties(): Property[] {
       ownerName: "김국환", ownerPhone: "010-5205-1111",
       tenantName: "", tenantPhone: "", leaseEndDate: "",
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
       memo: "급매 · 협의 가능",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 14,
     },
@@ -92,6 +115,7 @@ export function sampleProperties(): Property[] {
       tenantName: "권다솜", tenantPhone: "010-9242-3333",
       leaseEndDate: dateOffset(45),  // D-45 만기 임박
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
       memo: "임차인 재계약 의향 확인 필요",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 365,
     },
@@ -105,6 +129,7 @@ export function sampleProperties(): Property[] {
       tenantName: "조현민", tenantPhone: "010-7924-1111",
       leaseEndDate: dateOffset(85),  // D-85 예고
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
       memo: "묵시적 갱신 주의 — 협상 시작",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 300,
     },
@@ -117,6 +142,7 @@ export function sampleProperties(): Property[] {
       ownerName: "정수영", ownerPhone: "010-9109-6666",
       tenantName: "", tenantPhone: "", leaseEndDate: "",
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
       memo: "즉시 입주 가능",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 7,
     },
@@ -130,6 +156,7 @@ export function sampleProperties(): Property[] {
       tenantName: "민완규(카페)", tenantPhone: "010-5380-7777",
       leaseEndDate: dateOffset(220),  // D-220 안전
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
       memo: "1층 코너 / 카페 운영중",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 200,
     },
@@ -142,6 +169,7 @@ export function sampleProperties(): Property[] {
       ownerName: "조서영", ownerPhone: "010-9205-0000",
       tenantName: "", tenantPhone: "", leaseEndDate: "",
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
       memo: "거래 완료 — 입주 완료",
       status: "closed", createdAt: now - 1000 * 60 * 60 * 24 * 90,
     },
@@ -183,6 +211,10 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     balanceDate:     (d.balanceDate     as string) || "",
     commission:      (d.commission      as string) || "",
     linkedTenantId:  (d.linkedTenantId  as string) || undefined,
+    occupancy:       (d.occupancy       as Occupancy) || "",
+    nextManageDate:  (d.nextManageDate  as string) || "",
+    manageCycle:     (d.manageCycle     as ManageCycle) || "",
+    manageTags:      Array.isArray(d.manageTags) ? (d.manageTags as string[]) : [],
     memo:         (d.memo         as string) || "",
     status:       (d.status       as PropertyStatus) || "active",
   };
@@ -243,6 +275,7 @@ export function contractBackToProperty(c: {
     ownerPhone: c.landlordPhone,
     tenantName: "", tenantPhone: "", leaseEndDate: "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
+    occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
     memo: c.memo ? `${c.memo}\n[재모집] 만기관리에서 복귀` : "[재모집] 만기관리에서 복귀",
     status: "active", createdAt: Date.now(),
   };
