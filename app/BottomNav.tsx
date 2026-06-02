@@ -18,6 +18,7 @@ const SIDEBAR_TABS = [
   { href: "/expiry",     icon: "⏰", label: "만기 관리" },
   { href: "/customers",  icon: "👥", label: "손님 관리" },
   { href: "/schedule",   icon: "📅", label: "스케줄" },
+  { href: "/sales",      icon: "💰", label: "매출 관리" },
   { href: "/",           icon: "✨", label: "AI 문구 생성" },
   { href: "/feedback",   icon: "📬", label: "건의함" },
 ];

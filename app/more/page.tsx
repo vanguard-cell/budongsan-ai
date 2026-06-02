@@ -2,6 +2,7 @@
 import Link from "next/link";
 
 const ITEMS = [
+  { href: "/sales",    icon: "💰", label: "매출 관리",     desc: "잔금일 기준 월별 수수료 매출 집계·그래프" },
   { href: "/",         icon: "✨", label: "AI 문구 생성",  desc: "네이버·블로그·인스타 문구 자동 생성" },
   { href: "/feedback", icon: "📬", label: "건의함",        desc: "수정 요청 및 건의사항 전달" },
 ];
