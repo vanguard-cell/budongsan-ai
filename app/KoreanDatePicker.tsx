@@ -60,7 +60,7 @@ function formatValue(d: Date | null, withTime: boolean): string {
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
 }
 
-/* 커스텀 트리거 버튼 — 입력 필드를 크고 명확하게 */
+/* 커스텀 트리거 버튼 — 기존 input 사이즈와 비슷하게 */
 type TriggerProps = {
   value?: string;
   onClick?: () => void;
@@ -77,12 +77,12 @@ const TriggerButton = forwardRef<HTMLButtonElement, TriggerProps>(function Trigg
       ref={ref}
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center justify-between gap-2 border-2 ${borderCls} rounded-xl px-4 py-3 text-base bg-white focus:outline-none focus:ring-2 ${ringCls} text-left hover:bg-gray-50 transition-colors`}
+      className={`w-full flex items-center justify-between gap-2 border ${borderCls} rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 ${ringCls} text-left hover:bg-gray-50 transition-colors`}
     >
-      <span className={value ? "text-gray-900 font-semibold" : "text-gray-400"}>
+      <span className={value ? "text-gray-800" : "text-gray-400"}>
         {value || placeholder || "날짜 선택"}
       </span>
-      <span className="text-2xl flex-shrink-0">📅</span>
+      <span className="text-sm flex-shrink-0">📅</span>
     </button>
   );
 });

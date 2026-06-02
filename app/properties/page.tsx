@@ -845,7 +845,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
           {(p.contractDate || p.downPaymentDate || p.balanceDate) && !isClosed && (
             <div className="mt-2 flex flex-wrap gap-1.5 items-center">
               {p.contractDate && (
-                <span className="text-sm font-bold px-3 py-1.5 rounded-full bg-purple-100 text-purple-800 border-2 border-purple-300 shadow-sm">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-300">
                   📝 계약일 {formatDateKo(p.contractDate)}
                 </span>
               )}
@@ -1300,7 +1300,6 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
               showTime={true}
               label="📝 계약일 (날짜·시간)"
               accent="purple"
-              emphasizeLabel={true}
               placeholder="계약 일시 선택"
             />
             <KoreanDatePicker
