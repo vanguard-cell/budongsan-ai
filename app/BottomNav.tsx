@@ -3,25 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// 메인 5개 탭 — 모바일
+// 메인 5개 탭 — 모바일 (Material Symbols Outlined)
 const MAIN_TABS = [
-  { href: "/dashboard",  icon: "🏠", label: "홈" },
-  { href: "/properties", icon: "🏘️", label: "내 매물" },
-  { href: "/expiry",     icon: "⏰", label: "만기" },
-  { href: "/customers",  icon: "👥", label: "손님" },
-  { href: "/more",       icon: "···", label: "더보기" },
+  { href: "/dashboard",  icon: "home",       label: "홈" },
+  { href: "/properties", icon: "domain",     label: "내 매물" },
+  { href: "/expiry",     icon: "event_busy", label: "만기" },
+  { href: "/customers",  icon: "group",      label: "손님" },
+  { href: "/more",       icon: "more_horiz", label: "더보기" },
 ];
 
-// 사이드바 전체 메뉴 — PC
+// 사이드바 전체 메뉴 — PC (Material Symbols Outlined, 대시보드와 통일)
 const SIDEBAR_TABS = [
-  { href: "/dashboard",  icon: "🏠", label: "홈" },
-  { href: "/properties", icon: "🏘️", label: "내 매물 관리" },
-  { href: "/expiry",     icon: "⏰", label: "만기 관리" },
-  { href: "/customers",  icon: "👥", label: "손님 관리" },
-  { href: "/schedule",   icon: "📅", label: "스케줄" },
-  { href: "/sales",      icon: "💰", label: "매출 관리" },
-  { href: "/",           icon: "✨", label: "AI 문구 생성" },
-  { href: "/feedback",   icon: "📬", label: "건의함" },
+  { href: "/dashboard",  icon: "home",            label: "홈" },
+  { href: "/properties", icon: "domain",          label: "내 매물 관리" },
+  { href: "/expiry",     icon: "event_busy",      label: "만기 관리" },
+  { href: "/customers",  icon: "group",           label: "손님 관리" },
+  { href: "/schedule",   icon: "calendar_month",  label: "스케줄" },
+  { href: "/sales",      icon: "payments",        label: "매출 관리" },
+  { href: "/",           icon: "auto_awesome",    label: "AI 문구 생성" },
+  { href: "/feedback",   icon: "feedback",        label: "건의함" },
 ];
 
 export default function AppNav() {
@@ -56,7 +56,12 @@ export default function AppNav() {
                     ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold"
                     : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}>
-                <span className="text-lg leading-none w-7 text-center">{tab.icon}</span>
+                <span
+                  className="material-symbols-outlined text-xl leading-none w-7 text-center"
+                  style={isActive ? { fontVariationSettings: "'FILL' 1, 'wght' 500" } : undefined}
+                >
+                  {tab.icon}
+                </span>
                 <span className="text-sm">{tab.label}</span>
                 {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />}
               </Link>
@@ -79,9 +84,14 @@ export default function AppNav() {
             return (
               <Link key={tab.href} href={tab.href}
                 className={`flex flex-col items-center gap-0.5 flex-1 py-2 rounded-2xl transition-colors ${
-                  isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
+                  isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-500"
                 }`}>
-                <span className={`${tab.icon === "···" ? "text-lg font-bold tracking-widest" : "text-xl"} leading-none`}>{tab.icon}</span>
+                <span
+                  className="material-symbols-outlined text-2xl leading-none"
+                  style={isActive ? { fontVariationSettings: "'FILL' 1, 'wght' 600" } : undefined}
+                >
+                  {tab.icon}
+                </span>
                 <span className={`text-[10px] font-medium ${isActive ? "font-bold" : ""}`}>{tab.label}</span>
                 {isActive && <span className="w-1 h-1 rounded-full bg-blue-600 dark:bg-blue-400 mt-0.5" />}
               </Link>
