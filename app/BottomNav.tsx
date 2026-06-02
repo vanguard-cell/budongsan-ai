@@ -20,7 +20,7 @@ const SIDEBAR_TABS = [
   { href: "/customers",  icon: "group",           label: "손님 관리" },
   { href: "/schedule",   icon: "calendar_month",  label: "스케줄" },
   { href: "/sales",      icon: "payments",        label: "매출 관리" },
-  { href: "/",           icon: "auto_awesome",    label: "AI 문구 생성" },
+  { href: "/ai-content", icon: "auto_awesome",    label: "AI 문구 생성" },
   { href: "/feedback",   icon: "feedback",        label: "건의함" },
 ];
 

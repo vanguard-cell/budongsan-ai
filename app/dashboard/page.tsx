@@ -265,7 +265,7 @@ export default function DashboardPage() {
                 textColor="text-pink-900 dark:text-pink-300"
                 borderColor="border-pink-100 dark:border-pink-900/50"
                 hoverBg="hover:bg-pink-50 dark:hover:bg-pink-950/30"
-                href="/"
+                href="/ai-content"
               />
               <button
                 onClick={() => alert("준비 중인 기능입니다. 곧 사용자 정의 액션 추가가 지원됩니다.")}
