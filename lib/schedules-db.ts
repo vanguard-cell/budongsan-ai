@@ -86,7 +86,21 @@ export function subscribeSchedules(agencyId: string, onChange: (list: Schedule[]
 
 export async function saveSchedule(agencyId: string, s: Schedule): Promise<void> {
   const { id, ...rest } = s;
-  await setDoc(ref(agencyId, id), { ...rest, updatedAt: serverTimestamp(), createdAt: rest.createdAt || Date.now() });
+  const payload: Record<string, unknown> = {
+    ...rest,
+    updatedAt: serverTimestamp(),
+    createdAt: rest.createdAt || Date.now(),
+  };
+  // Firestore는 undefined 거부 → optional 필드(propertyId/customerId) 정리
+  for (const k of Object.keys(payload)) {
+    if (payload[k] === undefined) delete payload[k];
+  }
+  try {
+    await setDoc(ref(agencyId, id), payload);
+  } catch (e) {
+    console.error("[saveSchedule] 실패:", e, "payload:", payload);
+    throw e;
+  }
 }
 
 export async function deleteSchedule(agencyId: string, id: string): Promise<void> {

@@ -85,8 +85,8 @@ export default function PropertiesPage() {
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   // 계약진행중 탭: "available"=계약없음, "contracted"=임차인있음(계약진행중)
   const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
-  // 정렬: 등록순(newest) / 금액 낮은순(price_asc) / 금액 높은순(price_desc)
-  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
+  // 정렬: 등록순 / 금액 낮은순 / 금액 높은순 / 만기일순 / 잔금일순
+  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance">("newest");
   // 수수료 상세는 /sales 페이지로 이동 (showCommission 제거)
   // 가격대 빠른 필터 (만원 기준)
   const [priceRange, setPriceRange] = useState<"all" | "u1" | "1to2" | "2to3" | "3to5" | "o5">("all");
@@ -264,10 +264,15 @@ export default function PropertiesPage() {
         return true;
       });
 
+    // 날짜 정렬용 — 빈 값은 맨 뒤로
+    const dateKey = (v: string) => v && v.length >= 10 ? v.slice(0, 10) : "9999-99-99";
     // 정렬 (즐겨찾기는 항상 상단)
-    const sorted = sortBy === "price_asc"  ? [...result].sort((a, b) => priceNum(a) - priceNum(b))
-                 : sortBy === "price_desc" ? [...result].sort((a, b) => priceNum(b) - priceNum(a))
-                 : [...result].sort((a, b) => b.createdAt - a.createdAt);
+    const sorted =
+      sortBy === "price_asc"  ? [...result].sort((a, b) => priceNum(a) - priceNum(b))
+    : sortBy === "price_desc" ? [...result].sort((a, b) => priceNum(b) - priceNum(a))
+    : sortBy === "lease_end"  ? [...result].sort((a, b) => dateKey(a.leaseEndDate).localeCompare(dateKey(b.leaseEndDate)))
+    : sortBy === "balance"    ? [...result].sort((a, b) => dateKey(a.balanceDate).localeCompare(dateKey(b.balanceDate)))
+    :                           [...result].sort((a, b) => b.createdAt - a.createdAt);
     return sorted.sort((a, b) => {
       const ap = pinnedIds.has(a.id) ? 0 : 1;
       const bp = pinnedIds.has(b.id) ? 0 : 1;
@@ -422,7 +427,7 @@ export default function PropertiesPage() {
               }`}
             >
               <div className="text-left">
-                <div className="text-xs font-medium opacity-80">매물 관리</div>
+                <div className="text-xs font-medium opacity-80">📋 미계약 매물</div>
                 <div className="text-[11px] opacity-70">계약 없는 매물</div>
               </div>
               <div className={`text-2xl font-bold ml-2 ${viewMode === "available" ? "text-white" : "text-emerald-600"}`}>
@@ -560,6 +565,8 @@ export default function PropertiesPage() {
               { key: "newest",     label: "📅 최신순" },
               { key: "price_asc",  label: "💰 금액 낮은순" },
               { key: "price_desc", label: "💰 금액 높은순" },
+              { key: "lease_end",  label: "⏰ 만기일순" },
+              { key: "balance",    label: "💵 잔금일순" },
             ] as const).map(s => (
               <button key={s.key} onClick={() => setSortBy(s.key)}
                 className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
@@ -908,7 +915,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
                 : "text-[11px] px-2.5 py-1 rounded-full border border-orange-300 bg-orange-50 text-orange-700 font-semibold hover:bg-orange-100 transition-colors"
             }
           >
-            {p.dealType === "매매" ? "🚀 거래완료 → 만기" : "⏹️ 광고 종료"}
+            {p.dealType === "매매" ? "🚀 거래완료 → 만기" : "🛑 광고 종료"}
           </button>
         )}
         <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors ml-auto">🗑️ 삭제</button>

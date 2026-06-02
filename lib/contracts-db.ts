@@ -85,14 +85,24 @@ export function subscribeContracts(
   );
 }
 
-/** 추가/수정 (upsert) */
+/** 추가/수정 (upsert) — Firestore undefined 거부 방어 */
 export async function saveContract(agencyId: string, c: Contract): Promise<void> {
   const { id, ...rest } = c;
-  await setDoc(contractDoc(agencyId, id), {
+  const payload: Record<string, unknown> = {
     ...rest,
     updatedAt: serverTimestamp(),
     createdAt: rest.createdAt || Date.now(),
-  });
+  };
+  // Firestore는 undefined 거부 → optional 필드(dong/ho/contractDate 등) 정리
+  for (const k of Object.keys(payload)) {
+    if (payload[k] === undefined) delete payload[k];
+  }
+  try {
+    await setDoc(contractDoc(agencyId, id), payload);
+  } catch (e) {
+    console.error("[saveContract] 실패:", e, "payload:", payload);
+    throw e;
+  }
 }
 
 /** 다건 일괄 추가 (예시 데이터·엑셀 업로드용) */
