@@ -14,6 +14,7 @@ import { moveToContract } from "@/lib/contracts-db";
 import { subscribeCustomers } from "@/lib/customers-db";
 import type { Customer } from "@/app/customers/customer-types";
 import ComplexPickerWidget from "@/app/ComplexPicker";
+import KoreanDatePicker from "@/app/KoreanDatePicker";
 import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
 import ExportModal from "../ExportModal";
 import { exportProperties } from "@/lib/export";
@@ -35,6 +36,22 @@ function fmtNum(s: string): string {
   const n = parseInt(s.replace(/[^\d]/g, ""), 10);
   if (isNaN(n)) return s;
   return n.toLocaleString();
+}
+
+/** 날짜·시간 한국식 표시 — "2026-06-17" → "6/17(화)" / "2026-06-17T14:00" → "6/17(화) 14:00" */
+function formatDateKo(v: string): string {
+  if (!v) return "";
+  const hasTime = v.includes("T");
+  const d = new Date(hasTime ? v : v + "T00:00:00");
+  if (isNaN(d.getTime())) return v;
+  const m  = d.getMonth() + 1;
+  const dd = d.getDate();
+  const w  = "일월화수목금토"[d.getDay()];
+  const base = `${m}/${dd}(${w})`;
+  if (!hasTime) return base;
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${base} ${hh}:${mi}`;
 }
 
 /** 한국식 단위 보조 — "29600" → "2억 9,600" */
@@ -824,22 +841,22 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             </div>
           )}
 
-          {/* 계약 진행 날짜 (있을 때만) */}
+          {/* 계약 진행 날짜 (있을 때만) — 계약일 강조 (어머니 요청) */}
           {(p.contractDate || p.downPaymentDate || p.balanceDate) && !isClosed && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-2 flex flex-wrap gap-1.5 items-center">
               {p.contractDate && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                  📝 계약일 {p.contractDate}
+                <span className="text-sm font-bold px-3 py-1.5 rounded-full bg-purple-100 text-purple-800 border-2 border-purple-300 shadow-sm">
+                  📝 계약일 {formatDateKo(p.contractDate)}
                 </span>
               )}
               {p.downPaymentDate && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200">
-                  💰 중도금 {p.downPaymentDate}
+                  💰 중도금 {formatDateKo(p.downPaymentDate)}
                 </span>
               )}
               {p.balanceDate && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full border ${balanceOverdue ? "bg-red-50 text-red-700 border-red-200" : "bg-orange-50 text-orange-700 border-orange-200"}`}>
-                  💵 잔금일 {p.balanceDate}
+                  💵 잔금일 {formatDateKo(p.balanceDate)}
                 </span>
               )}
               {p.commission && (
@@ -1231,13 +1248,15 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
     if (!form.contractDate && !form.balanceDate) {
       if (!confirm("계약일·잔금일이 비어있습니다. 그래도 저장할까요?")) return;
     }
-    // 날짜 순서 검증 — 계약일 ≤ 중도금일 ≤ 잔금일
+    // 날짜 순서 검증 — 계약일 ≤ 중도금일 ≤ 잔금일 (계약일은 시간 포함 가능)
+    const dateOnly = (v: string) => v ? v.slice(0, 10) : "";
+    const cd = dateOnly(form.contractDate);
     const errors: string[] = [];
-    if (form.contractDate && form.downPaymentDate && form.contractDate > form.downPaymentDate) {
-      errors.push(`• 중도금일(${form.downPaymentDate})이 계약일(${form.contractDate})보다 빠릅니다`);
+    if (cd && form.downPaymentDate && cd > form.downPaymentDate) {
+      errors.push(`• 중도금일(${form.downPaymentDate})이 계약일(${cd})보다 빠릅니다`);
     }
-    if (form.contractDate && form.balanceDate && form.contractDate > form.balanceDate) {
-      errors.push(`• 잔금일(${form.balanceDate})이 계약일(${form.contractDate})보다 빠릅니다`);
+    if (cd && form.balanceDate && cd > form.balanceDate) {
+      errors.push(`• 잔금일(${form.balanceDate})이 계약일(${cd})보다 빠릅니다`);
     }
     if (form.downPaymentDate && form.balanceDate && form.downPaymentDate > form.balanceDate) {
       errors.push(`• 잔금일(${form.balanceDate})이 중도금일(${form.downPaymentDate})보다 빠릅니다`);
@@ -1273,29 +1292,41 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
             잔금일이 지나면 자동으로 만기 관리로 이동 가능합니다.
           </div>
 
-          {/* 4개 날짜 */}
-          <div className="space-y-2.5">
+          {/* 4개 날짜 — 한국어 캘린더, 계약일은 시간 포함·라벨 강조 */}
+          <div className="space-y-3">
+            <KoreanDatePicker
+              value={form.contractDate}
+              onChange={(v) => set("contractDate", v)}
+              showTime={true}
+              label="📝 계약일 (날짜·시간)"
+              accent="purple"
+              emphasizeLabel={true}
+              placeholder="계약 일시 선택"
+            />
+            <KoreanDatePicker
+              value={form.downPaymentDate}
+              onChange={(v) => set("downPaymentDate", v)}
+              label="💰 중도금일 (선택)"
+              accent="pink"
+              placeholder="중도금일 선택"
+            />
             <div>
-              <label className="block text-sm font-medium text-purple-700 mb-1">📝 계약일</label>
-              <input type="date" value={form.contractDate} onChange={e => set("contractDate", e.target.value)}
-                className="w-full border border-purple-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-400" />
+              <KoreanDatePicker
+                value={form.balanceDate}
+                onChange={(v) => set("balanceDate", v)}
+                label="💵 잔금일 ★"
+                accent="red"
+                placeholder="잔금일 선택"
+              />
+              <p className="text-[11px] text-red-600 mt-1.5">⚠️ 이 날짜 지나면 자동 알림 → 만기 관리로 이동 가능</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-pink-700 mb-1">💰 중도금일 <span className="text-gray-400 text-xs font-normal">(선택)</span></label>
-              <input type="date" value={form.downPaymentDate} onChange={e => set("downPaymentDate", e.target.value)}
-                className="w-full border border-pink-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pink-400" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-red-700 mb-1">💵 잔금일 <span className="text-red-500 text-xs">★</span></label>
-              <input type="date" value={form.balanceDate} onChange={e => set("balanceDate", e.target.value)}
-                className="w-full border border-red-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-400" />
-              <p className="text-[10px] text-red-600 mt-1">⚠️ 이 날짜 지나면 자동 알림 → 만기 관리로 이동 가능</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-orange-700 mb-1">⏰ 임대만기일 <span className="text-gray-400 text-xs font-normal">(전·월세만)</span></label>
-              <input type="date" value={form.leaseEndDate} onChange={e => set("leaseEndDate", e.target.value)}
-                className="w-full border border-orange-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
-            </div>
+            <KoreanDatePicker
+              value={form.leaseEndDate}
+              onChange={(v) => set("leaseEndDate", v)}
+              label="⏰ 임대만기일 (전·월세만)"
+              accent="orange"
+              placeholder="만기일 선택"
+            />
             <div>
               <label className="block text-sm font-medium text-emerald-700 mb-1">💵 중개 수수료 (만원)</label>
               <input type="text" inputMode="numeric" value={form.commission}
