@@ -73,11 +73,16 @@ export function subscribeCustomers(
 
 export async function saveCustomer(agencyId: string, c: Customer): Promise<void> {
   const { id, ...rest } = c;
-  await setDoc(customerDoc(agencyId, id), {
+  const payload: Record<string, unknown> = {
     ...rest,
     updatedAt: serverTimestamp(),
     createdAt: rest.createdAt || Date.now(),
-  });
+  };
+  // Firestore는 undefined 값을 거부 → 제거 (다른 DB와 일관)
+  for (const k of Object.keys(payload)) {
+    if (payload[k] === undefined) delete payload[k];
+  }
+  await setDoc(customerDoc(agencyId, id), payload);
 }
 
 export async function saveCustomersBatch(agencyId: string, customers: Customer[]): Promise<void> {
