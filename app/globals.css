@@ -72,6 +72,21 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
+/* 입력 필드 글자색 — 모든 모달의 input/textarea/select에 명시 글자색 강제
+   (다크모드에서 input bg는 회색인데 글자 색이 미상속되어 안 보이던 문제 해결) */
+input, textarea, select {
+  color: #111827;  /* gray-900 */
+}
+.dark input, .dark textarea, .dark select {
+  color: #f1f5f9;  /* slate-100 */
+}
+input::placeholder, textarea::placeholder {
+  color: #9ca3af;  /* gray-400 */
+}
+.dark input::placeholder, .dark textarea::placeholder {
+  color: #64748b;  /* slate-500 */
+}
+
 /* Material Symbols 폰트 — 대시보드 사이드바 등에서 사용 */
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;

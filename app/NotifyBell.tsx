@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * 알림 종 — 헤더에 표시되는 작은 컨트롤
@@ -228,7 +228,7 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div

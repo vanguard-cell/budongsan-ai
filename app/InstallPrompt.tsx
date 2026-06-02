@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * 앱 설치 가이드 — 폰 기종 자동 감지
@@ -155,7 +155,7 @@ function GuideModal({ platform, onClose }: { platform: Platform; onClose: () => 
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div
