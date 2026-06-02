@@ -85,8 +85,8 @@ export default function PropertiesPage() {
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   // 탭: available=계약 없는 매물(주인거주·공실 포함) / contracted=계약진행중
   const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
-  // 집주인/공실만 보기 토글
-  const [ownerVacantOnly, setOwnerVacantOnly] = useState(false);
+  // 입주상태 필터: "" 전체 / owner 집주인 / vacant 공실
+  const [occFilter, setOccFilter] = useState<"" | "owner" | "vacant">("");
   // 정렬: 등록순 / 금액 낮은순 / 금액 높은순 / 만기일순 / 잔금일순
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance">("newest");
   // 수수료 상세는 /sales 페이지로 이동 (showCommission 제거)
@@ -285,7 +285,7 @@ export default function PropertiesPage() {
     const result = baseList
       .filter(p => filterPropType === "all" || p.propertyType === filterPropType)
       .filter(p => filterType === "all" || p.dealType === filterType)
-      .filter(p => !ownerVacantOnly || p.occupancy === "owner" || p.occupancy === "vacant")
+      .filter(p => !occFilter || p.occupancy === occFilter)
       .filter(p => {
         if (!query.trim()) return true;
         const q = query.toLowerCase();
@@ -322,7 +322,7 @@ export default function PropertiesPage() {
       const bp = pinnedIds.has(b.id) ? 0 : 1;
       return ap - bp;
     });
-  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds, ownerVacantOnly]);
+  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds, occFilter]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -637,14 +637,22 @@ export default function PropertiesPage() {
                 {s.label}
               </button>
             ))}
-            {/* 집주인/공실 필터 토글 */}
-            <button onClick={() => setOwnerVacantOnly(v => !v)}
+            {/* 입주상태 필터 — 집주인 / 공실 (토글) */}
+            <button onClick={() => setOccFilter(v => v === "owner" ? "" : "owner")}
               className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
-                ownerVacantOnly
+                occFilter === "owner"
                   ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
                   : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"
               }`}>
-              🏠 집주인/공실
+              🏠 집주인
+            </button>
+            <button onClick={() => setOccFilter(v => v === "vacant" ? "" : "vacant")}
+              className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+                occFilter === "vacant"
+                  ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"
+              }`}>
+              🏚️ 공실
             </button>
             <div className="flex-1" />
             <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
