@@ -327,24 +327,23 @@ export default function PropertiesPage() {
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto">
 
-        {/* 사용자 바 */}
-        <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
-          <span>👤 {user.displayName || user.email}</span>
-          <span className="text-gray-300">·</span>
-          <button onClick={() => { if (confirm("로그아웃?")) signOut(); }} className="hover:text-blue-600 hover:underline">로그아웃</button>
-        </div>
+        {/* Stitch 톤 페이지 헤더 — 좌측 정렬 큰 제목 + 부제 */}
+        <section className="mb-4">
+          <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400" style={{ fontSize: "2rem" }}>domain</span>
+            내 매물 관리
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+            광고 중인 매물 목록 — 등록·계약 진행·만기 이동 한눈에
+          </p>
+        </section>
 
-        {/* 헤더 */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
-            🏘️ 내 매물 관리
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">내 매물 목록</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mb-4">등록 매물에서 바로 전화·문자 연결</p>
-          <div className="flex flex-wrap gap-2 justify-center">
+        {/* 헤더 (기존 디자인 유지) */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setEditing(emptyProperty())}
               className="px-5 py-2.5 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 text-sm font-semibold hover:bg-emerald-100 transition-colors"

@@ -28,9 +28,11 @@ export default function AppNav() {
   const pathname = usePathname();
   if (pathname === "/login") return null;
 
-  // /dashboard는 자체 사이드바를 가지므로 PC 사이드바 중복 방지.
-  // 단 모바일 하단 탭바는 그대로 표시 (모바일에선 자체 사이드바가 hidden이라 다른 메뉴 갈 길이 없음)
-  const hideDesktopSidebar = pathname.startsWith("/dashboard");
+  // Stitch 톤 페이지(자체 사이드바)는 PC 사이드바 중복 방지.
+  // 단 모바일 하단 탭바는 그대로 표시
+  const hideDesktopSidebar =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/properties");
 
   return (
     <>

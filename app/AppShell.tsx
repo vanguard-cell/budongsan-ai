@@ -15,7 +15,10 @@ import BottomNav from "./BottomNav";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
-  const isDashboard = pathname.startsWith("/dashboard");
+  // Stitch 톤 적용된 페이지들 (자체 사이드바·헤더 보유)
+  const isFullscreen =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/properties");
 
   if (isLogin) {
     return <>{children}</>;
@@ -23,11 +26,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* 대시보드는 자체 PC 사이드바를 가지므로 padding 없이, 일반 페이지는 md:pl-56 */}
-      <div className={isDashboard ? "" : "md:pl-56"}>
+      {/* 풀스크린(자체 사이드바·헤더) 페이지는 padding 없이, 일반 페이지는 md:pl-56 */}
+      <div className={isFullscreen ? "" : "md:pl-56"}>
         {children}
       </div>
-      {/* BottomNav 내부에서 PC 사이드바는 /dashboard 시 숨기지만, 모바일 탭바는 항상 표시 */}
+      {/* BottomNav 내부에서 PC 사이드바는 풀스크린 시 숨기지만, 모바일 탭바는 항상 표시 */}
       <BottomNav />
     </>
   );
