@@ -4,22 +4,54 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* 라이트 모드 토큰 */
-  --background: #ffffff;
+  /* 라이트 모드 — Stitch 디자인 시스템 토큰 (Material Design 3 기반) */
+  --background: #f8f9ff;
   --foreground: #0b1c30;
+
+  --md-primary:               #006948;  /* 메인 컬러 — deep emerald */
+  --md-primary-container:     #85f8c4;  /* 활성 메뉴 배경 */
+  --md-on-primary-container:  #002112;
+  --md-on-surface:            #0b1c30;
+  --md-on-surface-variant:    #3d4a42;
+  --md-surface:               #f8f9ff;
+  --md-surface-container-low: #eff4ff;
+  --md-surface-container:     #e5eeff;
+  --md-surface-container-high: #dee7f7;
+  --md-outline:               #6d7a72;
+  --md-outline-variant:       #bdc8c1;
+  --md-error:                 #ba1a1a;
+  --md-tertiary:              #6800b4;  /* 보라 (후속연락 등) */
+  --md-tertiary-fixed:        #ddb8ff;
+  --md-secondary-container:   #316bf3;
+
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
   --border: #e5e7eb;
   --text-primary: #0b1c30;
   --text-muted: #6b7280;
 }
 
 .dark {
-  /* 다크 모드 토큰 */
+  /* 다크 모드 */
   --background: #0f172a;
   --foreground: #f1f5f9;
+
+  --md-primary:               #5cdaa1;
+  --md-primary-container:     #00513a;
+  --md-on-primary-container:  #85f8c4;
+  --md-on-surface:            #e2e8f0;
+  --md-on-surface-variant:    #cbd5e1;
+  --md-surface:               #0f172a;
+  --md-surface-container-low: #1e293b;
+  --md-surface-container:     #334155;
+  --md-surface-container-high: #475569;
+  --md-outline:               #94a3b8;
+  --md-outline-variant:       #475569;
+  --md-error:                 #ff6b6b;
+  --md-tertiary:              #c89bff;
+  --md-tertiary-fixed:        #6800b4;
+  --md-secondary-container:   #1a3a8c;
+
   --surface: #1e293b;
-  --surface-muted: #0f172a;
   --border: #334155;
   --text-primary: #f1f5f9;
   --text-muted: #94a3b8;

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
-import BottomNav from "./BottomNav";
+import AppShell from "./AppShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -83,11 +83,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider>
-          {/* PC에서 사이드바(w-56) 만큼 오른쪽으로 밀기 */}
-          <div className="md:pl-56">
-            {children}
-          </div>
-          <BottomNav />
+          <AppShell>{children}</AppShell>
         </AuthProvider>
       </body>
     </html>
