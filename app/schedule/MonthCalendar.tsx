@@ -11,7 +11,7 @@
 
 import { useMemo, useState } from "react";
 
-export type CalendarSource = "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
+export type CalendarSource = "appointment" | "contractDate" | "downPaymentDate" | "balanceDate" | "manage";
 
 export interface CalendarItem {
   date: string;                          // YYYY-MM-DD
@@ -30,12 +30,14 @@ export const SOURCE_COLORS: Record<CalendarSource, string> = {
   contractDate:    "bg-purple-500",
   downPaymentDate: "bg-pink-500",
   balanceDate:     "bg-red-500",
+  manage:          "bg-indigo-500",
 };
 export const SOURCE_LABELS: Record<CalendarSource, string> = {
   appointment:     "약속",
   contractDate:    "계약일",
   downPaymentDate: "중도금일",
   balanceDate:     "잔금일",
+  manage:          "관리",
 };
 /** 캘린더 셀 안에 표시할 짧은 라벨 — 1글자 (작은 셀에 들어가도록) */
 export const SOURCE_SHORT_LABELS: Record<CalendarSource, string> = {
@@ -43,6 +45,7 @@ export const SOURCE_SHORT_LABELS: Record<CalendarSource, string> = {
   contractDate:    "계",
   downPaymentDate: "중",
   balanceDate:     "잔",
+  manage:          "관",
 };
 /** 글자까지 덮는 알약 형태 범례용 — 배경+텍스트+테두리 일체형 */
 export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
@@ -50,6 +53,7 @@ export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
   contractDate:    "bg-purple-100 text-purple-700 border-purple-200",
   downPaymentDate: "bg-pink-100   text-pink-700   border-pink-200",
   balanceDate:     "bg-red-100    text-red-700    border-red-200",
+  manage:          "bg-indigo-100 text-indigo-700 border-indigo-200",
 };
 /** 캘린더 셀 안 미니 알약용 — 테두리 없이 배경+텍스트만 (좁은 공간) */
 export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
@@ -57,6 +61,7 @@ export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
   contractDate:    "bg-purple-100 text-purple-700",
   downPaymentDate: "bg-pink-100   text-pink-700",
   balanceDate:     "bg-red-100    text-red-700",
+  manage:          "bg-indigo-100 text-indigo-700",
 };
 
 function pad(n: number): string { return String(n).padStart(2, "0"); }

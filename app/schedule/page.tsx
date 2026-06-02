@@ -14,7 +14,7 @@ import type { Customer } from "@/app/customers/customer-types";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 
 /* ── 타입 ── */
-type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
+type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate" | "manage";
 type ItemSource   = Exclude<SourceFilter, "all">;
 type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate" | "manage";
 
@@ -118,7 +118,7 @@ export default function SchedulePage() {
       if (p.status !== "active") continue;
       if (!p.nextManageDate) continue;
       if (!showPast && !isFuture(p.nextManageDate)) continue;
-      items.push({ key: `pm-${p.id}`, source: "appointment", date: p.nextManageDate, time: "", property: p, propertyKind: "manage" });
+      items.push({ key: `pm-${p.id}`, source: "manage", date: p.nextManageDate, time: "", property: p, propertyKind: "manage" });
     }
 
     // ③ 손님 후속연락 — "약속" 카테고리로 통합
@@ -151,7 +151,7 @@ export default function SchedulePage() {
       if (p.contractDate)    items.push({ date: p.contractDate,    source: "contractDate" });
       if (p.downPaymentDate) items.push({ date: p.downPaymentDate, source: "downPaymentDate" });
       if (p.balanceDate)     items.push({ date: p.balanceDate,     source: "balanceDate" });
-      if (p.nextManageDate)  items.push({ date: p.nextManageDate,  source: "appointment" });
+      if (p.nextManageDate)  items.push({ date: p.nextManageDate,  source: "manage" });
     }
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
@@ -180,6 +180,7 @@ export default function SchedulePage() {
     contractDate:    unified.filter(i => i.source === "contractDate").length,
     downPaymentDate: unified.filter(i => i.source === "downPaymentDate").length,
     balanceDate:     unified.filter(i => i.source === "balanceDate").length,
+    manage:          unified.filter(i => i.source === "manage").length,
   }), [unified]);
 
   const upsert = async (s: Schedule) => {
@@ -272,13 +273,14 @@ export default function SchedulePage() {
         )}
 
         {/* 필터 탭 — 5개 */}
-        <div className="grid grid-cols-5 gap-1.5 mb-4">
+        <div className="grid grid-cols-6 gap-1 mb-4">
           {([
             { key: "all",             icon: "📋", label: "전체",     activeColor: "bg-blue-600",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
             { key: "appointment",     icon: "👥", label: "약속",     activeColor: "bg-blue-500",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
             { key: "contractDate",    icon: "📝", label: "계약일",   activeColor: "bg-purple-600",  inactiveColor: "bg-purple-50 border-purple-200 text-purple-700" },
-            { key: "downPaymentDate", icon: "💰", label: "중도금일", activeColor: "bg-pink-600",    inactiveColor: "bg-pink-50 border-pink-200 text-pink-700" },
-            { key: "balanceDate",     icon: "🔑", label: "잔금일",   activeColor: "bg-red-600",     inactiveColor: "bg-red-50 border-red-200 text-red-700" },
+            { key: "downPaymentDate", icon: "💰", label: "중도금", activeColor: "bg-pink-600",    inactiveColor: "bg-pink-50 border-pink-200 text-pink-700" },
+            { key: "balanceDate",     icon: "🔑", label: "잔금",   activeColor: "bg-red-600",     inactiveColor: "bg-red-50 border-red-200 text-red-700" },
+            { key: "manage",          icon: "📞", label: "관리",   activeColor: "bg-indigo-600",  inactiveColor: "bg-indigo-50 border-indigo-200 text-indigo-700" },
           ] as const).map(tab => (
             <button
               key={tab.key}

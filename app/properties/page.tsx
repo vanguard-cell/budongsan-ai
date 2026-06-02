@@ -83,8 +83,8 @@ export default function PropertiesPage() {
   const [filterPropType, setFilterPropType] = useState<"all" | PropertyType>("all"); // 대분류: 매물 유형
   const [showClosed, setShowClosed] = useState(false);
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
-  // 계약진행중 탭: "available"=계약없음, "contracted"=임차인있음(계약진행중)
-  const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
+  // 탭: available=일반매물 / contracted=계약진행중 / managed=집주인·관리(주인거주·관리일)
+  const [viewMode, setViewMode] = useState<"available" | "contracted" | "managed">("available");
   // 정렬: 등록순 / 금액 낮은순 / 금액 높은순 / 만기일순 / 잔금일순
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance">("newest");
   // 수수료 상세는 /sales 페이지로 이동 (showCommission 제거)
@@ -267,15 +267,22 @@ export default function PropertiesPage() {
   // 계약진행중 = "계약 진행" 모달에서 contractDate/중도금/잔금일을 입력한 매물
   // (tenantName/tenantPhone은 일반 매물 등록에도 쓰이므로 기준으로 쓰지 않음)
   const isContracted = (p: Property) => !!(p.contractDate || p.downPaymentDate || p.balanceDate);
+  // 집주인·관리 = 주인거주 또는 관리일이 설정된 매물 (계약진행중이 아닌)
+  const isManaged = (p: Property) => !isContracted(p) && (p.occupancy === "owner" || !!p.nextManageDate);
 
   // 매물 대표 금액 (만원 int) — 매매/전세=price, 월세=보증금
   const priceNum = (p: Property) => parseInt((p.price || "0").replace(/\D/g, ""), 10) || 0;
 
+  // 탭별 매물 분류
+  const matchView = (p: Property) =>
+    viewMode === "contracted" ? isContracted(p)
+    : viewMode === "managed"   ? isManaged(p)
+    : (!isContracted(p) && !isManaged(p)); // available = 일반 매물
+
   const filtered = useMemo(() => {
     const baseList = showClosed
       ? properties.filter(p => p.status === "closed")
-      : properties.filter(p => p.status === "active")
-          .filter(p => viewMode === "available" ? !isContracted(p) : isContracted(p));
+      : properties.filter(p => p.status === "active").filter(matchView);
 
     const result = baseList
       .filter(p => filterPropType === "all" || p.propertyType === filterPropType)
@@ -322,20 +329,20 @@ export default function PropertiesPage() {
     const active = properties.filter(p => p.status === "active");
     return {
       all: active.length,
-      available: active.filter(p => !isContracted(p)).length,
+      available: active.filter(p => !isContracted(p) && !isManaged(p)).length,
       contracted: active.filter(p => isContracted(p)).length,
+      managed: active.filter(p => isManaged(p)).length,
       매매: active.filter(p => p.dealType === "매매").length,
       전세: active.filter(p => p.dealType === "전세").length,
       월세: active.filter(p => p.dealType === "월세").length,
     };
   }, [properties]);
 
-  // 매물 유형별 개수 (대분류 칩) — 현재 탭(매물관리/계약진행중) 기준
+  // 매물 유형별 개수 (대분류 칩) — 현재 탭 기준
   const propTypeCounts = useMemo(() => {
     const base = showClosed
       ? properties.filter(p => p.status === "closed")
-      : properties.filter(p => p.status === "active")
-          .filter(p => viewMode === "available" ? !isContracted(p) : isContracted(p));
+      : properties.filter(p => p.status === "active").filter(matchView);
     const map: Record<string, number> = { all: base.length };
     for (const t of PROPERTY_TYPES) map[t] = base.filter(p => p.propertyType === t).length;
     return map;
@@ -475,41 +482,44 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        {/* 계약 상태 탭 */}
+        {/* 매물 상태 탭 — 미계약 / 계약진행중 / 집주인·관리 */}
         {!showClosed && (
-          <div className="flex rounded-2xl overflow-hidden border border-gray-200 mb-4 shadow-sm">
+          <div className="grid grid-cols-3 gap-1.5 mb-4">
             <button
               onClick={() => setViewMode("available")}
-              className={`flex-1 flex items-center justify-between px-4 py-3.5 transition-all ${
+              className={`rounded-2xl border px-2 py-3 text-center transition-all ${
                 viewMode === "available"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-emerald-50"
+                  ? "bg-emerald-600 text-white border-emerald-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-emerald-50"
               }`}
             >
-              <div className="text-left">
-                <div className="text-xs font-medium opacity-80">📋 미계약 매물</div>
-                <div className="text-[11px] opacity-70">계약 없는 매물</div>
-              </div>
-              <div className={`text-2xl font-bold ml-2 ${viewMode === "available" ? "text-white" : "text-emerald-600"}`}>
-                {counts.available}
-              </div>
+              <div className="text-xl font-bold leading-none">{counts.available}</div>
+              <div className="text-[11px] font-medium mt-1">📋 미계약</div>
+              <div className="text-[9px] opacity-70">광고 중 매물</div>
             </button>
-            <div className="w-px bg-gray-200" />
             <button
               onClick={() => setViewMode("contracted")}
-              className={`flex-1 flex items-center justify-between px-4 py-3.5 transition-all ${
+              className={`rounded-2xl border px-2 py-3 text-center transition-all ${
                 viewMode === "contracted"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-blue-50"
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-blue-50"
               }`}
             >
-              <div className="text-left">
-                <div className="text-xs font-medium opacity-80">🤝 계약진행중</div>
-                <div className="text-[11px] opacity-70">계약일 입력한 매물</div>
-              </div>
-              <div className={`text-2xl font-bold ml-2 ${viewMode === "contracted" ? "text-white" : "text-blue-600"}`}>
-                {counts.contracted}
-              </div>
+              <div className="text-xl font-bold leading-none">{counts.contracted}</div>
+              <div className="text-[11px] font-medium mt-1">🤝 계약진행</div>
+              <div className="text-[9px] opacity-70">계약일 입력</div>
+            </button>
+            <button
+              onClick={() => setViewMode("managed")}
+              className={`rounded-2xl border px-2 py-3 text-center transition-all ${
+                viewMode === "managed"
+                  ? "bg-indigo-600 text-white border-indigo-600"
+                  : "bg-white text-gray-600 border-gray-200 hover:bg-indigo-50"
+              }`}
+            >
+              <div className="text-xl font-bold leading-none">{counts.managed}</div>
+              <div className="text-[11px] font-medium mt-1">👤 집주인·관리</div>
+              <div className="text-[9px] opacity-70">주인거주·관리일</div>
             </button>
           </div>
         )}
