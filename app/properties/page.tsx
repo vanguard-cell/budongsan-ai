@@ -11,7 +11,7 @@ import {
 import { dDay } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import { moveToContract } from "@/lib/contracts-db";
-import { subscribeCustomers } from "@/lib/customers-db";
+import { subscribeCustomers, upsertTenantAsCustomer } from "@/lib/customers-db";
 import type { Customer } from "@/app/customers/customer-types";
 import { computeSalesStats } from "@/lib/sales";
 import Link from "next/link";
@@ -152,23 +152,32 @@ export default function PropertiesPage() {
     });
   };
 
+  /**
+   * 거래완료 처리 — 매매·전세·월세 모두 만기 관리로 이동 (통일)
+   * - 전월세는 임차인 정보 있으면 손님관리 자동 등록
+   * - moveToContract: Property → Contract 변환 + Property 삭제
+   */
   const close = async (p: Property) => {
     if (!user) return;
-    // 매매는 거래완료 = 만기 관리로 이동 (사용자 결정: Q1 답변)
-    if (p.dealType === "매매") {
-      if (!confirm(`${p.address}\n\n매매 거래완료 처리하시겠어요?\n→ 만기 관리(거래 이력)로 이동됩니다.`)) return;
-      try {
-        await moveToContract(user.agencyId, p);
-        setTimeout(() => alert("✅ 매매 거래완료 — 만기 관리로 이동되었습니다."), 100);
-      } catch (e) {
-        console.error("[close-매매] 실패:", e);
-        alert("처리 중 오류가 발생했습니다.");
+    if (!confirm(`${p.address}\n\n${p.dealType} 거래완료 처리하시겠어요?\n→ 만기 관리(거래 이력)로 이동됩니다.`)) return;
+    try {
+      // 전·월세는 임차인 자동 등록
+      let linkedCustomerId: string | undefined = p.linkedTenantId;
+      if (p.dealType !== "매매" && (p.tenantName || p.tenantPhone)) {
+        const id = await upsertTenantAsCustomer(user.agencyId, {
+          name: p.tenantName,
+          phone: p.tenantPhone,
+          propertyAddress: p.address,
+          contractDate: p.contractDate,
+        });
+        linkedCustomerId = id || linkedCustomerId;
       }
-      return;
+      await moveToContract(user.agencyId, p, linkedCustomerId);
+      setTimeout(() => alert(`✅ ${p.dealType} 거래완료 — 만기 관리로 이동되었습니다.`), 100);
+    } catch (e) {
+      console.error("[close] 실패:", e);
+      alert("처리 중 오류가 발생했습니다.");
     }
-    // 전·월세: 단순히 광고 종료 (status: closed). 만기 관리는 "만기로 보내기" 별도 버튼으로
-    if (!confirm("거래완료 처리할까요? (광고 종료, 만기 관리로 이동은 [만기로 보내기] 버튼 사용)")) return;
-    await saveProperty(user.agencyId, { ...p, status: "closed" });
   };
 
   /**
@@ -908,14 +917,10 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
         ) : (
           <button
             onClick={onClose}
-            title={p.dealType === "매매" ? "매매 거래 완료 → 만기 관리로 이동" : "광고 종료 (만기 관리는 별도 [만기로 보내기] 버튼)"}
-            className={
-              p.dealType === "매매"
-                ? "text-[11px] px-2.5 py-1 rounded-full border-2 border-red-400 bg-red-50 text-red-700 font-bold hover:bg-red-100 transition-colors"
-                : "text-[11px] px-2.5 py-1 rounded-full border border-orange-300 bg-orange-50 text-orange-700 font-semibold hover:bg-orange-100 transition-colors"
-            }
+            title="거래 완료 → 만기 관리로 이동 (매매·전세·월세 모두 동일)"
+            className="text-[11px] px-2.5 py-1 rounded-full border-2 border-red-400 bg-red-50 text-red-700 font-bold hover:bg-red-100 transition-colors"
           >
-            {p.dealType === "매매" ? "🚀 거래완료 → 만기" : "🛑 광고 종료"}
+            🚀 거래완료 → 만기
           </button>
         )}
         <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors ml-auto">🗑️ 삭제</button>
