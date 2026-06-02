@@ -808,8 +808,6 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
   const today = new Date().toISOString().slice(0, 10);
   const balanceOverdue = hasBalanceDate && p.balanceDate <= today;
 
-  // 정기 관리일 D-day
-  const manageDD = p.nextManageDate ? dDay(p.nextManageDate) : null;
   const OCC_LABEL: Record<string, string> = { tenant: "임대중", owner: "주인거주", vacant: "공실" };
 
   return (
@@ -840,11 +838,6 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             )}
             {p.occupancy && p.occupancy !== "tenant" && (
               <span className="text-[11px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-medium">{OCC_LABEL[p.occupancy]}</span>
-            )}
-            {manageDD !== null && !isClosed && (
-              <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${manageDD < 0 ? "bg-red-100 text-red-700" : manageDD <= 7 ? "bg-orange-100 text-orange-700" : "bg-indigo-100 text-indigo-700"}`}>
-                📞 관리 {manageDD < 0 ? `${-manageDD}일지남` : manageDD === 0 ? "오늘" : `D-${manageDD}`}
-              </span>
             )}
               <span className="text-sm font-bold text-gray-900 truncate">{priceStr}</span>
             </div>

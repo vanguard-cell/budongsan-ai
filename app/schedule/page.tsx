@@ -14,9 +14,9 @@ import type { Customer } from "@/app/customers/customer-types";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 
 /* ── 타입 ── */
-type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate" | "manage";
+type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
 type ItemSource   = Exclude<SourceFilter, "all">;
-type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate" | "manage";
+type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate";
 
 interface UnifiedItem {
   key: string;
@@ -113,13 +113,6 @@ export default function SchedulePage() {
       }
     }
 
-    // ②-2 내 매물 정기 관리일 (주인거주·공실 등 만기 없는 매물) — "약속"으로 통합
-    for (const p of properties) {
-      if (p.status !== "active") continue;
-      if (!p.nextManageDate) continue;
-      if (!showPast && !isFuture(p.nextManageDate)) continue;
-      items.push({ key: `pm-${p.id}`, source: "manage", date: p.nextManageDate, time: "", property: p, propertyKind: "manage" });
-    }
 
     // ③ 손님 후속연락 — "약속" 카테고리로 통합
     for (const cu of customers) {
@@ -151,7 +144,6 @@ export default function SchedulePage() {
       if (p.contractDate)    items.push({ date: p.contractDate,    source: "contractDate" });
       if (p.downPaymentDate) items.push({ date: p.downPaymentDate, source: "downPaymentDate" });
       if (p.balanceDate)     items.push({ date: p.balanceDate,     source: "balanceDate" });
-      if (p.nextManageDate)  items.push({ date: p.nextManageDate,  source: "manage" });
     }
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
@@ -180,7 +172,6 @@ export default function SchedulePage() {
     contractDate:    unified.filter(i => i.source === "contractDate").length,
     downPaymentDate: unified.filter(i => i.source === "downPaymentDate").length,
     balanceDate:     unified.filter(i => i.source === "balanceDate").length,
-    manage:          unified.filter(i => i.source === "manage").length,
   }), [unified]);
 
   const upsert = async (s: Schedule) => {
@@ -273,14 +264,13 @@ export default function SchedulePage() {
         )}
 
         {/* 필터 탭 — 5개 */}
-        <div className="grid grid-cols-6 gap-1 mb-4">
+        <div className="grid grid-cols-5 gap-1.5 mb-4">
           {([
             { key: "all",             icon: "📋", label: "전체",     activeColor: "bg-blue-600",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
             { key: "appointment",     icon: "👥", label: "약속",     activeColor: "bg-blue-500",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
             { key: "contractDate",    icon: "📝", label: "계약일",   activeColor: "bg-purple-600",  inactiveColor: "bg-purple-50 border-purple-200 text-purple-700" },
             { key: "downPaymentDate", icon: "💰", label: "중도금", activeColor: "bg-pink-600",    inactiveColor: "bg-pink-50 border-pink-200 text-pink-700" },
             { key: "balanceDate",     icon: "🔑", label: "잔금",   activeColor: "bg-red-600",     inactiveColor: "bg-red-50 border-red-200 text-red-700" },
-            { key: "manage",          icon: "📞", label: "관리",   activeColor: "bg-indigo-600",  inactiveColor: "bg-indigo-50 border-indigo-200 text-indigo-700" },
           ] as const).map(tab => (
             <button
               key={tab.key}
@@ -417,14 +407,12 @@ function PropertyDateCard({ property: p, kind }: { property: Property; kind: Pro
   const date =
     kind === "contractDate"    ? p.contractDate
     : kind === "downPaymentDate" ? p.downPaymentDate
-    : kind === "balanceDate"   ? p.balanceDate
-    : p.nextManageDate;
+    : p.balanceDate;
 
   const kindMeta: Record<PropertyDateKind, { label: string; icon: string; mainColor: string; badgeColor: string; bgColor: string }> = {
     contractDate:    { label: "계약일",   icon: "📝", mainColor: "text-purple-600", badgeColor: "bg-purple-100 text-purple-700", bgColor: "bg-purple-50 border-purple-200" },
     downPaymentDate: { label: "중도금일", icon: "💰", mainColor: "text-pink-600",   badgeColor: "bg-pink-100 text-pink-700",     bgColor: "bg-pink-50 border-pink-200" },
     balanceDate:     { label: "잔금일",   icon: "🔑", mainColor: "text-red-600",    badgeColor: "bg-red-100 text-red-700",       bgColor: "bg-red-50 border-red-200" },
-    manage:          { label: "관리",     icon: "📞", mainColor: "text-indigo-600", badgeColor: "bg-indigo-100 text-indigo-700", bgColor: "bg-indigo-50 border-indigo-200" },
   };
   const m = kindMeta[kind];
 
