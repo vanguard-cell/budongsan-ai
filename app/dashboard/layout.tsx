@@ -13,7 +13,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-gradient-to-br from-white to-emerald-50/40 dark:from-slate-900 dark:to-emerald-950/30">
       <DashboardHeader />
       <DashboardSidebar />
-      <main className="pt-16 lg:pl-64">
+      {/* pt-16: 상단 헤더 / lg:pl-64: PC 사이드바 / pb-20 md:pb-0: 모바일 하단 탭바 여유 */}
+      <main className="pt-16 lg:pl-64 pb-20 md:pb-0">
         {children}
       </main>
     </div>

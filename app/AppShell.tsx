@@ -2,27 +2,32 @@
 
 /**
  * 앱 셸 — 경로별 레이아웃 분기
- * - 일반 페이지: 기존 BottomNav(모바일 탭바·PC 사이드바) + md:pl-56 padding
- * - 풀스크린 페이지(/dashboard, /login): 자체 레이아웃 유지, BottomNav 숨김
+ *
+ * - /login: 완전 풀스크린 (네비 없음)
+ * - /dashboard: 자체 사이드바·헤더 (PC) + 모바일은 BottomNav 탭바 유지
+ *   · md:pl-56 padding 없음 (자체 lg:pl-64로 처리)
+ * - 그 외: 기존 BottomNav (PC 사이드바 + 모바일 탭바) + md:pl-56
  */
 
 import { usePathname } from "next/navigation";
 import BottomNav from "./BottomNav";
 
-const FULLSCREEN_PATTERNS = ["/dashboard", "/login"];
-
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isFullscreen = FULLSCREEN_PATTERNS.some(p => pathname === p || pathname.startsWith(p + "/"));
+  const isLogin = pathname === "/login";
+  const isDashboard = pathname.startsWith("/dashboard");
 
-  if (isFullscreen) {
-    // 자체 사이드바·헤더가 있는 페이지 — wrapper padding 없이 그대로
+  if (isLogin) {
     return <>{children}</>;
   }
 
   return (
     <>
-      <div className="md:pl-56">{children}</div>
+      {/* 대시보드는 자체 PC 사이드바를 가지므로 padding 없이, 일반 페이지는 md:pl-56 */}
+      <div className={isDashboard ? "" : "md:pl-56"}>
+        {children}
+      </div>
+      {/* BottomNav 내부에서 PC 사이드바는 /dashboard 시 숨기지만, 모바일 탭바는 항상 표시 */}
       <BottomNav />
     </>
   );
