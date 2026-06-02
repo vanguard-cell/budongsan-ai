@@ -96,7 +96,7 @@ export default function FeedbackPage() {
               👑 관리자
             </span>
           )}
-          <span>👤 {user.displayName || user.email} ({user.email})</span>
+          <span>👤 {user.displayName || user.email}</span>
           <span className="text-gray-300">·</span>
           <button
             onClick={() => { if (confirm("로그아웃 하시겠어요?")) signOut(); }}
