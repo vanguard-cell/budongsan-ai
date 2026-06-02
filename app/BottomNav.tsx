@@ -35,13 +35,13 @@ export default function AppNav() {
   return (
     <>
       {/* ── PC: 왼쪽 고정 사이드바 (대시보드에서는 자체 사이드바라 숨김) ── */}
-      <aside className={`${hideDesktopSidebar ? "hidden" : "hidden md:flex"} fixed left-0 top-0 bottom-0 w-56 bg-white border-r border-gray-100 shadow-sm flex-col z-50`}>
-        <div className="px-5 py-6 border-b border-gray-100">
+      <aside className={`${hideDesktopSidebar ? "hidden" : "hidden md:flex"} fixed left-0 top-0 bottom-0 w-56 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-700 shadow-sm flex-col z-50`}>
+        <div className="px-5 py-6 border-b border-gray-100 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <span className="text-xl">🏡</span>
             <div>
-              <div className="text-sm font-bold text-gray-900 leading-tight">미사금빛</div>
-              <div className="text-[11px] text-gray-400">매물 도우미</div>
+              <div className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">미사금빛</div>
+              <div className="text-[11px] text-gray-400 dark:text-gray-500">매물 도우미</div>
             </div>
           </div>
         </div>
@@ -52,34 +52,38 @@ export default function AppNav() {
             return (
               <Link key={tab.href} href={tab.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                  isActive ? "bg-blue-50 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  isActive
+                    ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}>
                 <span className="text-lg leading-none w-7 text-center">{tab.icon}</span>
                 <span className="text-sm">{tab.label}</span>
-                {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />}
+                {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />}
               </Link>
             );
           })}
         </nav>
 
-        <div className="px-5 py-4 border-t border-gray-100">
-          <p className="text-[10px] text-gray-400 leading-relaxed">☁️ 실시간 동기화<br />PC · 폰 자동 연동</p>
+        <div className="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-relaxed">☁️ 실시간 동기화<br />PC · 폰 자동 연동</p>
         </div>
       </aside>
 
       {/* ── 모바일: 하단 탭바 ── */}
       <div className="h-20 md:hidden" />
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div className="flex items-center justify-around px-1 pt-1 pb-3">
           {MAIN_TABS.map(tab => {
             const isActive = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
             return (
               <Link key={tab.href} href={tab.href}
-                className={`flex flex-col items-center gap-0.5 flex-1 py-2 rounded-2xl transition-colors ${isActive ? "text-blue-600" : "text-gray-400"}`}>
+                className={`flex flex-col items-center gap-0.5 flex-1 py-2 rounded-2xl transition-colors ${
+                  isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
+                }`}>
                 <span className={`${tab.icon === "···" ? "text-lg font-bold tracking-widest" : "text-xl"} leading-none`}>{tab.icon}</span>
                 <span className={`text-[10px] font-medium ${isActive ? "font-bold" : ""}`}>{tab.label}</span>
-                {isActive && <span className="w-1 h-1 rounded-full bg-blue-600 mt-0.5" />}
+                {isActive && <span className="w-1 h-1 rounded-full bg-blue-600 dark:bg-blue-400 mt-0.5" />}
               </Link>
             );
           })}
