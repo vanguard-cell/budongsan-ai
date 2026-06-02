@@ -234,6 +234,35 @@ export default function PropertiesPage() {
     for (const p of properties) await deleteProperty(user.agencyId, p.id);
   };
 
+  /** 기존 매물 임차인 → 손님관리 일괄 등록 (전·월세, linkedTenantId 없는 것만) */
+  const migrateTenantsToCustomers = async () => {
+    if (!user) return;
+    const targets = properties.filter(p =>
+      p.dealType !== "매매" && (p.tenantName || p.tenantPhone) && !p.linkedTenantId,
+    );
+    if (targets.length === 0) {
+      alert("일괄 등록할 임차인이 없습니다.");
+      return;
+    }
+    if (!confirm(`${targets.length}건의 매물 임차인을 손님관리에 일괄 등록할까요?`)) return;
+    let ok = 0, fail = 0;
+    for (const p of targets) {
+      try {
+        const id = await upsertTenantAsCustomer(user.agencyId, {
+          name: p.tenantName, phone: p.tenantPhone, propertyAddress: p.address, contractDate: p.contractDate,
+        });
+        if (id) {
+          await saveProperty(user.agencyId, { ...p, linkedTenantId: id });
+          ok++;
+        } else fail++;
+      } catch (e) {
+        console.error("[migrate]", e);
+        fail++;
+      }
+    }
+    alert(`✅ 일괄 등록 완료\n\n성공: ${ok}건\n실패: ${fail}건`);
+  };
+
 
   // 계약진행중 = "계약 진행" 모달에서 contractDate/중도금/잔금일을 입력한 매물
   // (tenantName/tenantPhone은 일반 매물 등록에도 쓰이므로 기준으로 쓰지 않음)
@@ -330,58 +359,81 @@ export default function PropertiesPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
 
-        {/* Stitch 톤 페이지 헤더 — 좌측 정렬 큰 제목 + 부제 */}
-        <section className="mb-4">
-          <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400" style={{ fontSize: "2rem" }}>domain</span>
-            내 매물 관리
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
-            광고 중인 매물 목록 — 등록·계약 진행·만기 이동 한눈에
-          </p>
-        </section>
+        {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 액션 버튼 그룹 */}
+        <section className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
+          {/* 좌측: 제목 + 부제 */}
+          <div>
+            <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+              <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400" style={{ fontSize: "2rem" }}>domain</span>
+              내 매물 관리
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+              광고 중인 매물 목록 — 등록·계약 진행·만기 이동 한눈에
+            </p>
+          </div>
 
-        {/* 헤더 (기존 디자인 유지) */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setEditing(emptyProperty())}
-              className="px-5 py-2.5 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 text-sm font-semibold hover:bg-emerald-100 transition-colors"
-            >
-              + 매물 등록
-            </button>
-            <button
-              onClick={() => setShowUpload(true)}
-              title="엑셀 파일에서 한 번에 여러 매물 등록"
-              className="px-4 py-2.5 rounded-full border border-gray-300 text-gray-700 text-sm hover:border-emerald-500 hover:text-emerald-700 transition-colors"
-            >
-              📥 엑셀 업로드
-            </button>
-            <button
-              onClick={() => setShowExport(true)}
-              title="현재 매물을 엑셀로 다운로드 — 백업/다른 시스템 이관"
-              className="px-4 py-2.5 rounded-full border border-gray-300 text-gray-700 text-sm hover:border-emerald-500 hover:text-emerald-700 transition-colors"
-            >
-              📤 내보내기
-            </button>
-            <button
-              onClick={loadSamples}
-              title="예시 매물 6건 추가 (테스트용)"
-              className="px-4 py-2.5 rounded-full border border-gray-300 text-gray-700 text-sm hover:border-emerald-500 hover:text-emerald-700 transition-colors"
-            >
-              🧪 예시 데이터
-            </button>
-            {properties.length > 0 && (
+          {/* 우측: 액션 버튼 그룹 (Stitch 톤) */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* 기존 임차인 일괄 등록 — 조건부, 파랑 강조 */}
+            {properties.some(p => p.dealType !== "매매" && (p.tenantName || p.tenantPhone) && !p.linkedTenantId) && (
               <button
-                onClick={clearAll}
-                title="모든 매물 데이터 삭제"
-                className="px-4 py-2.5 rounded-full border border-gray-300 text-gray-500 text-sm hover:border-red-400 hover:text-red-600 transition-colors"
+                onClick={migrateTenantsToCustomers}
+                title="기존 매물의 임차인을 손님관리에 일괄 등록"
+                className="px-4 py-2.5 rounded-xl border border-blue-300 bg-blue-50 text-blue-700 text-sm font-bold flex items-center gap-1.5 hover:bg-blue-100 transition-all shadow-sm"
               >
-                🗑️ 전체 삭제
+                <span className="material-symbols-outlined text-lg">sync</span>
+                기존 임차인 → 손님관리
               </button>
             )}
+
+            {/* 보조 액션 그룹 (배경 surface-container) */}
+            <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
+              <button
+                onClick={() => setShowUpload(true)}
+                title="엑셀 일괄 업로드"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-base">upload_file</span>
+                <span className="hidden sm:inline">엑셀 업로드</span>
+              </button>
+              <button
+                onClick={() => setShowExport(true)}
+                title="엑셀 내보내기"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-base">download</span>
+                <span className="hidden sm:inline">내보내기</span>
+              </button>
+              <button
+                onClick={loadSamples}
+                title="예시 데이터 추가"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-base">science</span>
+                <span className="hidden sm:inline">예시</span>
+              </button>
+              {properties.length > 0 && (
+                <button
+                  onClick={clearAll}
+                  title="전체 삭제"
+                  className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-base">delete_sweep</span>
+                  <span className="hidden sm:inline">전체 삭제</span>
+                </button>
+              )}
+            </div>
+
+            {/* 메인 액션 — 매물 등록 (solid 에메랄드 큰 버튼) */}
+            <button
+              onClick={() => setEditing(emptyProperty())}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              매물 등록
+            </button>
           </div>
-        </div>
+        </section>
 
         {/* 잔금일 경과 알림 — 만기 관리로 이동 권유 */}
         {balanceOverdue.length > 0 && (
