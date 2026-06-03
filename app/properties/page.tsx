@@ -832,9 +832,12 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
               <span className="text-[11px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">📝 계약진행중</span>
             )}
             {leaseDD !== null && (
-              <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${leaseUrgent ? "bg-red-100 text-red-700" : leaseCaution ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"}`}>
-                ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`} · {p.leaseEndDate}
-              </span>
+              <>
+                <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${leaseUrgent ? "bg-red-100 text-red-700" : leaseCaution ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"}`}>
+                  ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
+                </span>
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">📅 {p.leaseEndDate}</span>
+              </>
             )}
             {p.occupancy && p.occupancy !== "tenant" && (
               <span className="text-[11px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-medium">{OCC_LABEL[p.occupancy]}</span>
@@ -856,14 +859,13 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             </div>
           </div>
           <div className="text-sm font-semibold text-gray-800 break-all mb-1">{p.address || "—"}</div>
-          <div className="text-xs text-gray-500 flex flex-wrap gap-2">
-            {p.dong && <span>{p.dong}동</span>}
-            {p.ho && <span>{p.ho}호</span>}
-            {p.area && <span>{p.area}㎡</span>}
-            {p.floor && <span>{p.floor}층</span>}
-            {p.rooms && <span>방{p.rooms}개</span>}
-            {p.direction && <span>{p.direction}</span>}
-          </div>
+          {(p.area || p.rooms || p.direction) && (
+            <div className="text-xs text-gray-500 flex flex-wrap gap-2">
+              {p.area && <span>{p.area}㎡</span>}
+              {p.rooms && <span>방{p.rooms}개</span>}
+              {p.direction && <span>{p.direction}</span>}
+            </div>
+          )}
 
           {/* 집주인 연락처 */}
           {p.ownerPhone && (
