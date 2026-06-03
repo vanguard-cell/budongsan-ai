@@ -67,6 +67,13 @@ function fmtKoreanNum(s: string): string {
   return man.toLocaleString();
 }
 
+/** ㎡ → 평 (소수점 1자리 반올림). 1평 = 3.3058㎡ */
+function m2ToPyeong(m2: string): string {
+  const n = parseFloat((m2 || "").replace(/[^\d.]/g, ""));
+  if (!n || isNaN(n)) return "";
+  return (Math.round(n / 3.3058 * 10) / 10).toString();
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -843,7 +850,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
           <div className="text-sm font-semibold text-gray-800 break-all mb-1">{p.address || "—"}</div>
           {(p.area || p.rooms || p.direction) && (
             <div className="text-xs text-gray-500 flex flex-wrap gap-2">
-              {p.area && <span>{p.area}㎡</span>}
+              {p.area && <span>{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}
               {p.rooms && <span>방{p.rooms}개</span>}
               {p.direction && <span>{p.direction}</span>}
             </div>
@@ -1168,8 +1175,9 @@ function PropertyModal({ property, onClose, onSave }: {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">전용면적 (㎡)</label>
-              <input type="text" inputMode="numeric" value={form.area} onChange={e => set("area", e.target.value)}
+              <input type="text" inputMode="decimal" value={form.area} onChange={e => set("area", e.target.value)}
                 placeholder="84" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              {m2ToPyeong(form.area) && <div className="mt-1 text-[10px] text-gray-500">≈ {m2ToPyeong(form.area)}평</div>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">방향</label>
