@@ -182,22 +182,6 @@ export default function PropertiesPage() {
     }
   };
 
-  /**
-   * 만기로 보내기 — Property→Contract 이동
-   * - 임차인 정보 있으면 손님 관리에 자동 등록 (전화번호 중복 체크)
-   * - Property 삭제 + Contract 생성
-   */
-  const sendToExpiry = async (p: Property) => {
-    if (!user) return;
-    const label = p.dealType === "매매" ? "거래완료 처리하고 만기 관리로 이동할까요?" : "이 매물을 만기 관리로 옮길까요? (내 매물에서는 사라집니다)";
-    if (!confirm(label)) return;
-    try {
-      await moveToContract(user.agencyId, p, p.linkedTenantId);
-    } catch (e) {
-      console.error("[sendToExpiry] 실패:", e);
-      alert("만기 관리로 이동 중 오류가 발생했습니다.");
-    }
-  };
 
   // 잔금일 경과 매물 (active + 잔금일 today 이전 + 아직 닫지 않은 알림)
   const balanceOverdue = useMemo(() => {
@@ -461,10 +445,10 @@ export default function PropertiesPage() {
                       <div className="text-[10px] text-red-600">잔금일 {p.balanceDate} ({daysOver}일 지남)</div>
                     </div>
                     <button
-                      onClick={() => sendToExpiry(p)}
+                      onClick={() => close(p)}
                       className="text-[11px] px-2.5 py-1 rounded-full bg-red-600 text-white font-semibold hover:bg-red-700 shrink-0"
                     >
-                      만기로 보내기
+                      거래완료 → 만기
                     </button>
                     <button
                       onClick={() => setDismissedAlertIds(s => new Set(s).add(p.id))}
@@ -714,7 +698,6 @@ export default function PropertiesPage() {
                 onDelete={() => remove(p.id)}
                 onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
                 onProgress={() => setProgressing({ ...p })}
-                onSendToExpiry={() => sendToExpiry(p)}
                 onCloneSameComplex={() => cloneSameComplex(p)}
               />
             ))}
@@ -773,7 +756,7 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onSendToExpiry, onCloneSameComplex }: {
+function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex }: {
   property: Property;
   schedules: Schedule[];
   isPinned: boolean;
@@ -783,7 +766,6 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
   onDelete: () => void;
   onReopen: () => void;
   onProgress: () => void;
-  onSendToExpiry: () => void;
   onCloneSameComplex: () => void;
 }) {
   const [showHistory, setShowHistory] = useState(false);
@@ -817,7 +799,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
         <div className="mb-2 -mt-1 -mx-1 px-2 py-1.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2 text-[11px]">
           <span>🔔</span>
           <span className="text-red-700 font-medium">잔금일이 지났습니다 ({p.balanceDate})</span>
-          <button onClick={onSendToExpiry} className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-semibold hover:bg-red-700">만기 관리로 →</button>
+          <button onClick={onClose} className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-semibold hover:bg-red-700">거래완료 → 만기</button>
         </div>
       )}
       <div className="flex items-start gap-3">
@@ -976,15 +958,6 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             className="text-[11px] px-2.5 py-1 rounded-full border border-purple-300 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
           >
             📝 {hasContractDate ? "계약 정보 수정" : "계약 진행"}
-          </button>
-        )}
-        {!isClosed && hasBalanceDate && (
-          <button
-            onClick={onSendToExpiry}
-            title="만기 관리로 옮김 (내 매물에서 사라집니다)"
-            className="text-[11px] px-2.5 py-1 rounded-full border-2 border-red-400 bg-red-50 text-red-700 font-bold hover:bg-red-100 transition-colors"
-          >
-            🚀 만기로 보내기
           </button>
         )}
         {isClosed ? (
@@ -1474,7 +1447,7 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
           {balanceOverdueLocal && (
             <div className="rounded-xl bg-red-50 border-2 border-red-300 p-3">
               <div className="text-xs font-bold text-red-700 mb-1">🔔 잔금일이 이미 지났습니다</div>
-              <div className="text-[11px] text-red-600">저장 후 카드의 &quot;만기로 보내기&quot; 버튼을 누르면 만기 관리로 이동됩니다.</div>
+              <div className="text-[11px] text-red-600">저장 후 카드의 &quot;거래완료 → 만기&quot; 버튼을 누르면 만기 관리로 이동됩니다.</div>
             </div>
           )}
 
