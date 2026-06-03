@@ -318,13 +318,26 @@ export default function PropertiesPage() {
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
+    const available = active.filter(p => !isContracted(p));
+    const contracted = active.filter(p => isContracted(p));
+
+    // 보조 메트릭 — Step4 큰 카드 보조 라인
+    const weekAgo = Date.now() - 7 * 86400000;
+    const thisWeekNew = available.filter(p => p.createdAt >= weekAgo).length;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+    const balanceSoon = contracted.filter(p => p.balanceDate && p.balanceDate >= today && p.balanceDate <= in30).length;
+
     return {
       all: active.length,
-      available: active.filter(p => !isContracted(p)).length,
-      contracted: active.filter(p => isContracted(p)).length,
+      available: available.length,
+      contracted: contracted.length,
       매매: active.filter(p => p.dealType === "매매").length,
       전세: active.filter(p => p.dealType === "전세").length,
       월세: active.filter(p => p.dealType === "월세").length,
+      thisWeekNew,
+      balanceSoon,
     };
   }, [properties]);
 
@@ -496,36 +509,114 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        {/* 매물 상태 탭 — 미계약 / 계약진행중 */}
+        {/* ── 매물 상태 탭 — Stitch 톤 큰 카드 (Material Symbols + 보조 메트릭) ── */}
         {!showClosed && (
-          <div className="grid grid-cols-2 gap-1.5 mb-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-5">
+            {/* 미계약 카드 — 에메랄드 */}
             <button
               onClick={() => setViewMode("available")}
-              className={`rounded-2xl border px-3 py-3 flex items-center justify-between transition-all ${
+              className={`group text-left rounded-3xl p-3 sm:p-4 transition-all border ${
                 viewMode === "available"
-                  ? "bg-emerald-600 text-white border-emerald-600"
-                  : "bg-white text-gray-600 border-gray-200 hover:bg-emerald-50"
+                  ? "bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white border-emerald-600 shadow-xl shadow-emerald-200 dark:shadow-emerald-900/50 ring-4 ring-emerald-100 dark:ring-emerald-950"
+                  : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-700 hover:shadow-md hover:-translate-y-0.5"
               }`}
             >
-              <div className="text-left">
-                <div className="text-[12px] font-medium">📋 미계약</div>
-                <div className="text-[9px] opacity-70">광고 중 매물</div>
+              {/* 헤더: 아이콘 + 라벨 */}
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
+                    viewMode === "available"
+                      ? "bg-white/20 backdrop-blur-sm"
+                      : "bg-emerald-50 dark:bg-emerald-950/60 group-hover:bg-emerald-100"
+                  }`}>
+                    <span
+                      className={`material-symbols-outlined text-xl ${viewMode === "available" ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      storefront
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "available" ? "text-white" : "text-gray-900 dark:text-gray-100"}`}>
+                      미계약 매물
+                    </div>
+                    <div className={`text-[10px] sm:text-[11px] mt-0.5 ${viewMode === "available" ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}>
+                      광고 중 · 계약 전
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-2xl font-bold">{counts.available}</div>
+              {/* 큰 숫자 */}
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums leading-none ${viewMode === "available" ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {counts.available}
+                </span>
+                <span className={`text-xs font-medium ${viewMode === "available" ? "text-white/80" : "text-gray-400"}`}>건</span>
+              </div>
+              {/* 보조 메트릭 */}
+              <div className={`mt-3 pt-2.5 border-t flex items-center gap-1 text-[11px] ${
+                viewMode === "available"
+                  ? "border-white/20 text-white/90"
+                  : "border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400"
+              }`}>
+                <span className="material-symbols-outlined text-sm">fiber_new</span>
+                이번 주 신규
+                <span className={`ml-auto font-bold ${viewMode === "available" ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {counts.thisWeekNew}건
+                </span>
+              </div>
             </button>
+
+            {/* 계약진행중 카드 — 블루 */}
             <button
               onClick={() => setViewMode("contracted")}
-              className={`rounded-2xl border px-3 py-3 flex items-center justify-between transition-all ${
+              className={`group text-left rounded-3xl p-3 sm:p-4 transition-all border ${
                 viewMode === "contracted"
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-600 border-gray-200 hover:bg-blue-50"
+                  ? "bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white border-blue-600 shadow-xl shadow-blue-200 dark:shadow-blue-900/50 ring-4 ring-blue-100 dark:ring-blue-950"
+                  : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-700 hover:shadow-md hover:-translate-y-0.5"
               }`}
             >
-              <div className="text-left">
-                <div className="text-[12px] font-medium">🤝 계약진행</div>
-                <div className="text-[9px] opacity-70">계약일 입력</div>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
+                    viewMode === "contracted"
+                      ? "bg-white/20 backdrop-blur-sm"
+                      : "bg-blue-50 dark:bg-blue-950/60 group-hover:bg-blue-100"
+                  }`}>
+                    <span
+                      className={`material-symbols-outlined text-xl ${viewMode === "contracted" ? "text-white" : "text-blue-600 dark:text-blue-400"}`}
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      handshake
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "contracted" ? "text-white" : "text-gray-900 dark:text-gray-100"}`}>
+                      계약진행중
+                    </div>
+                    <div className={`text-[10px] sm:text-[11px] mt-0.5 ${viewMode === "contracted" ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}>
+                      계약일 입력 완료
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-2xl font-bold">{counts.contracted}</div>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums leading-none ${viewMode === "contracted" ? "text-white" : "text-blue-600 dark:text-blue-400"}`}>
+                  {counts.contracted}
+                </span>
+                <span className={`text-xs font-medium ${viewMode === "contracted" ? "text-white/80" : "text-gray-400"}`}>건</span>
+              </div>
+              <div className={`mt-3 pt-2.5 border-t flex items-center gap-1 text-[11px] ${
+                viewMode === "contracted"
+                  ? "border-white/20 text-white/90"
+                  : "border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400"
+              }`}>
+                <span className="material-symbols-outlined text-sm">event_upcoming</span>
+                잔금 30일 이내
+                <span className={`ml-auto font-bold ${viewMode === "contracted" ? "text-white" : counts.balanceSoon > 0 ? "text-orange-600 dark:text-orange-400" : "text-gray-400"}`}>
+                  {counts.balanceSoon}건
+                </span>
+              </div>
             </button>
           </div>
         )}
