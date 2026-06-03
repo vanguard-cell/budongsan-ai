@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { fetchAllUsersUsage, summarize, ADMIN_EMAIL, type UserUsage, type UsageSummary } from "@/lib/admin-db";
+import { fetchProperties, type Property } from "@/lib/properties-db";
 
 function fmtDate(ms: number): string {
   if (!ms) return "—";
@@ -31,6 +32,22 @@ export default function AdminPage() {
   const [summary, setSummary] = useState<UsageSummary | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
+  // 매물 열람 모달
+  const [viewing, setViewing] = useState<{ user: UserUsage; props: Property[] } | null>(null);
+  const [viewLoading, setViewLoading] = useState(false);
+
+  const openUserProperties = async (u: UserUsage) => {
+    if (!u.agencyId) return;
+    setViewLoading(true);
+    try {
+      const props = await fetchProperties(u.agencyId);
+      setViewing({ user: u, props });
+    } catch (e) {
+      alert("매물 열람 실패: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setViewLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/admin");
@@ -138,13 +155,24 @@ export default function AdminPage() {
                 </div>
 
                 {/* 사용량 */}
-                <div className="flex flex-wrap gap-1.5 text-[11px]">
+                <div className="flex flex-wrap gap-1.5 text-[11px] mb-2.5">
                   <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">🏘️ 매물 {u.properties}</span>
                   <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">⏰ 계약 {u.contracts}</span>
                   <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100">👥 손님 {u.customers}</span>
                   <span className="px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-100">📅 일정 {u.schedules}</span>
                   <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 font-medium ml-auto">접속 {u.loginCount}회</span>
                 </div>
+
+                {/* 매물 열람 버튼 */}
+                {u.properties > 0 && (
+                  <button
+                    onClick={() => openUserProperties(u)}
+                    disabled={viewLoading}
+                    className="w-full text-[11px] py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                  >
+                    {viewLoading ? "불러오는 중…" : `🏘️ 이 유저의 매물 ${u.properties}건 열람`}
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -154,6 +182,43 @@ export default function AdminPage() {
           📊 접속 기록은 이 기능 추가 시점부터 누적됩니다 · 데이터량은 실시간 집계
         </p>
       </div>
+
+      {/* 유저 매물 열람 모달 */}
+      {viewing && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setViewing(null)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-3xl">
+              <div>
+                <h2 className="text-base font-semibold">🏘️ {viewing.user.displayName || viewing.user.email}의 매물</h2>
+                <p className="text-[11px] text-gray-500">{viewing.props.length}건 · 읽기 전용</p>
+              </div>
+              <button onClick={() => setViewing(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 text-lg">✕</button>
+            </div>
+            <div className="p-4 space-y-2">
+              {viewing.props.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">매물이 없습니다</p>
+              ) : viewing.props.map(p => (
+                <div key={p.id} className={`rounded-xl border p-3 ${p.status === "closed" ? "bg-gray-50/60 border-gray-200 opacity-70" : "bg-white border-gray-200"}`}>
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">{p.dealType}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.propertyType}</span>
+                    {p.status === "closed" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">거래완료</span>}
+                    <span className="text-sm font-bold text-gray-900 ml-auto">
+                      {p.dealType === "월세" ? `${p.price || "0"}/${p.monthly || "0"}만` : p.price ? `${parseInt(p.price.replace(/\D/g,""),10).toLocaleString()}만` : "—"}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-800 break-all">{p.address || "—"}</div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-500 mt-1">
+                    {p.ownerName && <span>집주인 {p.ownerName}</span>}
+                    {p.ownerPhone && <span>{p.ownerPhone}</span>}
+                    {p.leaseEndDate && <span>임대만기 {p.leaseEndDate}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@
  */
 
 import {
-  collection, doc, setDoc, deleteDoc,
+  collection, doc, setDoc, deleteDoc, getDocs,
   query, orderBy, onSnapshot, serverTimestamp, Timestamp,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -230,6 +230,12 @@ export function subscribeProperties(agencyId: string, onChange: (list: Property[
       onChange([]);
     },
   );
+}
+
+/** 일회성 조회 (관리자 열람용) */
+export async function fetchProperties(agencyId: string): Promise<Property[]> {
+  const snap = await getDocs(query(col(agencyId), orderBy("createdAt", "desc")));
+  return snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>));
 }
 
 export async function saveProperty(agencyId: string, p: Property): Promise<void> {

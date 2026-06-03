@@ -11,6 +11,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { ADMIN_EMAIL } from "@/lib/admin-db";
 
 interface NavItem {
   href: string;
@@ -33,9 +34,13 @@ const SUB_NAV: NavItem[] = [
   { href: "/feedback",   icon: "feedback",        label: "건의함" },
 ];
 
+const ADMIN_NAV: NavItem = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리", highlight: true };
+
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const subNav = isAdmin ? [...SUB_NAV, ADMIN_NAV] : SUB_NAV;
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -76,7 +81,7 @@ export default function DashboardSidebar() {
 
         {/* 보조 메뉴 */}
         <div className="pt-4 mt-4 border-t border-gray-200 dark:border-slate-700 space-y-1">
-          {SUB_NAV.map(item => {
+          {subNav.map(item => {
             const active = isActive(item.href);
             return (
               <Link
