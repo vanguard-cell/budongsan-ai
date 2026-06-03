@@ -34,7 +34,7 @@ const TYPE_COLORS: Record<ScheduleType, string> = {
   "집보기":   "bg-blue-100 text-blue-700",
   "계약일":   "bg-purple-100 text-purple-700",
   "중도금일": "bg-pink-100 text-pink-700",
-  "잔금일":   "bg-red-100 text-red-700",
+  "잔금일":   "bg-amber-100 text-amber-700",
   "기타":     "bg-gray-100 text-gray-600",
 };
 
@@ -230,7 +230,7 @@ export default function SchedulePage() {
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "잔금일" })}
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-red-400 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-amber-400 bg-amber-50 text-amber-700 font-semibold hover:bg-amber-100 transition-colors"
             >
               + 잔금일
             </button>
@@ -270,7 +270,7 @@ export default function SchedulePage() {
             { key: "appointment",     icon: "👥", label: "약속",     activeColor: "bg-blue-500",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
             { key: "contractDate",    icon: "📝", label: "계약일",   activeColor: "bg-purple-600",  inactiveColor: "bg-purple-50 border-purple-200 text-purple-700" },
             { key: "downPaymentDate", icon: "💰", label: "중도금", activeColor: "bg-pink-600",    inactiveColor: "bg-pink-50 border-pink-200 text-pink-700" },
-            { key: "balanceDate",     icon: "🔑", label: "잔금",   activeColor: "bg-red-600",     inactiveColor: "bg-red-50 border-red-200 text-red-700" },
+            { key: "balanceDate",     icon: "🔑", label: "잔금",   activeColor: "bg-amber-500",   inactiveColor: "bg-amber-50 border-amber-200 text-amber-700" },
           ] as const).map(tab => (
             <button
               key={tab.key}
@@ -412,7 +412,7 @@ function PropertyDateCard({ property: p, kind }: { property: Property; kind: Pro
   const kindMeta: Record<PropertyDateKind, { label: string; icon: string; mainColor: string; badgeColor: string; bgColor: string }> = {
     contractDate:    { label: "계약일",   icon: "📝", mainColor: "text-purple-600", badgeColor: "bg-purple-100 text-purple-700", bgColor: "bg-purple-50 border-purple-200" },
     downPaymentDate: { label: "중도금일", icon: "💰", mainColor: "text-pink-600",   badgeColor: "bg-pink-100 text-pink-700",     bgColor: "bg-pink-50 border-pink-200" },
-    balanceDate:     { label: "잔금일",   icon: "🔑", mainColor: "text-red-600",    badgeColor: "bg-red-100 text-red-700",       bgColor: "bg-red-50 border-red-200" },
+    balanceDate:     { label: "잔금일",   icon: "🔑", mainColor: "text-amber-600",  badgeColor: "bg-amber-100 text-amber-700",   bgColor: "bg-amber-50 border-amber-200" },
   };
   const m = kindMeta[kind];
 

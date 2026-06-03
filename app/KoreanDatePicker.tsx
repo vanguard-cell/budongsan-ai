@@ -25,7 +25,7 @@ interface Props {
   placeholder?: string;
   label?: string;
   /** 강조 색상 — purple/pink/red/orange/blue/emerald */
-  accent?: "purple" | "pink" | "red" | "orange" | "blue" | "emerald" | "gray";
+  accent?: "purple" | "pink" | "red" | "orange" | "amber" | "blue" | "emerald" | "gray";
   /** 라벨 크고 진하게 (계약일용) */
   emphasizeLabel?: boolean;
 }
@@ -35,6 +35,7 @@ const ACCENT_CLASSES: Record<NonNullable<Props["accent"]>, { border: string; rin
   pink:    { border: "border-pink-300",    ring: "focus:ring-pink-400",    label: "text-pink-700" },
   red:     { border: "border-red-300",     ring: "focus:ring-red-400",     label: "text-red-700" },
   orange:  { border: "border-orange-300",  ring: "focus:ring-orange-400",  label: "text-orange-700" },
+  amber:   { border: "border-amber-300",   ring: "focus:ring-amber-400",   label: "text-amber-700" },
   blue:    { border: "border-blue-300",    ring: "focus:ring-blue-400",    label: "text-blue-700" },
   emerald: { border: "border-emerald-300", ring: "focus:ring-emerald-400", label: "text-emerald-700" },
   gray:    { border: "border-gray-300",    ring: "focus:ring-gray-400",    label: "text-gray-700" },

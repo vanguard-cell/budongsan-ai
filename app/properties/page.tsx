@@ -913,7 +913,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
                 </span>
               )}
               {p.balanceDate && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-full border ${balanceOverdue ? "bg-red-50 text-red-700 border-red-200" : "bg-orange-50 text-orange-700 border-orange-200"}`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full border ${balanceOverdue ? "bg-red-50 text-red-700 border-red-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
                   💵 잔금일 {formatDateKo(p.balanceDate)}
                 </span>
               )}
@@ -1386,7 +1386,7 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
                 value={form.balanceDate}
                 onChange={(v) => set("balanceDate", v)}
                 label="💵 잔금일 ★"
-                accent="red"
+                accent="amber"
                 placeholder="잔금일 선택"
               />
               <p className="text-[11px] text-red-600 mt-1.5">⚠️ 이 날짜 지나면 자동 알림 → 만기 관리로 이동 가능</p>
