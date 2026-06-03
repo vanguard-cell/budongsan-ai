@@ -1211,6 +1211,21 @@ function PropertyModal({ property, onClose, onSave }: {
                   placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
               </div>
             </div>
+            {/* 현재 임차인 보증금/월세 — 매매 매물에도 세입자 있을 수 있음 */}
+            <div className="grid grid-cols-2 gap-3 mb-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">보증금 (만원)</label>
+                <input type="text" inputMode="numeric" value={form.tenantDeposit}
+                  onChange={e => set("tenantDeposit", e.target.value.replace(/\D/g, ""))}
+                  placeholder="1000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">월세 (만원)</label>
+                <input type="text" inputMode="numeric" value={form.tenantMonthly}
+                  onChange={e => set("tenantMonthly", e.target.value.replace(/\D/g, ""))}
+                  placeholder="70 (전세는 0)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">전세·월세 만기일</label>
               <input type="date" value={form.leaseEndDate} onChange={e => set("leaseEndDate", e.target.value)}
@@ -1439,7 +1454,22 @@ function ContractProgressModal({ property, customers, onClose, onSave }: {
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
               </div>
-              <p className="text-[10px] text-orange-600">💡 손님관리에 등록된 손님을 검색하거나 직접 입력하세요</p>
+              {/* 보증금/월세 */}
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">보증금 (만원)</label>
+                  <input type="text" inputMode="numeric" value={form.tenantDeposit}
+                    onChange={e => set("tenantDeposit", e.target.value.replace(/\D/g, ""))}
+                    placeholder="1000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">월세 (만원)</label>
+                  <input type="text" inputMode="numeric" value={form.tenantMonthly}
+                    onChange={e => set("tenantMonthly", e.target.value.replace(/\D/g, ""))}
+                    placeholder="70 (전세는 0)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+              </div>
+              <p className="text-[10px] text-orange-600 mt-1">💡 손님관리에 등록된 손님을 검색하거나 직접 입력하세요</p>
             </div>
             );
           })()}
