@@ -20,6 +20,7 @@ import KoreanDatePicker from "@/app/KoreanDatePicker";
 import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
 import ExportModal from "../ExportModal";
 import { exportProperties } from "@/lib/export";
+import SparklineChart from "@/app/dashboard/components/SparklineChart";
 
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"];
 const DEAL_TYPES: DealType[] = ["매매", "전세", "월세"];
@@ -346,6 +347,7 @@ export default function PropertiesPage() {
       thisYearTotal: s.thisYear,
       grandTotal: s.grand,
       allMonths: s.allMonths,
+      byMonth: s.byMonth,        // YYYY-MM → 매출 — sparkline용
     };
   }, [properties]);
 
@@ -431,38 +433,61 @@ export default function PropertiesPage() {
           </div>
         </section>
 
-        {/* 잔금일 경과 알림 — 만기 관리로 이동 권유 */}
+        {/* ── 잔금일 경과 알림 — Stitch 톤 (gradient + Material Symbols + 카드형) ── */}
         {balanceOverdue.length > 0 && (
-          <div className="mb-4 rounded-2xl border-2 border-red-300 bg-red-50 p-3 sm:p-4">
-            <div className="flex items-start gap-2 mb-2">
-              <span className="text-lg">🔔</span>
-              <div className="flex-1">
-                <div className="text-sm font-bold text-red-700">잔금일이 지난 매물 {balanceOverdue.length}건</div>
-                <div className="text-xs text-red-600 mt-0.5">계약이 완료된 매물입니다. 만기 관리로 옮기시겠어요?</div>
+          <div className="mb-5 rounded-3xl border border-red-200 dark:border-red-800/60 bg-gradient-to-br from-red-50 via-rose-50 to-orange-50 dark:from-red-950/40 dark:via-rose-950/30 dark:to-orange-950/30 shadow-lg shadow-red-100/40 dark:shadow-red-950/20 overflow-hidden">
+            {/* 헤더 */}
+            <div className="flex items-start gap-3 px-4 sm:px-5 pt-4 pb-3 border-b border-red-100 dark:border-red-900/40">
+              <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-red-600 dark:text-red-300" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  notifications_active
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm sm:text-base font-bold text-red-800 dark:text-red-200">잔금일이 지난 매물</h3>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-600 text-white font-bold">
+                    {balanceOverdue.length}건
+                  </span>
+                </div>
+                <p className="text-xs text-red-700/80 dark:text-red-300/80 mt-1">
+                  계약이 완료된 매물입니다 — 만기 관리로 옮기면 자동 거래이력으로 정리됩니다
+                </p>
               </div>
             </div>
-            <div className="space-y-1.5 mt-2">
+
+            {/* 매물 리스트 */}
+            <div className="p-3 sm:p-4 space-y-2">
               {balanceOverdue.map(p => {
                 const daysOver = Math.max(0, Math.round((Date.now() - new Date(p.balanceDate).getTime()) / 86400000));
                 return (
-                  <div key={p.id} className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-red-200">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 shrink-0">{p.dealType}</span>
+                  <div
+                    key={p.id}
+                    className="group flex items-center gap-2.5 bg-white dark:bg-slate-900/80 rounded-2xl px-3 sm:px-4 py-2.5 border border-red-100 dark:border-red-900/40 hover:shadow-md hover:border-red-300 dark:hover:border-red-700 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-red-500 text-lg shrink-0">schedule</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-semibold shrink-0">{p.dealType}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-gray-800 truncate">{p.address}</div>
-                      <div className="text-[10px] text-red-600">잔금일 {p.balanceDate} ({daysOver}일 지남)</div>
+                      <div className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{p.address}</div>
+                      <div className="text-[11px] text-red-600 dark:text-red-400 mt-0.5 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[13px] leading-none">event</span>
+                        잔금일 {formatDateKo(p.balanceDate)}
+                        <span className="ml-1 px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/60 font-bold">{daysOver}일 지남</span>
+                      </div>
                     </div>
                     <button
                       onClick={() => close(p)}
-                      className="text-[11px] px-2.5 py-1 rounded-full bg-red-600 text-white font-semibold hover:bg-red-700 shrink-0"
+                      className="text-[11px] px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shrink-0 shadow-sm hover:shadow-md transition-all flex items-center gap-1"
                     >
+                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
                       거래완료 → 만기
                     </button>
                     <button
                       onClick={() => setDismissedAlertIds(s => new Set(s).add(p.id))}
                       title="이번 세션에서 숨기기"
-                      className="text-[10px] text-gray-400 hover:text-gray-600 shrink-0"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 shrink-0 transition-colors"
                     >
-                      ✕
+                      <span className="material-symbols-outlined text-base">close</span>
                     </button>
                   </div>
                 );
@@ -505,37 +530,85 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        {/* 수수료 매출 요약 — 한 줄로 간소화. 상세는 매출관리 페이지 */}
-        {!showClosed && viewMode === "contracted" && (
-          <Link
-            href="/sales"
-            className="block mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3 hover:bg-emerald-50 transition-colors"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="text-2xl">💰</span>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-bold text-emerald-800">이번 달 매출</div>
-                  <div className="text-lg font-bold text-emerald-700 leading-tight truncate">
-                    {fmtNum(String(commissionStats.thisMonthTotal))}<span className="text-[10px] font-normal text-gray-400 ml-0.5">만원</span>
+        {/* ── 수수료 매출 요약 — Stitch 톤 (grid-12 + sparkline + emerald gradient) ── */}
+        {!showClosed && viewMode === "contracted" && (() => {
+          // 최근 6개월 sparkline 데이터 — allMonths는 최신순(desc) string[], 오름차순으로 뒤집어서 표시
+          const sortedAsc = [...commissionStats.allMonths].sort();   // 오래된 → 최신
+          const recent6 = sortedAsc.slice(-6).map(k => commissionStats.byMonth[k] || 0);
+          const sparkData = recent6.length >= 2 ? recent6 : [0, 0, 0, 0, 0, 0];
+          return (
+            <Link
+              href="/sales"
+              className="group block mb-5 rounded-3xl border border-emerald-200 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50 via-teal-50/60 to-white dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-slate-900 p-4 sm:p-5 hover:shadow-xl hover:shadow-emerald-100/60 dark:hover:shadow-emerald-950/30 transition-all"
+            >
+              <div className="grid grid-cols-12 gap-4 items-center">
+                {/* 좌측: 이번 달 매출 (8/12) */}
+                <div className="col-span-12 sm:col-span-7 flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center shrink-0 shadow-md shadow-emerald-200 dark:shadow-emerald-900/50">
+                    <span className="material-symbols-outlined text-white text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      payments
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">이번 달 매출</div>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="text-2xl sm:text-3xl font-extrabold text-emerald-700 dark:text-emerald-200 leading-tight tabular-nums">
+                        {fmtNum(String(commissionStats.thisMonthTotal))}
+                      </span>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">만원</span>
+                    </div>
+                  </div>
+                  {/* 미니 sparkline */}
+                  <div className="hidden sm:flex flex-col items-end shrink-0">
+                    <SparklineChart data={sparkData} className="stroke-emerald-500 dark:stroke-emerald-400" />
+                    <span className="text-[9px] text-gray-400 mt-0.5">최근 6개월</span>
                   </div>
                 </div>
-                <div className="text-[10px] text-gray-500 hidden sm:block border-l border-emerald-200 pl-3">
-                  <div>올해 {fmtNum(String(commissionStats.thisYearTotal))}만</div>
-                  <div>예정 {fmtNum(String(commissionStats.pendingTotal))}만</div>
+
+                {/* 우측: KPI 미니 (4/12) */}
+                <div className="col-span-12 sm:col-span-5 grid grid-cols-2 gap-2 sm:border-l sm:border-emerald-200 dark:sm:border-emerald-800/60 sm:pl-4">
+                  <div className="rounded-2xl bg-white/60 dark:bg-slate-900/40 px-3 py-2 border border-emerald-100 dark:border-emerald-900/40">
+                    <div className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">calendar_today</span>
+                      올해
+                    </div>
+                    <div className="text-sm font-bold text-gray-900 dark:text-gray-100 tabular-nums">
+                      {fmtNum(String(commissionStats.thisYearTotal))}<span className="text-[9px] text-gray-400 ml-0.5">만</span>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-white/60 dark:bg-slate-900/40 px-3 py-2 border border-emerald-100 dark:border-emerald-900/40">
+                    <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">hourglass_top</span>
+                      예정
+                    </div>
+                    <div className="text-sm font-bold text-gray-900 dark:text-gray-100 tabular-nums">
+                      {fmtNum(String(commissionStats.pendingTotal))}<span className="text-[9px] text-gray-400 ml-0.5">만</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-600 text-white font-semibold whitespace-nowrap">
-                📊 매출 관리 →
-              </span>
-            </div>
-            {commissionStats.allMonths.length === 0 && (
-              <p className="text-[10px] text-emerald-700 mt-2 leading-relaxed">
-                💡 [계약 정보 수정]에서 <b>수수료</b>와 <b>잔금일</b>을 입력하면 자동 집계됩니다.
-              </p>
-            )}
-          </Link>
-        )}
+
+              {/* 하단: CTA + 안내문 */}
+              <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-800/40">
+                {commissionStats.allMonths.length === 0 ? (
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300 leading-relaxed flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm">lightbulb</span>
+                    [계약 정보 수정]에서 <b>수수료</b>와 <b>잔금일</b>을 입력하면 자동 집계됩니다
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-emerald-600">trending_up</span>
+                    누적 매출 <b className="text-emerald-700 dark:text-emerald-300">{fmtNum(String(commissionStats.grandTotal))}만원</b>
+                  </p>
+                )}
+                <span className="text-[11px] px-3 py-1.5 rounded-xl bg-emerald-600 group-hover:bg-emerald-700 text-white font-bold whitespace-nowrap flex items-center gap-1 shrink-0 shadow-sm transition-colors">
+                  매출 관리
+                  <span className="material-symbols-outlined text-sm group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+                </span>
+              </div>
+            </Link>
+          );
+        })()}
 
         {/* 대분류: 매물 유형 필터 */}
         <div className="mb-3">
