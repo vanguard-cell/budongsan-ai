@@ -863,28 +863,24 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             </div>
           )}
 
-          {/* 임차인 정보 (이름·전화·보증금·월세 중 하나라도 있으면 표시) */}
+          {/* 임차인 정보 — 이름·전화·보증금/월세 한 줄(flex-wrap) */}
           {(p.tenantName || p.tenantPhone || p.tenantDeposit || p.tenantMonthly) && (
-            <div className="mt-2 space-y-1">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-orange-600 shrink-0">임차인 {p.tenantName || ""}</span>
-                {p.tenantPhone ? (
-                  <>
-                    <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
-                    <a
-                      href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
-                      className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto"
-                    >문자</a>
-                  </>
-                ) : (
-                  <span className="text-gray-400 text-[10px]">연락처 미입력</span>
-                )}
-              </div>
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+              <span className="text-orange-600 shrink-0">임차인 {p.tenantName || ""}</span>
+              {p.tenantPhone && (
+                <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
+              )}
               {(p.tenantDeposit || p.tenantMonthly) && (
-                <div className="text-[11px] text-orange-700 bg-orange-50 rounded px-2 py-1 inline-block border border-orange-100">
-                  현재 임대차: 보증금 {p.tenantDeposit ? `${fmtNum(p.tenantDeposit)}만` : "—"}
+                <span className="text-[11px] text-orange-700 bg-orange-50 rounded px-2 py-0.5 border border-orange-100">
+                  보증금 {p.tenantDeposit ? `${fmtNum(p.tenantDeposit)}만` : "—"}
                   {p.tenantMonthly && Number(p.tenantMonthly) > 0 ? ` / 월세 ${fmtNum(p.tenantMonthly)}만` : " (전세)"}
-                </div>
+                </span>
+              )}
+              {p.tenantPhone && (
+                <a
+                  href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
+                  className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto"
+                >문자</a>
               )}
             </div>
           )}
