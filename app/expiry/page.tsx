@@ -550,6 +550,9 @@ function ContractRow({
             <div className="text-[10px] font-medium leading-tight">{severityLabel(severity)}</div>
             <div className="text-sm font-bold leading-tight">{dDayLabel(dday)}</div>
           </div>
+          {c.endDate && (
+            <div className="text-[10px] text-gray-500 text-center mt-1 whitespace-nowrap">{c.endDate}</div>
+          )}
         </div>
 
         {/* 메인 정보 */}

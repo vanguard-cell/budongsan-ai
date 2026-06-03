@@ -833,7 +833,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             )}
             {leaseDD !== null && (
               <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${leaseUrgent ? "bg-red-100 text-red-700" : leaseCaution ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"}`}>
-                ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
+                ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`} · {p.leaseEndDate}
               </span>
             )}
             {p.occupancy && p.occupancy !== "tenant" && (
