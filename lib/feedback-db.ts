@@ -14,11 +14,11 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
   query,
   orderBy,
   where,
   onSnapshot,
-  arrayUnion,
   serverTimestamp,
   Timestamp,
   type Unsubscribe,
@@ -132,21 +132,38 @@ export async function addFeedback(
   });
 }
 
-/** 스레드에 메시지 추가 (문의자·관리자 양쪽 대화) */
+/** 스레드에 메시지 추가 (문의자·관리자 양쪽 대화)
+ *  레거시(text/reply만 있는) 문서는 먼저 thread로 보존한 뒤 추가 → 기존 질문 누락 방지
+ */
 export async function addMessage(
   id: string,
   msg: { sender: "user" | "admin"; senderName: string; text: string; image?: string },
 ): Promise<void> {
-  const message: FeedbackMessage = {
+  const ref = doc(db, "feedback", id);
+  const snap = await getDoc(ref);
+  const data = (snap.data() as Record<string, unknown>) || {};
+
+  // 기존 thread 확보 (없으면 레거시 text/reply에서 복원)
+  let thread: FeedbackMessage[] = Array.isArray(data.thread) ? [...(data.thread as FeedbackMessage[])] : [];
+  if (thread.length === 0) {
+    const text = (data.text as string) || "";
+    const reply = (data.reply as string) || "";
+    const createdAt = data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : (data.createdAt as number) || Date.now();
+    const sb = (data.submittedBy as { name?: string }) || {};
+    if (text) thread.push({ sender: "user", senderName: sb.name || "사용자", text, createdAt });
+    if (reply) thread.push({ sender: "admin", senderName: "관리자", text: reply, createdAt: createdAt + 1 });
+  }
+
+  thread.push({
     sender: msg.sender,
     senderName: msg.senderName,
     text: msg.text,
     createdAt: Date.now(),
     ...(msg.image ? { image: msg.image } : {}),
-  };
-  await updateDoc(doc(db, "feedback", id), {
-    thread: arrayUnion(message),
-    // 문의자가 추가하면 다시 대기중으로
+  });
+
+  await updateDoc(ref, {
+    thread,
     ...(msg.sender === "user" ? { status: "pending" } : {}),
   });
 }

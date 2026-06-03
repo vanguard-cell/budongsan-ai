@@ -122,6 +122,11 @@ export default function KoreanDatePicker({
         showTimeSelect={showTime}
         timeIntervals={15}
         timeCaption="시간"
+        showYearDropdown
+        showMonthDropdown
+        dropdownMode="select"
+        scrollableYearDropdown
+        yearDropdownItemNumber={6}
         placeholderText={placeholder || (showTime ? "날짜·시간 선택" : "날짜 선택")}
         customInput={<TriggerButton value={displayValue} placeholder={placeholder} borderCls={cls.border} ringCls={cls.ring} />}
         popperPlacement="bottom-start"
