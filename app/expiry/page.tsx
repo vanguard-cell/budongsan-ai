@@ -48,6 +48,13 @@ import {
 
 type FilterKey = "all" | Severity;
 
+/** 천단위 콤마 — "5000" → "5,000" */
+function fmtNum(s: string): string {
+  if (!s) return s;
+  const n = parseInt(s.replace(/[^\d]/g, ""), 10);
+  return isNaN(n) ? s : n.toLocaleString();
+}
+
 export default function ExpiryPage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -550,9 +557,6 @@ function ContractRow({
             <div className="text-[10px] font-medium leading-tight">{severityLabel(severity)}</div>
             <div className="text-sm font-bold leading-tight">{dDayLabel(dday)}</div>
           </div>
-          {c.endDate && (
-            <div className="text-[10px] text-gray-500 text-center mt-1 whitespace-nowrap">{c.endDate}</div>
-          )}
         </div>
 
         {/* 메인 정보 */}
@@ -567,11 +571,11 @@ function ContractRow({
           <div className="text-xs text-gray-600 mt-1">
             만기 <span className="font-medium text-gray-800">{c.endDate || "—"}</span>
             <span className="mx-1.5 text-gray-300">·</span>
-            보증금 <span className="font-medium text-gray-800">{c.deposit || "—"}{c.deposit && "만"}</span>
+            보증금 <span className="font-medium text-gray-800">{c.deposit ? `${fmtNum(c.deposit)}만` : "—"}</span>
             {c.type === "월세" && (
               <>
                 <span className="mx-1.5 text-gray-300">·</span>
-                월세 <span className="font-medium text-gray-800">{c.monthly || "—"}{c.monthly && "만"}</span>
+                월세 <span className="font-medium text-gray-800">{c.monthly ? `${fmtNum(c.monthly)}만` : "—"}</span>
               </>
             )}
           </div>
