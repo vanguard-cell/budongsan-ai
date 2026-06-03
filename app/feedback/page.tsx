@@ -351,10 +351,11 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onDelete }: {
 
       {/* 액션 버튼 */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
-        {isAdmin && (
+        {/* 처리완료 토글 — 관리자 또는 본인(질문자) 모두 가능 */}
+        {(isAdmin || isMine) && (
           <button onClick={onDone}
-            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${item.status === "done" ? "border-gray-200 text-gray-500 hover:border-orange-400 hover:text-orange-600" : "border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-600"}`}>
-            {item.status === "done" ? "다시 열기" : "처리완료 표시"}
+            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${item.status === "done" ? "border-gray-200 text-gray-500 hover:border-orange-400 hover:text-orange-600" : "border-green-300 bg-green-50 text-green-700 font-medium hover:bg-green-100"}`}>
+            {item.status === "done" ? "↩️ 다시 열기" : "✅ 해결됨(처리완료)"}
           </button>
         )}
         {(isAdmin || isMine) && (
