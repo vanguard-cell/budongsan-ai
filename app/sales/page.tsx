@@ -16,12 +16,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
+import { subscribeContracts } from "@/lib/contracts-db";
+import type { Contract } from "@/app/expiry/contracts";
 import { computeSalesStats, fmtNum, formatMonthKo, formatManToKorean } from "@/lib/sales";
 
 export default function SalesPage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [openMonth, setOpenMonth] = useState<string | null>(null);
 
@@ -31,14 +34,15 @@ export default function SalesPage() {
 
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeProperties(user.agencyId, list => {
+    const u1 = subscribeProperties(user.agencyId, list => {
       setProperties(list);
       setLoaded(true);
     });
-    return () => unsub();
+    const u2 = subscribeContracts(user.agencyId, setContracts);
+    return () => { u1(); u2(); };
   }, [user]);
 
-  const stats = useMemo(() => computeSalesStats(properties), [properties]);
+  const stats = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
 
   // 최근 12개월 막대 그래프 데이터
   const chartData = useMemo(() => {

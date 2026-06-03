@@ -55,7 +55,7 @@ export default function DashboardPage() {
     return () => { u1(); u2(); u3(); };
   }, [user]);
 
-  const sales = useMemo(() => computeSalesStats(properties), [properties]);
+  const sales = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
   const activeProps = useMemo(() => properties.filter(p => p.status === "active"), [properties]);
   const contractingProps = useMemo(() =>
     activeProps.filter(p => p.contractDate || p.downPaymentDate || p.balanceDate),

@@ -10,7 +10,23 @@
  *  · 미래 잔금일 = "예정 매출"
  */
 
-import type { Property, DealType } from "./properties-db";
+import { emptyProperty, type Property, type DealType } from "./properties-db";
+import type { Contract } from "@/app/expiry/contracts";
+
+/** 만기로 이전된 계약을 매출 집계용 Property 형태로 변환 (commission·잔금일 보존) */
+function contractToSalesProperty(c: Contract): Property {
+  return {
+    ...emptyProperty(),
+    id: c.id,
+    address: c.address,
+    dealType: c.type,
+    price: c.deposit || "",
+    monthly: c.monthly || "",
+    commission: c.commission || "",
+    balanceDate: c.balanceDate || "",
+    status: c.status === "closed" ? "closed" : "active",
+  };
+}
 
 export interface SalesStats {
   thisMonth: number;        // 이번달 매출 (만원)
@@ -31,13 +47,16 @@ const emptyStats = (): SalesStats => ({
   allMonths: [], count: 0, avgPerDeal: 0,
 });
 
-export function computeSalesStats(properties: Property[]): SalesStats {
+export function computeSalesStats(properties: Property[], contracts: Contract[] = []): SalesStats {
   const stats = emptyStats();
   const thisMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
   const thisYear  = new Date().toISOString().slice(0, 4); // YYYY
   const today     = new Date().toISOString().slice(0, 10);
 
-  for (const p of properties) {
+  // 내 매물 + 만기로 이전된 계약(수수료 보존)을 함께 집계
+  const all = [...properties, ...contracts.map(contractToSalesProperty)];
+
+  for (const p of all) {
     const amt = parseInt((p.commission || "0").replace(/\D/g, ""), 10) || 0;
     if (amt === 0 || !p.balanceDate) continue;
 
