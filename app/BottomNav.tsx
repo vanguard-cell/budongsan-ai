@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { ADMIN_EMAIL } from "@/lib/admin-db";
 
 // 메인 5개 탭 — 모바일 (Material Symbols Outlined)
 const MAIN_TABS = [
@@ -24,9 +26,15 @@ const SIDEBAR_TABS = [
   { href: "/feedback",   icon: "feedback",        label: "건의함" },
 ];
 
+const ADMIN_TAB = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리" };
+
 export default function AppNav() {
   const pathname = usePathname();
+  const { user } = useAuth();
   if (pathname === "/login") return null;
+
+  // 관리자에게만 유저 관리 메뉴 노출
+  const sidebarTabs = user?.email === ADMIN_EMAIL ? [...SIDEBAR_TABS, ADMIN_TAB] : SIDEBAR_TABS;
 
   // Stitch 톤 페이지(자체 사이드바)는 PC 사이드바 중복 방지.
   // 단 모바일 하단 탭바는 그대로 표시
@@ -49,7 +57,7 @@ export default function AppNav() {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {SIDEBAR_TABS.map(tab => {
+          {sidebarTabs.map(tab => {
             const isActive = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
             return (
               <Link key={tab.href} href={tab.href}

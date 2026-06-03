@@ -227,8 +227,8 @@ export default function FeedbackPage() {
                           value={replyText}
                           onChange={e => setReplyText(e.target.value)}
                           placeholder="답변 내용을 입력하세요"
-                          rows={2}
-                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          rows={8}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y leading-relaxed"
                         />
                         <div className="flex gap-1.5">
                           <button
