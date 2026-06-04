@@ -163,6 +163,7 @@ export default function PropertiesPage() {
       propertyType: p.propertyType,
       dealType:     p.dealType,
       area:         p.area,
+      unitType:     p.unitType,
       rooms:        p.rooms,
       direction:    p.direction,
       // 호별 다른 정보는 빈 채로 → 사용자 입력
@@ -1125,9 +1126,10 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
           <div className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 break-all mb-1 leading-snug">{p.address || "—"}</div>
 
           {/* 면적·방·방향 */}
-          {(p.area || p.rooms || p.direction) && (
+          {(p.area || p.unitType || p.rooms || p.direction) && (
             <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-2 items-center">
               {p.area && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">square_foot</span>{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}
+              {p.unitType && <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold"><span className="material-symbols-outlined text-sm">grid_view</span>{p.unitType}</span>}
               {p.rooms && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">meeting_room</span>방{p.rooms}개</span>}
               {p.direction && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">explore</span>{p.direction}</span>}
             </div>
@@ -1521,14 +1523,40 @@ function PropertyModal({ property, onClose, onSave }: {
             )}
           </div>
 
-          {/* 면적/방수/방향 */}
+          {/* 면적 / 평면도 타입 — 면적란엔 숫자만, 타입은 별도 (어머니 피드백) */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">전용면적 (㎡)</label>
-              <input type="text" inputMode="decimal" value={form.area} onChange={e => set("area", e.target.value)}
-                placeholder="84" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input
+                type="text"
+                inputMode="decimal"
+                value={form.area}
+                onChange={e => {
+                  // 숫자·소수점만 허용 — "44c-3" 같은 오입력 방지
+                  const cleaned = e.target.value.replace(/[^\d.]/g, "");
+                  set("area", cleaned);
+                }}
+                placeholder="84"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
               {m2ToPyeong(form.area) && <div className="mt-1 text-[10px] text-gray-500">≈ {m2ToPyeong(form.area)}평</div>}
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                평면도 타입 <span className="text-[10px] text-gray-400">(선택)</span>
+              </label>
+              <input
+                type="text"
+                value={form.unitType}
+                onChange={e => set("unitType", e.target.value)}
+                placeholder="예: 84A, C-3타입"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <div className="mt-1 text-[10px] text-gray-400">A/B/C타입 등 평면 구분</div>
+            </div>
+          </div>
+          {/* 방향 / 방수 한 줄 */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">방향</label>
               <select value={form.direction} onChange={e => set("direction", e.target.value)}
@@ -1537,12 +1565,15 @@ function PropertyModal({ property, onClose, onSave }: {
                 {DIRECTIONS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">방수</label>
+              <input type="text" inputMode="numeric" value={form.rooms}
+                onChange={e => set("rooms", e.target.value.replace(/\D/g, ""))}
+                placeholder="3"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">방수</label>
-            <input type="text" value={form.rooms} onChange={e => set("rooms", e.target.value)}
-              placeholder="3" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-          </div>
+{/* 방수는 위 방향/방수 그리드로 통합됨 */}
 
           {/* 집주인 */}
           <div className="grid grid-cols-2 gap-3">

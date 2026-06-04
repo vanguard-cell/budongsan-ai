@@ -172,7 +172,21 @@ export default function FeedbackPage() {
         {/* 새 건의 입력 (일반 사용자만) */}
         {!isAdmin && (
           <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-5 mb-5">
-            <div className="text-sm font-semibold text-gray-800 mb-3">✏️ 새 건의사항 작성</div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-semibold text-gray-800">✏️ 새 건의사항 작성</div>
+              {items.length > 0 && (
+                <span className="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-medium">
+                  💡 기존 건의는 아래 카드에서 답글로 추가
+                </span>
+              )}
+            </div>
+            {/* 안내문 — 같은 건의에 추가 의견은 답글로 */}
+            {items.length > 0 && (
+              <div className="mb-3 p-2.5 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-[11px] text-purple-800 leading-relaxed">
+                💬 <b>새로운 주제</b>일 때만 여기에 작성하세요.<br />
+                기존 건의에 <b>이어서 의견 추가</b>는 아래 각 카드 안의 <b>「추가 메시지 입력」</b>란을 사용하면 같은 글에서 대화처럼 이어집니다.
+              </div>
+            )}
             <textarea
               value={text}
               onChange={e => setText(e.target.value)}
@@ -199,7 +213,7 @@ export default function FeedbackPage() {
                 disabled={submitting || (!text.trim() && !newImage)}
                 className="px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors"
               >
-                {submitting ? "등록 중…" : "등록하기"}
+                {submitting ? "등록 중…" : "새 주제로 등록"}
               </button>
             </div>
           </div>
@@ -293,6 +307,12 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onDelete }: {
         )}
       </div>
 
+      {/* 대화 스레드 라벨 */}
+      <div className="flex items-center gap-1.5 mb-2 text-[11px] text-gray-500">
+        <span>💬 대화</span>
+        <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-semibold">{item.thread.length}</span>
+      </div>
+
       {/* 대화 스레드 (카톡 스타일) */}
       <div className="space-y-2 mb-3">
         {item.thread.map((m, i) => {
@@ -318,9 +338,13 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onDelete }: {
         })}
       </div>
 
-      {/* 메시지 입력 (관리자·본인 모두) */}
+      {/* 메시지 입력 (관리자·본인 모두) — 강조 박스 + 친절 placeholder */}
       {(isAdmin || isMine) && item.status !== "done" && (
-        <div className="border-t border-gray-100 pt-3">
+        <div className="rounded-2xl bg-purple-50/60 border-2 border-dashed border-purple-300 p-3 mt-3">
+          <div className="flex items-center gap-1.5 mb-2 text-[11px] font-bold text-purple-700">
+            <span className="text-base leading-none">⬇️</span>
+            {isAdmin ? "💬 답변 작성" : "💬 이 글에 메시지 추가 (대화 이어가기)"}
+          </div>
           {img && (
             <div className="mb-2 relative inline-block">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -331,19 +355,19 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onDelete }: {
           <textarea
             value={msg}
             onChange={e => setMsg(e.target.value)}
-            placeholder={isAdmin ? "답변을 입력하세요…" : "추가 문의나 답변을 입력하세요…"}
+            placeholder={isAdmin ? "답변을 입력하세요…" : "여기에 추가 의견·답글 작성 — 새 글 만들지 않고 이어서 대화!"}
             rows={3}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-y leading-relaxed"
+            className="w-full border-2 border-purple-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-y leading-relaxed placeholder:text-purple-400"
           />
           <div className="flex items-center gap-2 mt-2">
-            <label className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 cursor-pointer">
+            <label className="text-xs px-3 py-1.5 rounded-lg border border-purple-200 bg-white text-purple-600 hover:bg-purple-50 cursor-pointer font-medium">
               📷 사진
               <input type="file" accept="image/*" className="hidden"
                 onChange={e => { pickImage(e.target.files?.[0]); e.target.value = ""; }} />
             </label>
             <button onClick={send} disabled={sending || (!msg.trim() && !img)}
-              className="text-xs px-4 py-1.5 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:opacity-50 ml-auto">
-              {sending ? "전송 중…" : "전송"}
+              className="text-xs px-5 py-1.5 rounded-lg bg-purple-600 text-white font-bold hover:bg-purple-700 disabled:opacity-50 ml-auto shadow-sm">
+              {sending ? "전송 중…" : "💬 답글 보내기"}
             </button>
           </div>
         </div>

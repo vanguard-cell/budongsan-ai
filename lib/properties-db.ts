@@ -25,7 +25,8 @@ export interface Property {
   dealType: DealType;
   price: string;       // 매매가 or 보증금 (만원)
   monthly: string;     // 월세 (만원)
-  area: string;        // 전용면적 (㎡)
+  area: string;        // 전용면적 (㎡) — 숫자만
+  unitType: string;    // 평면도 타입 (예: "84A", "C-3타입") — 면적에 잘못 입력되지 않게 분리
   dong: string;        // 동
   ho: string;          // 호수
   floor: string;       // 층 (레거시, 호환용)
@@ -70,7 +71,7 @@ export function emptyProperty(): Property {
   return {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
     address: "", propertyType: "아파트", dealType: "월세",
-    price: "", monthly: "", area: "", dong: "", ho: "", floor: "", rooms: "",
+    price: "", monthly: "", area: "", unitType: "", dong: "", ho: "", floor: "", rooms: "",
     direction: "", ownerName: "", ownerPhone: "",
     tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
@@ -98,7 +99,7 @@ export function sampleProperties(): Property[] {
       id: uid(),
       address: "경기도 하남시 미사강변동 1100 힐스테이트 미사역 그랑파사쥬 101동 1902호",
       propertyType: "아파트", dealType: "매매",
-      price: "55000", monthly: "", area: "84", dong: "101", ho: "1902", floor: "",
+      price: "55000", monthly: "", area: "84", unitType: "84A", dong: "101", ho: "1902", floor: "",
       rooms: "3", direction: "남향",
       ownerName: "김국환", ownerPhone: "010-5205-1111",
       tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
@@ -111,7 +112,7 @@ export function sampleProperties(): Property[] {
       id: uid(),
       address: "경기도 하남시 미사강변동 1087 미사효성 해링턴타워 더퍼스트 101동 2717호",
       propertyType: "오피스텔", dealType: "월세",
-      price: "1000", monthly: "70", area: "42", dong: "101", ho: "2717", floor: "",
+      price: "1000", monthly: "70", area: "42", unitType: "", dong: "101", ho: "2717", floor: "",
       rooms: "1", direction: "동향",
       ownerName: "최재현", ownerPhone: "010-2480-4444",
       tenantName: "권다솜", tenantPhone: "010-9242-3333", tenantDeposit: "1000", tenantMonthly: "70",
@@ -125,7 +126,7 @@ export function sampleProperties(): Property[] {
       id: uid(),
       address: "경기도 하남시 망월동 1099-1 망월동 공공주택지구 11-1 1023호",
       propertyType: "오피스텔", dealType: "전세",
-      price: "22770", monthly: "", area: "29", dong: "11-1", ho: "1023", floor: "",
+      price: "22770", monthly: "", area: "29", unitType: "", dong: "11-1", ho: "1023", floor: "",
       rooms: "1", direction: "남동향",
       ownerName: "정우성", ownerPhone: "010-5033-2222",
       tenantName: "조현민", tenantPhone: "010-7924-1111", tenantDeposit: "22770", tenantMonthly: "",
@@ -139,7 +140,7 @@ export function sampleProperties(): Property[] {
       id: uid(),
       address: "경기도 하남시 망월동 1100 마들렌 제9층 제910호",
       propertyType: "원룸/투룸", dealType: "월세",
-      price: "500", monthly: "70", area: "23", dong: "", ho: "910", floor: "",
+      price: "500", monthly: "70", area: "23", unitType: "", dong: "", ho: "910", floor: "",
       rooms: "1", direction: "서향",
       ownerName: "정수영", ownerPhone: "010-9109-6666",
       tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
@@ -152,7 +153,7 @@ export function sampleProperties(): Property[] {
       id: uid(),
       address: "경기도 하남시 미사강변동 1143-1 미사강변 오벨리스크 제6층 제101-613호",
       propertyType: "상가", dealType: "월세",
-      price: "10000", monthly: "150", area: "66", dong: "", ho: "613", floor: "",
+      price: "10000", monthly: "150", area: "66", unitType: "", dong: "", ho: "613", floor: "",
       rooms: "", direction: "",
       ownerName: "최령", ownerPhone: "010-5210-8888",
       tenantName: "민완규(카페)", tenantPhone: "010-5380-7777", tenantDeposit: "10000", tenantMonthly: "150",
@@ -166,7 +167,7 @@ export function sampleProperties(): Property[] {
       id: uid(),
       address: "경기도 하남시 미사강변동 1100 힐스테이트 미사역 그랑파사쥬 201동 1502호",
       propertyType: "아파트", dealType: "전세",
-      price: "45000", monthly: "", area: "84", dong: "201", ho: "1502", floor: "",
+      price: "45000", monthly: "", area: "84", unitType: "84B", dong: "201", ho: "1502", floor: "",
       rooms: "3", direction: "남향",
       ownerName: "조서영", ownerPhone: "010-9205-0000",
       tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
@@ -198,6 +199,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     price:        (d.price        as string) || "",
     monthly:      (d.monthly      as string) || "",
     area:         (d.area         as string) || "",
+    unitType:     (d.unitType     as string) || "",
     dong:         (d.dong         as string) || "",
     ho:           (d.ho           as string) || "",
     floor:        (d.floor        as string) || "",
@@ -280,7 +282,7 @@ export function contractBackToProperty(c: {
     dealType: c.type,
     price: c.deposit,
     monthly: c.monthly,
-    area: "", dong: "", ho: "", floor: "", rooms: "", direction: "",
+    area: "", unitType: "", dong: "", ho: "", floor: "", rooms: "", direction: "",
     ownerName: c.landlordName,
     ownerPhone: c.landlordPhone,
     tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
