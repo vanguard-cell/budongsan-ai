@@ -97,6 +97,9 @@ export default function PropertiesPage() {
   const [occFilter, setOccFilter] = useState<"" | "owner" | "vacant">("");
   // 정렬: 등록순 / 금액 낮은순 / 금액 높은순 / 만기일순 / 잔금일순
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance">("newest");
+  // 페이지네이션 — 20건/페이지
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
   // 수수료 상세는 /sales 페이지로 이동 (showCommission 제거)
   // 가격대 빠른 필터 (만원 기준)
   const [priceRange, setPriceRange] = useState<"all" | "u1" | "1to2" | "2to3" | "3to5" | "o5">("all");
@@ -124,6 +127,11 @@ export default function PropertiesPage() {
     const u3 = subscribeCustomers(user.agencyId, setCustomers);
     return () => { u1(); u2(); u3(); };
   }, [user]);
+
+  // 필터·정렬·검색·탭 변경 시 1페이지로 리셋
+  useEffect(() => {
+    setPage(1);
+  }, [query, filterType, filterPropType, priceRange, sortBy, viewMode, showClosed, occFilter]);
 
   const upsert = async (p: Property) => {
     if (!user) return;
@@ -855,25 +863,112 @@ export default function PropertiesPage() {
               </div>
             );
           })()
-        ) : (
-          <div className="space-y-2.5">
-            {filtered.map(p => (
-              <PropertyCard
-                key={p.id}
-                property={p}
-                schedules={schedules.filter(s => s.propertyId === p.id)}
-                isPinned={pinnedIds.has(p.id)}
-                onPin={() => togglePin(p.id)}
-                onEdit={() => setEditing({ ...p })}
-                onClose={() => close(p)}
-                onDelete={() => remove(p.id)}
-                onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
-                onProgress={() => setProgressing({ ...p })}
-                onCloneSameComplex={() => cloneSameComplex(p)}
-              />
-            ))}
-          </div>
-        )}
+        ) : (() => {
+          /* ── 페이징 — 20건/페이지 ── */
+          const total = filtered.length;
+          const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+          const safePage = Math.min(page, totalPages);
+          const start = (safePage - 1) * PAGE_SIZE;
+          const pagedList = filtered.slice(start, start + PAGE_SIZE);
+          const showPager = totalPages > 1;
+
+          /* 1·2·3·…·N 페이지 번호 (현재 ±2 + 처음/끝 + ellipsis) */
+          const pageNumbers: (number | "…")[] = [];
+          if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+          } else {
+            const around = new Set<number>([1, totalPages, safePage - 1, safePage, safePage + 1]);
+            const sorted = [...around].filter(n => n >= 1 && n <= totalPages).sort((a, b) => a - b);
+            let prev = 0;
+            for (const n of sorted) {
+              if (n - prev > 1) pageNumbers.push("…");
+              pageNumbers.push(n);
+              prev = n;
+            }
+          }
+
+          return (
+            <>
+              {/* 표시 개수 안내 */}
+              <div className="flex items-center justify-between mb-2.5 text-[11px] text-gray-500 dark:text-gray-400 px-1">
+                <span>
+                  전체 <b className="text-gray-900 dark:text-gray-100">{total}</b>건 중{" "}
+                  <b className="text-emerald-600 dark:text-emerald-400">{start + 1}–{Math.min(start + PAGE_SIZE, total)}</b>건 표시
+                </span>
+                {showPager && (
+                  <span className="font-medium">
+                    {safePage}/{totalPages} 페이지
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2.5">
+                {pagedList.map(p => (
+                  <PropertyCard
+                    key={p.id}
+                    property={p}
+                    schedules={schedules.filter(s => s.propertyId === p.id)}
+                    isPinned={pinnedIds.has(p.id)}
+                    onPin={() => togglePin(p.id)}
+                    onEdit={() => setEditing({ ...p })}
+                    onClose={() => close(p)}
+                    onDelete={() => remove(p.id)}
+                    onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
+                    onProgress={() => setProgressing({ ...p })}
+                    onCloneSameComplex={() => cloneSameComplex(p)}
+                  />
+                ))}
+              </div>
+
+              {/* ── 페이지네이션 UI ── */}
+              {showPager && (
+                <nav
+                  aria-label="페이지 이동"
+                  className="mt-5 flex items-center justify-center gap-1 flex-wrap"
+                >
+                  {/* 이전 */}
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={safePage === 1}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="이전 페이지"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_left</span>
+                  </button>
+
+                  {/* 페이지 번호 */}
+                  {pageNumbers.map((n, idx) =>
+                    n === "…" ? (
+                      <span key={`e${idx}`} className="w-9 h-9 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">…</span>
+                    ) : (
+                      <button
+                        key={n}
+                        onClick={() => setPage(n)}
+                        className={`min-w-[2.25rem] h-9 px-2.5 rounded-xl text-sm font-semibold transition-all ${
+                          safePage === n
+                            ? "bg-emerald-600 text-white shadow-md scale-105"
+                            : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ),
+                  )}
+
+                  {/* 다음 */}
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={safePage === totalPages}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="다음 페이지"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_right</span>
+                  </button>
+                </nav>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {editing && (
