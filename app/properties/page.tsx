@@ -1083,15 +1083,11 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
         </div>
       )}
 
-      {/* ── 상단: 배지(가격포함) + 우상단 작은 아이콘 ── */}
-      <div className="flex items-start gap-2">
+      {/* ── 상단: 좌측 배지(가격 없이) + 우측 큰 가격 박스 + 작은 아이콘 ── */}
+      <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
-          {/* 배지 라인 — 가격을 좌측 영역 안에 emerald-600 solid 큰 알약으로 배치 (사용자가 한눈에 인지) */}
+          {/* 배지 라인 — 가격은 우측 박스로 분리 */}
           <div className="flex flex-wrap items-center gap-1.5 mb-2">
-            {/* 💰 가격 — 가장 튀는 위치 (좌측 첫 배지) */}
-            <span className="text-sm px-2.5 py-1 rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white font-extrabold tabular-nums shadow-sm">
-              {priceStr === "—" ? "—" : priceStr}
-            </span>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold">{p.dealType}</span>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300">{p.propertyType}</span>
             {isClosed && (
@@ -1140,28 +1136,37 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
           )}
         </div>
 
-        {/* 우상단 — 지도·즐겨찾기만 작게 (가격은 좌측 알약으로 이동) */}
-        <div className="flex items-center gap-1 shrink-0">
-          <a
-            href={mapUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors"
-            title="카카오 지도로 보기"
-          >
-            <span className="material-symbols-outlined text-sm">location_on</span>
-          </a>
-          <button
-            onClick={onPin}
-            className={`w-7 h-7 flex items-center justify-center rounded-full border transition-colors ${
-              isPinned
-                ? "bg-amber-400 border-amber-400 text-white"
-                : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 hover:bg-amber-50"
-            }`}
-            title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}
-          >
-            <span className="material-symbols-outlined text-sm" style={isPinned ? { fontVariationSettings: "'FILL' 1" } : undefined}>star</span>
-          </button>
+        {/* 우상단 — 가격 박스(강조) + 아이콘 (간격 mt-2) */}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          {/* 💰 가격 박스 — emerald-50 배경 + 진한 글자 + padding 으로 영역감 부여 */}
+          <div className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 shadow-sm">
+            <div className="text-lg sm:text-xl font-extrabold text-emerald-700 dark:text-emerald-300 tabular-nums leading-none whitespace-nowrap">
+              {priceStr === "—" ? <span className="text-gray-300">—</span> : priceStr}
+            </div>
+          </div>
+          {/* 지도·즐겨찾기 아이콘 — 가격 아래 간격 두고 */}
+          <div className="flex items-center gap-1">
+            <a
+              href={mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors"
+              title="카카오 지도로 보기"
+            >
+              <span className="material-symbols-outlined text-sm">location_on</span>
+            </a>
+            <button
+              onClick={onPin}
+              className={`w-7 h-7 flex items-center justify-center rounded-full border transition-colors ${
+                isPinned
+                  ? "bg-amber-400 border-amber-400 text-white"
+                  : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 hover:bg-amber-50"
+              }`}
+              title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}
+            >
+              <span className="material-symbols-outlined text-sm" style={isPinned ? { fontVariationSettings: "'FILL' 1" } : undefined}>star</span>
+            </button>
+          </div>
         </div>
       </div>
 
