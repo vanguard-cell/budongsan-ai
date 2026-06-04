@@ -1037,7 +1037,6 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
 }) {
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
-  const mapUrl = `https://map.kakao.com/?q=${encodeURIComponent(p.address)}`;
   const priceStr = p.dealType === "월세"
     ? (p.price || p.monthly)
         ? `${p.price ? fmtNum(p.price) : "0"}/${p.monthly ? fmtNum(p.monthly) : "0"}만`
@@ -1105,16 +1104,12 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
               {priceStr === "—" ? <span className="text-gray-300">—</span> : priceStr}
             </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <a href={mapUrl} target="_blank" rel="noopener noreferrer"
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 hover:bg-emerald-100 transition-colors text-xs"
-              title="지도로 보기">🗺️</a>
-            <button onClick={onPin}
-              className={`w-6 h-6 flex items-center justify-center rounded-full border transition-colors text-xs ${
-                isPinned ? "bg-amber-400 border-amber-400 text-white" : "bg-gray-50 dark:bg-slate-800 border-gray-200 text-gray-400"
-              }`}
-              title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}>⭐</button>
-          </div>
+          {/* 즐겨찾기만 표시 (카카오 지도 버튼 제거 — 어머니 피드백) */}
+          <button onClick={onPin}
+            className={`w-6 h-6 flex items-center justify-center rounded-full border transition-colors text-xs ${
+              isPinned ? "bg-amber-400 border-amber-400 text-white" : "bg-gray-50 dark:bg-slate-800 border-gray-200 text-gray-400"
+            }`}
+            title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}>⭐</button>
         </div>
       </div>
 
