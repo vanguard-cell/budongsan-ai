@@ -1022,6 +1022,11 @@ const STYPE_COLORS: Record<string, string> = {
   "기타":   "bg-gray-100 text-gray-600",
 };
 
+/** 구분점 — 항목 사이 명확한 점 (어머니 피드백: 진하고 크게) */
+function Dot() {
+  return <span className="text-gray-400 dark:text-gray-500 font-bold text-sm leading-none select-none">·</span>;
+}
+
 /* ── 매물 카드 ── */
 function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex }: {
   property: Property;
@@ -1116,8 +1121,9 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
       {/* ─── 2째줄: 주소 ─── */}
       <div className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 break-all mb-2 leading-snug">{p.address || "—"}</div>
 
-      {/* ─── 3째줄: 임대차 정보 (만기 D-day · 면적 · 타입 · 방향 · 입주상태) ─── */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mb-3">
+      {/* ─── 3째줄: 임대차 정보 (만기 • 면적 • 타입 • 방향 • 입주상태) ─── */}
+      {/* 구분점 — 진하고 명확하게, 간격 좁게 (어머니 피드백) */}
+      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mb-3">
         {leaseDD !== null && (
           <>
             <span className={`px-2 py-0.5 rounded-full font-bold ${
@@ -1128,27 +1134,27 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
               임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
             </span>
             <span className="text-gray-500 dark:text-gray-400">{p.leaseEndDate}</span>
-            <span className="text-gray-300">·</span>
           </>
         )}
-        {p.area && <span>{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}
-        {p.unitType && <><span className="text-gray-300">·</span><span className="font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span></>}
-        {p.rooms && <><span className="text-gray-300">·</span><span>방{p.rooms}개</span></>}
-        {p.direction && <><span className="text-gray-300">·</span><span>{p.direction}</span></>}
+        {p.area && <><Dot />{<span>{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}</>}
+        {p.unitType && <><Dot /><span className="font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span></>}
+        {p.rooms && <><Dot /><span>방{p.rooms}개</span></>}
+        {p.direction && <><Dot /><span>{p.direction}</span></>}
         {p.occupancy && p.occupancy !== "tenant" && (
-          <><span className="text-gray-300">·</span>
+          <><Dot />
           <span className="px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-medium">{OCC_LABEL[p.occupancy]}</span></>
         )}
       </div>
 
-      {/* ── 본문 정보 (집주인·임차인·계약일·메모) ── */}
+      {/* ── 4째줄: 집주인·임차인 (아이콘 제거, 점 구분) ── */}
       <div className="mt-3 space-y-2">
-        {/* 집주인 연락처 — 아이콘 작게, 텍스트 위주 (이전 톤 복귀) */}
+        {/* 집주인 — 이름 • 전화번호 (점 구분, 아이콘 없음) */}
         {p.ownerPhone && (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-600 dark:text-gray-400 shrink-0">👤 집주인 <b className="text-gray-900 dark:text-gray-100">{p.ownerName || ""}</b></span>
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-gray-600 dark:text-gray-400 shrink-0">집주인 <b className="text-gray-900 dark:text-gray-100">{p.ownerName || ""}</b></span>
+            <Dot />
             <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-              📞 {formatPhone(p.ownerPhone)}
+              {formatPhone(p.ownerPhone)}
             </a>
             <a
               href={`sms:${p.ownerPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.ownerName ? ` ${p.ownerName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 매물 관련하여 연락드립니다.`)}`}
@@ -1159,20 +1165,26 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
           </div>
         )}
 
-        {/* 임차인 정보 — 동일 톤 */}
+        {/* 임차인 — 이름 • 전화번호 (점 구분, 아이콘 없음) */}
         {(p.tenantName || p.tenantPhone || p.tenantDeposit || p.tenantMonthly) && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-            <span className="text-orange-600 dark:text-orange-400 shrink-0">👤 임차인 <b className="text-orange-900 dark:text-orange-200">{p.tenantName || ""}</b></span>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-orange-600 dark:text-orange-400 shrink-0">임차인 <b className="text-orange-900 dark:text-orange-200">{p.tenantName || ""}</b></span>
             {p.tenantPhone && (
-              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                📞 {formatPhone(p.tenantPhone)}
-              </a>
+              <>
+                <Dot />
+                <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                  {formatPhone(p.tenantPhone)}
+                </a>
+              </>
             )}
             {(p.tenantDeposit || p.tenantMonthly) && (
-              <span className="text-[11px] text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 rounded-full px-2.5 py-0.5 border border-orange-200 dark:border-orange-800/60 font-medium">
-                보증금 {p.tenantDeposit ? `${fmtNum(p.tenantDeposit)}만` : "—"}
-                {p.tenantMonthly && Number(p.tenantMonthly) > 0 ? ` / 월세 ${fmtNum(p.tenantMonthly)}만` : " (전세)"}
-              </span>
+              <>
+                <Dot />
+                <span className="text-[11px] text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 rounded-full px-2.5 py-0.5 border border-orange-200 dark:border-orange-800/60 font-medium">
+                  보증금 {p.tenantDeposit ? `${fmtNum(p.tenantDeposit)}만` : "—"}
+                  {p.tenantMonthly && Number(p.tenantMonthly) > 0 ? ` / 월세 ${fmtNum(p.tenantMonthly)}만` : " (전세)"}
+                </span>
+              </>
             )}
             {p.tenantPhone && (
               <a
