@@ -30,7 +30,7 @@ export default function RootRedirect() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-emerald-50 dark:from-slate-900 dark:to-emerald-950/30">
       <div className="text-center">
         <div className="inline-block w-10 h-10 border-3 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-3" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">미사금빛 매물 도우미 불러오는 중…</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">DealDone 불러오는 중…</p>
       </div>
     </div>
   );

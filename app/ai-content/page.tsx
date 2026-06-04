@@ -640,7 +640,7 @@ export default function Home() {
         {/* 헤더 */}
         <div className="text-center mb-4">
           <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-2">
-            🏠 미사금빛 매물 도우미
+            🏠 DealDone — 부동산 매물 도우미
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">매물·만기·손님 한 곳에서</h1>
           <p className="text-gray-500 text-xs sm:text-sm">PC·폰 자동 동기화 · 4989 보완용</p>

@@ -43,7 +43,7 @@ export default function DashboardHeader({ alertCount = 0 }: Props) {
       <div className="h-full px-6 flex items-center gap-8">
         {/* 로고 */}
         <h1 className="text-xl font-bold text-green-700 dark:text-green-400 shrink-0">
-          미사금빛 매물 도우미
+          DealDone
         </h1>
 
         {/* 글로벌 검색 — 큰 형태 */}

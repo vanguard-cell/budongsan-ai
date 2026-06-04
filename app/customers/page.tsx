@@ -215,7 +215,7 @@ export default function CustomersPage() {
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
             <Link href="/" className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors">
-              ← 매물 도우미
+              ← DealDone
             </Link>
             <Link href="/expiry" className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors">
               ⏰ 만기 관리

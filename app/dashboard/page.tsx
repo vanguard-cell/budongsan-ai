@@ -126,7 +126,7 @@ export default function DashboardPage() {
             <span className="text-green-700 dark:text-green-400">{userName} 사장님!</span>
           </h2>
           <p className="text-base text-gray-500 dark:text-gray-400 mt-2">
-            오늘도 성공적인 계약을 위해 미사금빛이 도와드릴게요. 🏠
+            오늘도 성공적인 계약을 위해 DealDone이 도와드릴게요. 🏠
           </p>
         </header>
 

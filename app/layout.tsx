@@ -16,15 +16,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "미사금빛 매물 도우미",
-    template: "%s | 미사금빛 매물 도우미",
+    default: "DealDone — 부동산 매물 도우미",
+    template: "%s | DealDone",
   },
   description:
     "공인중개사 업무 보조 — 매물 문구 자동 생성, 만기 알림, 손님 관리, 실시간 동기화",
-  applicationName: "매물 도우미",
+  applicationName: "DealDone",
   appleWebApp: {
     capable: true,
-    title: "매물 도우미",
+    title: "DealDone",
     statusBarStyle: "default",
   },
   formatDetection: {

@@ -9,8 +9,8 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "미사금빛 매물 도우미",
-    short_name: "매물 도우미",
+    name: "DealDone — 부동산 매물 도우미",
+    short_name: "DealDone",
     description:
       "공인중개사 업무 보조 — 매물 문구 자동 생성, 만기 알림, 손님 관리, 실시간 동기화",
     start_url: "/",

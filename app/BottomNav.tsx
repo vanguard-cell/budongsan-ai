@@ -50,8 +50,8 @@ export default function AppNav() {
           <div className="flex items-center gap-2">
             <span className="text-xl">🏡</span>
             <div>
-              <div className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">미사금빛</div>
-              <div className="text-[11px] text-gray-400 dark:text-gray-500">매물 도우미</div>
+              <div className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">DealDone</div>
+              <div className="text-[11px] text-gray-400 dark:text-gray-500">부동산 매물 도우미</div>
             </div>
           </div>
         </div>

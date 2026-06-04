@@ -144,7 +144,7 @@ function LoginInner() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
-            🏠 미사금빛 매물 도우미
+            🏠 DealDone — 부동산 매물 도우미
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-1">
             {mode === "login" ? "로그인" : "회원가입"}
@@ -278,7 +278,7 @@ function LoginInner() {
 
         <div className="text-center mt-4">
           <Link href="/" className="text-xs text-gray-500 hover:text-blue-600">
-            ← 매물 도우미로 돌아가기
+            ← DealDone으로 돌아가기
           </Link>
         </div>
 

@@ -1,0 +1,20 @@
+feat: 앱 이름 변경 → DealDone (브랜드 분리)
+
+변경 (앱 브랜드)
+- manifest: name "DealDone — 부동산 매물 도우미" / short "DealDone"
+- layout metadata: title / applicationName / appleWebApp.title
+- DashboardHeader 로고 / BottomNav 사이드바 로고
+- /dashboard 인사말 / /login 헤더 배지·뒤로가기
+- /ai-content 헤더 배지 / /page.tsx 로딩 / /customers·/feedback 뒤로가기
+
+유지 (어머니 사업자명)
+- SMS 템플릿 "미사금빛공인중개사" — 정식 사업자명
+- AGENCY_NAME 상수 (expiry/contracts.ts)
+- 사용자 카드 "미사금빛 부동산" (DashboardSidebar)
+- HTML 앵커 id="매물도우미" (페이지 내부 스크롤 링크)
+- placeholder "예: 미사금빛 김OO" (어머니 사례)
+
+→ 브랜드(앱 이름)와 사업자명(어머니 사무실)이 분리되도록 설계.
+   추후 SaaS로 키울 때도 어머니 사무실은 그대로 둘 수 있음.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
