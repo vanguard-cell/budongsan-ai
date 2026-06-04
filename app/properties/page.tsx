@@ -1083,11 +1083,15 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
         </div>
       )}
 
-      {/* ── 상단: 좌측 정보 + 우측 가격·아이콘 버튼 ── */}
-      <div className="flex items-start gap-3">
+      {/* ── 상단: 배지(가격포함) + 우상단 작은 아이콘 ── */}
+      <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
-          {/* 배지 라인 (거래유형 · 매물유형 · 상태) */}
+          {/* 배지 라인 — 가격을 좌측 영역 안에 emerald-600 solid 큰 알약으로 배치 (사용자가 한눈에 인지) */}
           <div className="flex flex-wrap items-center gap-1.5 mb-2">
+            {/* 💰 가격 — 가장 튀는 위치 (좌측 첫 배지) */}
+            <span className="text-sm px-2.5 py-1 rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white font-extrabold tabular-nums shadow-sm">
+              {priceStr === "—" ? "—" : priceStr}
+            </span>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold">{p.dealType}</span>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300">{p.propertyType}</span>
             {isClosed && (
@@ -1122,10 +1126,10 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             )}
           </div>
 
-          {/* 주소 (더 크고 굵게) */}
+          {/* 주소 */}
           <div className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 break-all mb-1 leading-snug">{p.address || "—"}</div>
 
-          {/* 면적·방·방향 */}
+          {/* 면적·타입·방·방향 */}
           {(p.area || p.unitType || p.rooms || p.direction) && (
             <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-2 items-center">
               {p.area && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">square_foot</span>{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}
@@ -1136,67 +1140,56 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
           )}
         </div>
 
-        {/* 우측 상단: 가격 + 아이콘 버튼 (vertical stack) */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <div className="text-right">
-            <div className="text-base sm:text-lg font-extrabold text-emerald-700 dark:text-emerald-300 tabular-nums leading-none">
-              {priceStr === "—" ? <span className="text-gray-300">—</span> : priceStr}
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <a
-              href={mapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
-              title="카카오 지도로 보기"
-            >
-              <span className="material-symbols-outlined text-base">location_on</span>
-            </a>
-            <button
-              onClick={onPin}
-              className={`w-8 h-8 flex items-center justify-center rounded-full border transition-colors ${
-                isPinned
-                  ? "bg-amber-400 border-amber-400 text-white"
-                  : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-300 dark:hover:border-amber-700"
-              }`}
-              title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}
-            >
-              <span className="material-symbols-outlined text-base" style={isPinned ? { fontVariationSettings: "'FILL' 1" } : undefined}>star</span>
-            </button>
-          </div>
+        {/* 우상단 — 지도·즐겨찾기만 작게 (가격은 좌측 알약으로 이동) */}
+        <div className="flex items-center gap-1 shrink-0">
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors"
+            title="카카오 지도로 보기"
+          >
+            <span className="material-symbols-outlined text-sm">location_on</span>
+          </a>
+          <button
+            onClick={onPin}
+            className={`w-7 h-7 flex items-center justify-center rounded-full border transition-colors ${
+              isPinned
+                ? "bg-amber-400 border-amber-400 text-white"
+                : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 hover:bg-amber-50"
+            }`}
+            title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}
+          >
+            <span className="material-symbols-outlined text-sm" style={isPinned ? { fontVariationSettings: "'FILL' 1" } : undefined}>star</span>
+          </button>
         </div>
       </div>
 
       {/* ── 본문 정보 (집주인·임차인·계약일·메모) ── */}
       <div className="mt-3 space-y-2">
-        {/* 집주인 연락처 */}
+        {/* 집주인 연락처 — 아이콘 작게, 텍스트 위주 (이전 톤 복귀) */}
         {p.ownerPhone && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-base">person</span>
-            <span className="text-gray-500 dark:text-gray-400 shrink-0">집주인 {p.ownerName || ""}</span>
-            <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-0.5">
-              <span className="material-symbols-outlined text-sm">call</span>
-              {formatPhone(p.ownerPhone)}
+            <span className="text-gray-500 dark:text-gray-400 shrink-0">👤 집주인 {p.ownerName || ""}</span>
+            <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+              📞 {formatPhone(p.ownerPhone)}
             </a>
             <a
               href={`sms:${p.ownerPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.ownerName ? ` ${p.ownerName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 매물 관련하여 연락드립니다.`)}`}
-              className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto flex items-center gap-0.5"
+              className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto"
             >
-              <span className="material-symbols-outlined text-xs">sms</span> 문자
+              💬 문자
             </a>
           </div>
         )}
 
-        {/* 임차인 정보 */}
+        {/* 임차인 정보 — 동일 톤 */}
         {(p.tenantName || p.tenantPhone || p.tenantDeposit || p.tenantMonthly) && (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-            <span className="material-symbols-outlined text-orange-500 dark:text-orange-400 text-base">person_2</span>
-            <span className="text-orange-600 dark:text-orange-400 shrink-0">임차인 {p.tenantName || ""}</span>
+            <span className="text-orange-600 dark:text-orange-400 shrink-0">👤 임차인 {p.tenantName || ""}</span>
             {p.tenantPhone && (
-              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-0.5">
-                <span className="material-symbols-outlined text-sm">call</span>
-                {formatPhone(p.tenantPhone)}
+              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                📞 {formatPhone(p.tenantPhone)}
               </a>
             )}
             {(p.tenantDeposit || p.tenantMonthly) && (
@@ -1208,9 +1201,9 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             {p.tenantPhone && (
               <a
                 href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto flex items-center gap-0.5"
+                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto"
               >
-                <span className="material-symbols-outlined text-xs">sms</span> 문자
+                💬 문자
               </a>
             )}
           </div>
