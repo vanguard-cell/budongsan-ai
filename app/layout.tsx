@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "DealDone — 부동산 매물 도우미",
+    default: "DealDone",
     template: "%s | DealDone",
   },
   description:
