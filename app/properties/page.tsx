@@ -963,150 +963,225 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
 
   const OCC_LABEL: Record<string, string> = { tenant: "임대중", owner: "주인거주", vacant: "공실" };
 
+  // ── 카드 외곽 톤
+  const cardClass =
+    isPinned && !isClosed
+      ? "border-amber-300 dark:border-amber-700 ring-2 ring-amber-100 dark:ring-amber-900/40 bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-950/30 dark:to-slate-900"
+      : isClosed
+      ? "bg-gray-50/60 dark:bg-slate-900/40 border-gray-200 dark:border-slate-700 opacity-70"
+      : balanceOverdue
+      ? "bg-white dark:bg-slate-900 border-red-300 dark:border-red-800 shadow-sm ring-2 ring-red-100 dark:ring-red-950/40"
+      : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md";
+
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${isPinned && !isClosed ? "border-yellow-300 ring-2 ring-yellow-100" : isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : balanceOverdue ? "bg-white border-red-300 shadow-sm ring-2 ring-red-100" : "bg-white border-gray-200 shadow-sm"}`}>
-      {/* 잔금일 경과 카드 내 빨간 배너 */}
+    <div className={`rounded-3xl border p-3 sm:p-4 transition-all ${cardClass}`}>
+      {/* ── 잔금일 경과 카드 내부 빨간 배너 ── */}
       {balanceOverdue && !isClosed && (
-        <div className="mb-2 -mt-1 -mx-1 px-2 py-1.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2 text-[11px]">
-          <span>🔔</span>
-          <span className="text-red-700 font-medium">잔금일이 지났습니다 ({p.balanceDate})</span>
-          <button onClick={onClose} className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-semibold hover:bg-red-700">거래완료 → 만기</button>
+        <div className="mb-3 -mt-1 -mx-1 px-3 py-2 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40 border border-red-200 dark:border-red-800/60 flex items-center gap-2 text-[11px]">
+          <span className="material-symbols-outlined text-red-600 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>notifications_active</span>
+          <span className="text-red-700 dark:text-red-300 font-semibold">잔금일이 지났습니다 · {formatDateKo(p.balanceDate)}</span>
+          <button onClick={onClose} className="ml-auto text-[10px] px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1 transition-colors">
+            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+            거래완료 → 만기
+          </button>
         </div>
       )}
+
+      {/* ── 상단: 좌측 정보 + 우측 가격·아이콘 버튼 ── */}
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
-          {/* 즐겨찾기 + 지도 버튼 (카드 우상단) */}
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <div className="flex flex-wrap items-center gap-1.5 flex-1">
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">{p.dealType}</span>
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.propertyType}</span>
-            {isClosed && <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">거래완료</span>}
+          {/* 배지 라인 (거래유형 · 매물유형 · 상태) */}
+          <div className="flex flex-wrap items-center gap-1.5 mb-2">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold">{p.dealType}</span>
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300">{p.propertyType}</span>
+            {isClosed && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400 font-medium flex items-center gap-0.5">
+                <span className="material-symbols-outlined text-xs">check_circle</span> 거래완료
+              </span>
+            )}
             {hasContractDate && !isClosed && (
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">📝 계약진행중</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold flex items-center gap-0.5">
+                <span className="material-symbols-outlined text-xs">edit_document</span> 계약진행중
+              </span>
             )}
             {leaseDD !== null && (
               <>
-                <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${leaseUrgent ? "bg-red-100 text-red-700" : leaseCaution ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"}`}>
-                  ⏰ 임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
+                <span
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold flex items-center gap-0.5 ${
+                    leaseUrgent
+                      ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                      : leaseCaution
+                      ? "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300"
+                      : "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-xs">schedule</span>
+                  임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
                 </span>
-                <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">📅 {p.leaseEndDate}</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400">{p.leaseEndDate}</span>
               </>
             )}
             {p.occupancy && p.occupancy !== "tenant" && (
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-medium">{OCC_LABEL[p.occupancy]}</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-medium">{OCC_LABEL[p.occupancy]}</span>
             )}
-              <span className="text-sm font-bold text-gray-900 truncate">{priceStr}</span>
+          </div>
+
+          {/* 주소 (더 크고 굵게) */}
+          <div className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 break-all mb-1 leading-snug">{p.address || "—"}</div>
+
+          {/* 면적·방·방향 */}
+          {(p.area || p.rooms || p.direction) && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-2 items-center">
+              {p.area && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">square_foot</span>{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}
+              {p.rooms && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">meeting_room</span>방{p.rooms}개</span>}
+              {p.direction && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">explore</span>{p.direction}</span>}
             </div>
-            {/* 즐겨찾기 + 지도 버튼 */}
-            <div className="flex items-center gap-1 shrink-0">
-              <a href={mapUrl} target="_blank" rel="noopener noreferrer"
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition-colors text-sm"
-                title="네이버 지도로 보기">
-                🗺️
-              </a>
-              <button onClick={onPin}
-                className={`w-8 h-8 flex items-center justify-center rounded-full border transition-colors text-sm ${isPinned ? "bg-yellow-400 border-yellow-400 text-white" : "bg-gray-50 border-gray-200 text-gray-400 hover:bg-yellow-50 hover:border-yellow-300"}`}
-                title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}>
-                ⭐
-              </button>
+          )}
+        </div>
+
+        {/* 우측 상단: 가격 + 아이콘 버튼 (vertical stack) */}
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          <div className="text-right">
+            <div className="text-base sm:text-lg font-extrabold text-emerald-700 dark:text-emerald-300 tabular-nums leading-none">
+              {priceStr === "—" ? <span className="text-gray-300">—</span> : priceStr}
             </div>
           </div>
-          <div className="text-sm font-semibold text-gray-800 break-all mb-1">{p.address || "—"}</div>
-          {(p.area || p.rooms || p.direction) && (
-            <div className="text-xs text-gray-500 flex flex-wrap gap-2">
-              {p.area && <span>{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}
-              {p.rooms && <span>방{p.rooms}개</span>}
-              {p.direction && <span>{p.direction}</span>}
-            </div>
-          )}
-
-          {/* 집주인 연락처 */}
-          {p.ownerPhone && (
-            <div className="mt-2 flex items-center gap-2 text-xs">
-              <span className="text-gray-500 shrink-0">집주인 {p.ownerName || ""}</span>
-              <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.ownerPhone)}</a>
-              <a
-                href={`sms:${p.ownerPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.ownerName ? ` ${p.ownerName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 매물 관련하여 연락드립니다.`)}`}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto"
-              >
-                문자
-              </a>
-            </div>
-          )}
-
-          {/* 임차인 정보 — 이름·전화·보증금/월세 한 줄(flex-wrap) */}
-          {(p.tenantName || p.tenantPhone || p.tenantDeposit || p.tenantMonthly) && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              <span className="text-orange-600 shrink-0">임차인 {p.tenantName || ""}</span>
-              {p.tenantPhone && (
-                <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
-              )}
-              {(p.tenantDeposit || p.tenantMonthly) && (
-                <span className="text-[11px] text-orange-700 bg-orange-50 rounded px-2 py-0.5 border border-orange-100">
-                  보증금 {p.tenantDeposit ? `${fmtNum(p.tenantDeposit)}만` : "—"}
-                  {p.tenantMonthly && Number(p.tenantMonthly) > 0 ? ` / 월세 ${fmtNum(p.tenantMonthly)}만` : " (전세)"}
-                </span>
-              )}
-              {p.tenantPhone && (
-                <a
-                  href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
-                  className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto"
-                >문자</a>
-              )}
-            </div>
-          )}
-
-          {/* 계약 진행 날짜 (있을 때만) — 계약일 강조 (어머니 요청) */}
-          {(p.contractDate || p.downPaymentDate || p.balanceDate) && !isClosed && (
-            <div className="mt-2 flex flex-wrap gap-1.5 items-center">
-              {p.contractDate && (
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-300">
-                  📝 계약일 {formatDateKo(p.contractDate)}
-                </span>
-              )}
-              {p.downPaymentDate && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200">
-                  💰 중도금 {formatDateKo(p.downPaymentDate)}
-                </span>
-              )}
-              {p.balanceDate && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-full border ${balanceOverdue ? "bg-red-50 text-red-700 border-red-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
-                  💵 잔금일 {formatDateKo(p.balanceDate)}
-                </span>
-              )}
-              {p.commission && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-                  💵 수수료 {fmtNum(p.commission)}만
-                </span>
-              )}
-            </div>
-          )}
-
-          {p.memo && (
-            <div className="mt-1.5 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-1 border border-gray-100">💬 {p.memo}</div>
-          )}
+          <div className="flex items-center gap-1">
+            <a
+              href={mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+              title="카카오 지도로 보기"
+            >
+              <span className="material-symbols-outlined text-base">location_on</span>
+            </a>
+            <button
+              onClick={onPin}
+              className={`w-8 h-8 flex items-center justify-center rounded-full border transition-colors ${
+                isPinned
+                  ? "bg-amber-400 border-amber-400 text-white"
+                  : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-300 dark:hover:border-amber-700"
+              }`}
+              title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}
+            >
+              <span className="material-symbols-outlined text-base" style={isPinned ? { fontVariationSettings: "'FILL' 1" } : undefined}>star</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 스케줄 이력 */}
+      {/* ── 본문 정보 (집주인·임차인·계약일·메모) ── */}
+      <div className="mt-3 space-y-2">
+        {/* 집주인 연락처 */}
+        {p.ownerPhone && (
+          <div className="flex items-center gap-2 text-xs">
+            <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-base">person</span>
+            <span className="text-gray-500 dark:text-gray-400 shrink-0">집주인 {p.ownerName || ""}</span>
+            <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-0.5">
+              <span className="material-symbols-outlined text-sm">call</span>
+              {formatPhone(p.ownerPhone)}
+            </a>
+            <a
+              href={`sms:${p.ownerPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.ownerName ? ` ${p.ownerName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 매물 관련하여 연락드립니다.`)}`}
+              className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto flex items-center gap-0.5"
+            >
+              <span className="material-symbols-outlined text-xs">sms</span> 문자
+            </a>
+          </div>
+        )}
+
+        {/* 임차인 정보 */}
+        {(p.tenantName || p.tenantPhone || p.tenantDeposit || p.tenantMonthly) && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+            <span className="material-symbols-outlined text-orange-500 dark:text-orange-400 text-base">person_2</span>
+            <span className="text-orange-600 dark:text-orange-400 shrink-0">임차인 {p.tenantName || ""}</span>
+            {p.tenantPhone && (
+              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-0.5">
+                <span className="material-symbols-outlined text-sm">call</span>
+                {formatPhone(p.tenantPhone)}
+              </a>
+            )}
+            {(p.tenantDeposit || p.tenantMonthly) && (
+              <span className="text-[11px] text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 rounded-full px-2.5 py-0.5 border border-orange-200 dark:border-orange-800/60 font-medium">
+                보증금 {p.tenantDeposit ? `${fmtNum(p.tenantDeposit)}만` : "—"}
+                {p.tenantMonthly && Number(p.tenantMonthly) > 0 ? ` / 월세 ${fmtNum(p.tenantMonthly)}만` : " (전세)"}
+              </span>
+            )}
+            {p.tenantPhone && (
+              <a
+                href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
+                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto flex items-center gap-0.5"
+              >
+                <span className="material-symbols-outlined text-xs">sms</span> 문자
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* 계약 진행 날짜 */}
+        {(p.contractDate || p.downPaymentDate || p.balanceDate) && !isClosed && (
+          <div className="flex flex-wrap gap-1.5 items-center">
+            {p.contractDate && (
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-800 flex items-center gap-0.5">
+                <span className="material-symbols-outlined text-xs">edit_document</span>
+                계약일 {formatDateKo(p.contractDate)}
+              </span>
+            )}
+            {p.downPaymentDate && (
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/60 flex items-center gap-0.5">
+                <span className="material-symbols-outlined text-xs">payments</span>
+                중도금 {formatDateKo(p.downPaymentDate)}
+              </span>
+            )}
+            {p.balanceDate && (
+              <span className={`text-[10px] px-2.5 py-0.5 rounded-full border flex items-center gap-0.5 ${
+                balanceOverdue
+                  ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800/60"
+                  : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60"
+              }`}>
+                <span className="material-symbols-outlined text-xs">savings</span>
+                잔금일 {formatDateKo(p.balanceDate)}
+              </span>
+            )}
+            {p.commission && (
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-bold flex items-center gap-0.5">
+                <span className="material-symbols-outlined text-xs">paid</span>
+                수수료 {fmtNum(p.commission)}만
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* 메모 */}
+        {p.memo && (
+          <div className="text-[11px] text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded-xl px-3 py-2 border border-gray-100 dark:border-slate-700 flex items-start gap-1.5">
+            <span className="material-symbols-outlined text-sm text-gray-400 dark:text-gray-500 shrink-0">sticky_note_2</span>
+            <span className="leading-relaxed">{p.memo}</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── 스케줄 이력 ── */}
       {schedules.length > 0 && (
         <div className="mt-3">
           <button
             onClick={() => setShowHistory(v => !v)}
-            className="flex items-center gap-1.5 text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
           >
-            📅 스케줄 이력 {schedules.length}건
-            <span className="text-[10px]">{showHistory ? "▲" : "▼"}</span>
+            <span className="material-symbols-outlined text-sm">event</span>
+            스케줄 이력 {schedules.length}건
+            <span className="material-symbols-outlined text-xs">{showHistory ? "expand_less" : "expand_more"}</span>
           </button>
           {showHistory && (
             <div className="mt-2 space-y-1.5">
               {sortedSchedules.map(s => (
-                <div key={s.id} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs ${s.status === "done" ? "bg-gray-50 text-gray-400" : "bg-blue-50 text-gray-700"}`}>
+                <div key={s.id} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs ${s.status === "done" ? "bg-gray-50 dark:bg-slate-800/40 text-gray-400" : "bg-blue-50 dark:bg-blue-950/30 text-gray-700 dark:text-gray-200"}`}>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${STYPE_COLORS[s.scheduleType]}`}>{s.scheduleType}</span>
                   <span className="font-medium">{new Date(s.date + "T00:00:00").toLocaleDateString("ko-KR", { month: "short", day: "numeric", weekday: "short" })}</span>
                   <span>{s.time}</span>
-                  {s.visitorName && <span className="text-gray-500">· {s.visitorName}</span>}
-                  {s.status === "done" && <span className="ml-auto text-[10px] text-green-600">완료</span>}
+                  {s.visitorName && <span className="text-gray-500 dark:text-gray-400">· {s.visitorName}</span>}
+                  {s.status === "done" && <span className="ml-auto text-[10px] text-green-600 dark:text-green-400">완료</span>}
                 </div>
               ))}
             </div>
@@ -1114,39 +1189,55 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
         </div>
       )}
 
-      {/* 액션 — 색 구분감 강화: 수정(회) / 같은단지(에메랄드) / 계약(보) / 만기(빨) / 종료(주황) / 복구(파) / 삭제(빨) */}
-      <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
-        <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors">✏️ 수정</button>
+      {/* ── 액션 버튼 (Material Symbols로 통일) ── */}
+      <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+        <button
+          onClick={onEdit}
+          className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-0.5"
+        >
+          <span className="material-symbols-outlined text-sm">edit</span> 수정
+        </button>
         {!isClosed && (
           <button
             onClick={onCloneSameComplex}
-            title={`같은 단지에 다른 호수 빠른 등록 — 단지명·유형은 복사, 동호수·임대인·가격만 입력`}
-            className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 font-semibold hover:bg-teal-100 transition-colors"
+            title="같은 단지에 다른 호수 빠른 등록"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-semibold hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors flex items-center gap-0.5"
           >
-            📋 같은 단지 추가
+            <span className="material-symbols-outlined text-sm">content_copy</span> 같은 단지 추가
           </button>
         )}
         {!isClosed && (
           <button
             onClick={onProgress}
             title={hasContractDate ? "계약 진행 정보 수정" : "계약 체결 → 4개 날짜 입력"}
-            className="text-[11px] px-2.5 py-1 rounded-full border border-purple-300 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-full border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors flex items-center gap-0.5"
           >
-            📝 {hasContractDate ? "계약 정보 수정" : "계약 진행"}
+            <span className="material-symbols-outlined text-sm">edit_document</span>
+            {hasContractDate ? "계약 정보 수정" : "계약 진행"}
           </button>
         )}
         {isClosed ? (
-          <button onClick={onReopen} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors">↩️ 진행중으로 복구</button>
+          <button
+            onClick={onReopen}
+            className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors flex items-center gap-0.5"
+          >
+            <span className="material-symbols-outlined text-sm">undo</span> 진행중으로 복구
+          </button>
         ) : (
           <button
             onClick={onClose}
             title="거래 완료 → 만기 관리로 이동 (매매·전세·월세 모두 동일)"
-            className="text-[11px] px-2.5 py-1 rounded-full border-2 border-red-400 bg-red-50 text-red-700 font-bold hover:bg-red-100 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-full border-2 border-red-400 dark:border-red-700 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors flex items-center gap-0.5"
           >
-            🚀 거래완료 → 만기
+            <span className="material-symbols-outlined text-sm">rocket_launch</span> 거래완료 → 만기
           </button>
         )}
-        <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors ml-auto">🗑️ 삭제</button>
+        <button
+          onClick={onDelete}
+          className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors ml-auto flex items-center gap-0.5"
+        >
+          <span className="material-symbols-outlined text-sm">delete</span> 삭제
+        </button>
       </div>
     </div>
   );
