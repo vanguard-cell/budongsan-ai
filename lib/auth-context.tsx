@@ -21,13 +21,28 @@ import {
 import { doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
+/**
+ * 사용자 역할
+ * - owner: 사무실 개설자(대표공인중개사) — "대표님"
+ * - partner: 같은 사무실에 초대받은 직원 — "파트너님"
+ *
+ * agencies.owner === user.uid 일 때 owner, 아니면 partner
+ * 추후 직원 초대 기능 추가 시 members 배열에 추가하면 partner로 입장
+ */
+export type UserRole = "owner" | "partner";
+
 export interface AppUser {
   uid: string;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
   agencyId: string;
+  role: UserRole;
 }
+
+/** role → 한국어 호칭 ("대표님" / "파트너님") */
+export const roleTitle = (role: UserRole): string =>
+  role === "owner" ? "대표님" : "파트너님";
 
 interface AuthContextValue {
   user: AppUser | null;
@@ -61,16 +76,30 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
       lastLoginAt: serverTimestamp(),
       loginCount: increment(1),
     }).catch(e => console.error("[auth] 활동 기록 실패:", e));
+
+    // 역할 결정 — agency.owner === uid 이면 대표, 아니면 파트너
+    let role: UserRole = "partner";
+    try {
+      const agencySnap = await getDoc(doc(db, "agencies", data.agencyId));
+      if (agencySnap.exists() && agencySnap.data().owner === fbUser.uid) {
+        role = "owner";
+      }
+    } catch (e) {
+      console.error("[auth] agency 조회 실패 — 기본 owner로 처리:", e);
+      role = "owner";   // 안전 폴백 (조회 실패 시 자신을 대표로 가정)
+    }
+
     return {
       uid: fbUser.uid,
       email: fbUser.email,
       displayName: fbUser.displayName || data.displayName || null,
       photoURL: fbUser.photoURL,
       agencyId: data.agencyId,
+      role,
     };
   }
 
-  // 새 사용자 → 새 사무실 생성
+  // 새 사용자 → 새 사무실 생성 (자동으로 대표가 됨)
   const agencyId = `agency_${fbUser.uid.slice(0, 12)}`;
   const agencyRef = doc(db, "agencies", agencyId);
 
@@ -97,6 +126,7 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
     displayName: fbUser.displayName,
     photoURL: fbUser.photoURL,
     agencyId,
+    role: "owner",   // 사무실 개설자 = 대표
   };
 }
 

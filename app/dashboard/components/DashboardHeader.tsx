@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, roleTitle } from "@/lib/auth-context";
 
 interface Props {
   alertCount?: number;
@@ -37,6 +37,7 @@ export default function DashboardHeader({ alertCount = 0 }: Props) {
   };
 
   const userName = user?.displayName || user?.email?.split("@")[0] || "사용자";
+  const title = user ? roleTitle(user.role) : "대표님";   // 로딩 중엔 기본값
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-gray-200 dark:border-slate-700">
@@ -79,7 +80,7 @@ export default function DashboardHeader({ alertCount = 0 }: Props) {
           <div className="hidden md:flex items-center gap-3 pl-4 ml-1 border-l border-gray-200 dark:border-slate-700">
             <div className="text-right">
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-tight">
-                {userName} 사장님
+                {userName} {title}
               </p>
               <button
                 onClick={() => { if (confirm("로그아웃?")) signOut(); }}

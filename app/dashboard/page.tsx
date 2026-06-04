@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, roleTitle } from "@/lib/auth-context";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import { subscribeCustomers } from "@/lib/customers-db";
@@ -113,8 +113,9 @@ export default function DashboardPage() {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
 
-  const userName = user.displayName || user.email?.split("@")[0] || "사장";
+  const userName = user.displayName || user.email?.split("@")[0] || "이용자";
   const greeting = getGreeting();
+  const title = roleTitle(user.role);   // "대표님" | "파트너님"
 
   return (
     <div className="p-6 lg:p-10">
@@ -123,7 +124,7 @@ export default function DashboardPage() {
         <header>
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
             {greeting},{" "}
-            <span className="text-green-700 dark:text-green-400">{userName} 사장님!</span>
+            <span className="text-green-700 dark:text-green-400">{userName} {title}!</span>
           </h2>
           <p className="text-base text-gray-500 dark:text-gray-400 mt-2">
             오늘도 성공적인 계약을 위해 DealDone이 도와드릴게요. 🏠
