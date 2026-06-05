@@ -1022,10 +1022,10 @@ const STYPE_COLORS: Record<string, string> = {
   "기타":   "bg-gray-100 text-gray-600",
 };
 
-/** 구분점 — 뒤 항목(다음 글자)에 붙음, 앞 항목과는 띄움 (어머니 피드백: ".23㎡ .방1개 .서향")
- *  부모 gap-x-2 기준: 오른쪽 gap을 음수 마진으로 상쇄 → 점이 다음 글자에 붙음, 왼쪽은 gap 유지 */
+/** 구분점 — 항목 바로 앞에 붙음 (어머니 피드백: "·방1개 ·서향")
+ *  inline-flex 묶음 안에서 점과 항목 사이 2px(mr-0.5), 묶음끼리는 부모 gap-x-2(8px) */
 function Dot() {
-  return <span className="text-gray-400 dark:text-gray-500 font-bold text-sm leading-none select-none -mr-1.5">·</span>;
+  return <span className="text-gray-400 dark:text-gray-500 font-bold text-sm leading-none select-none mr-0.5">·</span>;
 }
 
 /* ── 매물 카드 ── */
