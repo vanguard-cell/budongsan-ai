@@ -1022,10 +1022,10 @@ const STYPE_COLORS: Record<string, string> = {
   "기타":   "bg-gray-100 text-gray-600",
 };
 
-/** 구분점 — 앞 글자에 살짝 붙고 뒤 항목과 띄움 (어머니 피드백)
- *  부모 gap-x-2 기준: 왼쪽 gap을 음수 마진으로 상쇄 → 앞 글자에 붙음, 오른쪽은 gap 유지 */
+/** 구분점 — 뒤 항목(다음 글자)에 붙음, 앞 항목과는 띄움 (어머니 피드백: ".23㎡ .방1개 .서향")
+ *  부모 gap-x-2 기준: 오른쪽 gap을 음수 마진으로 상쇄 → 점이 다음 글자에 붙음, 왼쪽은 gap 유지 */
 function Dot() {
-  return <span className="text-gray-400 dark:text-gray-500 font-bold text-sm leading-none select-none -ml-1">·</span>;
+  return <span className="text-gray-400 dark:text-gray-500 font-bold text-sm leading-none select-none -mr-1.5">·</span>;
 }
 
 /* ── 매물 카드 ── */
@@ -1088,29 +1088,29 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
         </div>
       )}
 
-      {/* ─── 1째줄: 헤더 (거래종류+매물유형) + 우측 가격 + 아이콘 ─── */}
+      {/* ─── 1째줄: 거래종류 · 매물유형 · 금액 (자연스럽게 이어서) + 우측 즐겨찾기 ─── */}
       <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
-          {/* 자연어 헤더: "월세 · 오피스텔" */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 flex-1 min-w-0">
+          {/* 자연어 헤더: "월세 · 아파트 · 1/1만" */}
           <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{p.dealType}</span>
-          <span className="text-sm text-gray-400 dark:text-gray-600">·</span>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{p.propertyType}</span>
+          <span className="inline-flex items-center"><Dot /><span className="text-sm font-medium text-gray-700 dark:text-gray-300">{p.propertyType}</span></span>
+          {/* 💰 금액 — 헤더에 이어서 강조 */}
+          <span className="inline-flex items-center">
+            <Dot />
+            <span className="text-base font-extrabold text-emerald-700 dark:text-emerald-300 tabular-nums">
+              {priceStr === "—" ? "—" : priceStr}
+            </span>
+          </span>
           {/* 상태 배지 — 거래완료/계약진행 등 */}
           {isClosed && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400 font-medium ml-1">거래완료</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400 font-medium">거래완료</span>
           )}
           {hasContractDate && !isClosed && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold ml-1">계약진행중</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold">계약진행중</span>
           )}
         </div>
-        {/* 우측: 가격 박스 + 작은 아이콘 (간격) */}
-        <div className="flex items-start gap-2 shrink-0">
-          <div className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 shadow-sm">
-            <div className="text-base sm:text-lg font-extrabold text-emerald-700 dark:text-emerald-300 tabular-nums leading-none whitespace-nowrap">
-              {priceStr === "—" ? <span className="text-gray-300">—</span> : priceStr}
-            </div>
-          </div>
-          {/* 즐겨찾기만 표시 (카카오 지도 버튼 제거 — 어머니 피드백) */}
+        {/* 우측: 즐겨찾기만 */}
+        <div className="shrink-0">
           <button onClick={onPin}
             className={`w-6 h-6 flex items-center justify-center rounded-full border transition-colors text-xs ${
               isPinned ? "bg-amber-400 border-amber-400 text-white" : "bg-gray-50 dark:bg-slate-800 border-gray-200 text-gray-400"
@@ -1137,13 +1137,13 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             <span className="text-gray-500 dark:text-gray-400">{p.leaseEndDate}</span>
           </>
         )}
-        {p.area && <><Dot />{<span>{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}</>}
-        {p.unitType && <><Dot /><span className="font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span></>}
-        {p.rooms && <><Dot /><span>방{p.rooms}개</span></>}
-        {p.direction && <><Dot /><span>{p.direction}</span></>}
+        {p.area && <span className="inline-flex items-center"><Dot />{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}
+        {p.unitType && <span className="inline-flex items-center"><Dot /><span className="font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span></span>}
+        {p.rooms && <span className="inline-flex items-center"><Dot />방{p.rooms}개</span>}
+        {p.direction && <span className="inline-flex items-center"><Dot />{p.direction}</span>}
         {p.occupancy && p.occupancy !== "tenant" && (
-          <><Dot />
-          <span className="px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-medium">{OCC_LABEL[p.occupancy]}</span></>
+          <span className="inline-flex items-center"><Dot />
+          <span className="px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-medium">{OCC_LABEL[p.occupancy]}</span></span>
         )}
       </div>
 
@@ -1153,9 +1153,8 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
         {p.ownerPhone && (
           <div className="flex items-center gap-x-2 gap-y-1 text-xs">
             <span className="text-gray-600 dark:text-gray-400 shrink-0">집주인 <b className="text-gray-900 dark:text-gray-100">{p.ownerName || ""}</b></span>
-            <Dot />
-            <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-              {formatPhone(p.ownerPhone)}
+            <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
+              <Dot />{formatPhone(p.ownerPhone)}
             </a>
             <a
               href={`sms:${p.ownerPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.ownerName ? ` ${p.ownerName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 매물 관련하여 연락드립니다.`)}`}
@@ -1168,24 +1167,21 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
 
         {/* 임차인 — 이름 • 전화번호 (점 구분, 아이콘 없음) */}
         {(p.tenantName || p.tenantPhone || p.tenantDeposit || p.tenantMonthly) && (
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
             <span className="text-orange-600 dark:text-orange-400 shrink-0">임차인 <b className="text-orange-900 dark:text-orange-200">{p.tenantName || ""}</b></span>
             {p.tenantPhone && (
-              <>
-                <Dot />
-                <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                  {formatPhone(p.tenantPhone)}
-                </a>
-              </>
+              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                <Dot />{formatPhone(p.tenantPhone)}
+              </a>
             )}
             {(p.tenantDeposit || p.tenantMonthly) && (
-              <>
+              <span className="inline-flex items-center">
                 <Dot />
                 <span className="text-[11px] text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 rounded-full px-2.5 py-0.5 border border-orange-200 dark:border-orange-800/60 font-medium">
                   보증금 {p.tenantDeposit ? `${fmtNum(p.tenantDeposit)}만` : "—"}
                   {p.tenantMonthly && Number(p.tenantMonthly) > 0 ? ` / 월세 ${fmtNum(p.tenantMonthly)}만` : " (전세)"}
                 </span>
-              </>
+              </span>
             )}
             {p.tenantPhone && (
               <a
