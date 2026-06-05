@@ -8,9 +8,9 @@ import {
   sampleProperties, savePropertiesBatch,
   type Property, type PropertyType, type DealType, type Occupancy,
 } from "@/lib/properties-db";
-import { dDay } from "@/app/expiry/contracts";
+import { dDay, type Contract } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
-import { moveToContract } from "@/lib/contracts-db";
+import { moveToContract, subscribeContracts } from "@/lib/contracts-db";
 import { subscribeCustomers, upsertTenantAsCustomer } from "@/lib/customers-db";
 import type { Customer } from "@/app/customers/customer-types";
 import { computeSalesStats } from "@/lib/sales";
@@ -81,6 +81,7 @@ export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);  // 만기로 이전된 계약 (매출 집계 보존용)
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
   const [progressing, setProgressing] = useState<Property | null>(null);   // 계약 진행 모달
@@ -125,7 +126,8 @@ export default function PropertiesPage() {
     const u1 = subscribeProperties(user.agencyId, list => { setProperties(list); setLoaded(true); });
     const u2 = subscribeSchedules(user.agencyId, setSchedules);
     const u3 = subscribeCustomers(user.agencyId, setCustomers);
-    return () => { u1(); u2(); u3(); };
+    const u4 = subscribeContracts(user.agencyId, setContracts);  // 만기 계약 — 매출 집계에 포함
+    return () => { u1(); u2(); u3(); u4(); };
   }, [user]);
 
   // 필터·정렬·검색·탭 변경 시 1페이지로 리셋
@@ -360,9 +362,10 @@ export default function PropertiesPage() {
     return map;
   }, [properties, showClosed, viewMode]);
 
-  // 수수료 매출 요약 — lib/sales.ts 공용 헬퍼 사용 (홈 대시보드도 같이 쓸 거)
+  // 수수료 매출 요약 — 내 매물 + 만기로 이전된 계약(contracts)을 함께 집계
+  // (만기로 보내도 매출에서 빠지지 않도록 — 어머니 피드백 버그픽스)
   const commissionStats = useMemo(() => {
-    const s = computeSalesStats(properties);
+    const s = computeSalesStats(properties, contracts);
     return {
       thisMonthTotal: s.thisMonth,
       pendingTotal: s.pending,
@@ -371,7 +374,7 @@ export default function PropertiesPage() {
       allMonths: s.allMonths,
       byMonth: s.byMonth,        // YYYY-MM → 매출 — sparkline용
     };
-  }, [properties]);
+  }, [properties, contracts]);
 
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
 
