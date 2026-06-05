@@ -1022,9 +1022,10 @@ const STYPE_COLORS: Record<string, string> = {
   "기타":   "bg-gray-100 text-gray-600",
 };
 
-/** 구분점 — 항목 사이 명확한 점 (어머니 피드백: 진하고 크게) */
+/** 구분점 — 앞 글자에 살짝 붙고 뒤 항목과 띄움 (어머니 피드백)
+ *  부모 gap-x-2 기준: 왼쪽 gap을 음수 마진으로 상쇄 → 앞 글자에 붙음, 오른쪽은 gap 유지 */
 function Dot() {
-  return <span className="text-gray-400 dark:text-gray-500 font-bold text-sm leading-none select-none">·</span>;
+  return <span className="text-gray-400 dark:text-gray-500 font-bold text-sm leading-none select-none -ml-1">·</span>;
 }
 
 /* ── 매물 카드 ── */
@@ -1122,8 +1123,8 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
       <div className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 break-all mb-2 leading-snug">{p.address || "—"}</div>
 
       {/* ─── 3째줄: 임대차 정보 (만기 • 면적 • 타입 • 방향 • 입주상태) ─── */}
-      {/* 구분점 — 진하고 명확하게, 간격 좁게 (어머니 피드백) */}
-      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mb-3">
+      {/* 구분점 — 진하고 명확, 앞 글자에 붙음 (Dot 음수마진) */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-600 dark:text-gray-400 mb-3">
         {leaseDD !== null && (
           <>
             <span className={`px-2 py-0.5 rounded-full font-bold ${
@@ -1150,7 +1151,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
       <div className="mt-3 space-y-2">
         {/* 집주인 — 이름 • 전화번호 (점 구분, 아이콘 없음) */}
         {p.ownerPhone && (
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-x-2 gap-y-1 text-xs">
             <span className="text-gray-600 dark:text-gray-400 shrink-0">집주인 <b className="text-gray-900 dark:text-gray-100">{p.ownerName || ""}</b></span>
             <Dot />
             <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
@@ -1267,14 +1268,14 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
         </div>
       )}
 
-      {/* ─── 5째줄: 액션 버튼 (통일된 도형 — rounded-full + 같은 padding + 같은 폰트, 색만 다르게) ─── */}
+      {/* ─── 5째줄: 액션 버튼 (아이콘 없이 텍스트만 — 색으로 구분, 어머니 피드백) ─── */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
         {/* 통일 스타일: text-xs px-3 py-1.5 rounded-full border font-semibold */}
         <button
           onClick={onEdit}
           className="text-xs px-3 py-1.5 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
         >
-          ✏️ 수정
+          수정
         </button>
         {!isClosed && (
           <button
@@ -1282,7 +1283,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             title="같은 단지에 다른 호수 빠른 등록"
             className="text-xs px-3 py-1.5 rounded-full border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-semibold hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"
           >
-            📋 같은 단지 추가
+            같은 단지 추가
           </button>
         )}
         {!isClosed && (
@@ -1291,7 +1292,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             title={hasContractDate ? "계약 진행 정보 수정" : "계약 체결 → 4개 날짜 입력"}
             className="text-xs px-3 py-1.5 rounded-full border border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
           >
-            📝 {hasContractDate ? "계약 정보 수정" : "계약 진행"}
+            {hasContractDate ? "계약 정보 수정" : "계약 진행"}
           </button>
         )}
         {isClosed ? (
@@ -1299,7 +1300,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             onClick={onReopen}
             className="text-xs px-3 py-1.5 rounded-full border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
           >
-            ↩️ 진행중으로 복구
+            진행중으로 복구
           </button>
         ) : (
           <button
@@ -1307,14 +1308,14 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
             title="거래 완료 → 만기 관리로 이동 (매매·전세·월세 모두 동일)"
             className="text-xs px-3 py-1.5 rounded-full border border-red-400 dark:border-red-700 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
           >
-            🚀 거래완료 → 만기
+            거래완료 → 만기
           </button>
         )}
         <button
           onClick={onDelete}
           className="text-xs px-3 py-1.5 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-500 hover:text-red-600 hover:border-red-300 hover:bg-red-50 transition-colors ml-auto"
         >
-          🗑️ 삭제
+          삭제
         </button>
       </div>
     </div>
