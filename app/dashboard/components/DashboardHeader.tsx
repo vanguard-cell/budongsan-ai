@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth, roleTitle } from "@/lib/auth-context";
 
 interface Props {
@@ -16,7 +17,16 @@ interface Props {
 
 export default function DashboardHeader({ alertCount = 0 }: Props) {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const [isDark, setIsDark] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const doSearch = () => {
+    const q = search.trim();
+    if (!q) return;
+    // 매물 페이지로 이동하며 검색어 전달 (주소·집주인·임차인·전화 통합 검색)
+    router.push(`/properties?q=${encodeURIComponent(q)}`);
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
@@ -49,10 +59,13 @@ export default function DashboardHeader({ alertCount = 0 }: Props) {
 
         {/* 글로벌 검색 — 큰 형태 */}
         <div className="flex-grow max-w-2xl relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">search</span>
+          <span onClick={doSearch} className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-green-600">search</span>
           <input
             type="text"
-            placeholder="단지명, 고객명, 또는 전화번호로 검색..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") doSearch(); }}
+            placeholder="단지명, 집주인·임차인, 전화번호로 검색..."
             className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-100 dark:bg-slate-800 border-0 rounded-full focus:ring-2 focus:ring-green-500/30 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
           />
         </div>

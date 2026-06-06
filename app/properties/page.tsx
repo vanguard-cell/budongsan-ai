@@ -93,7 +93,11 @@ export default function PropertiesPage() {
   const [progressing, setProgressing] = useState<Property | null>(null);   // 계약 진행 모달
   const [showUpload, setShowUpload] = useState(false);
   const [showExport, setShowExport] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => {
+    // 헤더 통합검색에서 ?q= 로 들어오면 검색창에 반영
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("q") || "";
+  });
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
   const [filterPropType, setFilterPropType] = useState<"all" | PropertyType>("all"); // 대분류: 매물 유형
   const [showClosed, setShowClosed] = useState(false);
@@ -104,9 +108,10 @@ export default function PropertiesPage() {
   const [occFilter, setOccFilter] = useState<"" | "owner" | "vacant">("");
   // 정렬: 등록순 / 금액 / 만기일 / 잔금일 / 동·호순
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho">("newest");
-  // 단지→동 계층 탐색: 선택된 단지(베이스주소) / 동
+  // 단지→동→호 조회 (선방 스타일): 단지(베이스주소) / 동 / 호
   const [selectedComplex, setSelectedComplex] = useState<string>("");
   const [selectedDong, setSelectedDong] = useState<string>("");
+  const [selectedHo, setSelectedHo] = useState<string>("");
   // 페이지네이션 — 20건/페이지
   const PAGE_SIZE = 20;
   const [page, setPage] = useState(1);
@@ -322,9 +327,10 @@ export default function PropertiesPage() {
         if (priceRange === "o5")    return n >= 50000;
         return true;
       })
-      // 단지→동 계층 탐색
+      // 단지→동→호 조회
       .filter(p => !selectedComplex || baseAddr(p) === selectedComplex)
-      .filter(p => !selectedDong || p.dong === selectedDong);
+      .filter(p => !selectedDong || p.dong === selectedDong)
+      .filter(p => !selectedHo.trim() || (p.ho || "").includes(selectedHo.trim()));
 
     // 날짜 정렬용 — 빈 값은 맨 뒤로
     const dateKey = (v: string) => v && v.length >= 10 ? v.slice(0, 10) : "9999-99-99";
@@ -348,7 +354,7 @@ export default function PropertiesPage() {
       const bp = pinnedIds.has(b.id) ? 0 : 1;
       return ap - bp;
     });
-  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds, occFilter, selectedComplex, selectedDong]);
+  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -804,43 +810,38 @@ export default function PropertiesPage() {
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
           />
 
-          {/* 단지 → 동 계층 탐색 */}
+          {/* 단지 → 동 → 호 조회 (선방 스타일 드롭다운) */}
           {complexList.length > 0 && (
-            <div className="border border-gray-100 rounded-xl bg-gray-50/60 p-2 mb-2 space-y-1.5">
-              {/* 1단계: 단지 선택 */}
-              {!selectedComplex ? (
-                <div className="flex items-center gap-1 flex-wrap">
-                  <span className="text-[11px] text-gray-500 shrink-0">🏢 단지</span>
-                  {complexList.slice(0, 12).map(([c, n]) => (
-                    <button key={c} onClick={() => { setSelectedComplex(c); setSortBy("dongho"); }}
-                      className="text-[11px] px-2 py-0.5 rounded-full border border-gray-200 bg-white text-gray-700 hover:border-emerald-400 max-w-[55%] truncate">
-                      {c.replace(/^.*[시구동]\s/, "")} <span className="text-gray-400">{n}</span>
-                    </button>
+            <div className="border border-emerald-100 rounded-xl bg-emerald-50/40 p-2.5 mb-2">
+              <div className="text-[11px] text-emerald-700 font-medium mb-1.5">🏢 단지·동·호 조회</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                {/* 단지 드롭다운 */}
+                <select value={selectedComplex}
+                  onChange={e => { setSelectedComplex(e.target.value); setSelectedDong(""); setSelectedHo(""); if (e.target.value) setSortBy("dongho"); }}
+                  className="col-span-2 border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                  <option value="">단지 전체</option>
+                  {complexList.map(([c, n]) => (
+                    <option key={c} value={c}>{c.replace(/^.*[시구동]\s/, "")} ({n})</option>
                   ))}
-                </div>
-              ) : (
-                <>
-                  {/* 선택된 단지 + 해제 */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-semibold truncate max-w-[70%]">🏢 {selectedComplex.replace(/^.*[시구동]\s/, "")}</span>
-                    <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); }}
-                      className="text-[11px] px-2 py-0.5 rounded-full border border-gray-200 text-gray-500 hover:text-red-600">✕ 단지 해제</button>
-                  </div>
-                  {/* 2단계: 동 선택 */}
-                  {dongList.length > 0 && (
-                    <div className="flex items-center gap-1 flex-wrap">
-                      <span className="text-[11px] text-gray-500 shrink-0">🚪 동</span>
-                      <button onClick={() => setSelectedDong("")}
-                        className={`text-[11px] px-2 py-0.5 rounded-full border ${!selectedDong ? "bg-emerald-600 text-white border-emerald-600 font-semibold" : "bg-white text-gray-600 border-gray-200"}`}>전체</button>
-                      {dongList.map(([d, n]) => (
-                        <button key={d} onClick={() => setSelectedDong(d)}
-                          className={`text-[11px] px-2 py-0.5 rounded-full border ${selectedDong === d ? "bg-emerald-600 text-white border-emerald-600 font-semibold" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
-                          {d}동 <span className={selectedDong === d ? "opacity-80" : "text-gray-400"}>{n}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </>
+                </select>
+                {/* 동 드롭다운 */}
+                <select value={selectedDong} disabled={!selectedComplex}
+                  onChange={e => setSelectedDong(e.target.value)}
+                  className="border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-gray-100 disabled:text-gray-400">
+                  <option value="">동 전체</option>
+                  {dongList.map(([d, n]) => (
+                    <option key={d} value={d}>{d}동 ({n})</option>
+                  ))}
+                </select>
+                {/* 호 입력 */}
+                <input type="text" inputMode="numeric" value={selectedHo}
+                  onChange={e => setSelectedHo(e.target.value)}
+                  placeholder="호수"
+                  className="border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+              </div>
+              {(selectedComplex || selectedDong || selectedHo) && (
+                <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
+                  className="mt-1.5 text-[11px] text-gray-500 hover:text-red-600">✕ 조회 초기화</button>
               )}
             </div>
           )}
