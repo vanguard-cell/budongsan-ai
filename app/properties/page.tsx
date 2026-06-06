@@ -102,8 +102,11 @@ export default function PropertiesPage() {
   const [viewMode, setViewMode] = useState<"available" | "contracted">("available");
   // 입주상태 필터: "" 전체 / owner 집주인 / vacant 공실
   const [occFilter, setOccFilter] = useState<"" | "owner" | "vacant">("");
-  // 정렬: 등록순 / 금액 낮은순 / 금액 높은순 / 만기일순 / 잔금일순
-  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance">("newest");
+  // 정렬: 등록순 / 금액 / 만기일 / 잔금일 / 동·호순
+  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho">("newest");
+  // 단지→동 계층 탐색: 선택된 단지(베이스주소) / 동
+  const [selectedComplex, setSelectedComplex] = useState<string>("");
+  const [selectedDong, setSelectedDong] = useState<string>("");
   // 페이지네이션 — 20건/페이지
   const PAGE_SIZE = 20;
   const [page, setPage] = useState(1);
@@ -281,6 +284,9 @@ export default function PropertiesPage() {
 
   // 매물 대표 금액 (만원 int) — 매매/전세=price, 월세=보증금
   const priceNum = (p: Property) => parseInt((p.price || "0").replace(/\D/g, ""), 10) || 0;
+  // 단지명(주소에서 동/호 제거) · 숫자 추출 — 동·호순 정렬·계층 탐색용
+  const baseAddr = (p: Property) => (p.address || "").replace(/\s*\d+동.*$/, "").replace(/\s*\d+호.*$/, "").trim();
+  const numOf = (s: string) => parseInt((s || "").replace(/\D/g, ""), 10) || 0;
 
   // 탭별 매물 분류 (계약진행중 / 그 외)
   const matchView = (p: Property) =>
@@ -315,7 +321,10 @@ export default function PropertiesPage() {
         if (priceRange === "3to5")  return n >= 30000 && n < 50000;
         if (priceRange === "o5")    return n >= 50000;
         return true;
-      });
+      })
+      // 단지→동 계층 탐색
+      .filter(p => !selectedComplex || baseAddr(p) === selectedComplex)
+      .filter(p => !selectedDong || p.dong === selectedDong);
 
     // 날짜 정렬용 — 빈 값은 맨 뒤로
     const dateKey = (v: string) => v && v.length >= 10 ? v.slice(0, 10) : "9999-99-99";
@@ -325,13 +334,21 @@ export default function PropertiesPage() {
     : sortBy === "price_desc" ? [...result].sort((a, b) => priceNum(b) - priceNum(a))
     : sortBy === "lease_end"  ? [...result].sort((a, b) => dateKey(a.leaseEndDate).localeCompare(dateKey(b.leaseEndDate)))
     : sortBy === "balance"    ? [...result].sort((a, b) => dateKey(a.balanceDate).localeCompare(dateKey(b.balanceDate)))
+    : sortBy === "dongho"     ? [...result].sort((a, b) => {
+        // 단지명 → 동(숫자) → 호(숫자) 오름차순
+        const baseA = baseAddr(a), baseB = baseAddr(b);
+        if (baseA !== baseB) return baseA.localeCompare(baseB, "ko");
+        const dongA = numOf(a.dong), dongB = numOf(b.dong);
+        if (dongA !== dongB) return dongA - dongB;
+        return numOf(a.ho) - numOf(b.ho);
+      })
     :                           [...result].sort((a, b) => b.createdAt - a.createdAt);
     return sorted.sort((a, b) => {
       const ap = pinnedIds.has(a.id) ? 0 : 1;
       const bp = pinnedIds.has(b.id) ? 0 : 1;
       return ap - bp;
     });
-  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds, occFilter]);
+  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds, occFilter, selectedComplex, selectedDong]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -358,6 +375,28 @@ export default function PropertiesPage() {
       balanceSoon,
     };
   }, [properties]);
+
+  // 단지→동 계층 탐색용 목록 (현재 탭의 active 매물 기준)
+  const complexList = useMemo(() => {
+    const base = properties.filter(p => p.status === "active").filter(matchView);
+    const map = new Map<string, number>();
+    for (const p of base) {
+      const c = baseAddr(p);
+      if (c) map.set(c, (map.get(c) || 0) + 1);
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "ko"));
+  }, [properties, viewMode]);
+
+  // 선택 단지의 동 목록
+  const dongList = useMemo(() => {
+    if (!selectedComplex) return [];
+    const base = properties.filter(p => p.status === "active").filter(matchView).filter(p => baseAddr(p) === selectedComplex);
+    const map = new Map<string, number>();
+    for (const p of base) {
+      if (p.dong) map.set(p.dong, (map.get(p.dong) || 0) + 1);
+    }
+    return [...map.entries()].sort((a, b) => numOf(a[0]) - numOf(b[0]));
+  }, [properties, viewMode, selectedComplex]);
 
   // 매물 유형별 개수 (대분류 칩) — 현재 탭 기준
   const propTypeCounts = useMemo(() => {
@@ -770,6 +809,48 @@ export default function PropertiesPage() {
             onChange={e => setQuery(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
           />
+
+          {/* 단지 → 동 계층 탐색 */}
+          {complexList.length > 0 && (
+            <div className="border border-gray-100 rounded-xl bg-gray-50/60 p-2 mb-2 space-y-1.5">
+              {/* 1단계: 단지 선택 */}
+              {!selectedComplex ? (
+                <div className="flex items-center gap-1 flex-wrap">
+                  <span className="text-[11px] text-gray-500 shrink-0">🏢 단지</span>
+                  {complexList.slice(0, 12).map(([c, n]) => (
+                    <button key={c} onClick={() => { setSelectedComplex(c); setSortBy("dongho"); }}
+                      className="text-[11px] px-2 py-0.5 rounded-full border border-gray-200 bg-white text-gray-700 hover:border-emerald-400 max-w-[55%] truncate">
+                      {c.replace(/^.*[시구동]\s/, "")} <span className="text-gray-400">{n}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* 선택된 단지 + 해제 */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-semibold truncate max-w-[70%]">🏢 {selectedComplex.replace(/^.*[시구동]\s/, "")}</span>
+                    <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); }}
+                      className="text-[11px] px-2 py-0.5 rounded-full border border-gray-200 text-gray-500 hover:text-red-600">✕ 단지 해제</button>
+                  </div>
+                  {/* 2단계: 동 선택 */}
+                  {dongList.length > 0 && (
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="text-[11px] text-gray-500 shrink-0">🚪 동</span>
+                      <button onClick={() => setSelectedDong("")}
+                        className={`text-[11px] px-2 py-0.5 rounded-full border ${!selectedDong ? "bg-emerald-600 text-white border-emerald-600 font-semibold" : "bg-white text-gray-600 border-gray-200"}`}>전체</button>
+                      {dongList.map(([d, n]) => (
+                        <button key={d} onClick={() => setSelectedDong(d)}
+                          className={`text-[11px] px-2 py-0.5 rounded-full border ${selectedDong === d ? "bg-emerald-600 text-white border-emerald-600 font-semibold" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+                          {d}동 <span className={selectedDong === d ? "opacity-80" : "text-gray-400"}>{n}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {/* 가격대 빠른 필터 */}
           <div className="flex items-center gap-1 mt-2 flex-wrap">
             <span className="text-[11px] text-gray-500 shrink-0">가격대</span>
@@ -801,6 +882,7 @@ export default function PropertiesPage() {
               { key: "price_desc", label: "💰 금액 높은순" },
               { key: "lease_end",  label: "⏰ 만기일순" },
               { key: "balance",    label: "💵 잔금일순" },
+              { key: "dongho",     label: "🏢 동·호순" },
             ] as const).map(s => (
               <button key={s.key} onClick={() => setSortBy(s.key)}
                 className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
