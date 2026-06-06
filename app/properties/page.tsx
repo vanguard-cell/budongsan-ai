@@ -598,9 +598,6 @@ export default function PropertiesPage() {
                     <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "available" ? "text-white" : "text-gray-900 dark:text-gray-100"}`}>
                       미계약 매물
                     </div>
-                    <div className={`text-[10px] sm:text-[11px] mt-0.5 ${viewMode === "available" ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}>
-                      광고 중 · 계약 전
-                    </div>
                   </div>
                 </div>
               </div>
@@ -651,9 +648,6 @@ export default function PropertiesPage() {
                   <div className="min-w-0">
                     <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "contracted" ? "text-white" : "text-gray-900 dark:text-gray-100"}`}>
                       계약진행중
-                    </div>
-                    <div className={`text-[10px] sm:text-[11px] mt-0.5 ${viewMode === "contracted" ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}>
-                      계약일 입력 완료
                     </div>
                   </div>
                 </div>
