@@ -24,6 +24,12 @@ import SparklineChart from "@/app/dashboard/components/SparklineChart";
 
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"];
 const DEAL_TYPES: DealType[] = ["매매", "전세", "월세"];
+/** 거래종류별 배지 색 — 금액(파랑)과 구분 */
+const DEAL_BADGE: Record<string, string> = {
+  "매매": "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+  "전세": "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+  "월세": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+};
 const DIRECTIONS = ["동향", "서향", "남향", "북향", "남동향", "남서향", "북동향", "북서향"];
 
 function formatPhone(raw: string): string {
@@ -341,12 +347,13 @@ export default function PropertiesPage() {
     const balanceSoon = contracted.filter(p => p.balanceDate && p.balanceDate >= today && p.balanceDate <= in30).length;
 
     return {
-      all: active.length,
+      // 거래종류 집계는 미계약(available) 기준 — 계약진행중 매물은 제외
+      all: available.length,
       available: available.length,
       contracted: contracted.length,
-      매매: active.filter(p => p.dealType === "매매").length,
-      전세: active.filter(p => p.dealType === "전세").length,
-      월세: active.filter(p => p.dealType === "월세").length,
+      매매: available.filter(p => p.dealType === "매매").length,
+      전세: available.filter(p => p.dealType === "전세").length,
+      월세: available.filter(p => p.dealType === "월세").length,
       thisWeekNew,
       balanceSoon,
     };
@@ -1094,13 +1101,16 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
       {/* ─── 1째줄: 거래종류 · 매물유형 · 금액 (자연스럽게 이어서) + 우측 즐겨찾기 ─── */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 flex-1 min-w-0">
-          {/* 자연어 헤더: "월세 · 아파트 · 1/1만" */}
-          <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{p.dealType}</span>
-          <span className="inline-flex items-center"><Dot /><span className="text-sm font-medium text-gray-700 dark:text-gray-300">{p.propertyType}</span></span>
-          {/* 💰 금액 — 헤더에 이어서 강조 */}
+          {/* 자연어 헤더: "오피스텔 · 매매 · 1/1만" — 유형 → 거래(색구분) → 금액 */}
+          <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{p.propertyType}</span>
           <span className="inline-flex items-center">
             <Dot />
-            <span className="text-base font-extrabold text-emerald-700 dark:text-emerald-300 tabular-nums">
+            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${DEAL_BADGE[p.dealType] || "bg-gray-100 text-gray-700"}`}>{p.dealType}</span>
+          </span>
+          {/* 💰 금액 — 헤더에 이어서 강조 (거래종류와 색 구분) */}
+          <span className="inline-flex items-center">
+            <Dot />
+            <span className="text-base font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">
               {priceStr === "—" ? "—" : priceStr}
             </span>
           </span>
