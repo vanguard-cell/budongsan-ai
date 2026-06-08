@@ -143,8 +143,24 @@ export default function ExpiryPage() {
   }, [contracts]);
 
   /* ── CRUD (Firestore) ── */
-  const upsertContract = async (c: Contract) => {
-    if (!user) return;
+  const upsertContract = async (c: Contract): Promise<boolean> => {
+    if (!user) return false;
+    // 중복 검사 — 같은 주소·동·호 계약이 이미 있으면 경고 (자기 자신·종료 제외)
+    const norm = (s: string) => (s || "").replace(/\s+/g, "").toLowerCase();
+    const dup = contracts.find(x =>
+      x.id !== c.id &&
+      x.status !== "closed" &&
+      norm(x.address) === norm(c.address) &&
+      (x.dong || "") === (c.dong || "") &&
+      (x.ho || "") === (c.ho || "") &&
+      c.address.trim() !== ""
+    );
+    if (dup) {
+      const where = [dup.address, dup.dong && `${dup.dong}동`, dup.ho && `${dup.ho}호`].filter(Boolean).join(" ");
+      if (!confirm(`⚠️ 이미 등록된 계약이 있습니다:\n${where}\n\n그래도 새로 등록할까요?\n(중복이 싫으면 [취소] 후 기존 계약을 수정하세요)`)) {
+        return false;
+      }
+    }
     await fsSaveContract(user.agencyId, c);
     // 실시간 구독이 자동 반영하지만, 즉시 반응 위해 낙관적 업데이트
     setContracts(prev => {
@@ -154,6 +170,7 @@ export default function ExpiryPage() {
       next[idx] = c;
       return next;
     });
+    return true;
   };
 
   const closeContract = async (id: string) => {
@@ -425,8 +442,8 @@ export default function ExpiryPage() {
           contract={editing}
           onClose={() => setEditing(null)}
           onSave={async (c) => {
-            await upsertContract(c);
-            setEditing(null);
+            const ok = await upsertContract(c);
+            if (ok) setEditing(null);
           }}
         />
       )}
