@@ -540,32 +540,50 @@ export default function PropertiesPage() {
                 return (
                   <div
                     key={p.id}
-                    className="group flex items-center gap-2.5 bg-white dark:bg-slate-900/80 rounded-2xl px-3 sm:px-4 py-2.5 border border-red-100 dark:border-red-900/40 hover:shadow-md hover:border-red-300 dark:hover:border-red-700 transition-all"
+                    className="group bg-white dark:bg-slate-900/80 rounded-2xl px-3 sm:px-4 py-2.5 border border-red-100 dark:border-red-900/40 hover:shadow-md hover:border-red-300 dark:hover:border-red-700 transition-all"
                   >
-                    <span className="material-symbols-outlined text-red-500 text-lg shrink-0">schedule</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-semibold shrink-0">{p.dealType}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{p.address}</div>
-                      <div className="text-[11px] text-red-600 dark:text-red-400 mt-0.5 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px] leading-none">event</span>
-                        잔금일 {formatDateKo(p.balanceDate)}
-                        <span className="ml-1 px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/60 font-bold">{daysOver}일 지남</span>
+                    {/* 모바일: 세로 / PC: 가로 */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      {/* 정보 영역 */}
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                        <span className="material-symbols-outlined text-red-500 text-lg shrink-0 mt-0.5">schedule</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-semibold shrink-0 mt-0.5">{p.dealType}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{p.address}</div>
+                          <div className="text-[11px] text-red-600 dark:text-red-400 mt-0.5 flex items-center gap-1 flex-wrap">
+                            <span className="material-symbols-outlined text-[13px] leading-none">event</span>
+                            <span className="whitespace-nowrap">잔금일 {formatDateKo(p.balanceDate)}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-950/60 font-bold whitespace-nowrap">{daysOver}일 지남</span>
+                          </div>
+                        </div>
+                        {/* X 닫기 — 모바일에선 우상단 */}
+                        <button
+                          onClick={() => setDismissedAlertIds(s => new Set(s).add(p.id))}
+                          title="이번 세션에서 숨기기"
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 shrink-0 transition-colors sm:hidden"
+                        >
+                          <span className="material-symbols-outlined text-base">close</span>
+                        </button>
+                      </div>
+                      {/* 액션 영역 — 모바일에선 전체 너비 버튼 */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => close(p)}
+                          className="flex-1 sm:flex-none justify-center text-[11px] px-3 py-2 sm:py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-sm hover:shadow-md transition-all flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                          거래완료 → 만기
+                        </button>
+                        {/* X 닫기 — PC에선 버튼 옆 */}
+                        <button
+                          onClick={() => setDismissedAlertIds(s => new Set(s).add(p.id))}
+                          title="이번 세션에서 숨기기"
+                          className="w-7 h-7 rounded-full hidden sm:flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 shrink-0 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-base">close</span>
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => close(p)}
-                      className="text-[11px] px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shrink-0 shadow-sm hover:shadow-md transition-all flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                      거래완료 → 만기
-                    </button>
-                    <button
-                      onClick={() => setDismissedAlertIds(s => new Set(s).add(p.id))}
-                      title="이번 세션에서 숨기기"
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 shrink-0 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-base">close</span>
-                    </button>
                   </div>
                 );
               })}
