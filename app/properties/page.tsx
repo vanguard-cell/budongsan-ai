@@ -149,9 +149,26 @@ export default function PropertiesPage() {
     setPage(1);
   }, [query, filterType, filterPropType, priceRange, sortBy, viewMode, showClosed, occFilter]);
 
-  const upsert = async (p: Property) => {
-    if (!user) return;
+  const upsert = async (p: Property): Promise<boolean> => {
+    if (!user) return false;
+    // 중복 검사 — 같은 주소·동·호 매물이 이미 있으면 경고 (자기 자신·거래완료 제외)
+    const norm = (s: string) => (s || "").replace(/\s+/g, "").toLowerCase();
+    const dup = properties.find(x =>
+      x.id !== p.id &&
+      x.status !== "closed" &&
+      norm(x.address) === norm(p.address) &&
+      (x.dong || "") === (p.dong || "") &&
+      (x.ho || "") === (p.ho || "") &&
+      p.address.trim() !== ""
+    );
+    if (dup) {
+      const where = [dup.address, dup.dong && `${dup.dong}동`, dup.ho && `${dup.ho}호`].filter(Boolean).join(" ");
+      if (!confirm(`⚠️ 이미 등록된 매물이 있습니다:\n${where}\n\n그래도 새로 등록할까요?\n(중복이 싫으면 [취소] 후 기존 매물을 수정하세요)`)) {
+        return false;
+      }
+    }
     await saveProperty(user.agencyId, p);
+    return true;
   };
 
   const remove = async (id: string) => {
@@ -1081,7 +1098,7 @@ export default function PropertiesPage() {
         <PropertyModal
           property={editing}
           onClose={() => setEditing(null)}
-          onSave={async p => { await upsert(p); setEditing(null); }}
+          onSave={async p => { const ok = await upsert(p); if (ok) setEditing(null); }}
         />
       )}
 
