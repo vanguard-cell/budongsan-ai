@@ -62,15 +62,19 @@ export default function DashboardPage() {
     [activeProps],
   );
 
-  const expiringContracts = useMemo(() =>
-    contracts.filter(c => {
-      if (c.status !== "active" || !c.endDate) return false;
-      const dd = dDay(c.endDate);
-      return dd <= 30 && dd >= -7;
-    }),
-    [contracts],
-  );
-  const urgentExpiring = expiringContracts.filter(c => dDay(c.endDate) <= 7);
+  // 만기 임박 — 만기관리 계약 + 내 매물 임대만기 둘 다 집계
+  const expiringSoon = useMemo(() => {
+    const inRange = (d: string) => { const dd = dDay(d); return dd <= 30 && dd >= -7; };
+    const items: { address: string; endDate: string }[] = [];
+    for (const c of contracts) {
+      if (c.status === "active" && c.endDate && inRange(c.endDate)) items.push({ address: c.address, endDate: c.endDate });
+    }
+    for (const p of activeProps) {
+      if (p.leaseEndDate && inRange(p.leaseEndDate)) items.push({ address: p.address, endDate: p.leaseEndDate });
+    }
+    return items;
+  }, [contracts, activeProps]);
+  const urgentExpiring = expiringSoon.filter(x => dDay(x.endDate) <= 7);
 
   const followUpNeeded = useMemo(() =>
     customers.filter(c => {
@@ -163,7 +167,7 @@ export default function DashboardPage() {
           <KpiCard
             icon="timer"
             label="만기 임박"
-            value={`${expiringContracts.length} 건`}
+            value={`${expiringSoon.length} 건`}
             sub={urgentExpiring.length > 0 ? `D-7 이내 ${urgentExpiring.length}건` : "30일 이내 만기"}
             iconBg="bg-orange-50 dark:bg-orange-950/40"
             iconColor="text-orange-500 dark:text-orange-400"
