@@ -289,22 +289,8 @@ export default function ExpiryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
-
-        {/* 사용자 바 */}
-        <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
-          <NotifyBell contracts={contracts} customers={customers} />
-          <span className="text-gray-300">·</span>
-          <span>👤 {user.displayName || user.email}</span>
-          <span className="text-gray-300">·</span>
-          <button
-            onClick={() => { if (confirm("로그아웃 하시겠어요?")) signOut(); }}
-            className="hover:text-blue-600 hover:underline"
-          >
-            로그아웃
-          </button>
-        </div>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-4xl mx-auto">
 
         {/* 마이그레이션 안내 */}
         {migratedCount !== null && migratedCount > 0 && (
@@ -313,60 +299,75 @@ export default function ExpiryPage() {
           </div>
         )}
 
-        {/* 헤더 */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
-            ⏰ 만기 관리
+        {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 액션 (내 매물과 동일 패턴) */}
+        <section className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
+          <div>
+            <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+              <span className="material-symbols-outlined text-blue-600 dark:text-blue-400" style={{ fontSize: "2rem" }}>event_busy</span>
+              만기 관리
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+              만기 4 / 3 / 2개월 전 자동 분류 — 임차인·임대인에게 바로 연락
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">임대차 계약 만기 알림 보드</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mb-3">
-            만기 4개월 / 3개월 / 2개월 전 자동 분류 — 임차인·임대인에게 바로 연락
-          </p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button
-              onClick={() => setShowSmsSettings(true)}
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              📝 문구 설정
-            </button>
+
+          <div className="flex flex-wrap gap-2 items-center">
+            <NotifyBell contracts={contracts} customers={customers} />
+            {/* 보조 액션 그룹 */}
+            <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
+              <button
+                onClick={() => setShowSmsSettings(true)}
+                title="문자 문구 설정"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-base">edit_note</span>
+                <span className="hidden sm:inline">문구 설정</span>
+              </button>
+              <button
+                onClick={() => setShowUpload(true)}
+                title="엑셀 일괄 업로드"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-base">upload_file</span>
+                <span className="hidden sm:inline">엑셀 업로드</span>
+              </button>
+              <button
+                onClick={() => setShowExport(true)}
+                title="엑셀 내보내기"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-base">download</span>
+                <span className="hidden sm:inline">내보내기</span>
+              </button>
+              <button
+                onClick={loadSampleData}
+                title="예시 계약 6건 추가"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-base">science</span>
+                <span className="hidden sm:inline">예시</span>
+              </button>
+              {contracts.length > 0 && (
+                <button
+                  onClick={clearAllData}
+                  title="모든 계약 데이터 삭제"
+                  className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-base">delete_sweep</span>
+                  <span className="hidden sm:inline">전체 삭제</span>
+                </button>
+              )}
+            </div>
+            {/* 메인 액션 */}
             <button
               onClick={() => setEditing(emptyContract())}
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
-              + 계약 추가
+              <span className="material-symbols-outlined text-lg">add</span>
+              계약 추가
             </button>
-            <button
-              onClick={loadSampleData}
-              title="예시 계약 6건 추가 (위험·주의·예고·안전·종료 각 단계 포함)"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              🧪 예시 데이터
-            </button>
-            <button
-              onClick={() => setShowUpload(true)}
-              title="한방·4989·자체 엑셀 모두 가능 — 컬럼 매핑 후 일괄 가져오기"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              📥 엑셀 업로드
-            </button>
-            <button
-              onClick={() => setShowExport(true)}
-              title="현재 데이터를 엑셀로 다운로드 — 백업 또는 다른 프로그램으로 이관용"
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"
-            >
-              📤 내보내기
-            </button>
-            {contracts.length > 0 && (
-              <button
-                onClick={clearAllData}
-                title="모든 계약 데이터 삭제"
-                className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 text-gray-500 hover:border-red-400 hover:text-red-600 transition-colors"
-              >
-                🗑️ 전체 삭제
-              </button>
-            )}
           </div>
-        </div>
+        </section>
 
         {/* 요약 카드 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">

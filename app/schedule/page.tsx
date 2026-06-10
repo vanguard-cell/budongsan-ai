@@ -192,50 +192,47 @@ export default function SchedulePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-2xl mx-auto">
 
-        {/* 사용자 바 */}
-        <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
-          <span>👤 {user.displayName || user.email}</span>
-          <span className="text-gray-300">·</span>
-          <button onClick={() => { if (confirm("로그아웃?")) signOut(); }} className="hover:text-blue-600 hover:underline">로그아웃</button>
-        </div>
-
-        {/* 헤더 */}
-        <div className="text-center mb-5">
-          <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
-            📅 스케줄 관리
+        {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 빠른 등록 */}
+        <section className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-5">
+          <div>
+            <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+              <span className="material-symbols-outlined text-blue-600 dark:text-blue-400" style={{ fontSize: "2rem" }}>calendar_month</span>
+              스케줄
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+              약속·계약일·중도금일·잔금일 한눈에 (만기일은 만기관리)
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">통합 일정</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mb-4">약속·계약일·중도금일·잔금일 한눈에 (만기일은 만기관리)</p>
-          <div className="flex flex-wrap gap-1.5 justify-center">
+          <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setEditing(emptySchedule())}
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
+              className="text-xs px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors shadow-sm"
             >
               + 약속
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "계약일" })}
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-purple-400 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
+              className="text-xs px-3.5 py-2 rounded-xl border-2 border-purple-400 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
             >
               + 계약일
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "중도금일" })}
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-pink-400 bg-pink-50 text-pink-700 font-semibold hover:bg-pink-100 transition-colors"
+              className="text-xs px-3.5 py-2 rounded-xl border-2 border-pink-400 bg-pink-50 text-pink-700 font-semibold hover:bg-pink-100 transition-colors"
             >
               + 중도금일
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "잔금일" })}
-              className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border-2 border-amber-400 bg-amber-50 text-amber-700 font-semibold hover:bg-amber-100 transition-colors"
+              className="text-xs px-3.5 py-2 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-semibold hover:bg-amber-100 transition-colors"
             >
               + 잔금일
             </button>
           </div>
-        </div>
+        </section>
 
         {/* 월별 캘린더 — 한눈에 보기 */}
         <MonthCalendar

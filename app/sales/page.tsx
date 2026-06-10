@@ -71,35 +71,19 @@ export default function SalesPage() {
   const thisMonthLabel = `${new Date().getMonth() + 1}월`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
-      <div className="max-w-3xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-3xl mx-auto">
 
-        {/* 사용자 바 */}
-        <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
-          <span>👤 {user.displayName || user.email}</span>
-          <span className="text-gray-300">·</span>
-          <button onClick={() => { if (confirm("로그아웃?")) signOut(); }} className="hover:text-blue-600 hover:underline">로그아웃</button>
-        </div>
-
-        {/* 헤더 */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">
-            💰 매출 관리
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">중개 수수료 매출</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mb-4">잔금일 기준으로 월별 매출이 자동 집계됩니다</p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Link href="/properties" className="text-xs sm:text-sm px-4 py-2 rounded-full border border-gray-300 hover:border-emerald-500 hover:text-emerald-700 transition-colors">
-              🏘️ 내 매물 관리
-            </Link>
-            <Link href="/expiry" className="text-xs sm:text-sm px-4 py-2 rounded-full border border-gray-300 hover:border-emerald-500 hover:text-emerald-700 transition-colors">
-              ⏰ 만기 관리
-            </Link>
-            <Link href="/" className="text-xs sm:text-sm px-4 py-2 rounded-full border border-gray-300 hover:border-emerald-500 hover:text-emerald-700 transition-colors">
-              🏠 홈
-            </Link>
-          </div>
-        </div>
+        {/* Stitch 톤 페이지 헤더 */}
+        <section className="mb-6">
+          <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400" style={{ fontSize: "2rem" }}>payments</span>
+            매출 관리
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+            잔금일 기준으로 월별 중개 수수료 매출이 자동 집계됩니다
+          </p>
+        </section>
 
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>

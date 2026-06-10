@@ -5,7 +5,6 @@ import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import DashboardCards from "../DashboardCards";
 import InstallPrompt from "../InstallPrompt";
 import ComplexPickerWidget from "../ComplexPicker";
 
@@ -634,23 +633,22 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-2xl mx-auto">
 
-        {/* 헤더 */}
-        <div className="text-center mb-4">
-          <div className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-2">
-            🏠 DealDone — 부동산 매물 도우미
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">매물·만기·손님 한 곳에서</h1>
-          <p className="text-gray-500 text-xs sm:text-sm">PC·폰 자동 동기화 · 4989 보완용</p>
-        </div>
+        {/* Stitch 톤 페이지 헤더 */}
+        <section className="mb-5">
+          <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400" style={{ fontSize: "2rem" }}>auto_awesome</span>
+            AI 문구 생성
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+            네이버 등록 문구 + 블로그 + 인스타 + 고객 맞춤 멘트까지 한 번에
+          </p>
+        </section>
 
         {/* ★ 앱 설치 안내 — 기종 자동 감지 + 시각 가이드 */}
         <InstallPrompt />
-
-        {/* ★ 대시보드 카드 — 만기/손님 긴급 알림 + 진입 */}
-        <DashboardCards />
 
         {/* 매물 문구 생성 헤더 */}
         <div id="매물도우미" className="text-center mb-4 mt-2 pt-4 border-t border-gray-200">

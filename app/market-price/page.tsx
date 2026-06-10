@@ -92,8 +92,8 @@ export default function MarketPricePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-violet-50/40 dark:from-slate-900 dark:to-violet-950/20">
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-5 sm:py-8 pb-24">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-4xl mx-auto">
 
         {/* 헤더 */}
         <section className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">
