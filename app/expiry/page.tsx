@@ -239,6 +239,8 @@ export default function ExpiryPage() {
       const prop = contractBackToProperty({
         address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
         landlordName: c.landlordName, landlordPhone: c.landlordPhone, memo: c.memo,
+        dong: c.dong, ho: c.ho, propertyType: c.propertyType,
+        area: c.area, unitType: c.unitType, direction: c.direction, rooms: c.rooms,
       });
       // 1. 새 매물 저장
       await saveProperty(user.agencyId, prop);

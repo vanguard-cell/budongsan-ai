@@ -274,15 +274,22 @@ export function contractBackToProperty(c: {
   landlordName: string;
   landlordPhone: string;
   memo: string;
+  dong?: string;
+  ho?: string;
+  propertyType?: string;
+  area?: string;
+  unitType?: string;
+  direction?: string;
+  rooms?: string;
 }): Property {
   return {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
     address: c.address,
-    propertyType: "아파트", // 기본값 — 사용자가 수정 가능
+    propertyType: (c.propertyType as PropertyType) || "아파트", // 만기 계약에 입력된 유형 보존
     dealType: c.type,
     price: c.deposit,
     monthly: c.monthly,
-    area: "", unitType: "", dong: "", ho: "", floor: "", rooms: "", direction: "",
+    area: c.area || "", unitType: c.unitType || "", dong: c.dong || "", ho: c.ho || "", floor: "", rooms: c.rooms || "", direction: c.direction || "",
     ownerName: c.landlordName,
     ownerPhone: c.landlordPhone,
     tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
