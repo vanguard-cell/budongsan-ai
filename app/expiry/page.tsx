@@ -44,7 +44,16 @@ import {
   saveCustomSmsTemplate,
   resetCustomSmsTemplate,
   applyTemplate,
+  CONTRACT_PROPERTY_TYPES,
+  CONTRACT_DIRECTIONS,
 } from "./contracts";
+
+/** ㎡ → 평 (소수점 1자리) — 매물 등록과 동일 */
+function m2ToPyeong(m2: string): string {
+  const n = parseFloat((m2 || "").replace(/[^\d.]/g, ""));
+  if (!n || isNaN(n)) return "";
+  return (Math.round(n / 3.3058 * 10) / 10).toString();
+}
 
 type FilterKey = "all" | Severity;
 
@@ -915,6 +924,26 @@ function EditModal({
         {/* 지역+유형 단지 검색 */}
         <ComplexPickerWidget onSelect={item => setField("address", `${item.address} ${item.name}`.trim())} />
 
+        {/* 매물 유형 — 내 매물 등록과 동일 */}
+        <Field label="매물 유형">
+          <div className="grid grid-cols-4 gap-1.5">
+            {CONTRACT_PROPERTY_TYPES.map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setField("propertyType", t)}
+                className={`py-2 rounded-xl text-[11px] font-medium border transition-colors ${
+                  form.propertyType === t
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </Field>
+
         <Field label="계약 종류">
           <div className="grid grid-cols-2 gap-1.5">
             {(["전세", "월세"] as ContractType[]).map(t => (
@@ -956,6 +985,54 @@ function EditModal({
               />
             </Field>
           )}
+        </div>
+
+        {/* 면적 / 평면도 타입 — 내 매물 등록과 동일 */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="전용면적 (㎡)">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={form.area || ""}
+              onChange={e => setField("area", e.target.value.replace(/[^\d.]/g, ""))}
+              placeholder="84"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {m2ToPyeong(form.area || "") && <div className="mt-1 text-[10px] text-gray-500">≈ {m2ToPyeong(form.area || "")}평</div>}
+          </Field>
+          <Field label="평면도 타입">
+            <input
+              type="text"
+              value={form.unitType || ""}
+              onChange={e => setField("unitType", e.target.value)}
+              placeholder="예: 84A, C-3타입"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </Field>
+        </div>
+
+        {/* 방향 / 방수 — 내 매물 등록과 동일 */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="방향">
+            <select
+              value={form.direction || ""}
+              onChange={e => setField("direction", e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">선택</option>
+              {CONTRACT_DIRECTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </Field>
+          <Field label="방수">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={form.rooms || ""}
+              onChange={e => setField("rooms", e.target.value.replace(/\D/g, ""))}
+              placeholder="3"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </Field>
         </div>
 
         <div className="grid grid-cols-2 gap-3">

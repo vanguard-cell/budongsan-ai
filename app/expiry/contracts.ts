@@ -19,6 +19,12 @@ export interface Contract {
   tenantPhone: string;
   landlordName: string;
   landlordPhone: string;
+  // 매물 상세 — 내 매물 등록 폼과 동일하게 (어머니 요청)
+  propertyType?: string;    // 아파트/오피스텔/빌라 등
+  area?: string;            // 전용면적 (㎡) — 숫자만
+  unitType?: string;        // 평면도 타입 (예: 84A, C-3타입)
+  direction?: string;       // 방향
+  rooms?: string;           // 방수
   // 매물에서 이전된 경우 보존되는 계약 진행 정보
   contractDate?: string;    // 계약일
   downPaymentDate?: string; // 중도금일
@@ -263,11 +269,21 @@ export function emptyContract(): Contract {
     tenantPhone: "",
     landlordName: "",
     landlordPhone: "",
+    propertyType: "아파트",
+    area: "",
+    unitType: "",
+    direction: "",
+    rooms: "",
     memo: "",
     status: "active",
     createdAt: Date.now(),
   };
 }
+
+/** 매물 유형 목록 — 내 매물 등록과 동일 */
+export const CONTRACT_PROPERTY_TYPES = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"] as const;
+/** 방향 목록 — 내 매물 등록과 동일 */
+export const CONTRACT_DIRECTIONS = ["동향", "서향", "남향", "북향", "남동향", "남서향", "북동향", "북서향"] as const;
 
 /* 문자 템플릿 */
 export interface SmsTemplate {
