@@ -63,7 +63,7 @@ function getTag(xml: string, tag: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { location, complexName, exclusiveArea, currentPrice, propertyType, dealType } = await req.json();
+  const { location, complexName, exclusiveArea, currentPrice, propertyType, dealType, mode } = await req.json();
 
   // 데모 모드
   if (!MOLIT_KEY || MOLIT_KEY === "여기에_공공데이터_키") {
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
     const lawdCd = getLawdCd(location);
     const now = new Date();
 
-    interface RawItem { nm: string; amount: string; deposit: string; monthly: string; area: string; floor: string; year: string; month: string; }
+    interface RawItem { nm: string; amount: string; deposit: string; monthly: string; area: string; floor: string; year: string; month: string; day: string; }
     const results: RawItem[] = [];
 
     for (let i = 0; i < 12; i++) {
@@ -140,12 +140,43 @@ export async function POST(req: NextRequest) {
         const targetArea = parseFloat(exclusiveArea);
         if (targetArea && !isNaN(areaNum) && Math.abs(areaNum - targetArea) > 10) continue;
 
-        results.push({ nm, amount, deposit, monthly, area, floor, year, month });
+        results.push({ nm, amount, deposit, monthly, area, floor, year, month, day: getTag(m, "dealDay") });
       }
     }
 
     if (!results.length) {
       return NextResponse.json({ error: "조건에 맞는 실거래 데이터가 없습니다. 단지명·면적을 확인하거나 비워두고 다시 시도해보세요." });
+    }
+
+    // ── 최고가 모드 — 최근 12개월 내 최고 거래 1건 (실거래 최고가 기록용) ──
+    if (mode === "max") {
+      const fmtDate = (t: RawItem) =>
+        `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day || "1").padStart(2, "0")}`;
+      if (api.isRent) {
+        let best: RawItem | null = null;
+        let bestDep = -1;
+        for (const t of results) {
+          const dep = parseInt((t.deposit || "0").replace(/,/g, ""), 10) || 0;
+          if (dep > bestDep) { bestDep = dep; best = t; }
+        }
+        if (!best) return NextResponse.json({ error: "전월세 거래가 없습니다." });
+        return NextResponse.json({
+          high: { deposit: bestDep, monthly: parseInt(best.monthly) || 0, date: fmtDate(best), area: parseFloat(best.area), floor: best.floor, nm: best.nm },
+          count: results.length, isRent: true,
+        });
+      } else {
+        let best: RawItem | null = null;
+        let bestAmt = -1;
+        for (const t of results) {
+          const amt = parseInt((t.amount || "0").replace(/,/g, ""), 10) || 0;
+          if (amt > bestAmt) { bestAmt = amt; best = t; }
+        }
+        if (!best) return NextResponse.json({ error: "매매 거래가 없습니다." });
+        return NextResponse.json({
+          high: { price: bestAmt, date: fmtDate(best), area: parseFloat(best.area), floor: best.floor, nm: best.nm },
+          count: results.length, isRent: false,
+        });
+      }
     }
 
     const recent = results.slice(0, 5);

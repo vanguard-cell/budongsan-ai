@@ -231,6 +231,57 @@ function MarketPriceModal({ item, onClose, onSave }: {
   const isNew = !item.complexName;
   const set = <K extends keyof MarketPrice>(k: K, v: MarketPrice[K]) => setForm(p => ({ ...p, [k]: v }));
 
+  // ── 국토부 실거래 자동 조회 ──
+  const [lookupType, setLookupType] = useState("아파트");
+  const [looking, setLooking] = useState(false);
+  const [lookupMsg, setLookupMsg] = useState("");
+
+  const autoLookup = async () => {
+    if (!form.complexName.trim()) { alert("단지명을 먼저 입력해주세요."); return; }
+    setLooking(true);
+    setLookupMsg("국토부 실거래 조회 중… (최근 12개월)");
+    try {
+      const body = {
+        location: form.complexName,        // lawdCd 추출용 (지역 키워드 없으면 하남 기본)
+        complexName: form.complexName,
+        exclusiveArea: form.area,
+        propertyType: lookupType,
+        mode: "max",
+      };
+      const [saleRes, jeonseRes] = await Promise.all([
+        fetch("/api/price", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, dealType: "매매" }) }).then(r => r.json()),
+        fetch("/api/price", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, dealType: "전세" }) }).then(r => r.json()),
+      ]);
+
+      const found: string[] = [];
+      setForm(p => {
+        const next = { ...p };
+        if (saleRes.high?.price) {
+          next.saleHigh = String(saleRes.high.price);
+          next.dealDate = saleRes.high.date || p.dealDate;
+          if (!p.area && saleRes.high.area) next.area = String(saleRes.high.area);
+          found.push(`매매 ${saleRes.count}건 중 최고 (${saleRes.high.floor}층)`);
+        }
+        if (jeonseRes.high?.deposit) {
+          next.jeonseHigh = String(jeonseRes.high.deposit);
+          if (!next.dealDate) next.dealDate = jeonseRes.high.date || "";
+          found.push(`전세 ${jeonseRes.count}건 중 최고`);
+        }
+        return next;
+      });
+
+      if (found.length === 0) {
+        setLookupMsg(`❌ ${saleRes.error || jeonseRes.error || "거래 내역이 없습니다. 단지명·유형을 확인해주세요."}`);
+      } else {
+        setLookupMsg(`✅ 자동 입력 완료 — ${found.join(" · ")}`);
+      }
+    } catch {
+      setLookupMsg("❌ 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setLooking(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.complexName.trim()) { alert("단지명을 입력해주세요."); return; }
     setSaving(true);
@@ -290,6 +341,44 @@ function MarketPriceModal({ item, onClose, onSave }: {
                 className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
             </div>
+          </div>
+
+          {/* 국토부 실거래 자동 조회 */}
+          <div className="rounded-2xl border-2 border-dashed border-violet-300 bg-violet-50/60 dark:bg-violet-950/30 p-3">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-violet-700 dark:text-violet-300 mb-2">
+              <span className="material-symbols-outlined text-sm">cloud_download</span>
+              국토부 실거래 자동 조회 — 최근 12개월 최고가를 자동으로 채워드려요
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {["아파트", "오피스텔", "빌라/다세대"].map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setLookupType(t)}
+                  className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+                    lookupType === t
+                      ? "bg-violet-600 text-white border-violet-600 font-semibold"
+                      : "bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-600"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={autoLookup}
+                disabled={looking}
+                className="ml-auto text-xs px-4 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold disabled:opacity-50 flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-sm">{looking ? "hourglass_top" : "search"}</span>
+                {looking ? "조회 중…" : "최고가 조회"}
+              </button>
+            </div>
+            {lookupMsg && (
+              <p className={`mt-2 text-[11px] leading-relaxed ${lookupMsg.startsWith("✅") ? "text-emerald-700 dark:text-emerald-400" : lookupMsg.startsWith("❌") ? "text-red-600 dark:text-red-400" : "text-gray-500"}`}>
+                {lookupMsg}
+              </p>
+            )}
           </div>
 
           {/* 매매 / 전세 최고가 */}
