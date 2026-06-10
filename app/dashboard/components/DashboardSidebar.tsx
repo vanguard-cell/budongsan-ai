@@ -25,9 +25,10 @@ const NAV: NavItem[] = [
   { href: "/properties", icon: "domain",          label: "내 매물 관리" },
   { href: "/expiry",     icon: "event_busy",      label: "만기 관리" },
   { href: "/customers",  icon: "group",           label: "손님 관리" },
-  { href: "/schedule",   icon: "calendar_month",  label: "스케줄" },
-  { href: "/sales",      icon: "payments",        label: "매출 관리" },
-  { href: "/ai-content", icon: "auto_awesome",    label: "AI 문구 생성", highlight: true },
+  { href: "/schedule",     icon: "calendar_month",  label: "스케줄" },
+  { href: "/sales",        icon: "payments",        label: "매출 관리" },
+  { href: "/market-price", icon: "trending_up",     label: "실거래 최고가" },
+  { href: "/ai-content",   icon: "auto_awesome",    label: "AI 문구 생성", highlight: true },
 ];
 
 const SUB_NAV: NavItem[] = [

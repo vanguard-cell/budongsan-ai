@@ -72,6 +72,12 @@ service cloud.firestore {
         allow create, update, delete: if isMember();
       }
 
+      // ── 실거래 최고가 ────────────────────────
+      match /marketPrices/{priceId} {
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update, delete: if isMember();
+      }
+
     }
 
     // ── 전역 건의함 (agency 밖, 단 documents 블록 안에 있어야 적용됨) ──
