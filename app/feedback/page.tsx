@@ -10,9 +10,14 @@ import {
   addMessage,
   updateFeedback,
   deleteFeedback,
+  markDone,
+  markPending,
+  confirmByUser,
   ADMIN_EMAIL,
   type FeedbackItem,
 } from "@/lib/feedback-db";
+
+type FeedbackFilter = "all" | "pending" | "done";
 
 /** 이미지 파일 → 압축된 base64 (가로 최대 1024px, jpeg 0.7) */
 function compressImage(file: File): Promise<string> {
@@ -48,6 +53,7 @@ export default function FeedbackPage() {
   const [text, setText] = useState("");
   const [newImage, setNewImage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [filter, setFilter] = useState<FeedbackFilter>("all");   // 관리자 필터 탭
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -105,10 +111,15 @@ export default function FeedbackPage() {
     });
   };
 
+  // 처리완료 토글 — done 시 유저 확인 대기 리셋, 되돌리면 pending
   const handleDone = async (item: FeedbackItem) => {
-    await updateFeedback(item.id, {
-      status: item.status === "done" ? "pending" : "done",
-    });
+    if (item.status === "done") await markPending(item.id);
+    else await markDone(item.id);
+  };
+
+  // 문의자가 "확인했어요" 누름
+  const handleConfirm = async (id: string) => {
+    await confirmByUser(id);
   };
 
   const handleDelete = async (id: string) => {
@@ -121,6 +132,16 @@ export default function FeedbackPage() {
   }
 
   const pendingCount = items.filter(i => i.status === "pending").length;
+  const doneCount = items.filter(i => i.status === "done").length;
+  // 관리자: 완료했지만 유저가 아직 확인 안 한 건 (닥달 대상)
+  const unconfirmedDone = items.filter(i => i.status === "done" && !i.userConfirmed);
+  // 유저: 확인 대기중인 처리완료 건 (본인 글)
+  const myAwaitingConfirm = items.filter(i => i.status === "done" && !i.userConfirmed && i.submittedBy.uid === user.uid);
+
+  // 필터 적용 (관리자만 탭 사용)
+  const visibleItems = isAdmin
+    ? items.filter(i => filter === "all" ? true : i.status === filter)
+    : items;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50">
@@ -219,10 +240,83 @@ export default function FeedbackPage() {
           </div>
         )}
 
-        {/* 관리자 — 빠른 입력 (테스트용) */}
+        {/* 유저 — 확인 대기중인 처리완료 건 배너 (확인 독촉) */}
+        {!isAdmin && myAwaitingConfirm.length > 0 && (
+          <div className="mb-5 rounded-3xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50 p-4 shadow-sm">
+            <div className="flex items-start gap-2 mb-2">
+              <span className="text-2xl">✅</span>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-emerald-800">
+                  처리완료된 건의 {myAwaitingConfirm.length}건이 있어요!
+                </div>
+                <div className="text-xs text-emerald-700 mt-0.5">
+                  아래 글을 확인하시고 <b>「확인했어요」</b> 버튼을 눌러주세요 👇
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1.5 mt-2">
+              {myAwaitingConfirm.map(it => (
+                <div key={it.id} className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-emerald-200">
+                  <span className="material-symbols-outlined text-emerald-600 text-base">check_circle</span>
+                  <span className="text-xs text-gray-700 flex-1 min-w-0 truncate">{it.thread[0]?.text || it.text}</span>
+                  <button
+                    onClick={() => handleConfirm(it.id)}
+                    className="text-[11px] px-3 py-1.5 rounded-full bg-emerald-600 text-white font-bold hover:bg-emerald-700 shrink-0"
+                  >
+                    확인했어요
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 관리자 — 모드 안내 + 미확인 완료건 추적 */}
         {isAdmin && (
-          <div className="bg-purple-50 border border-purple-200 rounded-2xl px-4 py-3 mb-5 text-xs text-purple-700">
-            👑 관리자 모드 — 모든 사용자의 건의사항이 표시됩니다. 답변 달기 및 처리완료 표시 가능.
+          <div className="space-y-3 mb-5">
+            <div className="bg-purple-50 border border-purple-200 rounded-2xl px-4 py-3 text-xs text-purple-700">
+              👑 관리자 모드 — 모든 사용자 건의 표시. 답변·처리완료·확인 추적 가능.
+            </div>
+            {/* 닥달 대상: 처리완료했지만 유저 미확인 */}
+            {unconfirmedDone.length > 0 && (
+              <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm font-bold text-amber-800">
+                  <span className="material-symbols-outlined text-amber-600">notifications_active</span>
+                  처리완료 후 유저 미확인 {unconfirmedDone.length}건
+                </div>
+                <div className="text-[11px] text-amber-700 mt-1">
+                  유저가 아직 확인 안 한 완료건이에요. 답글로 「확인 부탁드려요」 한 번 더 남겨보세요.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 관리자 — 전체/미처리/완료 필터 탭 */}
+        {isAdmin && items.length > 0 && (
+          <div className="flex gap-1.5 mb-4">
+            {([
+              { key: "all" as const,     label: "전체",   count: items.length,  color: "purple" },
+              { key: "pending" as const, label: "미처리", count: pendingCount,  color: "orange" },
+              { key: "done" as const,    label: "완료",   count: doneCount,     color: "green" },
+            ]).map(t => {
+              const active = filter === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setFilter(t.key)}
+                  className={`flex-1 py-2.5 rounded-2xl text-sm font-bold border transition-all ${
+                    active
+                      ? t.color === "purple" ? "bg-purple-600 text-white border-purple-600"
+                      : t.color === "orange" ? "bg-orange-500 text-white border-orange-500"
+                      : "bg-green-600 text-white border-green-600"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  {t.label} <span className={active ? "opacity-90" : "text-gray-400"}>{t.count}</span>
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -239,9 +333,13 @@ export default function FeedbackPage() {
               {isAdmin ? "사용자들이 건의사항을 등록하면 여기에 표시됩니다" : "불편한 점이나 수정 요청을 위에 작성해주세요"}
             </div>
           </div>
+        ) : visibleItems.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 text-center text-sm text-gray-500">
+            {filter === "pending" ? "미처리 건의가 없습니다 🎉" : filter === "done" ? "완료된 건의가 없습니다" : "표시할 건의가 없습니다"}
+          </div>
         ) : (
           <div className="space-y-2.5">
-            {items.map(item => (
+            {visibleItems.map(item => (
               <FeedbackCard
                 key={item.id}
                 item={item}
@@ -249,6 +347,7 @@ export default function FeedbackPage() {
                 isMine={item.submittedBy.uid === user.uid}
                 onSend={(t, img) => handleSendMessage(item.id, t, img)}
                 onDone={() => handleDone(item)}
+                onConfirm={() => handleConfirm(item.id)}
                 onDelete={() => handleDelete(item.id)}
               />
             ))}
@@ -264,12 +363,13 @@ export default function FeedbackPage() {
 }
 
 /* ── 건의 카드 (대화 스레드) ── */
-function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onDelete }: {
+function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onConfirm, onDelete }: {
   item: FeedbackItem;
   isAdmin: boolean;
   isMine: boolean;
   onSend: (text: string, image: string) => Promise<void>;
   onDone: () => void;
+  onConfirm: () => void;
   onDelete: () => void;
 }) {
   const [msg, setMsg] = useState("");
@@ -300,12 +400,35 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onDelete }: {
         <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${item.status === "done" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
           {item.status === "done" ? "✅ 처리완료" : "⏳ 대기중"}
         </span>
+        {/* 확인 상태 배지 — 처리완료 건만 */}
+        {item.status === "done" && (
+          item.userConfirmed ? (
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-0.5">
+              <span className="material-symbols-outlined text-xs">how_to_reg</span> 확인됨
+            </span>
+          ) : (
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center gap-0.5 animate-pulse">
+              <span className="material-symbols-outlined text-xs">hourglass_top</span> 확인 대기
+            </span>
+          )
+        )}
         {isAdmin && (
           <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">
             👤 {item.submittedBy.name || item.submittedBy.email}
           </span>
         )}
       </div>
+
+      {/* 유저(본인) — 처리완료 미확인 시 확인 버튼 강조 */}
+      {!isAdmin && isMine && item.status === "done" && !item.userConfirmed && (
+        <div className="mb-3 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center gap-2">
+          <span className="text-lg">✅</span>
+          <span className="text-xs text-emerald-800 flex-1">처리완료됐어요! 내용 확인하셨으면 눌러주세요</span>
+          <button onClick={onConfirm} className="text-[11px] px-3 py-1.5 rounded-full bg-emerald-600 text-white font-bold hover:bg-emerald-700 shrink-0">
+            확인했어요
+          </button>
+        </div>
+      )}
 
       {/* 대화 스레드 라벨 */}
       <div className="flex items-center gap-1.5 mb-2 text-[11px] text-gray-500">
