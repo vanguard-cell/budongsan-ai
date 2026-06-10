@@ -1276,7 +1276,7 @@ function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose
       <div className="mt-3 space-y-2">
         {/* 집주인 — 이름 • 전화번호 (점 구분, 아이콘 없음) */}
         {p.ownerPhone && (
-          <div className="flex items-center gap-x-2 gap-y-1 text-xs">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
             <span className="text-gray-600 dark:text-gray-400 shrink-0">집주인 <b className="text-gray-900 dark:text-gray-100">{p.ownerName || ""}</b></span>
             <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
               <Dot />{formatPhone(p.ownerPhone)}

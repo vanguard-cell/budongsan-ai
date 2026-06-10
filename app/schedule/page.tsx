@@ -56,7 +56,9 @@ function isToday(date: string) { return date === new Date().toISOString().slice(
 function isFuture(date: string) { return date >= new Date().toISOString().slice(0, 10); }
 function fmtDate(date: string) {
   if (!date) return "";
-  return new Date(date + "T00:00:00").toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
+  const d = new Date(date + "T00:00:00");
+  if (isNaN(d.getTime())) return date;   // 잘못된 날짜는 원문 그대로 (크래시 방지)
+  return d.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
 }
 
 /* ── 메인 ── */
@@ -378,7 +380,7 @@ function ScheduleCard({ schedule: s, properties, onEdit, onDone, onDelete }: {
             </div>
           )}
           {s.visitorPhone && (
-            <div className="mt-1.5 flex items-center gap-2 text-xs">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <span className="text-gray-500 shrink-0">{s.visitorName || "방문자"}</span>
               <a href={`tel:${s.visitorPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(s.visitorPhone)}</a>
               <a href={`sms:${s.visitorPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${s.visitorName ? ` ${s.visitorName}님` : ""}, 미사금빛공인중개사입니다.\n${s.date} ${s.time} ${s.propertyAddress} ${s.scheduleType} 약속 확인드립니다.`)}`}
@@ -431,13 +433,13 @@ function PropertyDateCard({ property: p, kind }: { property: Property; kind: Pro
           </div>
           <div className="text-sm font-semibold text-gray-800 break-all">{p.address}</div>
           {p.ownerPhone && (
-            <div className="mt-1.5 flex items-center gap-2 text-xs">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <span className="text-gray-500 shrink-0">집주인 {p.ownerName || ""}</span>
               <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.ownerPhone)}</a>
             </div>
           )}
           {p.tenantPhone && (
-            <div className="mt-1 flex items-center gap-2 text-xs">
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <span className="text-gray-500 shrink-0">임차인 {p.tenantName || ""}</span>
               <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
             </div>
@@ -473,7 +475,7 @@ function FollowUpCard({ customer: c }: { customer: Customer }) {
           <div className="text-sm font-semibold text-gray-800">{c.name}</div>
           {c.preferredArea && <div className="text-xs text-gray-500 mt-0.5">희망: {c.preferredArea}</div>}
           {c.phone && (
-            <div className="mt-1.5 flex items-center gap-2 text-xs">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <a href={`tel:${c.phone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(c.phone)}</a>
               <a href={`sms:${c.phone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요 ${c.name}님, 미사금빛공인중개사입니다.\n안녕하신지요? 좋은 매물 있어 연락드립니다.`)}`}
                 className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto">문자</a>
