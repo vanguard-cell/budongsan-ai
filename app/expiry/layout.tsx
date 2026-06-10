@@ -1,5 +1,5 @@
 import StitchLayout from "../StitchLayout";
 
-export default function PropertiesLayout({ children }: { children: React.ReactNode }) {
+export default function ExpiryLayout({ children }: { children: React.ReactNode }) {
   return <StitchLayout>{children}</StitchLayout>;
 }

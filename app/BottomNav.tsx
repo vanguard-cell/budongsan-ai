@@ -41,7 +41,13 @@ export default function AppNav() {
   // 단 모바일 하단 탭바는 그대로 표시
   const hideDesktopSidebar =
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/properties");
+    pathname.startsWith("/properties") ||
+    pathname.startsWith("/expiry") ||
+    pathname.startsWith("/customers") ||
+    pathname.startsWith("/schedule") ||
+    pathname.startsWith("/sales") ||
+    pathname.startsWith("/ai-content") ||
+    pathname.startsWith("/market-price");
 
   return (
     <>

@@ -15,10 +15,16 @@ import BottomNav from "./BottomNav";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
-  // Stitch 톤 적용된 페이지들 (자체 사이드바·헤더 보유)
+  // Stitch 톤 적용된 페이지들 (자체 사이드바·헤더 보유 — StitchLayout)
   const isFullscreen =
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/properties");
+    pathname.startsWith("/properties") ||
+    pathname.startsWith("/expiry") ||
+    pathname.startsWith("/customers") ||
+    pathname.startsWith("/schedule") ||
+    pathname.startsWith("/sales") ||
+    pathname.startsWith("/ai-content") ||
+    pathname.startsWith("/market-price");
 
   if (isLogin) {
     return <>{children}</>;
