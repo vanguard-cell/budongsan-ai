@@ -24,6 +24,7 @@ const SIDEBAR_TABS = [
   { href: "/sales",        icon: "payments",        label: "매출 관리" },
   { href: "/market-price", icon: "trending_up",     label: "실거래 최고가" },
   { href: "/ai-content",   icon: "auto_awesome",    label: "AI 문구 생성" },
+  { href: "/team",         icon: "groups",          label: "직원 관리" },
   { href: "/feedback",     icon: "feedback",        label: "건의함" },
 ];
 
@@ -47,7 +48,8 @@ export default function AppNav() {
     pathname.startsWith("/schedule") ||
     pathname.startsWith("/sales") ||
     pathname.startsWith("/ai-content") ||
-    pathname.startsWith("/market-price");
+    pathname.startsWith("/market-price") ||
+    pathname.startsWith("/team");
 
   return (
     <>

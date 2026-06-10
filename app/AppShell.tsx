@@ -24,7 +24,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/schedule") ||
     pathname.startsWith("/sales") ||
     pathname.startsWith("/ai-content") ||
-    pathname.startsWith("/market-price");
+    pathname.startsWith("/market-price") ||
+    pathname.startsWith("/team");
 
   if (isLogin) {
     return <>{children}</>;

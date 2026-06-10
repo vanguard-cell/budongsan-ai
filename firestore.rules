@@ -28,10 +28,21 @@ service cloud.firestore {
 
     // ── 사무실 ──────────────────────────────────
     match /agencies/{agencyId} {
-      // 멤버 또는 관리자 읽기, 멤버만 수정
+      // 초대 코드 합류 — "본인 uid만 추가 + owner 불변 + 유효한 joinCode" 일 때만 비멤버 update 허용
+      function isSelfJoin() {
+        return request.auth != null
+               && request.resource.data.owner == resource.data.owner
+               && request.resource.data.members.hasAll(resource.data.members)
+               && request.resource.data.members.toSet().difference(resource.data.members.toSet()) == [request.auth.uid].toSet()
+               && request.resource.data.joinCode is string
+               && get(/databases/$(database)/documents/invites/$(request.resource.data.joinCode)).data.agencyId == agencyId;
+      }
+
+      // 멤버 또는 관리자 읽기, 멤버 수정 (+ 초대코드 셀프 조인)
       allow read: if (request.auth != null && request.auth.uid in resource.data.members) || isGlobalAdmin();
-      allow update: if request.auth != null
-                          && request.auth.uid in resource.data.members;
+      allow update: if (request.auth != null
+                          && request.auth.uid in resource.data.members)
+                       || isSelfJoin();
 
       // 생성: 본인을 owner + members에 넣어서만 가능
       allow create: if request.auth != null
@@ -78,6 +89,18 @@ service cloud.firestore {
         allow create, update, delete: if isMember();
       }
 
+    }
+
+    // ── 초대 코드 (직원 합류용) ──────────────────
+    match /invites/{code} {
+      // 코드를 아는 로그인 사용자는 조회 가능 (합류 절차)
+      allow read: if request.auth != null;
+      // 생성: 해당 사무실 owner만
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.createdBy
+                    && get(/databases/$(database)/documents/agencies/$(request.resource.data.agencyId)).data.owner == request.auth.uid;
+      // 삭제: 발급자만
+      allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
     }
 
     // ── 전역 건의함 (agency 밖, 단 documents 블록 안에 있어야 적용됨) ──

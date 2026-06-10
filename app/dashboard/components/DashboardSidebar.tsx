@@ -32,6 +32,7 @@ const NAV: NavItem[] = [
 ];
 
 const SUB_NAV: NavItem[] = [
+  { href: "/team",       icon: "groups",          label: "직원 관리" },
   { href: "/feedback",   icon: "feedback",        label: "건의함" },
 ];
 
