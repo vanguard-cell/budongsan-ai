@@ -38,7 +38,16 @@ const SUB_NAV: NavItem[] = [
 
 const ADMIN_NAV: NavItem = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리", highlight: true };
 
-export default function DashboardSidebar() {
+interface SidebarProps {
+  /** 고정 열림 (토글 버튼) — false면 화면 밖으로 슬라이드 */
+  open?: boolean;
+  /** 접힌 상태에서 좌측 가장자리 hover로 임시 표시 (v0 스타일) */
+  peek?: boolean;
+  /** peek 중 마우스가 사이드바를 벗어나면 닫기 */
+  onPeekEnd?: () => void;
+}
+
+export default function DashboardSidebar({ open = true, peek = false, onPeekEnd }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
@@ -51,9 +60,16 @@ export default function DashboardSidebar() {
 
   const userName = user?.displayName || user?.email?.split("@")[0] || "사용자";
 
+  // open: 평소처럼 고정 / peek: 오버레이로 떠서 그림자 / 둘 다 아니면 화면 밖
+  const visible = open || peek;
+
   return (
-    {/* md(768px) 이상이면 항상 표시 — 화면 반분할(~960px)에서도 사이드바 유지 (사용자 요청) */}
-    <aside className="hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 p-4 z-30">
+    <aside
+      onMouseLeave={() => { if (!open && peek) onPeekEnd?.(); }}
+      className={`hidden sm:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] w-56 lg:w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 p-4 transition-transform duration-200 ease-out ${
+        visible ? "translate-x-0" : "-translate-x-full"
+      } ${!open && peek ? "z-50 shadow-2xl" : "z-30"}`}
+    >
       {/* 주 메뉴 */}
       <nav className="flex-grow space-y-1 overflow-y-auto">
         {NAV.map(item => {

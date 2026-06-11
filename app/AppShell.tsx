@@ -33,8 +33,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {/* 풀스크린(자체 사이드바·헤더) 페이지는 padding 없이, 일반 페이지는 md:pl-56 */}
-      <div className={isFullscreen ? "" : "md:pl-56"}>
+      {/* 풀스크린(자체 사이드바·헤더) 페이지는 padding 없이, 일반 페이지는 sm:pl-56 */}
+      <div className={isFullscreen ? "" : "sm:pl-56"}>
         {children}
       </div>
       {/* BottomNav 내부에서 PC 사이드바는 풀스크린 시 숨기지만, 모바일 탭바는 항상 표시 */}

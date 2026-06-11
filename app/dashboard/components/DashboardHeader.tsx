@@ -13,9 +13,13 @@ import { useAuth, roleTitle } from "@/lib/auth-context";
 
 interface Props {
   alertCount?: number;
+  /** 사이드바 열림 상태 (토글 버튼 아이콘용) */
+  sidebarOpen?: boolean;
+  /** 사이드바 토글 (v0 스타일) */
+  onToggleSidebar?: () => void;
 }
 
-export default function DashboardHeader({ alertCount = 0 }: Props) {
+export default function DashboardHeader({ alertCount = 0, sidebarOpen = true, onToggleSidebar }: Props) {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [isDark, setIsDark] = useState(false);
@@ -51,7 +55,20 @@ export default function DashboardHeader({ alertCount = 0 }: Props) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-gray-200 dark:border-slate-700">
-      <div className="h-full px-6 flex items-center gap-8">
+      <div className="h-full px-4 sm:px-6 flex items-center gap-4 sm:gap-8">
+        {/* 사이드바 토글 (v0 스타일) — 모바일(sm 미만)은 하단 탭바라 숨김 */}
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            title={sidebarOpen ? "사이드바 접기" : "사이드바 펼치기"}
+            className="hidden sm:flex w-9 h-9 items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors shrink-0 -ml-1"
+          >
+            <span className="material-symbols-outlined text-xl">
+              {sidebarOpen ? "menu_open" : "menu"}
+            </span>
+          </button>
+        )}
+
         {/* 로고 */}
         <h1 className="text-xl font-bold text-green-700 dark:text-green-400 shrink-0">
           DealDone

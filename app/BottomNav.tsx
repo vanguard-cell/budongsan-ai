@@ -54,7 +54,7 @@ export default function AppNav() {
   return (
     <>
       {/* ── PC: 왼쪽 고정 사이드바 (대시보드에서는 자체 사이드바라 숨김) ── */}
-      <aside className={`${hideDesktopSidebar ? "hidden" : "hidden md:flex"} fixed left-0 top-0 bottom-0 w-56 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-700 shadow-sm flex-col z-50`}>
+      <aside className={`${hideDesktopSidebar ? "hidden" : "hidden sm:flex"} fixed left-0 top-0 bottom-0 w-56 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-700 shadow-sm flex-col z-50`}>
         <div className="px-5 py-6 border-b border-gray-100 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <span className="text-xl">🏡</span>
@@ -93,10 +93,10 @@ export default function AppNav() {
         </div>
       </aside>
 
-      {/* ── 모바일: 하단 탭바 ── */}
-      <div className="h-20 md:hidden" />
+      {/* ── 모바일: 하단 탭바 (sm 미만 — 사이드바 표시 기준과 일치) ── */}
+      <div className="h-20 sm:hidden" />
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
         <div className="flex items-center justify-around px-1 pt-1 pb-3">
           {MAIN_TABS.map(tab => {
             const isActive = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
