@@ -11,7 +11,7 @@ export default function StitchLayout({ children }: { children: React.ReactNode }
     <div className="min-h-screen bg-gradient-to-br from-white to-emerald-50/40 dark:from-slate-900 dark:to-emerald-950/30">
       <DashboardHeader />
       <DashboardSidebar />
-      <main className="pt-16 lg:pl-64 pb-20 md:pb-0">
+      <main className="pt-16 md:pl-64 pb-20 md:pb-0">
         {children}
       </main>
     </div>

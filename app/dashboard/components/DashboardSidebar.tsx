@@ -52,7 +52,8 @@ export default function DashboardSidebar() {
   const userName = user?.displayName || user?.email?.split("@")[0] || "사용자";
 
   return (
-    <aside className="hidden lg:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 p-4 z-30">
+    {/* md(768px) 이상이면 항상 표시 — 화면 반분할(~960px)에서도 사이드바 유지 (사용자 요청) */}
+    <aside className="hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 p-4 z-30">
       {/* 주 메뉴 */}
       <nav className="flex-grow space-y-1 overflow-y-auto">
         {NAV.map(item => {
