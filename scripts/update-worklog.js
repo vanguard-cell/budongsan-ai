@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-11",
   day: "목",
-  category: "디자인",
-  work: "DealDone 리디자인 1·2단계 — 블루 토큰+딥네이비 사이드바, 새 홈(4카드: 오늘일정/잔금/만기/손님 + 중요알림 + 빠른실행)",
-  commit: "0ed9f4f",
-  note: "3단계 슬라이드 패널(drawer) 예정",
+  category: "신규 기능",
+  work: "리디자인 3단계 — 슬라이드 패널(SideDrawer): 홈 카드·알림 클릭 시 우측 패널(밀어내기)에서 전화·문자·상세 바로 실행, 폰은 바텀시트",
+  commit: "d85dd7f",
+  note: "4단계 빠른실행 편집 예정",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 블루 리디자인 1·2단계(새 홈)" : "블루 리디자인 1·2단계(새 홈)";
+      found.getCell(4).value = prev ? prev + " / 슬라이드 패널(3단계)" : "슬라이드 패널(3단계)";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "블루 리디자인 1·2단계(새 홈)"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "슬라이드 패널(3단계)"]);
     }
   }
 

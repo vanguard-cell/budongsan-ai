@@ -1,15 +1,21 @@
 "use client";
 
 /**
- * 사이드바 — 딥 네이비블루 (DealDone 리디자인 2026-06)
- * - 배경 #16284A(--brand-navy), 메뉴 텍스트 #9BB4D4, 활성 메뉴 #2563EB + 흰 글씨
- * - 라이트/다크 모드 공통 네이비 (사이드바는 항상 어두운 톤)
- * - 토글(open) + 가장자리 peek 동작은 기존 그대로
+ * 사이드바 — 딥 네이비블루, 상단바 통합형 (DealDone 리디자인 2026-06)
+ *
+ * 벤치마킹(Stripe/Linear/Notion/Toss)처럼 PC에서는 상단바 없이 사이드바가 전부 담당:
+ *  - 상단: 로고 + 접기 토글
+ *  - 검색 (Enter → /properties?q= 통합검색)
+ *  - 메뉴 (활성 = 리치 블루 #2563EB)
+ *  - 하단: 빠른 등록 + 사용자 카드 + 알림·다크모드·로그아웃
+ *
+ * 토글(open) + 가장자리 peek 동작은 StitchLayout에서 제어.
  */
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth, roleTitle } from "@/lib/auth-context";
 import { ADMIN_EMAIL } from "@/lib/admin-db";
 
 interface NavItem {
@@ -43,13 +49,43 @@ interface SidebarProps {
   peek?: boolean;
   /** peek 중 마우스가 사이드바를 벗어나면 닫기 */
   onPeekEnd?: () => void;
+  /** 접기/펴기 토글 (사이드바 상단 버튼) */
+  onToggle?: () => void;
 }
 
-export default function DashboardSidebar({ open = true, peek = false, onPeekEnd }: SidebarProps) {
+export default function DashboardSidebar({ open = true, peek = false, onPeekEnd, onToggle }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
   const subNav = isAdmin ? [...SUB_NAV, ADMIN_NAV] : SUB_NAV;
+
+  const [search, setSearch] = useState("");
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const dark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    setIsDark(dark);
+  }, []);
+
+  const toggleDark = () => {
+    const next = !isDark;
+    setIsDark(next);
+    if (next) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  };
+
+  const doSearch = () => {
+    const q = search.trim();
+    if (!q) return;
+    router.push(`/properties?q=${encodeURIComponent(q)}`);
+  };
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -57,6 +93,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd 
   };
 
   const userName = user?.displayName || user?.email?.split("@")[0] || "사용자";
+  const title = user ? roleTitle(user.role) : "대표님";
 
   // open: 평소처럼 고정 / peek: 오버레이로 떠서 그림자 / 둘 다 아니면 화면 밖
   const visible = open || peek;
@@ -64,10 +101,43 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd 
   return (
     <aside
       onMouseLeave={() => { if (!open && peek) onPeekEnd?.(); }}
-      className={`hidden sm:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] w-56 lg:w-64 bg-[var(--brand-navy)] p-4 transition-transform duration-200 ease-out ${
+      className={`hidden sm:flex flex-col fixed left-0 top-0 h-screen w-56 lg:w-64 bg-[var(--brand-navy)] p-4 transition-transform duration-200 ease-out ${
         visible ? "translate-x-0" : "-translate-x-full"
       } ${!open && peek ? "z-50 shadow-2xl" : "z-30"}`}
     >
+      {/* 브랜드 + 접기 토글 */}
+      <div className="flex items-center justify-between mb-4 pl-1">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <span className="text-lg">🏡</span>
+          <span className="text-lg font-bold text-white tracking-tight">DealDone</span>
+        </Link>
+        <button
+          onClick={onToggle}
+          title="사이드바 접기"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white transition-colors"
+        >
+          <span className="material-symbols-outlined text-xl">menu_open</span>
+        </button>
+      </div>
+
+      {/* 통합 검색 */}
+      <div className="relative mb-4">
+        <span
+          onClick={doSearch}
+          className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--sidebar-text)] cursor-pointer hover:text-white"
+        >
+          search
+        </span>
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") doSearch(); }}
+          placeholder="단지·이름·전화 검색"
+          className="sidebar-search w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-white/10 border-0 focus:bg-white/15 focus:outline-none focus:ring-1 focus:ring-[var(--brand-blue)]"
+        />
+      </div>
+
       {/* 주 메뉴 */}
       <nav className="flex-grow space-y-1 overflow-y-auto">
         {NAV.map(item => {
@@ -76,7 +146,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd 
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all cursor-pointer
                 ${active
                   ? "bg-[var(--brand-blue)] text-white font-bold shadow-md shadow-blue-900/30"
                   : "text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white"
@@ -94,14 +164,14 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd 
         })}
 
         {/* 보조 메뉴 */}
-        <div className="pt-4 mt-4 border-t border-white/10 space-y-1">
+        <div className="pt-3 mt-3 border-t border-white/10 space-y-1">
           {subNav.map(item => {
             const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors text-sm
+                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-colors text-sm
                   ${active
                     ? "bg-[var(--brand-blue)] text-white font-bold"
                     : "text-[var(--sidebar-text)]/80 hover:bg-white/8 hover:text-white"
@@ -115,23 +185,48 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd 
         </div>
       </nav>
 
-      {/* 하단 — 빠른 등록 + 사용자 카드 */}
-      <div className="pt-4 mt-4 border-t border-white/10">
+      {/* 하단 — 빠른 등록 + 사용자 + 액션 */}
+      <div className="pt-3 mt-3 border-t border-white/10">
         <Link
-          href="/properties"
-          className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--brand-blue)] text-white rounded-xl shadow-md shadow-blue-900/30 hover:brightness-110 active:scale-95 transition-all mb-3"
+          href="/properties?new=1"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--brand-blue)] text-white rounded-xl shadow-md shadow-blue-900/30 hover:brightness-110 active:scale-95 transition-all mb-3"
         >
           <span className="material-symbols-outlined text-xl">edit_note</span>
           <span className="font-bold text-sm">빠른 등록</span>
         </Link>
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-10 h-10 rounded-full bg-[var(--brand-blue)] flex items-center justify-center text-white font-bold shrink-0">
+
+        <div className="flex items-center gap-2.5 px-1">
+          <div className="w-9 h-9 rounded-full bg-[var(--brand-blue)] flex items-center justify-center text-white font-bold text-sm shrink-0">
             {userName.charAt(0)}
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{userName}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-white truncate leading-tight">{userName} {title}</p>
             <p className="text-[11px] text-[var(--sidebar-text)] truncate">미사금빛 부동산</p>
           </div>
+        </div>
+
+        {/* 알림 · 다크모드 · 로그아웃 */}
+        <div className="flex items-center justify-around mt-3 pt-3 border-t border-white/10">
+          <button
+            title="알림"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white transition-colors"
+          >
+            <span className="material-symbols-outlined text-xl">notifications</span>
+          </button>
+          <button
+            onClick={toggleDark}
+            title={isDark ? "라이트 모드" : "다크 모드"}
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white transition-colors"
+          >
+            <span className="material-symbols-outlined text-xl">{isDark ? "dark_mode" : "light_mode"}</span>
+          </button>
+          <button
+            onClick={() => { if (confirm("로그아웃 하시겠어요?")) signOut(); }}
+            title="로그아웃"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-white/8 hover:text-red-300 transition-colors"
+          >
+            <span className="material-symbols-outlined text-xl">logout</span>
+          </button>
         </div>
       </div>
     </aside>

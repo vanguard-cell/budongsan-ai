@@ -53,7 +53,7 @@ export default function SideDrawer({ open, onClose, title, icon, accent = "#2563
       <aside
         className="fixed z-50 bg-white dark:bg-slate-900 shadow-2xl flex flex-col
           max-sm:inset-x-0 max-sm:bottom-0 max-sm:max-h-[78vh] max-sm:rounded-t-2xl max-sm:animate-[drawer-in-up_.25s_ease-out]
-          sm:top-16 sm:right-0 sm:bottom-0 sm:w-[380px] sm:border-l sm:border-gray-200 sm:dark:border-slate-700 sm:animate-[drawer-in-right_.25s_ease-out]"
+          sm:top-0 sm:right-0 sm:bottom-0 sm:w-[380px] sm:border-l sm:border-gray-200 sm:dark:border-slate-700 sm:animate-[drawer-in-right_.25s_ease-out]"
         style={{ borderTop: `3px solid ${accent}` }}
       >
         {/* 폰: 끌기 핸들 */}

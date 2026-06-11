@@ -188,8 +188,8 @@ export default function DashboardPage() {
     : null;
 
   return (
-    <div className={`p-5 lg:p-10 transition-[padding] duration-300 ease-out ${drawer ? "xl:pr-[400px]" : ""}`}>
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className={`p-5 lg:p-8 transition-[padding] duration-300 ease-out ${drawer ? "xl:pr-[400px]" : ""}`}>
+      <div className="space-y-8">
         {/* ─── 1) 인사 ─── */}
         <header>
           <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
@@ -312,7 +312,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <QuickAction icon="add_home"      label="매물 등록"  href="/properties" />
+              <QuickAction icon="add_home"      label="매물 등록"  href="/properties?new=1" />
               <QuickAction icon="person_add"    label="손님 등록"  href="/customers" />
               <QuickAction icon="calendar_add_on" label="일정 추가" href="/schedule" />
               <QuickAction icon="auto_awesome"  label="AI 문구"    href="/ai-content" />

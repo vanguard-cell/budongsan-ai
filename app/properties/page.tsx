@@ -80,6 +80,14 @@ export default function PropertiesPage() {
     if (!authLoading && !user) router.replace("/login?redirect=/properties");
   }, [authLoading, user, router]);
 
+  // 홈 "빠른 등록" / "매물 등록" 진입 (?new=1) → 등록 모달 바로 열기
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("new") === "1") {
+      setEditing(emptyProperty());
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     const u1 = subscribeProperties(user.agencyId, list => { setProperties(list); setLoaded(true); });

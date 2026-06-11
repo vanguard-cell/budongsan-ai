@@ -106,6 +106,14 @@ input::placeholder, textarea::placeholder {
   font-variation-settings: 'FILL' 1;
 }
 
+/* 사이드바 통합검색 — 네이비 배경이라 전역 input 색 규칙 무시 */
+.sidebar-search, .dark .sidebar-search {
+  color: #ffffff;
+}
+.sidebar-search::placeholder, .dark .sidebar-search::placeholder {
+  color: rgba(155, 180, 212, 0.7);  /* --sidebar-text 70% */
+}
+
 /* ─────────── 슬라이드 패널 (SideDrawer) ─────────── */
 @keyframes drawer-in-right {
   from { transform: translateX(100%); }
