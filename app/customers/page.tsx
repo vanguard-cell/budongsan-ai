@@ -75,6 +75,14 @@ export default function CustomersPage() {
     if (!authLoading && !user) router.replace("/login?redirect=/customers");
   }, [authLoading, user, router]);
 
+  // 홈 빠른 실행 "손님 추가" 진입 (?new=1) → 추가 모달 바로 열기
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("new") === "1") {
+      setEditing(emptyCustomer());
+    }
+  }, []);
+
   /* 실시간 구독 */
   useEffect(() => {
     if (!user) return;

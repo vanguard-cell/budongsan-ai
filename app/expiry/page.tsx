@@ -96,6 +96,14 @@ export default function ExpiryPage() {
     }
   }, [authLoading, user, router]);
 
+  // 홈 빠른 실행 "계약 추가" 진입 (?new=1) → 추가 모달 바로 열기
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("new") === "1") {
+      setEditing(emptyContract());
+    }
+  }, []);
+
   /* 데이터 실시간 구독 + 첫 진입 시 localStorage 마이그레이션 */
   useEffect(() => {
     if (!user) return;

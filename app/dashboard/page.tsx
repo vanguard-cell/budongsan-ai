@@ -317,10 +317,10 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <QuickAction icon="add_home"      label="매물 등록"  href="/properties?new=1" />
-              <QuickAction icon="person_add"    label="손님 등록"  href="/customers" />
-              <QuickAction icon="calendar_add_on" label="일정 추가" href="/schedule" />
-              <QuickAction icon="auto_awesome"  label="AI 문구"    href="/ai-content" />
+              <QuickAction icon="add_home"        label="매물 등록" href="/properties?new=1" />
+              <QuickAction icon="post_add"        label="계약 추가" href="/expiry?new=1" />
+              <QuickAction icon="person_add"      label="손님 추가" href="/customers?new=1" />
+              <QuickAction icon="calendar_add_on" label="약속 추가" href="/schedule?new=1" />
             </div>
           </div>
         </section>

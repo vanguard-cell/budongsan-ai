@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-11",
   day: "목",
   category: "UX 개선",
-  work: "PC 상단바 제거 — 사이드바에 로고·검색·접기·알림·다크모드·로그아웃 통합 (Stripe식) + 빠른등록→매물등록 모달 직행 + 홈 풀폭",
-  commit: "a9c2e88",
-  note: "폰은 슬림 상단바 유지",
+  work: "홈 디테일 픽스 3건 — 알림·빠른실행 아이콘 중앙 정렬 / 패널 연락칩 역할 구분(임대인 주황·임차인 파랑, 임대인 먼저) / 패널 항목 3줄 컴팩트(한 줄 말줄임+화살표)",
+  commit: "976f811~236579a",
+  note: "어머니 피드백 반영",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 상단바→사이드바 통합" : "상단바→사이드바 통합";
+      found.getCell(4).value = prev ? prev + " / 홈 디테일 픽스 3건" : "홈 디테일 픽스 3건";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "상단바→사이드바 통합"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "홈 디테일 픽스 3건"]);
     }
   }
 

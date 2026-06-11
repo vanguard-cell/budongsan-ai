@@ -79,6 +79,14 @@ export default function SchedulePage() {
     if (!authLoading && !user) router.replace("/login?redirect=/schedule");
   }, [authLoading, user, router]);
 
+  // 홈 빠른 실행 "약속 추가" 진입 (?new=1) → 추가 모달 바로 열기
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("new") === "1") {
+      setEditing(emptySchedule());
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     const u1 = subscribeSchedules(user.agencyId,  list => { setSchedules(list);  setLoaded(true); });
