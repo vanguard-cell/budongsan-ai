@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * 사이드바 — 딥 네이비블루, 상단바 통합형 (DealDone 리디자인 2026-06)
+ * 사이드바 — 라이트 화이트 + 블루 포인트 (Stripe식, 테마 4 / 2026-06 확정)
  *
  * 벤치마킹(Stripe/Linear/Notion/Toss)처럼 PC에서는 상단바 없이 사이드바가 전부 담당:
  *  - 상단: 로고 + 접기 토글
  *  - 검색 (Enter → /properties?q= 통합검색)
- *  - 메뉴 (활성 = 리치 블루 #2563EB)
+ *  - 메뉴 (활성 = 연블루 배경 #EFF4FF + 블루 글씨 #2563EB)
  *  - 하단: 빠른 등록 + 사용자 카드 + 알림·다크모드·로그아웃
  *
  * 토글(open) + 가장자리 peek 동작은 StitchLayout에서 제어.
@@ -101,7 +101,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
   return (
     <aside
       onMouseLeave={() => { if (!open && peek) onPeekEnd?.(); }}
-      className={`hidden sm:flex flex-col fixed left-0 top-0 h-screen w-56 lg:w-64 bg-[var(--brand-navy)] p-4 transition-transform duration-200 ease-out ${
+      className={`hidden sm:flex flex-col fixed left-0 top-0 h-screen w-56 lg:w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 p-4 transition-transform duration-200 ease-out ${
         visible ? "translate-x-0" : "-translate-x-full"
       } ${!open && peek ? "z-50 shadow-2xl" : "z-30"}`}
     >
@@ -109,12 +109,12 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
       <div className="flex items-center justify-between mb-4 pl-1">
         <Link href="/dashboard" className="flex items-center gap-2">
           <span className="text-lg">🏡</span>
-          <span className="text-lg font-bold text-white tracking-tight">DealDone</span>
+          <span className="text-lg font-bold text-[var(--brand-blue)] dark:text-blue-400 tracking-tight">DealDone</span>
         </Link>
         <button
           onClick={onToggle}
           title="사이드바 접기"
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >
           <span className="material-symbols-outlined text-xl">menu_open</span>
         </button>
@@ -124,7 +124,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
       <div className="relative mb-4">
         <span
           onClick={doSearch}
-          className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--sidebar-text)] cursor-pointer hover:text-white"
+          className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[18px] text-gray-400 cursor-pointer hover:text-[var(--brand-blue)]"
         >
           search
         </span>
@@ -134,7 +134,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") doSearch(); }}
           placeholder="단지·이름·전화 검색"
-          className="sidebar-search w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-white/10 border-0 focus:bg-white/15 focus:outline-none focus:ring-1 focus:ring-[var(--brand-blue)]"
+          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-slate-800 border-0 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
         />
       </div>
 
@@ -148,8 +148,8 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
               href={item.href}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all cursor-pointer
                 ${active
-                  ? "bg-[var(--brand-blue)] text-white font-bold shadow-md shadow-blue-900/30"
-                  : "text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white"
+                  ? "bg-[var(--brand-blue-soft)] dark:bg-blue-950/40 text-[var(--brand-blue)] dark:text-blue-300 font-bold"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}
             >
               <span
@@ -164,7 +164,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
         })}
 
         {/* 보조 메뉴 */}
-        <div className="pt-3 mt-3 border-t border-white/10 space-y-1">
+        <div className="pt-3 mt-3 border-t border-gray-200 dark:border-slate-700 space-y-1">
           {subNav.map(item => {
             const active = isActive(item.href);
             return (
@@ -173,8 +173,8 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-colors text-sm
                   ${active
-                    ? "bg-[var(--brand-blue)] text-white font-bold"
-                    : "text-[var(--sidebar-text)]/80 hover:bg-white/8 hover:text-white"
+                    ? "bg-[var(--brand-blue-soft)] dark:bg-blue-950/40 text-[var(--brand-blue)] dark:text-blue-300 font-bold"
+                    : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
                   }`}
               >
                 <span className="material-symbols-outlined text-lg">{item.icon}</span>
@@ -186,10 +186,10 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
       </nav>
 
       {/* 하단 — 빠른 등록 + 사용자 + 액션 */}
-      <div className="pt-3 mt-3 border-t border-white/10">
+      <div className="pt-3 mt-3 border-t border-gray-200 dark:border-slate-700">
         <Link
           href="/properties?new=1"
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--brand-blue)] text-white rounded-xl shadow-md shadow-blue-900/30 hover:brightness-110 active:scale-95 transition-all mb-3"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--brand-blue)] text-white rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all mb-3"
         >
           <span className="material-symbols-outlined text-xl">edit_note</span>
           <span className="font-bold text-sm">빠른 등록</span>
@@ -200,30 +200,30 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
             {userName.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-white truncate leading-tight">{userName} {title}</p>
-            <p className="text-[11px] text-[var(--sidebar-text)] truncate">미사금빛 부동산</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">{userName} {title}</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">미사금빛 부동산</p>
           </div>
         </div>
 
         {/* 알림 · 다크모드 · 로그아웃 */}
-        <div className="flex items-center justify-around mt-3 pt-3 border-t border-white/10">
+        <div className="flex items-center justify-around mt-3 pt-3 border-t border-gray-200 dark:border-slate-700">
           <button
             title="알림"
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
           >
             <span className="material-symbols-outlined text-xl">notifications</span>
           </button>
           <button
             onClick={toggleDark}
             title={isDark ? "라이트 모드" : "다크 모드"}
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
           >
             <span className="material-symbols-outlined text-xl">{isDark ? "dark_mode" : "light_mode"}</span>
           </button>
           <button
             onClick={() => { if (confirm("로그아웃 하시겠어요?")) signOut(); }}
             title="로그아웃"
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--sidebar-text)] hover:bg-white/8 hover:text-red-300 transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-red-500 transition-colors"
           >
             <span className="material-symbols-outlined text-xl">logout</span>
           </button>

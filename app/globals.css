@@ -4,12 +4,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* ── DealDone 리디자인 토큰 (2026-06) — 딥 네이비블루 ── */
+  /* ── DealDone 리디자인 토큰 (2026-06) — 테마 4: 라이트 사이드바 + 블루 포인트 ── */
   --brand-blue:        #2563EB;  /* 포인트·활성·브랜드 */
-  --brand-blue-soft:   #EFF4FF;  /* 블루 연한 배경 */
-  --brand-navy:        #16284A;  /* 사이드바 배경 */
-  --brand-navy-deep:   #0F1D38;  /* 사이드바 하단/호버 */
-  --sidebar-text:      #9BB4D4;  /* 사이드바 메뉴 텍스트 */
+  --brand-blue-soft:   #EFF4FF;  /* 활성 메뉴·연한 블루 배경 */
+  --brand-navy:        #16284A;  /* 진한 네이비 (강조 텍스트 등 보조) */
   /* 상태색 (의미 유지) */
   --status-red:        #E24B4A;  /* 만기·긴급 */
   --status-green:      #1D9E75;  /* 잔금·완료 */
@@ -104,14 +102,6 @@ input::placeholder, textarea::placeholder {
 }
 .material-symbols-outlined.filled {
   font-variation-settings: 'FILL' 1;
-}
-
-/* 사이드바 통합검색 — 네이비 배경이라 전역 input 색 규칙 무시 */
-.sidebar-search, .dark .sidebar-search {
-  color: #ffffff;
-}
-.sidebar-search::placeholder, .dark .sidebar-search::placeholder {
-  color: rgba(155, 180, 212, 0.7);  /* --sidebar-text 70% */
 }
 
 /* ─────────── 슬라이드 패널 (SideDrawer) ─────────── */

@@ -54,13 +54,13 @@ export default function AppNav() {
   return (
     <>
       {/* ── PC: 왼쪽 고정 사이드바 (대시보드에서는 자체 사이드바라 숨김) ── */}
-      <aside className={`${hideDesktopSidebar ? "hidden" : "hidden sm:flex"} fixed left-0 top-0 bottom-0 w-56 bg-[var(--brand-navy)] flex-col z-50`}>
-        <div className="px-5 py-6 border-b border-white/10">
+      <aside className={`${hideDesktopSidebar ? "hidden" : "hidden sm:flex"} fixed left-0 top-0 bottom-0 w-56 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 flex-col z-50`}>
+        <div className="px-5 py-6 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-2">
             <span className="text-xl">🏡</span>
             <div>
-              <div className="text-sm font-bold text-white leading-tight">DealDone</div>
-              <div className="text-[11px] text-[var(--sidebar-text)]">부동산 매물 도우미</div>
+              <div className="text-sm font-bold text-[var(--brand-blue)] dark:text-blue-400 leading-tight">DealDone</div>
+              <div className="text-[11px] text-gray-400 dark:text-gray-500">부동산 매물 도우미</div>
             </div>
           </div>
         </div>
@@ -72,8 +72,8 @@ export default function AppNav() {
               <Link key={tab.href} href={tab.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                   isActive
-                    ? "bg-[var(--brand-blue)] text-white font-bold shadow-md shadow-blue-900/30"
-                    : "text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white"
+                    ? "bg-[var(--brand-blue-soft)] dark:bg-blue-950/40 text-[var(--brand-blue)] dark:text-blue-300 font-bold"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}>
                 <span
                   className="material-symbols-outlined text-xl leading-none w-7 text-center"
@@ -87,8 +87,8 @@ export default function AppNav() {
           })}
         </nav>
 
-        <div className="px-5 py-4 border-t border-white/10">
-          <p className="text-[10px] text-[var(--sidebar-text)] leading-relaxed">☁️ 실시간 동기화<br />PC · 폰 자동 연동</p>
+        <div className="px-5 py-4 border-t border-gray-200 dark:border-slate-700">
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-relaxed">☁️ 실시간 동기화<br />PC · 폰 자동 연동</p>
         </div>
       </aside>
 

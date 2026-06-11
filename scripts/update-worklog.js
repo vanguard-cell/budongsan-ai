@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-11",
   day: "목",
-  category: "UX 개선",
-  work: "홈 디테일 픽스 3건 — 알림·빠른실행 아이콘 중앙 정렬 / 패널 연락칩 역할 구분(임대인 주황·임차인 파랑, 임대인 먼저) / 패널 항목 3줄 컴팩트(한 줄 말줄임+화살표)",
-  commit: "976f811~236579a",
-  note: "어머니 피드백 반영",
+  category: "신규 기능",
+  work: "빠른 실행 4종 확정 — 매물 등록·계약 추가·손님 추가·약속 추가 전부 해당 페이지 추가 모달 직행(?new=1)",
+  commit: "6237ff2",
+  note: "사용자 편집(넣고빼기)은 추후",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 홈 디테일 픽스 3건" : "홈 디테일 픽스 3건";
+      found.getCell(4).value = prev ? prev + " / 빠른실행 4종 모달 직행" : "빠른실행 4종 모달 직행";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "홈 디테일 픽스 3건"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "빠른실행 4종 모달 직행"]);
     }
   }
 
