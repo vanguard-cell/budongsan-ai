@@ -9,7 +9,7 @@
  *     — 상단 3px 색 띠 + 라벨·아이콘 + 큰 건수 + 대표 1건 미리보기
  *  3) 하단 박스 2개: 중요 알림 / 빠른 실행 (편집은 다음 단계)
  *
- * 카드 클릭 → 지금은 해당 페이지 이동, 다음 단계에서 drawer(슬라이드 패널)로 교체 예정.
+ * 카드·알림 클릭 → 우측 슬라이드 패널(SideDrawer, 밀어내기 방식)에서 바로 전화/문자/상세.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -24,6 +24,7 @@ import type { Contract } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import { dDay } from "@/app/expiry/contracts";
 import { followUpDDay, followUpSeverity } from "@/app/customers/customer-types";
+import SideDrawer, { DrawerItem, DrawerEmpty } from "@/app/components/SideDrawer";
 
 /* 상태색 — 의미 고정 (메모리 확정안) */
 const C = {
@@ -44,6 +45,22 @@ function dDayLabel(dd: number): string {
   return `${-dd}일 지남`;
 }
 
+/* D-day 긴급도 → 배지 색 */
+function ddColor(dd: number): string {
+  if (dd < 0) return C.red;
+  if (dd === 0) return C.orange;
+  if (dd <= 7) return C.orange;
+  return "#9ca3af";
+}
+
+type DrawerType = "schedule" | "balance" | "expiry" | "customer" | null;
+
+interface ExpiryItem {
+  address: string;
+  endDate: string;
+  contacts: { label: string; phone?: string }[];
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -51,6 +68,7 @@ export default function DashboardPage() {
   const [contracts, setContracts]   = useState<Contract[]>([]);
   const [customers, setCustomers]   = useState<Customer[]>([]);
   const [schedules, setSchedules]   = useState<Schedule[]>([]);
+  const [drawer, setDrawer]         = useState<DrawerType>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/dashboard");
@@ -91,12 +109,28 @@ export default function DashboardPage() {
   /* ── ③ 만기 임박 — 만기관리 계약 + 내 매물 임대만기 (D-30 ~ 지난 7일) ── */
   const expiringSoon = useMemo(() => {
     const inRange = (d: string) => { const dd = dDay(d); return dd <= 30 && dd >= -7; };
-    const items: { address: string; endDate: string }[] = [];
+    const items: ExpiryItem[] = [];
     for (const c of contracts) {
-      if (c.status === "active" && c.endDate && inRange(c.endDate)) items.push({ address: c.address, endDate: c.endDate });
+      if (c.status === "active" && c.endDate && inRange(c.endDate)) {
+        items.push({
+          address: c.address, endDate: c.endDate,
+          contacts: [
+            { label: c.tenantName || "임차인", phone: c.tenantPhone || undefined },
+            { label: c.landlordName || "임대인", phone: c.landlordPhone || undefined },
+          ],
+        });
+      }
     }
     for (const p of activeProps) {
-      if (p.leaseEndDate && inRange(p.leaseEndDate)) items.push({ address: p.address, endDate: p.leaseEndDate });
+      if (p.leaseEndDate && inRange(p.leaseEndDate)) {
+        items.push({
+          address: p.address, endDate: p.leaseEndDate,
+          contacts: [
+            { label: p.tenantName || "임차인", phone: p.tenantPhone || undefined },
+            { label: p.ownerName || "집주인", phone: p.ownerPhone || undefined },
+          ],
+        });
+      }
     }
     return items.sort((a, b) => a.endDate.localeCompare(b.endDate));
   }, [contracts, activeProps]);
@@ -154,7 +188,7 @@ export default function DashboardPage() {
     : null;
 
   return (
-    <div className="p-5 lg:p-10">
+    <div className={`p-5 lg:p-10 transition-[padding] duration-300 ease-out ${drawer ? "xl:pr-[400px]" : ""}`}>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* ─── 1) 인사 ─── */}
         <header>
@@ -179,7 +213,7 @@ export default function DashboardPage() {
             count={todaySchedules.length}
             preview={previewSchedule}
             emptyText="오늘 일정 없음"
-            href="/schedule"
+            onClick={() => setDrawer("schedule")}
           />
           <SummaryCard
             color={C.green}
@@ -189,7 +223,7 @@ export default function DashboardPage() {
             preview={previewBalance}
             emptyText="예정된 잔금 없음"
             badge={overdueBalance.length > 0 ? `지남 ${overdueBalance.length}` : undefined}
-            href="/properties"
+            onClick={() => setDrawer("balance")}
           />
           <SummaryCard
             color={C.red}
@@ -199,7 +233,7 @@ export default function DashboardPage() {
             preview={previewExpiry}
             emptyText="30일 내 만기 없음"
             badge={urgentExpiring.length > 0 ? `D-7 ${urgentExpiring.length}` : undefined}
-            href="/expiry"
+            onClick={() => setDrawer("expiry")}
           />
           <SummaryCard
             color={C.blue}
@@ -209,7 +243,7 @@ export default function DashboardPage() {
             preview={previewCustomer}
             emptyText="연락할 손님 없음"
             badge={overdueFollowUp.length > 0 ? `지남 ${overdueFollowUp.length}` : undefined}
-            href="/customers"
+            onClick={() => setDrawer("customer")}
           />
         </section>
 
@@ -235,7 +269,7 @@ export default function DashboardPage() {
                     icon="priority_high"
                     title={`잔금일 지남 · ${p.address}`}
                     desc={`잔금일 ${p.balanceDate}`}
-                    href="/properties"
+                    onClick={() => setDrawer("balance")}
                   />
                 ))}
                 {urgentExpiring.slice(0, 2).map((x, i) => (
@@ -245,7 +279,7 @@ export default function DashboardPage() {
                     icon="schedule"
                     title={`만기 ${dDayLabel(dDay(x.endDate))} · ${x.address}`}
                     desc="연장 의사 확인 필요"
-                    href="/expiry"
+                    onClick={() => setDrawer("expiry")}
                   />
                 ))}
                 {overdueFollowUp.slice(0, 2).map(c => (
@@ -255,7 +289,7 @@ export default function DashboardPage() {
                     icon="contact_phone"
                     title={`후속연락 지남 · ${c.name || "고객님"}`}
                     desc={`예정일 ${c.nextFollowUp}`}
-                    href={`/customers?focus=${c.id}`}
+                    onClick={() => setDrawer("customer")}
                   />
                 ))}
               </div>
@@ -286,14 +320,122 @@ export default function DashboardPage() {
           </div>
         </section>
       </div>
+
+      {/* ─── 슬라이드 패널 (방식 A: 밀어내기) ─── */}
+      <SideDrawer
+        open={drawer === "schedule"}
+        onClose={() => setDrawer(null)}
+        title="오늘 일정"
+        icon="today"
+        accent={C.orange}
+        count={todaySchedules.length}
+        moreHref="/schedule"
+      >
+        {todaySchedules.length === 0 ? (
+          <DrawerEmpty text="오늘 잡힌 일정이 없습니다" />
+        ) : (
+          todaySchedules.map(s => (
+            <DrawerItem
+              key={s.id}
+              title={`${s.time} · ${s.scheduleType}`}
+              sub={[s.visitorName, s.propertyAddress, s.memo].filter(Boolean).join(" · ")}
+              badge="오늘"
+              badgeColor={C.orange}
+              contacts={[{ label: s.visitorName || "방문자", phone: s.visitorPhone || undefined }]}
+              detailHref="/schedule"
+            />
+          ))
+        )}
+      </SideDrawer>
+
+      <SideDrawer
+        open={drawer === "balance"}
+        onClose={() => setDrawer(null)}
+        title="잔금 관련"
+        icon="account_balance_wallet"
+        accent={C.green}
+        count={balanceItems.length}
+        moreHref="/properties"
+      >
+        {balanceItems.length === 0 ? (
+          <DrawerEmpty text="30일 내 예정된 잔금이 없습니다" />
+        ) : (
+          balanceItems.map(p => (
+            <DrawerItem
+              key={p.id}
+              title={p.address}
+              sub={`잔금일 ${p.balanceDate} · ${p.dealType} ${p.price ? Number(p.price).toLocaleString() + "만" : ""}`}
+              badge={dDayLabel(dDay(p.balanceDate!))}
+              badgeColor={ddColor(dDay(p.balanceDate!))}
+              contacts={[
+                { label: p.tenantName || "임차인", phone: p.tenantPhone || undefined },
+                { label: p.ownerName || "집주인", phone: p.ownerPhone || undefined },
+              ]}
+              detailHref={`/properties?q=${encodeURIComponent(p.address)}`}
+            />
+          ))
+        )}
+      </SideDrawer>
+
+      <SideDrawer
+        open={drawer === "expiry"}
+        onClose={() => setDrawer(null)}
+        title="만기 임박"
+        icon="event_busy"
+        accent={C.red}
+        count={expiringSoon.length}
+        moreHref="/expiry"
+      >
+        {expiringSoon.length === 0 ? (
+          <DrawerEmpty text="30일 내 만기가 없습니다" />
+        ) : (
+          expiringSoon.map((x, i) => (
+            <DrawerItem
+              key={`${x.address}-${x.endDate}-${i}`}
+              title={x.address}
+              sub={`만기일 ${x.endDate}`}
+              badge={dDayLabel(dDay(x.endDate))}
+              badgeColor={ddColor(dDay(x.endDate))}
+              contacts={x.contacts}
+              detailHref="/expiry"
+            />
+          ))
+        )}
+      </SideDrawer>
+
+      <SideDrawer
+        open={drawer === "customer"}
+        onClose={() => setDrawer(null)}
+        title="손님 관리"
+        icon="group"
+        accent={C.blue}
+        count={followUpNeeded.length}
+        moreHref="/customers"
+      >
+        {followUpNeeded.length === 0 ? (
+          <DrawerEmpty text="연락이 필요한 손님이 없습니다" />
+        ) : (
+          followUpNeeded.map(c => (
+            <DrawerItem
+              key={c.id}
+              title={c.name || "고객님"}
+              sub={[`연락 예정 ${c.nextFollowUp}`, c.preferredArea, c.budget].filter(Boolean).join(" · ")}
+              badge={dDayLabel(followUpDDay(c.nextFollowUp))}
+              badgeColor={ddColor(followUpDDay(c.nextFollowUp))}
+              contacts={[{ label: c.name || "고객", phone: c.phone || undefined }]}
+              detailHref={`/customers?focus=${c.id}`}
+            />
+          ))
+        )}
+      </SideDrawer>
     </div>
   );
 }
 
 /* ─────────────── 컴포넌트 ─────────────── */
 
-/** 상단 요약 카드 — 색 띠 + 라벨 + 큰 건수 + 대표 1건 미리보기 */
-function SummaryCard({ color, icon, label, count, preview, emptyText, badge, href }: {
+/** 상단 요약 카드 — 색 띠 + 라벨 + 큰 건수 + 대표 1건 미리보기. 클릭 → 슬라이드 패널 */
+function SummaryCard({ color, icon, label, count, preview, emptyText, badge, onClick }: {
   color: string;
   icon: string;
   label: string;
@@ -301,12 +443,12 @@ function SummaryCard({ color, icon, label, count, preview, emptyText, badge, hre
   preview: string | null;
   emptyText: string;
   badge?: string;
-  href: string;
+  onClick: () => void;
 }) {
   return (
-    <Link
-      href={href}
-      className="block bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all"
+    <button
+      onClick={onClick}
+      className="block w-full text-left bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
       style={{ borderTop: `3px solid ${color}` }}
     >
       <div className="p-4 lg:p-5">
@@ -331,22 +473,22 @@ function SummaryCard({ color, icon, label, count, preview, emptyText, badge, hre
           {preview || emptyText}
         </p>
       </div>
-    </Link>
+    </button>
   );
 }
 
-/** 중요 알림 한 줄 */
-function AlertRow({ color, icon, title, desc, href }: {
+/** 중요 알림 한 줄 — 클릭 → 슬라이드 패널 */
+function AlertRow({ color, icon, title, desc, onClick }: {
   color: string;
   icon: string;
   title: string;
   desc: string;
-  href: string;
+  onClick: () => void;
 }) {
   return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/80 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-900 transition-colors"
+    <button
+      onClick={onClick}
+      className="flex w-full text-left items-center gap-3 p-3 rounded-xl bg-gray-50/80 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-900 transition-colors cursor-pointer"
     >
       <span
         className="material-symbols-outlined text-[18px] w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white"
@@ -359,7 +501,7 @@ function AlertRow({ color, icon, title, desc, href }: {
         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{desc}</p>
       </div>
       <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-[18px] shrink-0">chevron_right</span>
-    </Link>
+    </button>
   );
 }
 
