@@ -120,8 +120,8 @@ export default function DashboardPage() {
         items.push({
           address: c.address, endDate: c.endDate,
           contacts: [
-            { label: roleLabel("임차인", c.tenantName), phone: c.tenantPhone || undefined, kind: "tenant" },
             { label: roleLabel("임대인", c.landlordName), phone: c.landlordPhone || undefined, kind: "owner" },
+            { label: roleLabel("임차인", c.tenantName), phone: c.tenantPhone || undefined, kind: "tenant" },
           ],
         });
       }
@@ -131,8 +131,8 @@ export default function DashboardPage() {
         items.push({
           address: p.address, endDate: p.leaseEndDate,
           contacts: [
-            { label: roleLabel("임차인", p.tenantName), phone: p.tenantPhone || undefined, kind: "tenant" },
             { label: roleLabel("집주인", p.ownerName), phone: p.ownerPhone || undefined, kind: "owner" },
+            { label: roleLabel("임차인", p.tenantName), phone: p.tenantPhone || undefined, kind: "tenant" },
           ],
         });
       }
@@ -373,8 +373,8 @@ export default function DashboardPage() {
               badge={dDayLabel(dDay(p.balanceDate!))}
               badgeColor={ddColor(dDay(p.balanceDate!))}
               contacts={[
-                { label: roleLabel("임차인", p.tenantName), phone: p.tenantPhone || undefined, kind: "tenant" },
                 { label: roleLabel("집주인", p.ownerName), phone: p.ownerPhone || undefined, kind: "owner" },
+                { label: roleLabel("임차인", p.tenantName), phone: p.tenantPhone || undefined, kind: "tenant" },
               ]}
               detailHref={`/properties?q=${encodeURIComponent(p.address)}`}
             />

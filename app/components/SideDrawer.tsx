@@ -123,9 +123,10 @@ export function DrawerItem({ title, sub, badge, badgeColor, contacts, detailHref
 }) {
   const valid = (contacts || []).filter(c => c.phone);
   return (
-    <div className="p-3.5 rounded-xl border border-gray-200/80 dark:border-slate-700 bg-white dark:bg-slate-800">
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-bold text-sm text-gray-900 dark:text-gray-100 break-all">{title}</p>
+    <div className="p-3 rounded-xl border border-gray-200/80 dark:border-slate-700 bg-white dark:bg-slate-800">
+      {/* 1줄: 제목 (한 줄 말줄임) + 배지 */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate min-w-0" title={title}>{title}</p>
         {badge && (
           <span
             className="text-[10px] px-1.5 py-0.5 rounded-full font-bold text-white shrink-0"
@@ -135,27 +136,30 @@ export function DrawerItem({ title, sub, badge, badgeColor, contacts, detailHref
           </span>
         )}
       </div>
-      {sub && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 break-all">{sub}</p>}
+      {/* 2줄: 부가정보 (한 줄 말줄임) */}
+      {sub && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate" title={sub}>{sub}</p>}
 
+      {/* 3줄: 연락 칩 + 상세 화살표 — 항상 한 줄 */}
       {(valid.length > 0 || detailHref) && (
-        <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+        <div className="flex items-center gap-1.5 mt-2 min-w-0">
           {valid.map(c => {
             const style = CHIP_STYLES[c.kind || "etc"];
             return (
-              <span key={c.phone} className="inline-flex items-center rounded-full overflow-hidden border border-gray-200 dark:border-slate-600">
+              <span key={c.phone} className="inline-flex items-center rounded-full overflow-hidden border border-gray-200 dark:border-slate-600 min-w-0">
                 <a
                   href={`tel:${c.phone}`}
-                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold transition-colors ${style}`}
+                  title={`${c.label} 전화`}
+                  className={`inline-flex items-center gap-1 pl-2 pr-1.5 py-1 text-[11px] font-bold transition-colors min-w-0 ${style}`}
                 >
-                  <span className="material-symbols-outlined text-[14px]">call</span>
-                  {c.label}
+                  <span className="material-symbols-outlined text-[13px] shrink-0">call</span>
+                  <span className="truncate max-w-[84px]">{c.label}</span>
                 </a>
                 <a
                   href={`sms:${c.phone}`}
                   title={`${c.label}에게 문자`}
-                  className={`inline-flex items-center px-2 py-1.5 text-xs font-bold transition-colors border-l border-gray-200 dark:border-slate-600 ${style}`}
+                  className={`inline-flex items-center px-1.5 py-1 transition-colors border-l border-gray-200 dark:border-slate-600 shrink-0 ${style}`}
                 >
-                  <span className="material-symbols-outlined text-[14px]">sms</span>
+                  <span className="material-symbols-outlined text-[13px]">sms</span>
                 </a>
               </span>
             );
@@ -163,10 +167,10 @@ export function DrawerItem({ title, sub, badge, badgeColor, contacts, detailHref
           {detailHref && (
             <Link
               href={detailHref}
-              className="ml-auto inline-flex items-center gap-0.5 text-xs font-semibold text-gray-400 hover:text-[var(--brand-blue)] dark:hover:text-blue-400 transition-colors"
+              title="상세 보기"
+              className="ml-auto shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-[var(--brand-blue)] dark:hover:text-blue-400 transition-colors"
             >
-              상세
-              <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+              <span className="material-symbols-outlined text-[18px]">chevron_right</span>
             </Link>
           )}
         </div>
