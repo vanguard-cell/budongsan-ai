@@ -102,14 +102,23 @@ export default function SideDrawer({ open, onClose, title, icon, accent = "#2563
 
 /* ── 패널 내부 공용 부품 ── */
 
+/** 연락 칩 색 — 역할별 구분 (임차인·매수인=파랑 / 임대인·집주인·매도인=주황 / 그 외=초록) */
+const CHIP_STYLES = {
+  tenant: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-950/70",
+  owner:  "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/70",
+  etc:    "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/70",
+} as const;
+
+export type ContactKind = keyof typeof CHIP_STYLES;
+
 /** 항목 한 장 — 제목 + 부가정보 + D-day 배지 + 전화/문자 칩 + 상세 링크 */
 export function DrawerItem({ title, sub, badge, badgeColor, contacts, detailHref }: {
   title: string;
   sub?: string;
   badge?: string;
   badgeColor?: string;
-  /** 전화 연결 대상 (이름 + 번호) — 번호 없는 항목은 자동 제외 */
-  contacts?: { label: string; phone?: string }[];
+  /** 전화 연결 대상 (역할+이름 라벨 + 번호) — 번호 없는 항목은 자동 제외 */
+  contacts?: { label: string; phone?: string; kind?: ContactKind }[];
   detailHref?: string;
 }) {
   const valid = (contacts || []).filter(c => c.phone);
@@ -130,24 +139,27 @@ export function DrawerItem({ title, sub, badge, badgeColor, contacts, detailHref
 
       {(valid.length > 0 || detailHref) && (
         <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-          {valid.map(c => (
-            <span key={c.phone} className="inline-flex items-center rounded-full overflow-hidden border border-gray-200 dark:border-slate-600">
-              <a
-                href={`tel:${c.phone}`}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/70 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[14px]">call</span>
-                {c.label}
-              </a>
-              <a
-                href={`sms:${c.phone}`}
-                title={`${c.label}에게 문자`}
-                className="inline-flex items-center px-2 py-1.5 text-xs font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-950/70 transition-colors border-l border-gray-200 dark:border-slate-600"
-              >
-                <span className="material-symbols-outlined text-[14px]">sms</span>
-              </a>
-            </span>
-          ))}
+          {valid.map(c => {
+            const style = CHIP_STYLES[c.kind || "etc"];
+            return (
+              <span key={c.phone} className="inline-flex items-center rounded-full overflow-hidden border border-gray-200 dark:border-slate-600">
+                <a
+                  href={`tel:${c.phone}`}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold transition-colors ${style}`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">call</span>
+                  {c.label}
+                </a>
+                <a
+                  href={`sms:${c.phone}`}
+                  title={`${c.label}에게 문자`}
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-bold transition-colors border-l border-gray-200 dark:border-slate-600 ${style}`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">sms</span>
+                </a>
+              </span>
+            );
+          })}
           {detailHref && (
             <Link
               href={detailHref}

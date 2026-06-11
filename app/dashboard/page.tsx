@@ -24,7 +24,7 @@ import type { Contract } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import { dDay } from "@/app/expiry/contracts";
 import { followUpDDay, followUpSeverity } from "@/app/customers/customer-types";
-import SideDrawer, { DrawerItem, DrawerEmpty } from "@/app/components/SideDrawer";
+import SideDrawer, { DrawerItem, DrawerEmpty, type ContactKind } from "@/app/components/SideDrawer";
 
 /* 상태색 — 의미 고정 (메모리 확정안) */
 const C = {
@@ -58,7 +58,12 @@ type DrawerType = "schedule" | "balance" | "expiry" | "customer" | null;
 interface ExpiryItem {
   address: string;
   endDate: string;
-  contacts: { label: string; phone?: string }[];
+  contacts: { label: string; phone?: string; kind?: ContactKind }[];
+}
+
+/* 연락 칩 라벨 — "역할 이름" (이름 없으면 역할만) */
+function roleLabel(role: string, name?: string): string {
+  return name ? `${role} ${name}` : role;
 }
 
 export default function DashboardPage() {
@@ -115,8 +120,8 @@ export default function DashboardPage() {
         items.push({
           address: c.address, endDate: c.endDate,
           contacts: [
-            { label: c.tenantName || "임차인", phone: c.tenantPhone || undefined },
-            { label: c.landlordName || "임대인", phone: c.landlordPhone || undefined },
+            { label: roleLabel("임차인", c.tenantName), phone: c.tenantPhone || undefined, kind: "tenant" },
+            { label: roleLabel("임대인", c.landlordName), phone: c.landlordPhone || undefined, kind: "owner" },
           ],
         });
       }
@@ -126,8 +131,8 @@ export default function DashboardPage() {
         items.push({
           address: p.address, endDate: p.leaseEndDate,
           contacts: [
-            { label: p.tenantName || "임차인", phone: p.tenantPhone || undefined },
-            { label: p.ownerName || "집주인", phone: p.ownerPhone || undefined },
+            { label: roleLabel("임차인", p.tenantName), phone: p.tenantPhone || undefined, kind: "tenant" },
+            { label: roleLabel("집주인", p.ownerName), phone: p.ownerPhone || undefined, kind: "owner" },
           ],
         });
       }
@@ -368,8 +373,8 @@ export default function DashboardPage() {
               badge={dDayLabel(dDay(p.balanceDate!))}
               badgeColor={ddColor(dDay(p.balanceDate!))}
               contacts={[
-                { label: p.tenantName || "임차인", phone: p.tenantPhone || undefined },
-                { label: p.ownerName || "집주인", phone: p.ownerPhone || undefined },
+                { label: roleLabel("임차인", p.tenantName), phone: p.tenantPhone || undefined, kind: "tenant" },
+                { label: roleLabel("집주인", p.ownerName), phone: p.ownerPhone || undefined, kind: "owner" },
               ]}
               detailHref={`/properties?q=${encodeURIComponent(p.address)}`}
             />
