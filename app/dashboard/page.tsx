@@ -491,10 +491,10 @@ function AlertRow({ color, icon, title, desc, onClick }: {
       className="flex w-full text-left items-center gap-3 p-3 rounded-xl bg-gray-50/80 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-900 transition-colors cursor-pointer"
     >
       <span
-        className="material-symbols-outlined text-[18px] w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white"
+        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white"
         style={{ backgroundColor: color }}
       >
-        {icon}
+        <span className="material-symbols-outlined text-[18px] leading-none">{icon}</span>
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-bold text-[13px] text-gray-900 dark:text-gray-100 truncate">{title}</p>
@@ -512,8 +512,8 @@ function QuickAction({ icon, label, href }: { icon: string; label: string; href:
       href={href}
       className="flex items-center gap-3 p-3.5 rounded-xl border border-gray-200/80 dark:border-slate-700 hover:border-[var(--brand-blue)]/40 hover:bg-[var(--brand-blue-soft)] dark:hover:bg-blue-950/30 transition-all group"
     >
-      <span className="material-symbols-outlined text-[20px] w-9 h-9 rounded-lg flex items-center justify-center bg-[var(--brand-blue-soft)] dark:bg-blue-950/50 text-[var(--brand-blue)] dark:text-blue-400 group-hover:scale-105 transition-transform">
-        {icon}
+      <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-[var(--brand-blue-soft)] dark:bg-blue-950/50 text-[var(--brand-blue)] dark:text-blue-400 group-hover:scale-105 transition-transform shrink-0">
+        <span className="material-symbols-outlined text-[20px] leading-none">{icon}</span>
       </span>
       <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{label}</span>
     </Link>

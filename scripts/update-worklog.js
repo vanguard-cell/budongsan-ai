@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-11",
   day: "목",
-  category: "신규 기능",
-  work: "리디자인 3단계 — 슬라이드 패널(SideDrawer): 홈 카드·알림 클릭 시 우측 패널(밀어내기)에서 전화·문자·상세 바로 실행, 폰은 바텀시트",
-  commit: "d85dd7f",
-  note: "4단계 빠른실행 편집 예정",
+  category: "UX 개선",
+  work: "PC 상단바 제거 — 사이드바에 로고·검색·접기·알림·다크모드·로그아웃 통합 (Stripe식) + 빠른등록→매물등록 모달 직행 + 홈 풀폭",
+  commit: "a9c2e88",
+  note: "폰은 슬림 상단바 유지",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 슬라이드 패널(3단계)" : "슬라이드 패널(3단계)";
+      found.getCell(4).value = prev ? prev + " / 상단바→사이드바 통합" : "상단바→사이드바 통합";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "슬라이드 패널(3단계)"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "상단바→사이드바 통합"]);
     }
   }
 
