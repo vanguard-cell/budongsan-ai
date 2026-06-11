@@ -189,7 +189,7 @@ export default function TeamPage() {
         {/* 초대 코드로 합류 (모두 — 직원용) */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 sm:p-5">
           <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">
-            <span className="material-symbols-outlined text-emerald-600 text-xl">login</span>
+            <span className="material-symbols-outlined text-[var(--brand-blue)] text-xl">login</span>
             초대 코드로 사무실 합류
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
@@ -206,7 +206,7 @@ export default function TeamPage() {
             <button
               onClick={handleJoin}
               disabled={joining || joinCode.trim().length < 4}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-[var(--brand-blue)] hover:bg-[var(--brand-blue-dark)] text-white font-bold text-sm disabled:opacity-50"
             >
               {joining ? "합류 중…" : "합류"}
             </button>

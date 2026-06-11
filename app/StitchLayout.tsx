@@ -37,7 +37,7 @@ export default function StitchLayout({ children }: { children: React.ReactNode }
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F8FB] dark:bg-slate-950">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       {/* 폰 전용 슬림 상단바 */}
       <DashboardHeader />
 

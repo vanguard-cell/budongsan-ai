@@ -252,21 +252,21 @@ function ShownPropertyRow({
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 200)}
             placeholder="매물 주소 — 내 매물장에서 검색 또는 직접 입력"
-            className="w-full border border-emerald-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full border border-blue-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           {open && suggestions.length > 0 && (
             <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-40 overflow-y-auto">
-              <div className="px-2 py-1 bg-emerald-50 text-[10px] text-emerald-700 font-medium border-b border-emerald-100">
+              <div className="px-2 py-1 bg-blue-50 text-[10px] text-blue-700 font-medium border-b border-blue-100">
                 🏘️ 내 매물장에서 선택
               </div>
               {suggestions.map(p => (
                 <button
                   key={p.id} type="button"
                   onMouseDown={e => { e.preventDefault(); select(p); }}
-                  className="w-full text-left px-2 py-1.5 hover:bg-emerald-50 border-b last:border-0 border-gray-100 text-xs"
+                  className="w-full text-left px-2 py-1.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 text-xs"
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">{p.dealType}</span>
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-blue-100 text-blue-700 shrink-0">{p.dealType}</span>
                     <span className="font-medium text-gray-800 truncate">{p.address}</span>
                   </div>
                   <div className="text-[10px] text-gray-500 mt-0.5 truncate">{p.propertyType}{p.price ? ` · ${p.price}만` : ""}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>

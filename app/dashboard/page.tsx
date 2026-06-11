@@ -31,7 +31,16 @@ const C = {
   orange: "#EF9F27",  // 오늘 일정
   green:  "#1D9E75",  // 잔금
   red:    "#E24B4A",  // 만기·긴급
-  blue:   "#2563EB",  // 손님·브랜드
+  blue:   "#2383E2",  // 손님·브랜드 (노션 블루)
+} as const;
+
+/* 노션 톤 v2 틴트 — globals.css 토큰 (라이트/다크 자동 전환) */
+type Tint = "amber" | "green" | "red" | "blue";
+const TINT = {
+  amber: { bg: "var(--tint-amber-bg)", bd: "var(--tint-amber-bd)", tx: "var(--tint-amber-tx)", tx2: "var(--tint-amber-tx2)" },
+  green: { bg: "var(--tint-green-bg)", bd: "var(--tint-green-bd)", tx: "var(--tint-green-tx)", tx2: "var(--tint-green-tx2)" },
+  red:   { bg: "var(--tint-red-bg)",   bd: "var(--tint-red-bd)",   tx: "var(--tint-red-tx)",   tx2: "var(--tint-red-tx2)" },
+  blue:  { bg: "var(--tint-blue-bg)",  bd: "var(--tint-blue-bd)",  tx: "var(--tint-blue-tx)",  tx2: "var(--tint-blue-tx2)" },
 } as const;
 
 function todayISO(): string {
@@ -198,8 +207,7 @@ export default function DashboardPage() {
         {/* ─── 1) 인사 ─── */}
         <header>
           <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            안녕하세요,{" "}
-            <span className="text-[var(--brand-blue)] dark:text-blue-400">{userName} {title}</span>
+            안녕하세요, {userName} {title}
           </h2>
           <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-2">
             {dateLabel} · 오늘 처리할 일{" "}
@@ -212,7 +220,8 @@ export default function DashboardPage() {
         {/* ─── 2) 상단 4카드 (순서 고정) ─── */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           <SummaryCard
-            color={C.orange}
+            tint="amber"
+            badgeColor={C.orange}
             icon="today"
             label="오늘 일정"
             count={todaySchedules.length}
@@ -221,7 +230,8 @@ export default function DashboardPage() {
             onClick={() => setDrawer("schedule")}
           />
           <SummaryCard
-            color={C.green}
+            tint="green"
+            badgeColor={C.red}
             icon="account_balance_wallet"
             label="잔금 관련"
             count={balanceItems.length}
@@ -231,7 +241,8 @@ export default function DashboardPage() {
             onClick={() => setDrawer("balance")}
           />
           <SummaryCard
-            color={C.red}
+            tint="red"
+            badgeColor={C.red}
             icon="event_busy"
             label="만기 임박"
             count={expiringSoon.length}
@@ -241,7 +252,8 @@ export default function DashboardPage() {
             onClick={() => setDrawer("expiry")}
           />
           <SummaryCard
-            color={C.blue}
+            tint="blue"
+            badgeColor={C.red}
             icon="group"
             label="손님 관리"
             count={followUpNeeded.length}
@@ -255,7 +267,7 @@ export default function DashboardPage() {
         {/* ─── 3) 하단 박스 2개: 중요 알림 + 빠른 실행 ─── */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {/* 중요 알림 */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm p-5">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-[var(--sidebar-bd)] p-5">
             <h4 className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
               <span className="material-symbols-outlined text-[20px]" style={{ color: C.red }}>campaign</span>
               중요 알림
@@ -270,7 +282,7 @@ export default function DashboardPage() {
                 {overdueBalance.slice(0, 2).map(p => (
                   <AlertRow
                     key={`bal-${p.id}`}
-                    color={C.red}
+                    tint="red"
                     icon="priority_high"
                     title={`잔금일 지남 · ${p.address}`}
                     desc={`잔금일 ${p.balanceDate}`}
@@ -280,7 +292,7 @@ export default function DashboardPage() {
                 {urgentExpiring.slice(0, 2).map((x, i) => (
                   <AlertRow
                     key={`exp-${i}`}
-                    color={C.red}
+                    tint="red"
                     icon="schedule"
                     title={`만기 ${dDayLabel(dDay(x.endDate))} · ${x.address}`}
                     desc="연장 의사 확인 필요"
@@ -290,7 +302,7 @@ export default function DashboardPage() {
                 {overdueFollowUp.slice(0, 2).map(c => (
                   <AlertRow
                     key={`fu-${c.id}`}
-                    color={C.orange}
+                    tint="amber"
                     icon="contact_phone"
                     title={`후속연락 지남 · ${c.name || "고객님"}`}
                     desc={`예정일 ${c.nextFollowUp}`}
@@ -302,7 +314,7 @@ export default function DashboardPage() {
           </div>
 
           {/* 빠른 실행 */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm p-5">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-[var(--sidebar-bd)] p-5">
             <div className="flex items-center justify-between mb-4">
               <h4 className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
                 <span className="material-symbols-outlined text-[20px] text-[var(--brand-blue)]">bolt</span>
@@ -439,9 +451,11 @@ export default function DashboardPage() {
 
 /* ─────────────── 컴포넌트 ─────────────── */
 
-/** 상단 요약 카드 — 색 띠 + 라벨 + 큰 건수 + 대표 1건 미리보기. 클릭 → 슬라이드 패널 */
-function SummaryCard({ color, icon, label, count, preview, emptyText, badge, onClick }: {
-  color: string;
+/** 상단 요약 카드 — 노션 톤 v2: 연한 틴트 배경 + 같은 계열 글자. 클릭 → 슬라이드 패널 */
+function SummaryCard({ tint, badgeColor, icon, label, count, preview, emptyText, badge, onClick }: {
+  tint: Tint;
+  /** 긴급 배지 색 (지남/D-7 등 — 보통 빨강) */
+  badgeColor: string;
   icon: string;
   label: string;
   count: number;
@@ -450,31 +464,32 @@ function SummaryCard({ color, icon, label, count, preview, emptyText, badge, onC
   badge?: string;
   onClick: () => void;
 }) {
+  const t = TINT[tint];
   return (
     <button
       onClick={onClick}
-      className="block w-full text-left bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-      style={{ borderTop: `3px solid ${color}` }}
+      className="block w-full text-left rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+      style={{ background: t.bg, border: `1px solid ${t.bd}` }}
     >
       <div className="p-4 lg:p-5">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-500 dark:text-gray-400">
-            <span className="material-symbols-outlined text-[18px]" style={{ color }}>{icon}</span>
+          <div className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: t.tx }}>
+            <span className="material-symbols-outlined text-[18px] leading-none">{icon}</span>
             {label}
           </div>
           {badge && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-full font-bold text-white"
-              style={{ backgroundColor: color }}
+              style={{ backgroundColor: badgeColor }}
             >
               {badge}
             </span>
           )}
         </div>
-        <p className="text-3xl font-bold tracking-tight" style={{ color: count > 0 ? color : "#9ca3af" }}>
-          {count}<span className="text-base font-semibold ml-0.5 text-gray-400">건</span>
+        <p className="text-3xl font-bold tracking-tight" style={{ color: count > 0 ? t.tx : "#9ca3af" }}>
+          {count}<span className="text-base font-semibold ml-0.5" style={{ color: count > 0 ? t.tx2 : "#9ca3af" }}>건</span>
         </p>
-        <p className={`mt-2 text-xs truncate ${preview ? "text-gray-600 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"}`}>
+        <p className="mt-2 text-xs truncate" style={{ color: preview ? t.tx2 : "#9ca3af" }}>
           {preview || emptyText}
         </p>
       </div>
@@ -482,44 +497,39 @@ function SummaryCard({ color, icon, label, count, preview, emptyText, badge, onC
   );
 }
 
-/** 중요 알림 한 줄 — 클릭 → 슬라이드 패널 */
-function AlertRow({ color, icon, title, desc, onClick }: {
-  color: string;
+/** 중요 알림 한 줄 — 노션 톤 v2: 연한 틴트 행 + 같은 계열 글자. 클릭 → 슬라이드 패널 */
+function AlertRow({ tint, icon, title, desc, onClick }: {
+  tint: Tint;
   icon: string;
   title: string;
   desc: string;
   onClick: () => void;
 }) {
+  const t = TINT[tint];
   return (
     <button
       onClick={onClick}
-      className="flex w-full text-left items-center gap-3 p-3 rounded-xl bg-gray-50/80 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-900 transition-colors cursor-pointer"
+      className="flex w-full text-left items-center gap-3 p-3 rounded-lg hover:brightness-[0.97] dark:hover:brightness-110 transition-all cursor-pointer"
+      style={{ background: t.bg, border: `1px solid ${t.bd}` }}
     >
-      <span
-        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white"
-        style={{ backgroundColor: color }}
-      >
-        <span className="material-symbols-outlined text-[18px] leading-none">{icon}</span>
-      </span>
+      <span className="material-symbols-outlined text-[18px] leading-none shrink-0" style={{ color: t.tx2 }}>{icon}</span>
       <div className="min-w-0 flex-1">
-        <p className="font-bold text-[13px] text-gray-900 dark:text-gray-100 truncate">{title}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{desc}</p>
+        <p className="font-bold text-[13px] truncate" style={{ color: t.tx }}>{title}</p>
+        <p className="text-xs truncate" style={{ color: t.tx2 }}>{desc}</p>
       </div>
-      <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-[18px] shrink-0">chevron_right</span>
+      <span className="material-symbols-outlined text-[18px] shrink-0" style={{ color: t.tx2 }}>chevron_right</span>
     </button>
   );
 }
 
-/** 빠른 실행 타일 */
+/** 빠른 실행 타일 — 노션 톤: 연회색 타일 + 블루 아이콘 */
 function QuickAction({ icon, label, href }: { icon: string; label: string; href: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 p-3.5 rounded-xl border border-gray-200/80 dark:border-slate-700 hover:border-[var(--brand-blue)]/40 hover:bg-[var(--brand-blue-soft)] dark:hover:bg-blue-950/30 transition-all group"
+      className="flex items-center gap-3 p-3.5 rounded-lg bg-[var(--tint-gray-bg)] border border-[var(--tint-gray-bd)] hover:border-[var(--brand-blue)]/40 hover:bg-[var(--brand-blue-soft)] dark:hover:bg-blue-950/30 transition-all group"
     >
-      <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-[var(--brand-blue-soft)] dark:bg-blue-950/50 text-[var(--brand-blue)] dark:text-blue-400 group-hover:scale-105 transition-transform shrink-0">
-        <span className="material-symbols-outlined text-[20px] leading-none">{icon}</span>
-      </span>
+      <span className="material-symbols-outlined text-[20px] leading-none text-[var(--brand-blue)] dark:text-blue-400 group-hover:scale-110 transition-transform shrink-0">{icon}</span>
       <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{label}</span>
     </Link>
   );

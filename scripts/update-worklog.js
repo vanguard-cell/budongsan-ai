@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-11",
   day: "목",
-  category: "신규 기능",
-  work: "빠른 실행 4종 확정 — 매물 등록·계약 추가·손님 추가·약속 추가 전부 해당 페이지 추가 모달 직행(?new=1)",
-  commit: "6237ff2",
-  note: "사용자 편집(넣고빼기)은 추후",
+  category: "디자인",
+  work: "사이드바 테마 변경 — 네이비 → 라이트 화이트 + 블루 포인트 (6종 시안 중 4번 Stripe식 선택, 레거시 사이드바 포함)",
+  commit: "399d02b",
+  note: "블루톤 별로 피드백 반영",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 빠른실행 4종 모달 직행" : "빠른실행 4종 모달 직행";
+      found.getCell(4).value = prev ? prev + " / 라이트 사이드바 테마" : "라이트 사이드바 테마";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "빠른실행 4종 모달 직행"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "라이트 사이드바 테마"]);
     }
   }
 

@@ -207,7 +207,7 @@ export default function KakaoParseModal({ onClose, onSave }: Props) {
               <button
                 onClick={save}
                 disabled={saving}
-                className="flex-1 py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-[var(--brand-blue)] text-white text-sm font-semibold hover:bg-[var(--brand-blue-dark)] disabled:opacity-50"
               >
                 {saving ? "저장 중…" : "✅ 손님 등록"}
               </button>

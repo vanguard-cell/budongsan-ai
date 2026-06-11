@@ -261,7 +261,7 @@ export default function FeedbackPage() {
                   <span className="text-xs text-gray-700 flex-1 min-w-0 truncate">{it.thread[0]?.text || it.text}</span>
                   <button
                     onClick={() => handleConfirm(it.id)}
-                    className="text-[11px] px-3 py-1.5 rounded-full bg-emerald-600 text-white font-bold hover:bg-emerald-700 shrink-0"
+                    className="text-[11px] px-3 py-1.5 rounded-full bg-[var(--brand-blue)] text-white font-bold hover:bg-[var(--brand-blue-dark)] shrink-0"
                   >
                     확인했어요
                   </button>
@@ -424,7 +424,7 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onConfirm, onDele
         <div className="mb-3 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center gap-2">
           <span className="text-lg">✅</span>
           <span className="text-xs text-emerald-800 flex-1">처리완료됐어요! 내용 확인하셨으면 눌러주세요</span>
-          <button onClick={onConfirm} className="text-[11px] px-3 py-1.5 rounded-full bg-emerald-600 text-white font-bold hover:bg-emerald-700 shrink-0">
+          <button onClick={onConfirm} className="text-[11px] px-3 py-1.5 rounded-full bg-[var(--brand-blue)] text-white font-bold hover:bg-[var(--brand-blue-dark)] shrink-0">
             확인했어요
           </button>
         </div>

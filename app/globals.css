@@ -4,17 +4,30 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* ── DealDone 리디자인 토큰 (2026-06) — 테마 4: 라이트 사이드바 + 블루 포인트 ── */
-  --brand-blue:        #2563EB;  /* 포인트·활성·브랜드 */
-  --brand-blue-soft:   #EFF4FF;  /* 활성 메뉴·연한 블루 배경 */
+  /* ── DealDone 리디자인 토큰 (2026-06) — 노션 톤 v2 (연회색 사이드바 + 연한 틴트 카드) ── */
+  --brand-blue:        #2383E2;  /* 포인트·CTA·브랜드 (노션 블루) */
+  --brand-blue-dark:   #1B6FC2;  /* CTA hover */
+  --brand-blue-soft:   #EAF3FC;  /* 연한 블루 배경 */
   --brand-navy:        #16284A;  /* 진한 네이비 (강조 텍스트 등 보조) */
+
+  /* 사이드바 (노션풍 연회색) */
+  --sidebar-bg:        #F7F7F5;
+  --sidebar-bd:        #E9E9E7;
+  --sidebar-active:    #E9E9E7;  /* 활성 메뉴 회색 알약 */
+
+  /* 카드 틴트 v2 — 아주 연한 파스텔 배경 + 같은 계열 진한 글자 */
+  --tint-amber-bg: #FDFAF2; --tint-amber-bd: #F1EAD8; --tint-amber-tx: #854F0B; --tint-amber-tx2: #BA7517;
+  --tint-green-bg: #F5FAF7; --tint-green-bd: #DEEDE5; --tint-green-tx: #0F6E56; --tint-green-tx2: #1D9E75;
+  --tint-red-bg:   #FDF6F5; --tint-red-bd:   #F2E0DD; --tint-red-tx:   #A32D2D; --tint-red-tx2:   #E24B4A;
+  --tint-blue-bg:  #F6F9FD; --tint-blue-bd:  #E1EAF6; --tint-blue-tx:  #185FA5; --tint-blue-tx2:  #378ADD;
+  --tint-gray-bg:  #F7F7F5; --tint-gray-bd:  #EFEFED;
   /* 상태색 (의미 유지) */
   --status-red:        #E24B4A;  /* 만기·긴급 */
   --status-green:      #1D9E75;  /* 잔금·완료 */
   --status-orange:     #EF9F27;  /* 오늘 약속 */
 
-  /* 라이트 모드 — Stitch 디자인 시스템 토큰 (Material Design 3 기반) */
-  --background: #f8f9ff;
+  /* 라이트 모드 — 노션 톤: 메인 흰 배경 */
+  --background: #ffffff;
   --foreground: #0b1c30;
 
   --md-primary:               #006948;  /* 메인 컬러 — deep emerald */
@@ -43,6 +56,18 @@
   /* 다크 모드 */
   --background: #0f172a;
   --foreground: #f1f5f9;
+
+  /* 사이드바 (다크) */
+  --sidebar-bg:        #0f172a;
+  --sidebar-bd:        #334155;
+  --sidebar-active:    #1e293b;
+
+  /* 카드 틴트 v2 (다크) — 어두운 같은 계열 틴트 + 밝은 글자 */
+  --tint-amber-bg: #292218; --tint-amber-bd: #4A3B22; --tint-amber-tx: #F5D9A0; --tint-amber-tx2: #D9B36A;
+  --tint-green-bg: #172420; --tint-green-bd: #234436; --tint-green-tx: #9FE1CB; --tint-green-tx2: #5DCAA5;
+  --tint-red-bg:   #2A1B1A; --tint-red-bd:   #4D2B29; --tint-red-tx:   #F7C1C1; --tint-red-tx2:   #F09595;
+  --tint-blue-bg:  #18212D; --tint-blue-bd:  #243A55; --tint-blue-tx:  #B5D4F4; --tint-blue-tx2:  #85B7EB;
+  --tint-gray-bg:  #1e293b; --tint-gray-bd:  #334155;
 
   --md-primary:               #5cdaa1;
   --md-primary-container:     #00513a;

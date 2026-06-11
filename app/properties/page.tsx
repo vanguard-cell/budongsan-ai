@@ -409,7 +409,7 @@ export default function PropertiesPage() {
           {/* 좌측: 제목 + 부제 */}
           <div>
             <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-              <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400" style={{ fontSize: "2rem" }}>domain</span>
+              <span className="material-symbols-outlined text-[var(--brand-blue)] dark:text-blue-400" style={{ fontSize: "2rem" }}>domain</span>
               내 매물 관리
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
@@ -472,7 +472,7 @@ export default function PropertiesPage() {
             {/* 메인 액션 — 매물 등록 (solid 에메랄드 큰 버튼) */}
             <button
               onClick={() => setEditing(emptyProperty())}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
+              className="px-5 py-2.5 bg-[var(--brand-blue)] hover:bg-[var(--brand-blue-dark)] text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">add</span>
               매물 등록
@@ -763,7 +763,7 @@ export default function PropertiesPage() {
                   onClick={() => { setFilterPropType(t); setFilterType("all"); }}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     filterPropType === t
-                      ? "bg-emerald-600 text-white border-emerald-600 font-semibold"
+                      ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
                       : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
                   }`}
                 >
@@ -780,7 +780,7 @@ export default function PropertiesPage() {
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`rounded-2xl border p-3 text-center transition-colors ${filterType === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white border-gray-200 hover:border-emerald-400"}`}
+              className={`rounded-2xl border p-3 text-center transition-colors ${filterType === t ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-white border-gray-200 hover:border-blue-300"}`}
             >
               <div className="text-lg font-bold">{counts[t === "all" ? "all" : t]}</div>
               <div className="text-[10px] mt-0.5 opacity-80">{t === "all" ? "전체" : t}</div>
@@ -848,7 +848,7 @@ export default function PropertiesPage() {
               <button key={r.key} onClick={() => setPriceRange(r.key)}
                 className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
                   priceRange === r.key
-                    ? "bg-emerald-600 text-white border-emerald-600 font-semibold"
+                    ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
                     : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
                 }`}>
                 {r.label}
@@ -870,7 +870,7 @@ export default function PropertiesPage() {
               <button key={s.key} onClick={() => setSortBy(s.key)}
                 className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
                   sortBy === s.key
-                    ? "bg-emerald-600 text-white border-emerald-600 font-semibold"
+                    ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
                     : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
                 }`}>
                 {s.label}
@@ -895,7 +895,7 @@ export default function PropertiesPage() {
             </button>
             <div className="flex-1" />
             <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
-              <input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} className="accent-emerald-600" />
+              <input type="checkbox" checked={showClosed} onChange={e => setShowClosed(e.target.checked)} className="accent-[#2383E2]" />
               거래완료 보기
             </label>
           </div>
@@ -969,7 +969,7 @@ export default function PropertiesPage() {
               <div className="flex items-center justify-between mb-2.5 text-[11px] text-gray-500 dark:text-gray-400 px-1">
                 <span>
                   전체 <b className="text-gray-900 dark:text-gray-100">{total}</b>건 중{" "}
-                  <b className="text-emerald-600 dark:text-emerald-400">{start + 1}–{Math.min(start + PAGE_SIZE, total)}</b>건 표시
+                  <b className="text-[var(--brand-blue)] dark:text-blue-400">{start + 1}–{Math.min(start + PAGE_SIZE, total)}</b>건 표시
                 </span>
                 {showPager && (
                   <span className="font-medium">
@@ -1022,7 +1022,7 @@ export default function PropertiesPage() {
                         onClick={() => setPage(n)}
                         className={`min-w-[2.25rem] h-9 px-2.5 rounded-xl text-sm font-semibold transition-all ${
                           safePage === n
-                            ? "bg-emerald-600 text-white shadow-md scale-105"
+                            ? "bg-[var(--brand-blue)] text-white shadow-md scale-105"
                             : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300"
                         }`}
                       >

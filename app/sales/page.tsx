@@ -77,7 +77,7 @@ export default function SalesPage() {
         {/* Stitch 톤 페이지 헤더 */}
         <section className="mb-6">
           <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400" style={{ fontSize: "2rem" }}>payments</span>
+            <span className="material-symbols-outlined text-[var(--brand-blue)] dark:text-blue-400" style={{ fontSize: "2rem" }}>payments</span>
             매출 관리
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">

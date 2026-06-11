@@ -180,7 +180,7 @@ function MappingStep({ parsed, mapping, onChange, onNext, onBack }: {
       <div className="flex gap-2 pt-1">
         <button onClick={onBack} className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50">← 파일</button>
         <button onClick={onNext} disabled={missingRequired.length > 0}
-          className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed">
+          className="flex-1 py-2.5 rounded-xl bg-[var(--brand-blue)] text-white text-sm font-semibold hover:bg-[var(--brand-blue-dark)] disabled:opacity-40 disabled:cursor-not-allowed">
           다음 — 미리보기
         </button>
       </div>
@@ -251,14 +251,14 @@ function PreviewStep({ parsed, result, strategy, onStrategyChange, onConfirm, on
       <div className="border border-gray-200 rounded-2xl p-3">
         <div className="text-xs font-medium text-gray-700 mb-2">저장 방식 (현재 {existingCount}건 등록됨)</div>
         <label className="flex items-start gap-2 text-xs py-1.5 cursor-pointer">
-          <input type="radio" checked={strategy === "addOnly"} onChange={() => onStrategyChange("addOnly")} className="mt-0.5 accent-emerald-600" />
+          <input type="radio" checked={strategy === "addOnly"} onChange={() => onStrategyChange("addOnly")} className="mt-0.5 accent-[#2383E2]" />
           <div>
             <div className="font-medium text-gray-800">새 매물만 추가 (추천)</div>
             <div className="text-[11px] text-gray-500">중복 {dup}건 제외, 새 {newC}건만 추가</div>
           </div>
         </label>
         <label className="flex items-start gap-2 text-xs py-1.5 cursor-pointer">
-          <input type="radio" checked={strategy === "replace"} onChange={() => onStrategyChange("replace")} className="mt-0.5 accent-emerald-600" />
+          <input type="radio" checked={strategy === "replace"} onChange={() => onStrategyChange("replace")} className="mt-0.5 accent-[#2383E2]" />
           <div>
             <div className="font-medium text-gray-800">전체 교체 (주의)</div>
             <div className="text-[11px] text-gray-500">기존 {existingCount}건 삭제 + 새로 {total}건</div>
@@ -269,7 +269,7 @@ function PreviewStep({ parsed, result, strategy, onStrategyChange, onConfirm, on
       <div className="flex gap-2 pt-1">
         <button onClick={onBack} disabled={busy} className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 disabled:opacity-50">← 매핑</button>
         <button onClick={onConfirm} disabled={busy || total === 0}
-          className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50">
+          className="flex-1 py-2.5 rounded-xl bg-[var(--brand-blue)] text-white text-sm font-semibold hover:bg-[var(--brand-blue-dark)] disabled:opacity-50">
           {busy ? "저장 중…" : strategy === "addOnly" ? `${newC}건 추가` : `${total}건 교체`}
         </button>
       </div>
@@ -298,7 +298,7 @@ function DoneStep({ imported, onClose }: { imported: number; onClose: () => void
       <div className="text-5xl">✅</div>
       <div className="text-base font-semibold text-gray-900">매물 {imported}건 추가 완료</div>
       <div className="text-xs text-gray-500">PC·폰에서 자동 동기화됩니다.</div>
-      <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
+      <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-[var(--brand-blue)] text-white text-sm font-semibold hover:bg-[var(--brand-blue-dark)]">
         목록으로
       </button>
     </div>

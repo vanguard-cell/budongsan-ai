@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * 사이드바 — 라이트 화이트 + 블루 포인트 (Stripe식, 테마 4 / 2026-06 확정)
+ * 사이드바 — 노션 톤 (연회색 #F7F7F5 + 회색 활성 알약, 2026-06 확정 v2)
  *
- * 벤치마킹(Stripe/Linear/Notion/Toss)처럼 PC에서는 상단바 없이 사이드바가 전부 담당:
+ * PC에서는 상단바 없이 사이드바가 전부 담당:
  *  - 상단: 로고 + 접기 토글
  *  - 검색 (Enter → /properties?q= 통합검색)
- *  - 메뉴 (활성 = 연블루 배경 #EFF4FF + 블루 글씨 #2563EB)
- *  - 하단: 빠른 등록 + 사용자 카드 + 알림·다크모드·로그아웃
+ *  - 메뉴 (활성 = 회색 알약 #E9E9E7 + 진한 글자)
+ *  - 하단: 빠른 등록(노션 블루 #2383E2) + 사용자 카드 + 알림·다크모드·로그아웃
  *
  * 토글(open) + 가장자리 peek 동작은 StitchLayout에서 제어.
  */
@@ -101,7 +101,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
   return (
     <aside
       onMouseLeave={() => { if (!open && peek) onPeekEnd?.(); }}
-      className={`hidden sm:flex flex-col fixed left-0 top-0 h-screen w-56 lg:w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-700 p-4 transition-transform duration-200 ease-out ${
+      className={`hidden sm:flex flex-col fixed left-0 top-0 h-screen w-56 lg:w-64 bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-bd)] p-4 transition-transform duration-200 ease-out ${
         visible ? "translate-x-0" : "-translate-x-full"
       } ${!open && peek ? "z-50 shadow-2xl" : "z-30"}`}
     >
@@ -109,7 +109,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
       <div className="flex items-center justify-between mb-4 pl-1">
         <Link href="/dashboard" className="flex items-center gap-2">
           <span className="text-lg">🏡</span>
-          <span className="text-lg font-bold text-[var(--brand-blue)] dark:text-blue-400 tracking-tight">DealDone</span>
+          <span className="text-lg font-bold text-gray-800 dark:text-gray-100 tracking-tight">DealDone</span>
         </Link>
         <button
           onClick={onToggle}
@@ -134,7 +134,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") doSearch(); }}
           placeholder="단지·이름·전화 검색"
-          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-slate-800 border-0 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-white dark:bg-slate-800 border border-[var(--sidebar-bd)] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
         />
       </div>
 
@@ -146,10 +146,10 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all cursor-pointer
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all cursor-pointer
                 ${active
-                  ? "bg-[var(--brand-blue-soft)] dark:bg-blue-950/40 text-[var(--brand-blue)] dark:text-blue-300 font-bold"
-                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
+                  ? "bg-[var(--sidebar-active)] text-gray-900 dark:text-gray-100 font-bold"
+                  : "text-[#5F5E5B] dark:text-gray-300 hover:bg-[var(--sidebar-active)]/60 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}
             >
               <span
@@ -164,17 +164,17 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
         })}
 
         {/* 보조 메뉴 */}
-        <div className="pt-3 mt-3 border-t border-gray-200 dark:border-slate-700 space-y-1">
+        <div className="pt-3 mt-3 border-t border-[var(--sidebar-bd)] space-y-1">
           {subNav.map(item => {
             const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-colors text-sm
+                className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm
                   ${active
-                    ? "bg-[var(--brand-blue-soft)] dark:bg-blue-950/40 text-[var(--brand-blue)] dark:text-blue-300 font-bold"
-                    : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
+                    ? "bg-[var(--sidebar-active)] text-gray-900 dark:text-gray-100 font-bold"
+                    : "text-[#5F5E5B]/90 dark:text-gray-400 hover:bg-[var(--sidebar-active)]/60 hover:text-gray-900 dark:hover:text-gray-100"
                   }`}
               >
                 <span className="material-symbols-outlined text-lg">{item.icon}</span>
@@ -186,7 +186,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
       </nav>
 
       {/* 하단 — 빠른 등록 + 사용자 + 액션 */}
-      <div className="pt-3 mt-3 border-t border-gray-200 dark:border-slate-700">
+      <div className="pt-3 mt-3 border-t border-[var(--sidebar-bd)]">
         <Link
           href="/properties?new=1"
           className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--brand-blue)] text-white rounded-xl shadow-sm hover:brightness-110 active:scale-95 transition-all mb-3"
@@ -196,7 +196,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
         </Link>
 
         <div className="flex items-center gap-2.5 px-1">
-          <div className="w-9 h-9 rounded-full bg-[var(--brand-blue)] flex items-center justify-center text-white font-bold text-sm shrink-0">
+          <div className="w-9 h-9 rounded-full bg-gray-800 dark:bg-slate-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
             {userName.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
@@ -206,7 +206,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
         </div>
 
         {/* 알림 · 다크모드 · 로그아웃 */}
-        <div className="flex items-center justify-around mt-3 pt-3 border-t border-gray-200 dark:border-slate-700">
+        <div className="flex items-center justify-around mt-3 pt-3 border-t border-[var(--sidebar-bd)]">
           <button
             title="알림"
             className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"

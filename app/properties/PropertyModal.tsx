@@ -106,7 +106,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
             <div className="grid grid-cols-4 gap-1.5">
               {PROPERTY_TYPES.map(t => (
                 <button key={t} type="button" onClick={() => set("propertyType", t)}
-                  className={`py-1.5 rounded-xl text-xs font-medium border transition-colors ${form.propertyType === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+                  className={`py-1.5 rounded-xl text-xs font-medium border transition-colors ${form.propertyType === t ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
                   {t}
                 </button>
               ))}
@@ -118,7 +118,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
             <div className="grid grid-cols-3 gap-1.5">
               {DEAL_TYPES.map(t => (
                 <button key={t} type="button" onClick={() => set("dealType", t)}
-                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${form.dealType === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${form.dealType === t ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
                   {t}
                 </button>
               ))}
@@ -131,13 +131,13 @@ export default function PropertyModal({ property, onClose, onSave }: {
             <div className="relative">
               <input value={baseAddress} onChange={e => handleAddressChange(e.target.value)}
                 placeholder="단지명 또는 주소 검색"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" autoComplete="off" />
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" autoComplete="off" />
               {addrLoading && <div className="absolute right-3 top-2.5 text-xs text-gray-400">검색 중…</div>}
               {addrSuggestions.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                   {addrSuggestions.map((item, i) => (
                     <button key={i} type="button" onClick={() => selectComplex(item.name, item.address)}
-                      className="w-full text-left px-3 py-2.5 hover:bg-emerald-50 border-b last:border-0 border-gray-100 transition-colors">
+                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors">
                       <div className="text-sm font-medium text-gray-800">{item.name}</div>
                       <div className="text-xs text-gray-500">{item.address}</div>
                     </button>
@@ -157,16 +157,16 @@ export default function PropertyModal({ property, onClose, onSave }: {
               <div>
                 <label className="block text-xs text-gray-500 mb-1">동 번호</label>
                 <input type="text" inputMode="numeric" value={form.dong} onChange={e => handleDongChange(e.target.value)}
-                  placeholder="101" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                  placeholder="101" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">호수</label>
                 <input type="text" inputMode="numeric" value={form.ho} onChange={e => handleHoChange(e.target.value)}
-                  placeholder="1902" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                  placeholder="1902" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
             </div>
             {form.address && (
-              <div className="mt-1.5 text-xs text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2">
+              <div className="mt-1.5 text-xs text-blue-700 bg-blue-50 rounded-xl px-3 py-2">
                 📍 저장 주소: <span className="font-medium">{form.address}</span>
               </div>
             )}
@@ -177,14 +177,14 @@ export default function PropertyModal({ property, onClose, onSave }: {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{form.dealType === "매매" ? "매매가" : "보증금"} (만원)</label>
               <input type="text" inputMode="numeric" value={form.price ? fmtNum(form.price) : ""} onChange={e => set("price", e.target.value.replace(/\D/g,""))}
-                placeholder="29,600" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                placeholder="29,600" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               {form.price && <div className="mt-1 text-[10px] text-gray-500">≈ {fmtKoreanNum(form.price)}만원</div>}
             </div>
             {form.dealType === "월세" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">월세 (만원)</label>
                 <input type="text" inputMode="numeric" value={form.monthly ? fmtNum(form.monthly) : ""} onChange={e => set("monthly", e.target.value.replace(/\D/g,""))}
-                  placeholder="70" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                  placeholder="70" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
             )}
           </div>
@@ -203,7 +203,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
                   set("area", cleaned);
                 }}
                 placeholder="84"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               {m2ToPyeong(form.area) && <div className="mt-1 text-[10px] text-gray-500">≈ {m2ToPyeong(form.area)}평</div>}
             </div>
@@ -216,7 +216,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
                 value={form.unitType}
                 onChange={e => set("unitType", e.target.value)}
                 placeholder="예: 84A, C-3타입"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <div className="mt-1 text-[10px] text-gray-400">A/B/C타입 등 평면 구분</div>
             </div>
@@ -226,7 +226,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">방향</label>
               <select value={form.direction} onChange={e => set("direction", e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
                 <option value="">선택</option>
                 {DIRECTIONS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
@@ -236,7 +236,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
               <input type="text" inputMode="numeric" value={form.rooms}
                 onChange={e => set("rooms", e.target.value.replace(/\D/g, ""))}
                 placeholder="3"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
           </div>
 {/* 방수는 위 방향/방수 그리드로 통합됨 */}
@@ -246,12 +246,12 @@ export default function PropertyModal({ property, onClose, onSave }: {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">집주인 이름</label>
               <input value={form.ownerName} onChange={e => set("ownerName", e.target.value)}
-                placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">집주인 연락처</label>
               <input type="tel" value={form.ownerPhone} onChange={e => set("ownerPhone", e.target.value)}
-                placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
           </div>
 
@@ -316,12 +316,12 @@ export default function PropertyModal({ property, onClose, onSave }: {
             <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
             <textarea value={form.memo} onChange={e => set("memo", e.target.value)}
               placeholder="특이사항, 열쇠 위치, 입주 가능일 등"
-              rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" />
+              rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
           </div>
 
           <div className="flex gap-2 pt-2">
             <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50">취소</button>
-            <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60">
+            <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-[var(--brand-blue)] text-white text-sm font-semibold hover:bg-[var(--brand-blue-dark)] disabled:opacity-60">
               {saving ? "저장 중…" : "저장"}
             </button>
           </div>
