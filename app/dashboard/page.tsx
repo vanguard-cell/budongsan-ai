@@ -1,16 +1,15 @@
 "use client";
 
 /**
- * 🏠 홈 대시보드 — Stitch 디자인 100% 적용
+ * 🏠 홈 — DealDone 리디자인 (2026-06, 블루 톤)
  *
- * 사이드바·헤더는 layout.tsx에서 처리.
- * 이 파일은 메인 컨텐츠 영역만 담당.
+ * 구성 (사용자 확정안):
+ *  1) 인사 — "안녕하세요, OOO 대표님" (블루 강조) + 날짜 + 오늘 처리할 일 N건
+ *  2) 상단 4카드 (순서 고정): 오늘 일정 / 잔금 관련 / 만기 임박 / 손님 관리
+ *     — 상단 3px 색 띠 + 라벨·아이콘 + 큰 건수 + 대표 1건 미리보기
+ *  3) 하단 박스 2개: 중요 알림 / 빠른 실행 (편집은 다음 단계)
  *
- * 구성:
- *  1) 인사 (display-lg 32px)
- *  2) KPI 4종 (headline-md 24px + SVG 스파크라인)
- *  3) 중요 알림 3종 + 빠른 실행 4종 (7:5 그리드)
- *  4) 최근 업데이트 매물 테이블 (progress bar)
+ * 카드 클릭 → 지금은 해당 페이지 이동, 다음 단계에서 drawer(슬라이드 패널)로 교체 예정.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -20,20 +19,29 @@ import { useAuth, roleTitle } from "@/lib/auth-context";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import { subscribeCustomers } from "@/lib/customers-db";
+import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import type { Contract } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import { dDay } from "@/app/expiry/contracts";
 import { followUpDDay, followUpSeverity } from "@/app/customers/customer-types";
-import { computeSalesStats, fmtNum } from "@/lib/sales";
-import SparklineChart from "./components/SparklineChart";
 
-/* 시간대별 인사 */
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 5)  return "안녕하세요";
-  if (h < 12) return "좋은 아침입니다";
-  if (h < 18) return "좋은 오후입니다";
-  return "좋은 저녁입니다";
+/* 상태색 — 의미 고정 (메모리 확정안) */
+const C = {
+  orange: "#EF9F27",  // 오늘 일정
+  green:  "#1D9E75",  // 잔금
+  red:    "#E24B4A",  // 만기·긴급
+  blue:   "#2563EB",  // 손님·브랜드
+} as const;
+
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function dDayLabel(dd: number): string {
+  if (dd === 0) return "오늘";
+  if (dd > 0) return `D-${dd}`;
+  return `${-dd}일 지남`;
 }
 
 export default function DashboardPage() {
@@ -42,6 +50,7 @@ export default function DashboardPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [contracts, setContracts]   = useState<Contract[]>([]);
   const [customers, setCustomers]   = useState<Customer[]>([]);
+  const [schedules, setSchedules]   = useState<Schedule[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/dashboard");
@@ -52,17 +61,34 @@ export default function DashboardPage() {
     const u1 = subscribeProperties(user.agencyId, setProperties);
     const u2 = subscribeContracts(user.agencyId, setContracts);
     const u3 = subscribeCustomers(user.agencyId, setCustomers);
-    return () => { u1(); u2(); u3(); };
+    const u4 = subscribeSchedules(user.agencyId, setSchedules);
+    return () => { u1(); u2(); u3(); u4(); };
   }, [user]);
 
-  const sales = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
+  const todayStr = todayISO();
   const activeProps = useMemo(() => properties.filter(p => p.status === "active"), [properties]);
-  const contractingProps = useMemo(() =>
-    activeProps.filter(p => p.contractDate || p.downPaymentDate || p.balanceDate),
-    [activeProps],
+
+  /* ── ① 오늘 일정 ── */
+  const todaySchedules = useMemo(() =>
+    schedules
+      .filter(s => s.date === todayStr && s.status === "scheduled")
+      .sort((a, b) => a.time.localeCompare(b.time)),
+    [schedules, todayStr],
   );
 
-  // 만기 임박 — 만기관리 계약 + 내 매물 임대만기 둘 다 집계
+  /* ── ② 잔금 관련 — 잔금일이 30일 이내이거나 이미 지난 진행중 매물 ── */
+  const balanceItems = useMemo(() =>
+    activeProps
+      .filter(p => p.balanceDate && dDay(p.balanceDate) <= 30)
+      .sort((a, b) => (a.balanceDate || "").localeCompare(b.balanceDate || "")),
+    [activeProps],
+  );
+  const overdueBalance = useMemo(
+    () => balanceItems.filter(p => p.balanceDate! < todayStr),
+    [balanceItems, todayStr],
+  );
+
+  /* ── ③ 만기 임박 — 만기관리 계약 + 내 매물 임대만기 (D-30 ~ 지난 7일) ── */
   const expiringSoon = useMemo(() => {
     const inRange = (d: string) => { const dd = dDay(d); return dd <= 30 && dd >= -7; };
     const items: { address: string; endDate: string }[] = [];
@@ -72,263 +98,192 @@ export default function DashboardPage() {
     for (const p of activeProps) {
       if (p.leaseEndDate && inRange(p.leaseEndDate)) items.push({ address: p.address, endDate: p.leaseEndDate });
     }
-    return items;
+    return items.sort((a, b) => a.endDate.localeCompare(b.endDate));
   }, [contracts, activeProps]);
-  const urgentExpiring = expiringSoon.filter(x => dDay(x.endDate) <= 7);
+  const urgentExpiring = useMemo(() => expiringSoon.filter(x => dDay(x.endDate) <= 7), [expiringSoon]);
 
+  /* ── ④ 손님 관리 — 후속연락 임박·오늘·지남 ── */
   const followUpNeeded = useMemo(() =>
-    customers.filter(c => {
-      if (c.status !== "active") return false;
-      const s = followUpSeverity(followUpDDay(c.nextFollowUp));
-      return s === "overdue" || s === "today" || s === "soon";
-    }),
+    customers
+      .filter(c => {
+        if (c.status !== "active") return false;
+        const s = followUpSeverity(followUpDDay(c.nextFollowUp));
+        return s === "overdue" || s === "today" || s === "soon";
+      })
+      .sort((a, b) => followUpDDay(a.nextFollowUp) - followUpDDay(b.nextFollowUp)),
     [customers],
   );
-  const todayFollowUp = followUpNeeded.filter(c => followUpDDay(c.nextFollowUp) === 0).length;
-
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const overdueBalance = useMemo(() =>
-    activeProps.filter(p => p.balanceDate && p.balanceDate <= todayStr),
-    [activeProps, todayStr],
-  );
   const overdueFollowUp = useMemo(() =>
-    customers.filter(c => c.status === "active" && c.nextFollowUp && c.nextFollowUp < todayStr),
-    [customers, todayStr],
+    followUpNeeded.filter(c => c.nextFollowUp && c.nextFollowUp < todayStr),
+    [followUpNeeded, todayStr],
   );
 
-  const recentProps = useMemo(() =>
-    [...activeProps].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5),
-    [activeProps],
-  );
-
-  // 매출 12개월 시계열 (스파크라인용)
-  const salesTrend = useMemo(() => {
-    const today = new Date();
-    const arr: number[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      arr.push(sales.byMonth[key] || 0);
-    }
-    return arr.length > 1 ? arr : [0, 0];
-  }, [sales]);
+  /* 오늘 처리할 일 = 오늘 일정 + 잔금 지남 + 만기 D-7 + 후속 오늘·지남 */
+  const todayTaskCount =
+    todaySchedules.length +
+    overdueBalance.length +
+    urgentExpiring.length +
+    followUpNeeded.filter(c => followUpDDay(c.nextFollowUp) <= 0).length;
 
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
 
   const userName = user.displayName || user.email?.split("@")[0] || "이용자";
-  const greeting = getGreeting();
   const title = roleTitle(user.role);   // "대표님" | "파트너님"
+  const dateLabel = new Date().toLocaleDateString("ko-KR", {
+    year: "numeric", month: "long", day: "numeric", weekday: "long",
+  });
+
+  /* 카드 미리보기 텍스트 */
+  const s0 = todaySchedules[0];
+  const previewSchedule = s0
+    ? `${s0.time} ${s0.scheduleType} · ${s0.visitorName || s0.propertyAddress || "일정"}`
+    : null;
+  const b0 = balanceItems[0];
+  const previewBalance = b0
+    ? `${b0.address} · ${dDayLabel(dDay(b0.balanceDate!))}`
+    : null;
+  const e0 = expiringSoon[0];
+  const previewExpiry = e0
+    ? `${e0.address} · ${dDayLabel(dDay(e0.endDate))}`
+    : null;
+  const f0 = followUpNeeded[0];
+  const previewCustomer = f0
+    ? `${f0.name || "고객님"} · 연락 ${dDayLabel(followUpDDay(f0.nextFollowUp))}`
+    : null;
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="p-5 lg:p-10">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* ─── 1) 인사 ─── */}
         <header>
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            {greeting},{" "}
-            <span className="text-green-700 dark:text-green-400">{userName} {title}!</span>
+          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+            안녕하세요,{" "}
+            <span className="text-[var(--brand-blue)] dark:text-blue-400">{userName} {title}</span>
           </h2>
-          <p className="text-base text-gray-500 dark:text-gray-400 mt-2">
-            오늘도 성공적인 계약을 위해 DealDone이 도와드릴게요. 🏠
+          <p className="text-sm lg:text-base text-gray-500 dark:text-gray-400 mt-2">
+            {dateLabel} · 오늘 처리할 일{" "}
+            <span className={`font-bold ${todayTaskCount > 0 ? "text-[var(--brand-blue)] dark:text-blue-400" : "text-gray-400"}`}>
+              {todayTaskCount}건
+            </span>
           </p>
         </header>
 
-        {/* ─── 2) KPI 4종 ─── */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard
-            icon="payments"
-            label="이번달 매출"
-            value={`₩${fmtNum(sales.thisMonth)}만`}
-            sub="전월 대비 +12% ↗"
-            iconBg="bg-amber-50 dark:bg-amber-950/40"
-            iconColor="text-amber-500 dark:text-amber-400"
-            valueColor="text-amber-600 dark:text-amber-400"
-            subColor="text-amber-600 dark:text-amber-400"
-            trendIcon="trending_up"
-            sparkData={salesTrend}
-            sparkColor="stroke-amber-500 dark:stroke-amber-400"
-            href="/sales"
+        {/* ─── 2) 상단 4카드 (순서 고정) ─── */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <SummaryCard
+            color={C.orange}
+            icon="today"
+            label="오늘 일정"
+            count={todaySchedules.length}
+            preview={previewSchedule}
+            emptyText="오늘 일정 없음"
+            href="/schedule"
           />
-          <KpiCard
-            icon="domain"
-            label="진행중 매물"
-            value={`${activeProps.length} 건`}
-            sub={`계약 진행 ${contractingProps.length}건 포함`}
-            iconBg="bg-emerald-50 dark:bg-emerald-950/40"
-            iconColor="text-emerald-600 dark:text-emerald-400"
-            valueColor="text-emerald-600 dark:text-emerald-400"
-            subColor="text-emerald-600 dark:text-emerald-400"
-            badge="진행 중"
-            badgeColor="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+          <SummaryCard
+            color={C.green}
+            icon="account_balance_wallet"
+            label="잔금 관련"
+            count={balanceItems.length}
+            preview={previewBalance}
+            emptyText="예정된 잔금 없음"
+            badge={overdueBalance.length > 0 ? `지남 ${overdueBalance.length}` : undefined}
             href="/properties"
           />
-          <KpiCard
-            icon="timer"
+          <SummaryCard
+            color={C.red}
+            icon="event_busy"
             label="만기 임박"
-            value={`${expiringSoon.length} 건`}
-            sub={urgentExpiring.length > 0 ? `D-7 이내 ${urgentExpiring.length}건` : "30일 이내 만기"}
-            iconBg="bg-orange-50 dark:bg-orange-950/40"
-            iconColor="text-orange-500 dark:text-orange-400"
-            valueColor="text-orange-500 dark:text-orange-400"
-            subColor="text-orange-600 dark:text-orange-400"
-            badge={urgentExpiring.length > 0 ? `긴급 ${urgentExpiring.length}` : undefined}
-            badgeColor="bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300"
+            count={expiringSoon.length}
+            preview={previewExpiry}
+            emptyText="30일 내 만기 없음"
+            badge={urgentExpiring.length > 0 ? `D-7 ${urgentExpiring.length}` : undefined}
             href="/expiry"
           />
-          <KpiCard
-            icon="phone_callback"
-            label="후속연락 필요"
-            value={`${followUpNeeded.length} 건`}
-            sub={todayFollowUp > 0 ? `오늘 ${todayFollowUp}명 상담 예정` : "지난 연락 확인 필요"}
-            iconBg="bg-blue-50 dark:bg-blue-950/40"
-            iconColor="text-blue-600 dark:text-blue-400"
-            valueColor="text-blue-600 dark:text-blue-400"
-            subColor="text-blue-600 dark:text-blue-400"
-            badge={todayFollowUp > 0 ? `오늘 ${todayFollowUp}` : "확인 요망"}
-            badgeColor="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+          <SummaryCard
+            color={C.blue}
+            icon="group"
+            label="손님 관리"
+            count={followUpNeeded.length}
+            preview={previewCustomer}
+            emptyText="연락할 손님 없음"
+            badge={overdueFollowUp.length > 0 ? `지남 ${overdueFollowUp.length}` : undefined}
             href="/customers"
           />
         </section>
 
-        {/* ─── 3) 중요 알림 + 빠른 실행 ─── */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* 알림 (7) */}
-          <div className="lg:col-span-7 space-y-4">
-            <h4 className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-gray-100">
-              <span className="material-symbols-outlined text-red-500">campaign</span>
+        {/* ─── 3) 하단 박스 2개: 중요 알림 + 빠른 실행 ─── */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          {/* 중요 알림 */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm p-5">
+            <h4 className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
+              <span className="material-symbols-outlined text-[20px]" style={{ color: C.red }}>campaign</span>
               중요 알림
             </h4>
 
             {overdueBalance.length === 0 && urgentExpiring.length === 0 && overdueFollowUp.length === 0 ? (
-              <div className="p-5 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 text-sm text-gray-500 dark:text-gray-400">
-                ✨ 오늘은 처리할 긴급 알림이 없습니다. 좋은 하루 보내세요!
+              <div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+                ✨ 지금은 긴급한 알림이 없습니다
               </div>
             ) : (
-              <>
-                {overdueBalance[0] && (
-                  <AlertCard
-                    color="red"
+              <div className="space-y-2">
+                {overdueBalance.slice(0, 2).map(p => (
+                  <AlertRow
+                    key={`bal-${p.id}`}
+                    color={C.red}
                     icon="priority_high"
-                    title={`잔금일 지남: ${overdueBalance[0].address}`}
-                    desc={`잔금일 ${overdueBalance[0].balanceDate}${overdueBalance.length > 1 ? ` (외 ${overdueBalance.length - 1}건)` : ""}`}
+                    title={`잔금일 지남 · ${p.address}`}
+                    desc={`잔금일 ${p.balanceDate}`}
                     href="/properties"
                   />
-                )}
-                {urgentExpiring[0] && (
-                  <AlertCard
-                    color="orange"
+                ))}
+                {urgentExpiring.slice(0, 2).map((x, i) => (
+                  <AlertRow
+                    key={`exp-${i}`}
+                    color={C.red}
                     icon="schedule"
-                    title={`만기 임박: ${urgentExpiring[0].address}`}
-                    desc={`D-${dDay(urgentExpiring[0].endDate)} 만기 도래, 연장 의사 확인 필요${urgentExpiring.length > 1 ? ` (외 ${urgentExpiring.length - 1}건)` : ""}`}
+                    title={`만기 ${dDayLabel(dDay(x.endDate))} · ${x.address}`}
+                    desc="연장 의사 확인 필요"
                     href="/expiry"
                   />
-                )}
-                {overdueFollowUp[0] && (
-                  <AlertCard
-                    color="purple"
+                ))}
+                {overdueFollowUp.slice(0, 2).map(c => (
+                  <AlertRow
+                    key={`fu-${c.id}`}
+                    color={C.orange}
                     icon="contact_phone"
-                    title={`후속연락 지남: ${overdueFollowUp[0].name || "고객님"}`}
-                    desc={`예정일 ${overdueFollowUp[0].nextFollowUp}${overdueFollowUp.length > 1 ? ` (외 ${overdueFollowUp.length - 1}건)` : ""}`}
-                    href={`/customers?focus=${overdueFollowUp[0].id}`}
+                    title={`후속연락 지남 · ${c.name || "고객님"}`}
+                    desc={`예정일 ${c.nextFollowUp}`}
+                    href={`/customers?focus=${c.id}`}
                   />
-                )}
-              </>
+                ))}
+              </div>
             )}
           </div>
 
-          {/* 빠른 실행 (5) */}
-          <div className="lg:col-span-5 space-y-4">
-            <h4 className="text-xl font-bold text-gray-900 dark:text-gray-100">빠른 실행</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <QuickAction
-                icon="add_business"
-                label="단지 빠른 등록"
-                iconBg="bg-emerald-100 dark:bg-emerald-900/40"
-                iconColor="text-emerald-600 dark:text-emerald-400"
-                textColor="text-emerald-900 dark:text-emerald-300"
-                borderColor="border-emerald-100 dark:border-emerald-900/50"
-                hoverBg="hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                href="/properties"
-              />
-              <QuickAction
-                icon="fact_check"
-                label="잔금/만기 일괄"
-                iconBg="bg-orange-100 dark:bg-orange-900/40"
-                iconColor="text-orange-600 dark:text-orange-400"
-                textColor="text-orange-900 dark:text-orange-300"
-                borderColor="border-orange-100 dark:border-orange-900/50"
-                hoverBg="hover:bg-orange-50 dark:hover:bg-orange-950/30"
-                href="/properties"
-              />
-              <QuickAction
-                icon="auto_awesome"
-                label="AI 문구 생성"
-                iconBg="bg-pink-100 dark:bg-pink-900/40"
-                iconColor="text-pink-600 dark:text-pink-400"
-                textColor="text-pink-900 dark:text-pink-300"
-                borderColor="border-pink-100 dark:border-pink-900/50"
-                hoverBg="hover:bg-pink-50 dark:hover:bg-pink-950/30"
-                href="/ai-content"
-              />
+          {/* 빠른 실행 */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="flex items-center gap-2 text-base font-bold text-gray-900 dark:text-gray-100">
+                <span className="material-symbols-outlined text-[20px] text-[var(--brand-blue)]">bolt</span>
+                빠른 실행
+              </h4>
               <button
-                onClick={() => alert("준비 중인 기능입니다. 곧 사용자 정의 액션 추가가 지원됩니다.")}
-                className="flex flex-col items-center justify-center gap-2 p-6 bg-white dark:bg-slate-800/40 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-gray-500 dark:text-gray-400"
+                onClick={() => alert("빠른 실행 편집은 곧 지원됩니다. 원하는 기능을 직접 넣고 뺄 수 있어요!")}
+                className="text-xs font-semibold text-gray-400 hover:text-[var(--brand-blue)] dark:hover:text-blue-400 flex items-center gap-1 transition-colors"
               >
-                <span className="p-3 bg-gray-100 dark:bg-slate-700 rounded-full material-symbols-outlined">add</span>
-                <span className="font-bold text-sm">기능 추가</span>
+                <span className="material-symbols-outlined text-[14px]">tune</span>
+                편집
               </button>
             </div>
-          </div>
-        </section>
-
-        {/* ─── 4) 최근 업데이트 매물 ─── */}
-        <section className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h4 className="text-xl font-bold text-gray-900 dark:text-gray-100">최근 업데이트 매물</h4>
-            <Link href="/properties" className="text-sm font-bold text-green-700 dark:text-green-400 hover:underline">
-              전체 보기
-            </Link>
-          </div>
-
-          {recentProps.length === 0 ? (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-10 text-center">
-              <div className="text-5xl mb-3">🏘️</div>
-              <p className="text-base text-gray-500 dark:text-gray-400 mb-4">아직 등록된 매물이 없습니다</p>
-              <Link href="/properties" className="inline-block text-sm px-5 py-2.5 rounded-full bg-green-700 text-white font-semibold">
-                + 첫 매물 등록
-              </Link>
+            <div className="grid grid-cols-2 gap-3">
+              <QuickAction icon="add_home"      label="매물 등록"  href="/properties" />
+              <QuickAction icon="person_add"    label="손님 등록"  href="/customers" />
+              <QuickAction icon="calendar_add_on" label="일정 추가" href="/schedule" />
+              <QuickAction icon="auto_awesome"  label="AI 문구"    href="/ai-content" />
             </div>
-          ) : (
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
-              {/* 데스크탑: 테이블 */}
-              <div className="hidden md:block">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 dark:bg-slate-900/50 border-b border-gray-200 dark:border-slate-700">
-                    <tr>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-600 dark:text-gray-400">거래 유형</th>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-600 dark:text-gray-400">매물명 / 상세 정보</th>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-600 dark:text-gray-400">가격 (만원)</th>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-600 dark:text-gray-400">진행 단계</th>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-600 dark:text-gray-400">업데이트</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-                    {recentProps.map(p => (
-                      <PropertyRow key={p.id} property={p} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* 모바일: 카드 */}
-              <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-700">
-                {recentProps.map(p => (
-                  <PropertyCardMobile key={p.id} property={p} />
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
         </section>
       </div>
     </div>
@@ -337,202 +292,88 @@ export default function DashboardPage() {
 
 /* ─────────────── 컴포넌트 ─────────────── */
 
-interface KpiCardProps {
+/** 상단 요약 카드 — 색 띠 + 라벨 + 큰 건수 + 대표 1건 미리보기 */
+function SummaryCard({ color, icon, label, count, preview, emptyText, badge, href }: {
+  color: string;
   icon: string;
   label: string;
-  value: string;
-  sub: string;
-  iconBg: string;
-  iconColor: string;
-  valueColor: string;
-  subColor: string;
-  href: string;
+  count: number;
+  preview: string | null;
+  emptyText: string;
   badge?: string;
-  badgeColor?: string;
-  trendIcon?: string;
-  sparkData?: number[];
-  sparkColor?: string;
-}
-
-function KpiCard(p: KpiCardProps) {
+  href: string;
+}) {
   return (
     <Link
-      href={p.href}
-      className="block p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 hover:shadow-md hover:-translate-y-0.5 transition-all group"
+      href={href}
+      className="block bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all"
+      style={{ borderTop: `3px solid ${color}` }}
     >
-      <div className="flex justify-between items-start mb-4">
-        <span className={`p-2 rounded-lg material-symbols-outlined ${p.iconBg} ${p.iconColor}`}>
-          {p.icon}
-        </span>
-        {p.sparkData ? (
-          <SparklineChart data={p.sparkData} className={p.sparkColor || "stroke-amber-500"} />
-        ) : p.badge ? (
-          <span className={`text-[12px] px-2 py-0.5 rounded-full font-bold ${p.badgeColor}`}>
-            {p.badge}
-          </span>
-        ) : null}
+      <div className="p-4 lg:p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-500 dark:text-gray-400">
+            <span className="material-symbols-outlined text-[18px]" style={{ color }}>{icon}</span>
+            {label}
+          </div>
+          {badge && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded-full font-bold text-white"
+              style={{ backgroundColor: color }}
+            >
+              {badge}
+            </span>
+          )}
+        </div>
+        <p className="text-3xl font-bold tracking-tight" style={{ color: count > 0 ? color : "#9ca3af" }}>
+          {count}<span className="text-base font-semibold ml-0.5 text-gray-400">건</span>
+        </p>
+        <p className={`mt-2 text-xs truncate ${preview ? "text-gray-600 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"}`}>
+          {preview || emptyText}
+        </p>
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{p.label}</p>
-      <h3 className={`text-2xl font-bold ${p.valueColor}`}>
-        {p.value}
-      </h3>
-      <p className={`text-xs font-medium mt-1 flex items-center gap-1 ${p.subColor}`}>
-        {p.trendIcon && (
-          <span className="material-symbols-outlined text-[14px]">{p.trendIcon}</span>
-        )}
-        {p.sub}
-      </p>
     </Link>
   );
 }
 
-function AlertCard({ color, icon, title, desc, href }: {
-  color: "red" | "orange" | "purple";
+/** 중요 알림 한 줄 */
+function AlertRow({ color, icon, title, desc, href }: {
+  color: string;
   icon: string;
   title: string;
   desc: string;
   href: string;
 }) {
-  const styles = {
-    red:    { border: "border-red-500",    iconColor: "text-red-500",    dot: "bg-red-500" },
-    orange: { border: "border-orange-500", iconColor: "text-orange-500", dot: "bg-orange-500" },
-    purple: { border: "border-purple-500", iconColor: "text-purple-500", dot: "bg-purple-500" },
-  };
-  const s = styles[color];
   return (
     <Link
       href={href}
-      className={`flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-l-4 ${s.border} rounded-r-xl shadow-sm hover:translate-x-1 transition-transform`}
+      className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/80 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-900 transition-colors"
     >
-      <div className="flex items-center gap-4 min-w-0">
-        <span className={`material-symbols-outlined shrink-0 ${s.iconColor}`}>{icon}</span>
-        <div className="min-w-0">
-          <p className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate">{title}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{desc}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-3 shrink-0 ml-3">
-        <span className={`w-2 h-2 rounded-full ${s.dot}`} />
-        <span className="material-symbols-outlined text-gray-400">chevron_right</span>
-      </div>
-    </Link>
-  );
-}
-
-function QuickAction({ icon, label, iconBg, iconColor, textColor, borderColor, hoverBg, href }: {
-  icon: string;
-  label: string;
-  iconBg: string;
-  iconColor: string;
-  textColor: string;
-  borderColor: string;
-  hoverBg: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex flex-col items-center justify-center gap-2 p-6 bg-white dark:bg-slate-800 border ${borderColor} rounded-2xl ${hoverBg} transition-all group`}
-    >
-      <span className={`p-3 rounded-full material-symbols-outlined ${iconBg} ${iconColor} group-hover:scale-110 transition-transform`}>
+      <span
+        className="material-symbols-outlined text-[18px] w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white"
+        style={{ backgroundColor: color }}
+      >
         {icon}
       </span>
-      <span className={`font-bold text-sm ${textColor}`}>{label}</span>
+      <div className="min-w-0 flex-1">
+        <p className="font-bold text-[13px] text-gray-900 dark:text-gray-100 truncate">{title}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{desc}</p>
+      </div>
+      <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-[18px] shrink-0">chevron_right</span>
     </Link>
   );
 }
 
-const DEAL_TYPE_STYLES = {
-  "매매": { badge: "bg-red-500 text-white",     text: "text-red-700 dark:text-red-400",     bar: "bg-red-500" },
-  "전세": { badge: "bg-blue-500 text-white",    text: "text-blue-700 dark:text-blue-400",   bar: "bg-blue-500" },
-  "월세": { badge: "bg-amber-500 text-white",   text: "text-amber-700 dark:text-amber-400", bar: "bg-amber-500" },
-} as const;
-
-function priceStr(p: Property): string {
-  if (p.dealType === "월세") return `${fmtNum(p.price)} / ${fmtNum(p.monthly)}`;
-  return fmtNum(p.price);
-}
-
-function progressInfo(p: Property): { label: string; percent: number } {
-  if (p.balanceDate) {
-    const today = new Date().toISOString().slice(0, 10);
-    if (p.balanceDate <= today) return { label: "잔금 완료", percent: 100 };
-    if (p.downPaymentDate && p.downPaymentDate <= today) return { label: "중도금 완료", percent: 75 };
-    if (p.contractDate && p.contractDate.slice(0, 10) <= today) return { label: "계약 체결", percent: 50 };
-    return { label: "계약 조율", percent: 33 };
-  }
-  if (p.contractDate) return { label: "계약 조율", percent: 33 };
-  return { label: "매물 등록", percent: 15 };
-}
-
-function timeAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}분 전`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}시간 전`;
-  const days = Math.floor(hrs / 24);
-  if (days === 1) return "어제";
-  if (days < 7) return `${days}일 전`;
-  return new Date(ts).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
-}
-
-function PropertyRow({ property: p }: { property: Property }) {
-  const s = DEAL_TYPE_STYLES[p.dealType];
-  const prog = progressInfo(p);
+/** 빠른 실행 타일 */
+function QuickAction({ icon, label, href }: { icon: string; label: string; href: string }) {
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer group">
-      <td className="px-6 py-4">
-        <span className={`px-3 py-1 text-xs font-bold rounded-full ${s.badge}`}>
-          {p.dealType}
-        </span>
-      </td>
-      <td className="px-6 py-4 min-w-0">
-        <p className="font-bold text-sm text-gray-900 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors truncate">
-          {p.address}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-          {[p.area && `${p.area}㎡`, p.rooms && `${p.rooms}룸`, p.direction].filter(Boolean).join(" / ")}
-        </p>
-      </td>
-      <td className="px-6 py-4">
-        <p className={`font-bold text-sm ${s.text}`}>{priceStr(p)}</p>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <span className="w-24 h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <span className={`block h-full ${s.bar} transition-all`} style={{ width: `${prog.percent}%` }} />
-          </span>
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">{prog.label}</span>
-        </div>
-      </td>
-      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{timeAgo(p.createdAt)}</td>
-    </tr>
-  );
-}
-
-function PropertyCardMobile({ property: p }: { property: Property }) {
-  const s = DEAL_TYPE_STYLES[p.dealType];
-  const prog = progressInfo(p);
-  return (
-    <div className="p-4 hover:bg-gray-50 dark:hover:bg-slate-900/50">
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${s.badge} shrink-0`}>{p.dealType}</span>
-        <span className="text-[10px] text-gray-400">{timeAgo(p.createdAt)}</span>
-      </div>
-      <p className="font-bold text-sm text-gray-900 dark:text-gray-100 break-all">{p.address}</p>
-      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-        {[p.area && `${p.area}㎡`, p.rooms && `${p.rooms}룸`, p.direction].filter(Boolean).join(" / ")}
-      </p>
-      <div className="flex items-center justify-between mt-2">
-        <p className={`font-bold text-sm ${s.text}`}>{priceStr(p)}만</p>
-        <div className="flex items-center gap-2">
-          <div className="w-14 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div className={`h-full ${s.bar}`} style={{ width: `${prog.percent}%` }} />
-          </div>
-          <span className="text-[10px] text-gray-500 dark:text-gray-400">{prog.label}</span>
-        </div>
-      </div>
-    </div>
+    <Link
+      href={href}
+      className="flex items-center gap-3 p-3.5 rounded-xl border border-gray-200/80 dark:border-slate-700 hover:border-[var(--brand-blue)]/40 hover:bg-[var(--brand-blue-soft)] dark:hover:bg-blue-950/30 transition-all group"
+    >
+      <span className="material-symbols-outlined text-[20px] w-9 h-9 rounded-lg flex items-center justify-center bg-[var(--brand-blue-soft)] dark:bg-blue-950/50 text-[var(--brand-blue)] dark:text-blue-400 group-hover:scale-105 transition-transform">
+        {icon}
+      </span>
+      <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{label}</span>
+    </Link>
   );
 }

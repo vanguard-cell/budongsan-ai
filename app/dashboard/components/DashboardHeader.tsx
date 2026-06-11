@@ -70,20 +70,20 @@ export default function DashboardHeader({ alertCount = 0, sidebarOpen = true, on
         )}
 
         {/* 로고 */}
-        <h1 className="text-xl font-bold text-green-700 dark:text-green-400 shrink-0">
+        <h1 className="text-xl font-bold text-[var(--brand-blue)] dark:text-blue-400 shrink-0">
           DealDone
         </h1>
 
         {/* 글로벌 검색 — 큰 형태 */}
         <div className="flex-grow max-w-2xl relative">
-          <span onClick={doSearch} className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-green-600">search</span>
+          <span onClick={doSearch} className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-blue-600">search</span>
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") doSearch(); }}
             placeholder="단지명, 집주인·임차인, 전화번호로 검색..."
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-100 dark:bg-slate-800 border-0 rounded-full focus:ring-2 focus:ring-green-500/30 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-100 dark:bg-slate-800 border-0 rounded-full focus:ring-2 focus:ring-blue-500/30 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
           />
         </div>
 
@@ -114,12 +114,12 @@ export default function DashboardHeader({ alertCount = 0, sidebarOpen = true, on
               </p>
               <button
                 onClick={() => { if (confirm("로그아웃?")) signOut(); }}
-                className="text-[10px] text-gray-400 hover:text-green-700 dark:hover:text-green-400 uppercase tracking-wider"
+                className="text-[10px] text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 uppercase tracking-wider"
               >
                 Broker Manager · 로그아웃
               </button>
             </div>
-            <div className="w-10 h-10 rounded-full bg-green-700 dark:bg-green-600 text-white font-bold flex items-center justify-center text-sm">
+            <div className="w-10 h-10 rounded-full bg-[var(--brand-navy)] dark:bg-blue-600 text-white font-bold flex items-center justify-center text-sm">
               {userName.charAt(0)}
             </div>
           </div>

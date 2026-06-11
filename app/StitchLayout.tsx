@@ -37,7 +37,7 @@ export default function StitchLayout({ children }: { children: React.ReactNode }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-emerald-50/40 dark:from-slate-900 dark:to-emerald-950/30">
+    <div className="min-h-screen bg-[#F6F8FB] dark:bg-slate-950">
       <DashboardHeader sidebarOpen={open} onToggleSidebar={toggle} />
       <DashboardSidebar open={open} peek={peek} onPeekEnd={() => setPeek(false)} />
 

@@ -4,6 +4,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  /* ── DealDone 리디자인 토큰 (2026-06) — 딥 네이비블루 ── */
+  --brand-blue:        #2563EB;  /* 포인트·활성·브랜드 */
+  --brand-blue-soft:   #EFF4FF;  /* 블루 연한 배경 */
+  --brand-navy:        #16284A;  /* 사이드바 배경 */
+  --brand-navy-deep:   #0F1D38;  /* 사이드바 하단/호버 */
+  --sidebar-text:      #9BB4D4;  /* 사이드바 메뉴 텍스트 */
+  /* 상태색 (의미 유지) */
+  --status-red:        #E24B4A;  /* 만기·긴급 */
+  --status-green:      #1D9E75;  /* 잔금·완료 */
+  --status-orange:     #EF9F27;  /* 오늘 약속 */
+
   /* 라이트 모드 — Stitch 디자인 시스템 토큰 (Material Design 3 기반) */
   --background: #f8f9ff;
   --foreground: #0b1c30;

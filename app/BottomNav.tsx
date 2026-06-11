@@ -54,13 +54,13 @@ export default function AppNav() {
   return (
     <>
       {/* ── PC: 왼쪽 고정 사이드바 (대시보드에서는 자체 사이드바라 숨김) ── */}
-      <aside className={`${hideDesktopSidebar ? "hidden" : "hidden sm:flex"} fixed left-0 top-0 bottom-0 w-56 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-700 shadow-sm flex-col z-50`}>
-        <div className="px-5 py-6 border-b border-gray-100 dark:border-slate-700">
+      <aside className={`${hideDesktopSidebar ? "hidden" : "hidden sm:flex"} fixed left-0 top-0 bottom-0 w-56 bg-[var(--brand-navy)] flex-col z-50`}>
+        <div className="px-5 py-6 border-b border-white/10">
           <div className="flex items-center gap-2">
             <span className="text-xl">🏡</span>
             <div>
-              <div className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight">DealDone</div>
-              <div className="text-[11px] text-gray-400 dark:text-gray-500">부동산 매물 도우미</div>
+              <div className="text-sm font-bold text-white leading-tight">DealDone</div>
+              <div className="text-[11px] text-[var(--sidebar-text)]">부동산 매물 도우미</div>
             </div>
           </div>
         </div>
@@ -72,8 +72,8 @@ export default function AppNav() {
               <Link key={tab.href} href={tab.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                   isActive
-                    ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100"
+                    ? "bg-[var(--brand-blue)] text-white font-bold shadow-md shadow-blue-900/30"
+                    : "text-[var(--sidebar-text)] hover:bg-white/8 hover:text-white"
                 }`}>
                 <span
                   className="material-symbols-outlined text-xl leading-none w-7 text-center"
@@ -82,14 +82,13 @@ export default function AppNav() {
                   {tab.icon}
                 </span>
                 <span className="text-sm">{tab.label}</span>
-                {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />}
               </Link>
             );
           })}
         </nav>
 
-        <div className="px-5 py-4 border-t border-gray-100 dark:border-slate-700">
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-relaxed">☁️ 실시간 동기화<br />PC · 폰 자동 연동</p>
+        <div className="px-5 py-4 border-t border-white/10">
+          <p className="text-[10px] text-[var(--sidebar-text)] leading-relaxed">☁️ 실시간 동기화<br />PC · 폰 자동 연동</p>
         </div>
       </aside>
 
