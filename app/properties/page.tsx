@@ -25,6 +25,8 @@ import { fmtNum, formatDateKo, PROPERTY_TYPES } from "./helpers";
 import PropertyCard from "./PropertyCard";
 import PropertyModal from "./PropertyModal";
 import ContractProgressModal from "./ContractProgressModal";
+import PropertyTable from "./PropertyTable";
+import PropertyPanel from "./PropertyPanel";
 
 export default function PropertiesPage() {
   const router = useRouter();
@@ -63,6 +65,16 @@ export default function PropertiesPage() {
   // 수수료 상세는 /sales 페이지로 이동 (showCommission 제거)
   // 가격대 빠른 필터 (만원 기준)
   const [priceRange, setPriceRange] = useState<"all" | "u1" | "1to2" | "2to3" | "3to5" | "o5">("all");
+  // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
+  const [viewStyle, setViewStyleState] = useState<"card" | "table">(() => {
+    try { return localStorage.getItem("dealdone_properties_view") === "table" ? "table" : "card"; } catch { return "card"; }
+  });
+  const setViewStyle = (v: "card" | "table") => {
+    setViewStyleState(v);
+    try { localStorage.setItem("dealdone_properties_view", v); } catch {}
+  };
+  // 우측 패널 — 표/카드에서 선택된 매물 (id로 보관해 실시간 갱신 반영)
+  const [panelId, setPanelId] = useState<string | null>(null);
   // 즐겨찾기 (localStorage)
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem("property_pins") || "[]")); } catch { return new Set(); }
@@ -400,8 +412,10 @@ export default function PropertiesPage() {
 
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
 
+  const panelProp = panelId ? properties.find(x => x.id === panelId) || null : null;
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className={`p-4 sm:p-6 lg:p-8 transition-[padding] duration-300 ease-out ${panelProp ? "xl:pr-[400px]" : ""}`}>
       <div className="max-w-6xl mx-auto">
 
         {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 액션 버튼 그룹 */}
@@ -467,6 +481,24 @@ export default function PropertiesPage() {
                   <span className="hidden sm:inline">전체 삭제</span>
                 </button>
               )}
+            </div>
+
+            {/* 뷰 토글 — 카드(기존) / 표(엑셀형) */}
+            <div className="inline-flex rounded-lg border border-[var(--sidebar-bd)] overflow-hidden text-xs font-semibold">
+              <button
+                onClick={() => setViewStyle("card")}
+                className={`px-3 py-2 flex items-center gap-1 transition-colors ${viewStyle === "card" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}
+              >
+                <span className="material-symbols-outlined text-[15px] leading-none">grid_view</span>
+                카드
+              </button>
+              <button
+                onClick={() => setViewStyle("table")}
+                className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "table" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}
+              >
+                <span className="material-symbols-outlined text-[15px] leading-none">table_rows</span>
+                표
+              </button>
             </div>
 
             {/* 메인 액션 — 매물 등록 (solid 에메랄드 큰 버튼) */}
@@ -980,23 +1012,31 @@ export default function PropertiesPage() {
                 )}
               </div>
 
-              <div className="space-y-2.5">
-                {pagedList.map(p => (
-                  <PropertyCard
-                    key={p.id}
-                    property={p}
-                    schedules={schedules.filter(s => s.propertyId === p.id)}
-                    isPinned={pinnedIds.has(p.id)}
-                    onPin={() => togglePin(p.id)}
-                    onEdit={() => setEditing({ ...p })}
-                    onClose={() => close(p)}
-                    onDelete={() => remove(p.id)}
-                    onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
-                    onProgress={() => setProgressing({ ...p })}
-                    onCloneSameComplex={() => cloneSameComplex(p)}
-                  />
-                ))}
-              </div>
+              {viewStyle === "table" ? (
+                <PropertyTable
+                  list={pagedList}
+                  selectedId={panelId || undefined}
+                  onRowClick={p => setPanelId(p.id)}
+                />
+              ) : (
+                <div className="space-y-2.5">
+                  {pagedList.map(p => (
+                    <PropertyCard
+                      key={p.id}
+                      property={p}
+                      schedules={schedules.filter(s => s.propertyId === p.id)}
+                      isPinned={pinnedIds.has(p.id)}
+                      onPin={() => togglePin(p.id)}
+                      onEdit={() => setEditing({ ...p })}
+                      onClose={() => close(p)}
+                      onDelete={() => remove(p.id)}
+                      onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
+                      onProgress={() => setProgressing({ ...p })}
+                      onCloneSameComplex={() => cloneSameComplex(p)}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* ── 페이지네이션 UI ── */}
               {showPager && (
@@ -1069,6 +1109,16 @@ export default function PropertiesPage() {
           }}
         />
       )}
+
+      {/* 우측 패널 — 표/카드 행 선택 시 상세 (노션식 사이드 보기) */}
+      <PropertyPanel
+        property={panelProp}
+        onClose={() => setPanelId(null)}
+        onEdit={p => setEditing({ ...p })}
+        onCloneSameComplex={p => { cloneSameComplex(p); setPanelId(null); }}
+        onProgress={p => setProgressing({ ...p })}
+        onComplete={p => close(p)}
+      />
 
       {showUpload && (
         <PropertiesUploadModal

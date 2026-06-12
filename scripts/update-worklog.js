@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-11",
   day: "목",
   category: "디자인",
-  work: "탭 페이지(매물·건의함·더보기 등) 노션 톤 — 그라데이션 전부 플랫 틴트로, 모서리 rounded-3xl→xl 전체 통일 (아이콘 색은 원복)",
-  commit: "0a25eda",
-  note: "사이드바 아이콘 색 3bffffd는 오해석으로 되돌림",
+  work: "매물 탭·거래종류 필터 활성 상태 — 진한 단색 → 연한 틴트 + 진한 테두리 + 링 + 체크 아이콘 (선택 인지 강화)",
+  commit: "a41f8b7",
+  note: "작은 알약 필터는 진한 파랑 유지",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 탭 페이지 노션 톤" : "탭 페이지 노션 톤";
+      found.getCell(4).value = prev ? prev + " / 선택 상태 틴트+체크" : "선택 상태 틴트+체크";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "탭 페이지 노션 톤"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "선택 상태 틴트+체크"]);
     }
   }
 
