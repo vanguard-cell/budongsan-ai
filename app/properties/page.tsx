@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -482,7 +482,7 @@ export default function PropertiesPage() {
 
         {/* ── 잔금일 경과 알림 — Stitch 톤 (gradient + Material Symbols + 카드형) ── */}
         {balanceOverdue.length > 0 && (
-          <div className="mb-5 rounded-3xl border border-red-200 dark:border-red-800/60 bg-gradient-to-br from-red-50 via-rose-50 to-orange-50 dark:from-red-950/40 dark:via-rose-950/30 dark:to-orange-950/30 shadow-lg shadow-red-100/40 dark:shadow-red-950/20 overflow-hidden">
+          <div className="mb-5 rounded-xl border bg-[var(--tint-red-bg)] border-[var(--tint-red-bd)] overflow-hidden">
             {/* 헤더 */}
             <div className="flex items-start gap-3 px-4 sm:px-5 pt-4 pb-3 border-b border-red-100 dark:border-red-900/40">
               <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0">
@@ -567,9 +567,9 @@ export default function PropertiesPage() {
             {/* 미계약 카드 — 에메랄드 */}
             <button
               onClick={() => setViewMode("available")}
-              className={`group text-left rounded-3xl p-3 sm:p-4 transition-all border ${
+              className={`group text-left rounded-xl p-3 sm:p-4 transition-all border ${
                 viewMode === "available"
-                  ? "bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white border-emerald-600 shadow-xl shadow-emerald-200 dark:shadow-emerald-900/50 ring-4 ring-emerald-100 dark:ring-emerald-950"
+                  ? "bg-[#1D9E75] text-white border-[#1D9E75]"
                   : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-700 hover:shadow-md hover:-translate-y-0.5"
               }`}
             >
@@ -619,9 +619,9 @@ export default function PropertiesPage() {
             {/* 계약진행중 카드 — 블루 */}
             <button
               onClick={() => setViewMode("contracted")}
-              className={`group text-left rounded-3xl p-3 sm:p-4 transition-all border ${
+              className={`group text-left rounded-xl p-3 sm:p-4 transition-all border ${
                 viewMode === "contracted"
-                  ? "bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 text-white border-blue-600 shadow-xl shadow-blue-200 dark:shadow-blue-900/50 ring-4 ring-blue-100 dark:ring-blue-950"
+                  ? "bg-[#2383E2] text-white border-[#2383E2]"
                   : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-700 hover:shadow-md hover:-translate-y-0.5"
               }`}
             >
@@ -676,7 +676,7 @@ export default function PropertiesPage() {
           return (
             <Link
               href="/sales"
-              className="group block mb-5 rounded-3xl border border-emerald-200 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50 via-teal-50/60 to-white dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-slate-900 p-4 sm:p-5 hover:shadow-xl hover:shadow-emerald-100/60 dark:hover:shadow-emerald-950/30 transition-all"
+              className="group block mb-5 rounded-xl border bg-[var(--tint-green-bg)] border-[var(--tint-green-bd)] p-4 sm:p-5 hover:shadow-md transition-all"
             >
               <div className="grid grid-cols-12 gap-4 items-center">
                 {/* 좌측: 이번 달 매출 (8/12) */}
@@ -789,7 +789,7 @@ export default function PropertiesPage() {
         </div>
 
         {/* 검색 + 필터 */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-3 mb-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 mb-4">
           <input
             type="text"
             placeholder="🔍 주소 · 집주인 이름 · 연락처 검색"
@@ -911,7 +911,7 @@ export default function PropertiesPage() {
             // 매물은 있는데 필터 때문에 0건 → 초기화 안내
             if (hasActive && filtersOn) {
               return (
-                <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center">
+                <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
                   <div className="text-5xl mb-3">🔍</div>
                   <div className="text-base font-semibold text-gray-900 mb-1">조건에 맞는 매물이 없습니다</div>
                   <div className="text-xs text-gray-500 mb-4">
@@ -929,7 +929,7 @@ export default function PropertiesPage() {
               );
             }
             return (
-              <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center">
+              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
                 <div className="text-5xl mb-3">🏘️</div>
                 <div className="text-base font-semibold text-gray-900 mb-1">등록된 매물이 없습니다</div>
                 <div className="text-xs text-gray-500 mb-4">매물 등록 버튼을 눌러 추가해보세요</div>

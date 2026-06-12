@@ -119,7 +119,7 @@ export default function SalesPage() {
             </div>
 
             {/* 거래종류별 합계 */}
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 mb-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
               <div className="text-sm font-bold text-gray-800 mb-3">🏷️ 거래종류별 매출 (누적)</div>
               <div className="grid grid-cols-3 gap-2">
                 <DealCard label="매매" value={stats.byDealType.매매} accent="red" />
@@ -129,7 +129,7 @@ export default function SalesPage() {
             </div>
 
             {/* 월별 막대 그래프 (최근 12개월) */}
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 mb-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
               <div className="flex items-baseline justify-between mb-3">
                 <div className="text-sm font-bold text-gray-800">📊 최근 12개월 매출 추이</div>
                 <div className="text-[10px] text-gray-400">단위: 만원</div>
@@ -166,7 +166,7 @@ export default function SalesPage() {
             </div>
 
             {/* 월별 명세 — 펼침 */}
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 mb-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
               <div className="text-sm font-bold text-gray-800 mb-3">📋 월별 매출 명세</div>
               <div className="space-y-2">
                 {stats.allMonths.map(m => {
@@ -264,7 +264,7 @@ function DealCard({ label, value, accent }: { label: string; value: number; acce
 
 function EmptyState() {
   return (
-    <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center">
+    <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
       <div className="text-5xl mb-3">📊</div>
       <div className="text-base font-semibold text-gray-900 mb-1">아직 집계된 매출이 없습니다</div>
       <div className="text-xs text-gray-500 mb-4 leading-relaxed">

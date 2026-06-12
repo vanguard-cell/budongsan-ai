@@ -687,7 +687,7 @@ export default function Home() {
         </div>
 
         {/* ── STEP 1: 기본 정보 ── */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
           <SectionHead step="1" title="기본 정보" desc="매물분류, 거래종류, 단지 선택, 타입 선택" />
 
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -924,7 +924,7 @@ export default function Home() {
         </div>
 
         {/* ── STEP 2: 가격 + 매물 정보 (통합) ── */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
           <SectionHead step="2" title="가격 및 매물 정보" desc="가격, 면적, 층수, 구조 등" />
 
           {/* 가격 */}
@@ -990,7 +990,7 @@ export default function Home() {
         </div>
 
         {/* ── STEP 3: 매물 특징 ── */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
           <SectionHead step="3" title="매물 특징" desc="아는 것만 입력해도 AI가 문구를 만들어드립니다" />
 
           <div className="mb-3"><Label>교통 / 역세권</Label><Input value={form.transport} onChange={sf("transport")} placeholder="예: 미사역 도보 30초 (인프라 분석 시 자동입력)" /></div>
@@ -1011,7 +1011,7 @@ export default function Home() {
         </div>
 
         {/* ── 사진 업로드 → AI 분석 ── */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-4">
           <SectionHead step="4" title="매물 사진 (선택)" desc="사진 업로드 → AI가 장점 자동 추출" />
 
           <input
@@ -1073,7 +1073,7 @@ export default function Home() {
         </div>
 
         {/* ── 중개사무소 정보 ── */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm mb-5 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-5 overflow-hidden">
           <button onClick={() => setShowAgency(p => !p)}
             className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2">
@@ -1338,7 +1338,7 @@ export default function Home() {
       {/* 매물 정보 가져오기 모달 */}
       {showImport && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => { setShowImport(false); resetImport(); }}>
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-gray-100 shrink-0">
               <div>
                 <h3 className="font-bold text-gray-800">📥 매물 정보 가져오기</h3>
@@ -1497,7 +1497,7 @@ export default function Home() {
       {/* 히스토리 모달 */}
       {showHistory && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowHistory(false)}>
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
               <h3 className="font-bold text-gray-800">📂 매물 히스토리 ({history.length})</h3>
               <button onClick={() => setShowHistory(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
@@ -1537,7 +1537,7 @@ export default function Home() {
       {/* 템플릿 모달 */}
       {showTemplates && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowTemplates(false)}>
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
               <h3 className="font-bold text-gray-800">📋 템플릿 ({templates.length})</h3>
               <button onClick={() => setShowTemplates(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>

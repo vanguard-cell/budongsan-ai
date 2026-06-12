@@ -144,7 +144,7 @@ export default function FeedbackPage() {
     : items;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
 
         {/* 사용자 바 */}
@@ -192,7 +192,7 @@ export default function FeedbackPage() {
 
         {/* 새 건의 입력 (일반 사용자만) */}
         {!isAdmin && (
-          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-4 sm:p-5 mb-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5 mb-5">
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm font-semibold text-gray-800">✏️ 새 건의사항 작성</div>
               {items.length > 0 && (
@@ -203,7 +203,7 @@ export default function FeedbackPage() {
             </div>
             {/* 안내문 — 같은 건의에 추가 의견은 답글로 */}
             {items.length > 0 && (
-              <div className="mb-3 p-2.5 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 text-[11px] text-purple-800 leading-relaxed">
+              <div className="mb-3 p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-[11px] text-purple-800 leading-relaxed">
                 💬 <b>새로운 주제</b>일 때만 여기에 작성하세요.<br />
                 기존 건의에 <b>이어서 의견 추가</b>는 아래 각 카드 안의 <b>「추가 메시지 입력」</b>란을 사용하면 같은 글에서 대화처럼 이어집니다.
               </div>
@@ -242,7 +242,7 @@ export default function FeedbackPage() {
 
         {/* 유저 — 확인 대기중인 처리완료 건 배너 (확인 독촉) */}
         {!isAdmin && myAwaitingConfirm.length > 0 && (
-          <div className="mb-5 rounded-3xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50 p-4 shadow-sm">
+          <div className="mb-5 rounded-xl border bg-[var(--tint-green-bg)] border-[var(--tint-green-bd)] p-4">
             <div className="flex items-start gap-2 mb-2">
               <span className="text-2xl">✅</span>
               <div className="flex-1">
@@ -324,7 +324,7 @@ export default function FeedbackPage() {
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : items.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 text-center">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
             <div className="text-5xl mb-3">📭</div>
             <div className="text-base font-semibold text-gray-900 mb-1">
               {isAdmin ? "아직 건의사항이 없습니다" : "아직 작성한 건의사항이 없습니다"}
@@ -334,7 +334,7 @@ export default function FeedbackPage() {
             </div>
           </div>
         ) : visibleItems.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 text-center text-sm text-gray-500">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center text-sm text-gray-500">
             {filter === "pending" ? "미처리 건의가 없습니다 🎉" : filter === "done" ? "완료된 건의가 없습니다" : "표시할 건의가 없습니다"}
           </div>
         ) : (

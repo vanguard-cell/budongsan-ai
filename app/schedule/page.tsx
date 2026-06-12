@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -307,7 +307,7 @@ export default function SchedulePage() {
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : grouped.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center">
+          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
             <div className="text-5xl mb-3">📅</div>
             <div className="text-base font-semibold text-gray-900 mb-1">일정이 없습니다</div>
             <div className="text-xs text-gray-500 mb-4">약속을 추가하거나 만기·손님 탭을 확인해보세요</div>
@@ -543,8 +543,8 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[92vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-3xl">
+      <div className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[92vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-base font-semibold">{!schedule.propertyAddress ? "약속 추가" : "약속 수정"}</h2>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 text-lg">✕</button>
         </div>

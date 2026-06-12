@@ -16,7 +16,7 @@ export default function MorePage() {
   const { user } = useAuth();
   const items = user?.email === ADMIN_EMAIL ? [...ITEMS, ADMIN_ITEM] : ITEMS;
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-gray-700 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">

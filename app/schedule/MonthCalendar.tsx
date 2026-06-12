@@ -128,7 +128,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate }: Pro
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
       {/* 월 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">‹</button>

@@ -68,7 +68,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
       : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md";
 
   return (
-    <div className={`rounded-3xl border p-3 sm:p-4 transition-all ${cardClass}`}>
+    <div className={`rounded-xl border p-3 sm:p-4 transition-all ${cardClass}`}>
       {/* ── 잔금일 경과 카드 내부 빨간 배너 ── */}
       {balanceOverdue && !isClosed && (
         <div className="mb-3 -mt-1 -mx-1 px-3 py-2 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40 border border-red-200 dark:border-red-800/60 flex items-center gap-2 text-[11px]">

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * 앱 설치 가이드 — 폰 기종 자동 감지
@@ -159,10 +159,10 @@ function GuideModal({ platform, onClose }: { platform: Platform; onClose: () => 
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-3xl">
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-base font-semibold text-gray-900">📲 폰에 앱처럼 설치하기</h2>
           <button
             onClick={onClose}

@@ -107,7 +107,7 @@ export default function TeamPage() {
         </section>
 
         {/* 멤버 목록 */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden mb-5">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden mb-5">
           <div className="px-4 py-3 bg-indigo-50 dark:bg-indigo-950/30 border-b border-indigo-100 dark:border-indigo-900/40 flex items-center gap-2">
             <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400" style={{ fontVariationSettings: "'FILL' 1" }}>apartment</span>
             <h3 className="font-bold text-gray-900 dark:text-gray-100 flex-1 truncate">{agency?.name || "내 사무실"}</h3>
@@ -151,7 +151,7 @@ export default function TeamPage() {
 
         {/* 대표 — 초대 코드 발급 */}
         {isOwner && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 sm:p-5 mb-5">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 sm:p-5 mb-5">
             <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">
               <span className="material-symbols-outlined text-indigo-600 text-xl">person_add</span>
               직원 초대하기
@@ -187,7 +187,7 @@ export default function TeamPage() {
         )}
 
         {/* 초대 코드로 합류 (모두 — 직원용) */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 sm:p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 sm:p-5">
           <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">
             <span className="material-symbols-outlined text-[var(--brand-blue)] text-xl">login</span>
             초대 코드로 사무실 합류

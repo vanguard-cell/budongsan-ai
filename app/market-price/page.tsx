@@ -130,7 +130,7 @@ export default function MarketPricePage() {
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : grouped.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-sm p-8 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-8 text-center">
             <div className="text-5xl mb-3">📈</div>
             <div className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
               {query ? "검색 결과가 없습니다" : "기록된 실거래가가 없습니다"}
@@ -145,7 +145,7 @@ export default function MarketPricePage() {
         ) : (
           <div className="space-y-4">
             {grouped.map(([complex, list]) => (
-              <div key={complex} className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div key={complex} className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
                 {/* 단지명 헤더 */}
                 <div className="px-4 py-3 bg-violet-50 dark:bg-violet-950/30 border-b border-violet-100 dark:border-violet-900/40 flex items-center gap-2">
                   <span className="material-symbols-outlined text-violet-600 dark:text-violet-400 text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>apartment</span>
@@ -293,7 +293,7 @@ function MarketPriceModal({ item, onClose, onSave }: {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div
-        className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[calc(100dvh-3rem)] sm:max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-xl shadow-2xl max-h-[calc(100dvh-3rem)] sm:max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* 헤더 */}

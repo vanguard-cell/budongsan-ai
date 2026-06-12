@@ -281,7 +281,7 @@ export default function CustomersPage() {
         </div>
 
         {/* 필터 / 검색 */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>전체 ({counts.all})</FilterChip>
             <FilterChip active={filter === "needFollowup"} onClick={() => setFilter("needFollowup")}>🔔 후속 연락 ({counts.needFollowup})</FilterChip>
@@ -598,7 +598,7 @@ function CustomerRow({
 
 function EmptyState({ isFirstUse, onAdd }: { isFirstUse: boolean; onAdd: () => void }) {
   return (
-    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 text-center">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
       <div className="text-5xl mb-3">{isFirstUse ? "👋" : "🔍"}</div>
       <div className="text-base font-semibold text-gray-900 mb-1">
         {isFirstUse ? "아직 등록된 손님이 없습니다" : "조건에 맞는 손님이 없습니다"}

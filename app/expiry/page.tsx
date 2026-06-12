@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import ComplexPickerWidget from "@/app/ComplexPicker";
@@ -386,7 +386,7 @@ export default function ExpiryPage() {
         </div>
 
         {/* 필터 / 검색 */}
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
               전체 ({counts.all})
@@ -748,7 +748,7 @@ function ContactLine({
 /* ───────── 빈 상태 ───────── */
 function EmptyState({ isFirstUse, onAdd }: { isFirstUse: boolean; onAdd: () => void }) {
   return (
-    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-8 text-center">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
       <div className="text-5xl mb-3">{isFirstUse ? "👋" : "🔍"}</div>
       <div className="text-base font-semibold text-gray-900 mb-1">
         {isFirstUse ? "아직 등록된 계약이 없습니다" : "조건에 맞는 계약이 없습니다"}
@@ -1262,10 +1262,10 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[calc(100dvh-5rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[calc(100dvh-5rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-3xl">
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-base font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}

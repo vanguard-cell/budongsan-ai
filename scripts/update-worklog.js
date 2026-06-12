@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-11",
   day: "목",
   category: "디자인",
-  work: "노션 톤 v2 전체 적용 — 연회색 사이드바(#F7F7F5)+회색 활성 알약, 흰 메인, 카드 연한 틴트 4색, 브랜드 에메랄드→노션 블루(#2383E2) 전 페이지 일괄",
-  commit: "1e5c0fb",
-  note: "시안 3종 중 2번 선택, 매출·완료 그린은 유지",
+  work: "사이드바·모바일 탭 항목별 아이콘 색 (노션식) — 홈 블루/매물 코랄/만기 빨강/손님 파랑/스케줄 주황/매출 그린 등 10색, 홈 카드 상태색과 통일",
+  commit: "3bffffd",
+  note: "",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 노션 톤 v2 전체 적용" : "노션 톤 v2 전체 적용";
+      found.getCell(4).value = prev ? prev + " / 사이드바 항목별 색" : "사이드바 항목별 색";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "노션 톤 v2 전체 적용"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "사이드바 항목별 색"]);
     }
   }
 

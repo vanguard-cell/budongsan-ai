@@ -135,7 +135,7 @@ export default function AdminPage() {
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : users.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center text-gray-500">아직 가입한 유저가 없습니다</div>
+          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">아직 가입한 유저가 없습니다</div>
         ) : (
           <div className="space-y-2.5">
             {users.map(u => (
@@ -186,8 +186,8 @@ export default function AdminPage() {
       {/* 유저 매물 열람 모달 */}
       {viewing && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setViewing(null)}>
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-3xl">
+          <div className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-2xl">
               <div>
                 <h2 className="text-base font-semibold">🏘️ {viewing.user.displayName || viewing.user.email}의 매물</h2>
                 <p className="text-[11px] text-gray-500">{viewing.props.length}건 · 읽기 전용</p>

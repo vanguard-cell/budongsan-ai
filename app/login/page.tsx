@@ -187,7 +187,7 @@ function LoginInner() {
           </div>
         )}
 
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-5 space-y-3">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-3">
           {/* 구글 로그인 */}
           <button
             onClick={handleGoogle}

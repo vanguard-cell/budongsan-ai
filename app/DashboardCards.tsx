@@ -80,7 +80,7 @@ export default function DashboardCards() {
   if (!user) {
     return (
       <div className="mb-5">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-3xl p-5 text-center">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5 text-center">
           <div className="text-3xl mb-2">☁️</div>
           <div className="text-sm font-semibold text-gray-900 mb-1">
             로그인하시면 PC·폰 자동 동기화됩니다
