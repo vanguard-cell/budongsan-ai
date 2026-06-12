@@ -196,17 +196,21 @@ export default function PropertyTable({
     setUndo(null);
   };
 
-  /* 편집 셀 공통 래퍼 — ✓ 확인 / ✕ 취소 */
-  const EditWrap = ({ p, children }: { p: Property; children: React.ReactNode }) => (
-    <div className="flex items-center gap-1" onClick={e => e.stopPropagation()} onDoubleClick={e => e.stopPropagation()}>
+  /* 편집 팝오버 — 셀 위로 넉넉하게 떠서 입력 (노션식). ✓ 확인 / ✕ 취소 */
+  const EditWrap = ({ p, wide, children }: { p: Property; wide?: boolean; children: React.ReactNode }) => (
+    <div
+      className={`absolute left-0 top-0 z-40 ${wide ? "min-w-[300px]" : "min-w-[240px]"} bg-white dark:bg-slate-900 border-2 border-[var(--brand-blue)] rounded-xl shadow-2xl p-1.5 flex items-center gap-1.5`}
+      onClick={e => e.stopPropagation()}
+      onDoubleClick={e => e.stopPropagation()}
+    >
       <div className="flex-1 min-w-0">{children}</div>
       <button onClick={() => commit(p)} title="저장 (Enter)"
-        className="w-6 h-6 flex items-center justify-center rounded-md bg-[var(--brand-blue)] text-white hover:bg-[var(--brand-blue-dark)] shrink-0">
-        <span className="material-symbols-outlined text-[14px]">check</span>
+        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--brand-blue)] text-white hover:bg-[var(--brand-blue-dark)] shrink-0">
+        <span className="material-symbols-outlined text-[18px]">check</span>
       </button>
       <button onClick={() => setEdit(null)} title="취소 (Esc)"
-        className="w-6 h-6 flex items-center justify-center rounded-md border border-gray-200 dark:border-slate-600 text-gray-400 hover:text-gray-700 shrink-0">
-        <span className="material-symbols-outlined text-[14px]">close</span>
+        className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 shrink-0">
+        <span className="material-symbols-outlined text-[18px]">close</span>
       </button>
     </div>
   );
@@ -216,7 +220,7 @@ export default function PropertyTable({
     if (e.key === "Escape") setEdit(null);
   };
 
-  const inputCls = "w-full px-1.5 py-1 text-[12px] rounded-md border border-[var(--brand-blue)] bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30";
+  const inputCls = "w-full px-2.5 py-2 text-[13px] rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30";
 
   const isEditing = (p: Property, f: EditField) => edit?.id === p.id && edit.field === f;
 
@@ -315,29 +319,29 @@ export default function PropertyTable({
                   }`}
                 >
                   {show("address") && (
-                    <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={addressStr(p)}>
-                      {addressStr(p)}
+                    <td className={`px-2 py-2 font-semibold max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={addressStr(p)}>
+                      <span className="line-clamp-2 break-all leading-snug">{addressStr(p)}</span>
                     </td>
                   )}
                   {show("deal") && (
-                    <td className="px-2 py-2.5" onDoubleClick={() => startEdit(p, "deal")}>
-                      {isEditing(p, "deal") ? (
+                    <td className="relative px-2 py-2.5" onDoubleClick={() => startEdit(p, "deal")}>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap ${DEAL_TINT[p.dealType] || "bg-gray-100 text-gray-600"}`}>
+                        {p.dealType}
+                      </span>
+                      {isEditing(p, "deal") && (
                         <EditWrap p={p}>
                           <select autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls}>
                             {DEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                           </select>
                         </EditWrap>
-                      ) : (
-                        <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap ${DEAL_TINT[p.dealType] || "bg-gray-100 text-gray-600"}`}>
-                          {p.dealType}
-                        </span>
                       )}
                     </td>
                   )}
                   {show("price") && (
-                    <td className="px-2 py-2.5 tabular-nums text-gray-900 dark:text-gray-100 whitespace-nowrap" onDoubleClick={() => startEdit(p, "price")}>
-                      {isEditing(p, "price") ? (
-                        <EditWrap p={p}>
+                    <td className="relative px-2 py-2.5 tabular-nums text-gray-900 dark:text-gray-100 whitespace-nowrap" onDoubleClick={() => startEdit(p, "price")}>
+                      {priceStr(p)}
+                      {isEditing(p, "price") && (
+                        <EditWrap p={p} wide={p.dealType === "월세"}>
                           <div className="flex items-center gap-1">
                             <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} placeholder={p.dealType === "월세" ? "보증금" : "가격"} className={inputCls} />
                             {p.dealType === "월세" && (
@@ -348,54 +352,59 @@ export default function PropertyTable({
                             )}
                           </div>
                         </EditWrap>
-                      ) : priceStr(p)}
+                      )}
                     </td>
                   )}
                   {show("ptype") && (
-                    <td className="px-2 py-2.5 text-gray-600 dark:text-gray-400 truncate max-w-0" onDoubleClick={() => startEdit(p, "ptype")}>
-                      {isEditing(p, "ptype") ? (
+                    <td className="relative px-2 py-2.5 text-gray-600 dark:text-gray-400 truncate max-w-0" onDoubleClick={() => startEdit(p, "ptype")}>
+                      {p.propertyType}
+                      {isEditing(p, "ptype") && (
                         <EditWrap p={p}>
                           <select autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls}>
                             {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                           </select>
                         </EditWrap>
-                      ) : p.propertyType}
+                      )}
                     </td>
                   )}
                   {show("owner") && (
-                    <td className="px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={() => startEdit(p, "owner")}>
-                      {isEditing(p, "owner") ? (
+                    <td className="relative px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={() => startEdit(p, "owner")}>
+                      {p.ownerName || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                      {isEditing(p, "owner") && (
                         <EditWrap p={p}>
                           <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls} />
                         </EditWrap>
-                      ) : (p.ownerName || <span className="text-gray-300 dark:text-gray-600">—</span>)}
+                      )}
                     </td>
                   )}
                   {show("tenant") && (
-                    <td className="px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={() => startEdit(p, "tenant")}>
-                      {isEditing(p, "tenant") ? (
+                    <td className="relative px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={() => startEdit(p, "tenant")}>
+                      {p.tenantName || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                      {isEditing(p, "tenant") && (
                         <EditWrap p={p}>
                           <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls} />
                         </EditWrap>
-                      ) : (p.tenantName || <span className="text-gray-300 dark:text-gray-600">—</span>)}
+                      )}
                     </td>
                   )}
                   {show("leaseEnd") && (
-                    <td className="px-2 py-2.5 whitespace-nowrap text-[12px]" onDoubleClick={() => startEdit(p, "leaseEnd")}>
-                      {isEditing(p, "leaseEnd") ? (
-                        <EditWrap p={p}>
+                    <td className="relative px-2 py-2.5 whitespace-nowrap text-[12px]" onDoubleClick={() => startEdit(p, "leaseEnd")}>
+                      <LeaseEndCell date={p.leaseEndDate} />
+                      {isEditing(p, "leaseEnd") && (
+                        <EditWrap p={p} wide>
                           <KoreanDatePicker value={draftA} onChange={setDraftA} accent="blue" portalId="dd-dp-portal" />
                         </EditWrap>
-                      ) : <LeaseEndCell date={p.leaseEndDate} />}
+                      )}
                     </td>
                   )}
                   {show("balance") && (
-                    <td className="px-2 py-2.5 whitespace-nowrap text-[12px]" onDoubleClick={() => startEdit(p, "balance")}>
-                      {isEditing(p, "balance") ? (
-                        <EditWrap p={p}>
+                    <td className="relative px-2 py-2.5 whitespace-nowrap text-[12px]" onDoubleClick={() => startEdit(p, "balance")}>
+                      <DateCell date={p.balanceDate} />
+                      {isEditing(p, "balance") && (
+                        <EditWrap p={p} wide>
                           <KoreanDatePicker value={draftA} onChange={setDraftA} accent="blue" portalId="dd-dp-portal" />
                         </EditWrap>
-                      ) : <DateCell date={p.balanceDate} />}
+                      )}
                     </td>
                   )}
                   {show("stage") && (

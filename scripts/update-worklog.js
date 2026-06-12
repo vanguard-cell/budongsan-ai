@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-12",
   day: "금",
   category: "신규 기능",
-  work: "내 매물 표 뷰(엑셀형) + 행 클릭 우측 패널 — 카드|표 토글, 9열 표(단계 자동배지·만기 임박색), 패널에서 전화·수정·같은단지·계약진행·만기 이동",
-  commit: "1fbff8d",
-  note: "다음: 헤더 정렬·필터 메뉴 → 인라인 셀 편집",
+  work: "매물 표 3·4단계 — 헤더 클릭 정렬·필터 메뉴(열 숨기기 포함) + 더블클릭 인라인 셀 편집(달력·✓확인·실행취소 토스트) + 주소·칩 잘림 픽스",
+  commit: "8e5f292",
+  note: "인라인 편집 PC 전용, 단지·단계 열은 편집 불가",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 매물 표 뷰+우측 패널" : "매물 표 뷰+우측 패널";
+      found.getCell(4).value = prev ? prev + " / 표 헤더 메뉴+인라인 편집" : "표 헤더 메뉴+인라인 편집";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "매물 표 뷰+우측 패널"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "표 헤더 메뉴+인라인 편집"]);
     }
   }
 
