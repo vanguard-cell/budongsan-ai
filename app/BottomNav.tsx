@@ -5,30 +5,30 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ADMIN_EMAIL } from "@/lib/admin-db";
 
-// 메인 5개 탭 — 모바일 (Material Symbols Outlined)
+// 메인 5개 탭 — 모바일 (Material Symbols Outlined) + 항목별 색 (노션식, 사이드바와 동일)
 const MAIN_TABS = [
-  { href: "/dashboard",  icon: "home",       label: "홈" },
-  { href: "/properties", icon: "domain",     label: "내 매물" },
-  { href: "/expiry",     icon: "event_busy", label: "만기" },
-  { href: "/customers",  icon: "group",      label: "손님" },
-  { href: "/more",       icon: "more_horiz", label: "더보기" },
+  { href: "/dashboard",  icon: "home",       label: "홈",     color: "#2383E2" },
+  { href: "/properties", icon: "domain",     label: "내 매물", color: "#D85A30" },
+  { href: "/expiry",     icon: "event_busy", label: "만기",   color: "#E24B4A" },
+  { href: "/customers",  icon: "group",      label: "손님",   color: "#378ADD" },
+  { href: "/more",       icon: "more_horiz", label: "더보기", color: "#888780" },
 ];
 
-// 사이드바 전체 메뉴 — PC (Material Symbols Outlined, 대시보드와 통일)
+// 사이드바 전체 메뉴 — PC (Material Symbols Outlined, 대시보드와 통일 — 색 포함)
 const SIDEBAR_TABS = [
-  { href: "/dashboard",  icon: "home",            label: "홈" },
-  { href: "/properties", icon: "domain",          label: "내 매물 관리" },
-  { href: "/expiry",     icon: "event_busy",      label: "만기 관리" },
-  { href: "/customers",  icon: "group",           label: "손님 관리" },
-  { href: "/schedule",     icon: "calendar_month",  label: "스케줄" },
-  { href: "/sales",        icon: "payments",        label: "매출 관리" },
-  { href: "/market-price", icon: "trending_up",     label: "실거래 최고가" },
-  { href: "/ai-content",   icon: "auto_awesome",    label: "AI 문구 생성" },
-  { href: "/team",         icon: "groups",          label: "직원 관리" },
-  { href: "/feedback",     icon: "feedback",        label: "건의함" },
+  { href: "/dashboard",  icon: "home",            label: "홈",          color: "#2383E2" },
+  { href: "/properties", icon: "domain",          label: "내 매물 관리", color: "#D85A30" },
+  { href: "/expiry",     icon: "event_busy",      label: "만기 관리",    color: "#E24B4A" },
+  { href: "/customers",  icon: "group",           label: "손님 관리",    color: "#378ADD" },
+  { href: "/schedule",     icon: "calendar_month",  label: "스케줄",       color: "#EF9F27" },
+  { href: "/sales",        icon: "payments",        label: "매출 관리",    color: "#1D9E75" },
+  { href: "/market-price", icon: "trending_up",     label: "실거래 최고가", color: "#7F77DD" },
+  { href: "/ai-content",   icon: "auto_awesome",    label: "AI 문구 생성",  color: "#D4537E" },
+  { href: "/team",         icon: "groups",          label: "직원 관리",    color: "#0F8A7D" },
+  { href: "/feedback",     icon: "feedback",        label: "건의함",       color: "#C77E29" },
 ];
 
-const ADMIN_TAB = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리" };
+const ADMIN_TAB = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리", color: "#888780" };
 
 export default function AppNav() {
   const pathname = usePathname();
@@ -77,7 +77,7 @@ export default function AppNav() {
                 }`}>
                 <span
                   className="material-symbols-outlined text-xl leading-none w-7 text-center"
-                  style={isActive ? { fontVariationSettings: "'FILL' 1, 'wght' 500" } : undefined}
+                  style={{ color: tab.color, ...(isActive ? { fontVariationSettings: "'FILL' 1, 'wght' 500" } : {}) }}
                 >
                   {tab.icon}
                 </span>
@@ -102,8 +102,9 @@ export default function AppNav() {
             return (
               <Link key={tab.href} href={tab.href}
                 className={`flex flex-col items-center gap-0.5 flex-1 py-2 rounded-2xl transition-colors ${
-                  isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-500"
-                }`}>
+                  isActive ? "" : "text-gray-500 dark:text-gray-500"
+                }`}
+                style={isActive ? { color: tab.color } : undefined}>
                 <span
                   className="material-symbols-outlined text-2xl leading-none"
                   style={isActive ? { fontVariationSettings: "'FILL' 1, 'wght' 600" } : undefined}
@@ -111,7 +112,7 @@ export default function AppNav() {
                   {tab.icon}
                 </span>
                 <span className={`text-[10px] font-medium ${isActive ? "font-bold" : ""}`}>{tab.label}</span>
-                {isActive && <span className="w-1 h-1 rounded-full bg-blue-600 dark:bg-blue-400 mt-0.5" />}
+                {isActive && <span className="w-1 h-1 rounded-full mt-0.5" style={{ backgroundColor: tab.color }} />}
               </Link>
             );
           })}

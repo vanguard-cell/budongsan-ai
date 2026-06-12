@@ -22,25 +22,26 @@ interface NavItem {
   href: string;
   icon: string;     // Material Symbols
   label: string;
+  color: string;    // 항목별 아이콘 색 (노션식 — 홈 카드 상태색과 동일 규칙)
 }
 
 const NAV: NavItem[] = [
-  { href: "/dashboard",  icon: "home",            label: "홈" },
-  { href: "/properties", icon: "domain",          label: "내 매물 관리" },
-  { href: "/expiry",     icon: "event_busy",      label: "만기 관리" },
-  { href: "/customers",  icon: "group",           label: "손님 관리" },
-  { href: "/schedule",     icon: "calendar_month",  label: "스케줄" },
-  { href: "/sales",        icon: "payments",        label: "매출 관리" },
-  { href: "/market-price", icon: "trending_up",     label: "실거래 최고가" },
-  { href: "/ai-content",   icon: "auto_awesome",    label: "AI 문구 생성" },
+  { href: "/dashboard",  icon: "home",            label: "홈",          color: "#2383E2" },
+  { href: "/properties", icon: "domain",          label: "내 매물 관리", color: "#D85A30" },
+  { href: "/expiry",     icon: "event_busy",      label: "만기 관리",    color: "#E24B4A" },
+  { href: "/customers",  icon: "group",           label: "손님 관리",    color: "#378ADD" },
+  { href: "/schedule",     icon: "calendar_month",  label: "스케줄",       color: "#EF9F27" },
+  { href: "/sales",        icon: "payments",        label: "매출 관리",    color: "#1D9E75" },
+  { href: "/market-price", icon: "trending_up",     label: "실거래 최고가", color: "#7F77DD" },
+  { href: "/ai-content",   icon: "auto_awesome",    label: "AI 문구 생성",  color: "#D4537E" },
 ];
 
 const SUB_NAV: NavItem[] = [
-  { href: "/team",       icon: "groups",          label: "직원 관리" },
-  { href: "/feedback",   icon: "feedback",        label: "건의함" },
+  { href: "/team",       icon: "groups",          label: "직원 관리", color: "#0F8A7D" },
+  { href: "/feedback",   icon: "feedback",        label: "건의함",    color: "#C77E29" },
 ];
 
-const ADMIN_NAV: NavItem = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리" };
+const ADMIN_NAV: NavItem = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리", color: "#888780" };
 
 interface SidebarProps {
   /** 고정 열림 (토글 버튼) — false면 화면 밖으로 슬라이드 */
@@ -154,7 +155,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
             >
               <span
                 className="material-symbols-outlined text-xl"
-                style={active ? { fontVariationSettings: "'FILL' 1, 'wght' 500" } : undefined}
+                style={{ color: item.color, ...(active ? { fontVariationSettings: "'FILL' 1, 'wght' 500" } : {}) }}
               >
                 {item.icon}
               </span>
@@ -177,7 +178,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
                     : "text-[#5F5E5B]/90 dark:text-gray-400 hover:bg-[var(--sidebar-active)]/60 hover:text-gray-900 dark:hover:text-gray-100"
                   }`}
               >
-                <span className="material-symbols-outlined text-lg">{item.icon}</span>
+                <span className="material-symbols-outlined text-lg" style={{ color: item.color }}>{item.icon}</span>
                 {item.label}
               </Link>
             );

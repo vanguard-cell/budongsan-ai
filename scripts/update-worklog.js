@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-11",
   day: "목",
   category: "디자인",
-  work: "사이드바 테마 변경 — 네이비 → 라이트 화이트 + 블루 포인트 (6종 시안 중 4번 Stripe식 선택, 레거시 사이드바 포함)",
-  commit: "399d02b",
-  note: "블루톤 별로 피드백 반영",
+  work: "노션 톤 v2 전체 적용 — 연회색 사이드바(#F7F7F5)+회색 활성 알약, 흰 메인, 카드 연한 틴트 4색, 브랜드 에메랄드→노션 블루(#2383E2) 전 페이지 일괄",
+  commit: "1e5c0fb",
+  note: "시안 3종 중 2번 선택, 매출·완료 그린은 유지",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 라이트 사이드바 테마" : "라이트 사이드바 테마";
+      found.getCell(4).value = prev ? prev + " / 노션 톤 v2 전체 적용" : "노션 톤 v2 전체 적용";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "라이트 사이드바 테마"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "노션 톤 v2 전체 적용"]);
     }
   }
 
