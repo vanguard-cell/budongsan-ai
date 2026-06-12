@@ -564,102 +564,104 @@ export default function PropertiesPage() {
         {/* ── 매물 상태 탭 — Stitch 톤 큰 카드 (Material Symbols + 보조 메트릭) ── */}
         {!showClosed && (
           <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-5">
-            {/* 미계약 카드 — 에메랄드 */}
+            {/* 미계약 카드 — 그린 틴트 + 선택 시 진한 테두리·링·체크 */}
             <button
               onClick={() => setViewMode("available")}
               className={`group text-left rounded-xl p-3 sm:p-4 transition-all border ${
                 viewMode === "available"
-                  ? "bg-[#1D9E75] text-white border-[#1D9E75]"
-                  : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-700 hover:shadow-md hover:-translate-y-0.5"
+                  ? "bg-[var(--tint-green-bg)] border-[#1D9E75] ring-2 ring-[#1D9E75]/25"
+                  : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-700 hover:shadow-md hover:-translate-y-0.5"
               }`}
             >
-              {/* 헤더: 아이콘 + 라벨 */}
+              {/* 헤더: 아이콘 + 라벨 + 선택 체크 */}
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
-                    viewMode === "available"
-                      ? "bg-white/20 backdrop-blur-sm"
-                      : "bg-emerald-50 dark:bg-emerald-950/60 group-hover:bg-emerald-100"
-                  }`}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 dark:bg-emerald-950/60 group-hover:bg-emerald-100">
                     <span
-                      className={`material-symbols-outlined text-xl ${viewMode === "available" ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}
+                      className="material-symbols-outlined text-xl text-emerald-600 dark:text-emerald-400"
                       style={{ fontVariationSettings: "'FILL' 1" }}
                     >
                       storefront
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "available" ? "text-white" : "text-gray-900 dark:text-gray-100"}`}>
+                    <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "available" ? "text-[var(--tint-green-tx)]" : "text-gray-900 dark:text-gray-100"}`}>
                       미계약 매물
                     </div>
                   </div>
                 </div>
+                {viewMode === "available" && (
+                  <span className="material-symbols-outlined text-[20px] text-[#1D9E75] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    check_circle
+                  </span>
+                )}
               </div>
               {/* 큰 숫자 */}
               <div className="flex items-baseline gap-1 mt-2">
-                <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums leading-none ${viewMode === "available" ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}>
+                <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums leading-none ${viewMode === "available" ? "text-[var(--tint-green-tx)]" : "text-gray-400 dark:text-gray-500"}`}>
                   {counts.available}
                 </span>
-                <span className={`text-xs font-medium ${viewMode === "available" ? "text-white/80" : "text-gray-400"}`}>건</span>
+                <span className={`text-xs font-medium ${viewMode === "available" ? "text-[var(--tint-green-tx2)]" : "text-gray-400"}`}>건</span>
               </div>
               {/* 보조 메트릭 */}
               <div className={`mt-3 pt-2.5 border-t flex items-center gap-1 text-[11px] ${
                 viewMode === "available"
-                  ? "border-white/20 text-white/90"
+                  ? "border-[var(--tint-green-bd)] text-[var(--tint-green-tx2)]"
                   : "border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400"
               }`}>
                 <span className="material-symbols-outlined text-sm">fiber_new</span>
                 이번 주 신규
-                <span className={`ml-auto font-bold ${viewMode === "available" ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`}>
+                <span className={`ml-auto font-bold ${viewMode === "available" ? "text-[var(--tint-green-tx)]" : "text-gray-400"}`}>
                   {counts.thisWeekNew}건
                 </span>
               </div>
             </button>
 
-            {/* 계약진행중 카드 — 블루 */}
+            {/* 계약진행중 카드 — 블루 틴트 + 선택 시 진한 테두리·링·체크 */}
             <button
               onClick={() => setViewMode("contracted")}
               className={`group text-left rounded-xl p-3 sm:p-4 transition-all border ${
                 viewMode === "contracted"
-                  ? "bg-[#2383E2] text-white border-[#2383E2]"
-                  : "bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-700 hover:shadow-md hover:-translate-y-0.5"
+                  ? "bg-[var(--tint-blue-bg)] border-[#2383E2] ring-2 ring-[#2383E2]/25"
+                  : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-700 hover:shadow-md hover:-translate-y-0.5"
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
-                    viewMode === "contracted"
-                      ? "bg-white/20 backdrop-blur-sm"
-                      : "bg-blue-50 dark:bg-blue-950/60 group-hover:bg-blue-100"
-                  }`}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-blue-50 dark:bg-blue-950/60 group-hover:bg-blue-100">
                     <span
-                      className={`material-symbols-outlined text-xl ${viewMode === "contracted" ? "text-white" : "text-blue-600 dark:text-blue-400"}`}
+                      className="material-symbols-outlined text-xl text-blue-600 dark:text-blue-400"
                       style={{ fontVariationSettings: "'FILL' 1" }}
                     >
                       handshake
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "contracted" ? "text-white" : "text-gray-900 dark:text-gray-100"}`}>
+                    <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "contracted" ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`}>
                       계약진행중
                     </div>
                   </div>
                 </div>
+                {viewMode === "contracted" && (
+                  <span className="material-symbols-outlined text-[20px] text-[#2383E2] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    check_circle
+                  </span>
+                )}
               </div>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums leading-none ${viewMode === "contracted" ? "text-white" : "text-blue-600 dark:text-blue-400"}`}>
+                <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums leading-none ${viewMode === "contracted" ? "text-[var(--tint-blue-tx)]" : "text-gray-400 dark:text-gray-500"}`}>
                   {counts.contracted}
                 </span>
-                <span className={`text-xs font-medium ${viewMode === "contracted" ? "text-white/80" : "text-gray-400"}`}>건</span>
+                <span className={`text-xs font-medium ${viewMode === "contracted" ? "text-[var(--tint-blue-tx2)]" : "text-gray-400"}`}>건</span>
               </div>
               <div className={`mt-3 pt-2.5 border-t flex items-center gap-1 text-[11px] ${
                 viewMode === "contracted"
-                  ? "border-white/20 text-white/90"
+                  ? "border-[var(--tint-blue-bd)] text-[var(--tint-blue-tx2)]"
                   : "border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400"
               }`}>
                 <span className="material-symbols-outlined text-sm">event_upcoming</span>
                 잔금 30일 이내
-                <span className={`ml-auto font-bold ${viewMode === "contracted" ? "text-white" : counts.balanceSoon > 0 ? "text-orange-600 dark:text-orange-400" : "text-gray-400"}`}>
+                <span className={`ml-auto font-bold ${viewMode === "contracted" ? "text-[var(--tint-blue-tx)]" : counts.balanceSoon > 0 ? "text-orange-600 dark:text-orange-400" : "text-gray-400"}`}>
                   {counts.balanceSoon}건
                 </span>
               </div>
@@ -780,7 +782,7 @@ export default function PropertiesPage() {
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`rounded-2xl border p-3 text-center transition-colors ${filterType === t ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-white border-gray-200 hover:border-blue-300"}`}
+              className={`rounded-xl border p-3 text-center transition-all ${filterType === t ? "bg-[var(--tint-blue-bg)] border-[#2383E2] ring-2 ring-[#2383E2]/25 text-[var(--tint-blue-tx)]" : "bg-white border-gray-200 text-gray-700 hover:border-blue-300"}`}
             >
               <div className="text-lg font-bold">{counts[t === "all" ? "all" : t]}</div>
               <div className="text-[10px] mt-0.5 opacity-80">{t === "all" ? "전체" : t}</div>

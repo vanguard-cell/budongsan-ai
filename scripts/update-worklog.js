@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-11",
   day: "목",
   category: "디자인",
-  work: "사이드바·모바일 탭 항목별 아이콘 색 (노션식) — 홈 블루/매물 코랄/만기 빨강/손님 파랑/스케줄 주황/매출 그린 등 10색, 홈 카드 상태색과 통일",
-  commit: "3bffffd",
-  note: "",
+  work: "탭 페이지(매물·건의함·더보기 등) 노션 톤 — 그라데이션 전부 플랫 틴트로, 모서리 rounded-3xl→xl 전체 통일 (아이콘 색은 원복)",
+  commit: "0a25eda",
+  note: "사이드바 아이콘 색 3bffffd는 오해석으로 되돌림",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 사이드바 항목별 색" : "사이드바 항목별 색";
+      found.getCell(4).value = prev ? prev + " / 탭 페이지 노션 톤" : "탭 페이지 노션 톤";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "사이드바 항목별 색"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "탭 페이지 노션 톤"]);
     }
   }
 
