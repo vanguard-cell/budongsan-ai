@@ -28,6 +28,8 @@ interface Props {
   accent?: "purple" | "pink" | "red" | "orange" | "amber" | "blue" | "emerald" | "gray";
   /** 라벨 크고 진하게 (계약일용) */
   emphasizeLabel?: boolean;
+  /** overflow 컨테이너(표 등) 안에서 달력이 잘릴 때 — body 포털로 렌더 */
+  portalId?: string;
 }
 
 const ACCENT_CLASSES: Record<NonNullable<Props["accent"]>, { border: string; ring: string; label: string }> = {
@@ -96,6 +98,7 @@ export default function KoreanDatePicker({
   label,
   accent = "gray",
   emphasizeLabel = false,
+  portalId,
 }: Props) {
   const cls = ACCENT_CLASSES[accent];
   const date = parseValue(value);
@@ -132,6 +135,7 @@ export default function KoreanDatePicker({
         popperPlacement="bottom-start"
         wrapperClassName="w-full"
         calendarClassName="korean-datepicker-cal"
+        portalId={portalId}
       />
     </div>
   );

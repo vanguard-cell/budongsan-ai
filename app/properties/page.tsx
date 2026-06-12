@@ -1017,6 +1017,15 @@ export default function PropertiesPage() {
                   list={pagedList}
                   selectedId={panelId || undefined}
                   onRowClick={p => setPanelId(p.id)}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  filterType={filterType}
+                  onFilterTypeChange={setFilterType}
+                  filterPropType={filterPropType}
+                  onFilterPropTypeChange={setFilterPropType}
+                  priceRange={priceRange}
+                  onPriceRangeChange={setPriceRange}
+                  onPatch={async (p, patch) => { await saveProperty(user.agencyId, { ...p, ...patch }); }}
                 />
               ) : (
                 <div className="space-y-2.5">

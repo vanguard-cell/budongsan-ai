@@ -18,12 +18,12 @@ const CATEGORY_FILL = {
 };
 
 const ENTRY = {
-  date: "2026-06-11",
-  day: "목",
-  category: "디자인",
-  work: "매물 탭·거래종류 필터 활성 상태 — 진한 단색 → 연한 틴트 + 진한 테두리 + 링 + 체크 아이콘 (선택 인지 강화)",
-  commit: "a41f8b7",
-  note: "작은 알약 필터는 진한 파랑 유지",
+  date: "2026-06-12",
+  day: "금",
+  category: "신규 기능",
+  work: "내 매물 표 뷰(엑셀형) + 행 클릭 우측 패널 — 카드|표 토글, 9열 표(단계 자동배지·만기 임박색), 패널에서 전화·수정·같은단지·계약진행·만기 이동",
+  commit: "1fbff8d",
+  note: "다음: 헤더 정렬·필터 메뉴 → 인라인 셀 편집",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 선택 상태 틴트+체크" : "선택 상태 틴트+체크";
+      found.getCell(4).value = prev ? prev + " / 매물 표 뷰+우측 패널" : "매물 표 뷰+우측 패널";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "선택 상태 틴트+체크"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "매물 표 뷰+우측 패널"]);
     }
   }
 

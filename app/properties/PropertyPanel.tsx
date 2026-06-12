@@ -41,7 +41,7 @@ function ContactChip({ role, name, phone, kind }: { role: string; name?: string;
     <span className="inline-flex items-center rounded-full overflow-hidden border border-gray-200 dark:border-slate-600">
       <a href={`tel:${phone}`} title={`${label} 전화`} className={`inline-flex items-center gap-1 pl-2 pr-1.5 py-1 text-[11px] font-bold transition-colors ${style}`}>
         <span className="material-symbols-outlined text-[13px]">call</span>
-        <span className="truncate max-w-[90px]">{label}</span>
+        <span className="whitespace-nowrap">{label}</span>
       </a>
       <a href={`sms:${phone}`} title={`${label}에게 문자`} className={`inline-flex items-center px-1.5 py-1 transition-colors border-l border-gray-200 dark:border-slate-600 ${style}`}>
         <span className="material-symbols-outlined text-[13px]">sms</span>
