@@ -180,6 +180,13 @@ export default function MarketPricePage() {
                                 <span className="text-[10px] text-gray-400">만</span>
                               </div>
                             )}
+                            {m.wolseMonthly && (
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-[11px] text-gray-500 dark:text-gray-400">월세</span>
+                                <span className="text-base font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">{fmtKorean(m.wolseDeposit) || "0"}/{fmtKorean(m.wolseMonthly)}</span>
+                                <span className="text-[10px] text-gray-400">만</span>
+                              </div>
+                            )}
                           </div>
                           {m.memo && (
                             <div className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded-lg px-2 py-1 inline-block">💬 {m.memo}</div>
@@ -239,7 +246,7 @@ function MarketPriceModal({ item, onClose, onSave }: {
   const autoLookup = async () => {
     if (!form.complexName.trim()) { alert("단지명을 먼저 입력해주세요."); return; }
     setLooking(true);
-    setLookupMsg("국토부 실거래 조회 중… (최근 12개월)");
+    setLookupMsg("국토부 실거래 조회 중… (최근 6개월)");
     try {
       const body = {
         location: form.complexName,        // lawdCd 추출용 (지역 키워드 없으면 하남 기본)
@@ -248,9 +255,10 @@ function MarketPriceModal({ item, onClose, onSave }: {
         propertyType: lookupType,
         mode: "max",
       };
-      const [saleRes, jeonseRes] = await Promise.all([
+      const [saleRes, jeonseRes, wolseRes] = await Promise.all([
         fetch("/api/price", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, dealType: "매매" }) }).then(r => r.json()),
         fetch("/api/price", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, dealType: "전세" }) }).then(r => r.json()),
+        fetch("/api/price", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, dealType: "월세" }) }).then(r => r.json()),
       ]);
 
       const found: string[] = [];
@@ -267,11 +275,17 @@ function MarketPriceModal({ item, onClose, onSave }: {
           if (!next.dealDate) next.dealDate = jeonseRes.high.date || "";
           found.push(`전세 ${jeonseRes.count}건 중 최고`);
         }
+        if (wolseRes.high?.monthly) {
+          next.wolseDeposit = String(wolseRes.high.deposit || "");
+          next.wolseMonthly = String(wolseRes.high.monthly);
+          if (!next.dealDate) next.dealDate = wolseRes.high.date || "";
+          found.push(`월세 ${wolseRes.count}건 중 최고`);
+        }
         return next;
       });
 
       if (found.length === 0) {
-        setLookupMsg(`❌ ${saleRes.error || jeonseRes.error || "거래 내역이 없습니다. 단지명·유형을 확인해주세요."}`);
+        setLookupMsg(`❌ ${saleRes.error || jeonseRes.error || wolseRes.error || "거래 내역이 없습니다. 단지명·유형을 확인해주세요."}`);
       } else {
         setLookupMsg(`✅ 자동 입력 완료 — ${found.join(" · ")}`);
       }
@@ -347,7 +361,7 @@ function MarketPriceModal({ item, onClose, onSave }: {
           <div className="rounded-2xl border-2 border-dashed border-violet-300 bg-violet-50/60 dark:bg-violet-950/30 p-3">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-violet-700 dark:text-violet-300 mb-2">
               <span className="material-symbols-outlined text-sm">cloud_download</span>
-              국토부 실거래 자동 조회 — 최근 12개월 최고가를 자동으로 채워드려요
+              국토부 실거래 자동 조회 — 최근 6개월 매매·전세·월세 최고가를 자동으로 채워드려요
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               {["아파트", "오피스텔", "빌라/다세대"].map(t => (
@@ -404,6 +418,31 @@ function MarketPriceModal({ item, onClose, onSave }: {
                 className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {fmtKorean(form.jeonseHigh) && <div className="mt-1 text-[10px] text-blue-500">{fmtKorean(form.jeonseHigh)}만원</div>}
+            </div>
+          </div>
+
+          {/* 월세 최고가 (보증금 / 월차임) */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">월세 보증금 (만원)</label>
+              <input
+                type="text" inputMode="numeric"
+                value={form.wolseDeposit}
+                onChange={e => set("wolseDeposit", e.target.value.replace(/\D/g, ""))}
+                placeholder="1000"
+                className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              {fmtKorean(form.wolseDeposit) && <div className="mt-1 text-[10px] text-amber-500">{fmtKorean(form.wolseDeposit)}만원</div>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-amber-600 dark:text-amber-400 mb-1">월세 차임 (만원)</label>
+              <input
+                type="text" inputMode="numeric"
+                value={form.wolseMonthly}
+                onChange={e => set("wolseMonthly", e.target.value.replace(/\D/g, ""))}
+                placeholder="50"
+                className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
             </div>
           </div>
 

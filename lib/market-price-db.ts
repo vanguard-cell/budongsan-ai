@@ -20,6 +20,8 @@ export interface MarketPrice {
   unitType: string;       // 평형/타입 (예: 84A, 59B)
   saleHigh: string;       // 매매 최고가 (만원)
   jeonseHigh: string;     // 전세 최고가 (만원)
+  wolseDeposit: string;   // 월세 보증금 (만원)
+  wolseMonthly: string;   // 월세 차임 (만원)
   dealDate: string;       // 거래일 (YYYY-MM-DD)
   memo: string;
   createdAt: number;
@@ -30,7 +32,7 @@ export function emptyMarketPrice(): MarketPrice {
   return {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
     complexName: "", area: "", unitType: "",
-    saleHigh: "", jeonseHigh: "", dealDate: "",
+    saleHigh: "", jeonseHigh: "", wolseDeposit: "", wolseMonthly: "", dealDate: "",
     memo: "", createdAt: Date.now(),
   };
 }
@@ -49,8 +51,10 @@ function fromDoc(id: string, d: Record<string, unknown>): MarketPrice {
     complexName: (d.complexName as string) || "",
     area:        (d.area        as string) || "",
     unitType:    (d.unitType    as string) || "",
-    saleHigh:    (d.saleHigh    as string) || "",
-    jeonseHigh:  (d.jeonseHigh  as string) || "",
+    saleHigh:     (d.saleHigh     as string) || "",
+    jeonseHigh:   (d.jeonseHigh   as string) || "",
+    wolseDeposit: (d.wolseDeposit as string) || "",
+    wolseMonthly: (d.wolseMonthly as string) || "",
     dealDate:    (d.dealDate    as string) || "",
     memo:        (d.memo        as string) || "",
     updatedAt:   d.updatedAt instanceof Timestamp ? d.updatedAt.toMillis() : (d.updatedAt as number) || undefined,

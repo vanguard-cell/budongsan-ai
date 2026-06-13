@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     interface RawItem { nm: string; amount: string; deposit: string; monthly: string; area: string; floor: string; year: string; month: string; day: string; }
     const results: RawItem[] = [];
 
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 6; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const ym = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
       const url = `https://apis.data.go.kr/1613000/${api.svc}/${api.op}?LAWD_CD=${lawdCd}&DEAL_YMD=${ym}&serviceKey=${MOLIT_KEY}&numOfRows=100&pageNo=1`;
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) {
         if (i === 0) {
-          return NextResponse.json({ error: `${propertyType} ${api.isRent ? "전월세" : "매매"} 실거래 데이터가 아직 준비 중입니다. 잠시 후 다시 시도해주세요.` });
+          return NextResponse.json({ error: `${propertyType} ${api.isRent ? "전월세" : "매매"} 실거래 데이터가 아직 준비 중입니다. 잠시 후 다시 시도해주세요. (최근 6개월)` });
         }
         continue;
       }
@@ -153,16 +153,28 @@ export async function POST(req: NextRequest) {
       const fmtDate = (t: RawItem) =>
         `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day || "1").padStart(2, "0")}`;
       if (api.isRent) {
-        let best: RawItem | null = null;
-        let bestDep = -1;
-        for (const t of results) {
-          const dep = parseInt((t.deposit || "0").replace(/,/g, ""), 10) || 0;
-          if (dep > bestDep) { bestDep = dep; best = t; }
+        // 전세(월차임 0)와 월세(월차임>0) 분리
+        const wantWolse = dealType === "월세" || dealType === "단기임대";
+        const pool = results.filter(t => {
+          const m = parseInt((t.monthly || "0").replace(/,/g, ""), 10) || 0;
+          return wantWolse ? m > 0 : m === 0;
+        });
+        if (!pool.length) {
+          return NextResponse.json({ error: `${wantWolse ? "월세" : "전세"} 거래가 없습니다.` });
         }
-        if (!best) return NextResponse.json({ error: "전월세 거래가 없습니다." });
+        let best: RawItem | null = null;
+        let bestKey = -1;
+        for (const t of pool) {
+          const dep = parseInt((t.deposit || "0").replace(/,/g, ""), 10) || 0;
+          const mon = parseInt((t.monthly || "0").replace(/,/g, ""), 10) || 0;
+          // 전세는 보증금 최고, 월세는 월차임 최고 기준
+          const key = wantWolse ? mon : dep;
+          if (key > bestKey) { bestKey = key; best = t; }
+        }
+        if (!best) return NextResponse.json({ error: `${wantWolse ? "월세" : "전세"} 거래가 없습니다.` });
         return NextResponse.json({
-          high: { deposit: bestDep, monthly: parseInt(best.monthly) || 0, date: fmtDate(best), area: parseFloat(best.area), floor: best.floor, nm: best.nm },
-          count: results.length, isRent: true,
+          high: { deposit: parseInt((best.deposit || "0").replace(/,/g, ""), 10) || 0, monthly: parseInt((best.monthly || "0").replace(/,/g, ""), 10) || 0, date: fmtDate(best), area: parseFloat(best.area), floor: best.floor, nm: best.nm },
+          count: pool.length, isRent: true,
         });
       } else {
         let best: RawItem | null = null;
