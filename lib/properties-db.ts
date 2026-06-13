@@ -274,6 +274,7 @@ export function contractBackToProperty(c: {
   landlordName: string;
   landlordPhone: string;
   memo: string;
+  // 물건 고유 정보 (재모집 시에도 그대로 보존)
   dong?: string;
   ho?: string;
   propertyType?: string;
