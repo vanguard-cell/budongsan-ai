@@ -10,11 +10,6 @@ export interface Contract {
   address: string;        // 단지명 + 동호수 (호환성 위해 통합 보관)
   dong?: string;          // 동 번호 (예: "101")
   ho?: string;            // 호수 (예: "1902")
-  // 물건 고유 정보 (사람만 바뀌어도 물건은 그대로 — 매물에서 이전 시 보존)
-  propertyType?: string;  // 매물 유형 (아파트/오피스텔/상가 등)
-  area?: string;          // 전용면적 (㎡)
-  direction?: string;     // 방향
-  rooms?: string;         // 방수
   type: ContractType;
   deposit: string;        // 보증금 (만원, 문자열로 보관해서 빈값 허용)
   monthly: string;        // 월세 (만원)
