@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-12",
   day: "금",
   category: "신규 기능",
-  work: "매물 표 3·4단계 — 헤더 클릭 정렬·필터 메뉴(열 숨기기 포함) + 더블클릭 인라인 셀 편집(달력·✓확인·실행취소 토스트) + 주소·칩 잘림 픽스",
-  commit: "8e5f292",
-  note: "인라인 편집 PC 전용, 단지·단계 열은 편집 불가",
+  work: "표 잘림·수정칸 픽스 — 단지·동호 2줄 표시, 인라인 편집을 셀 위 팝오버(240~300px, 큰 입력칸·✓✕)로 확대",
+  commit: "9adc064",
+  note: "",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 표 헤더 메뉴+인라인 편집" : "표 헤더 메뉴+인라인 편집";
+      found.getCell(4).value = prev ? prev + " / 표 잘림·수정칸 픽스" : "표 잘림·수정칸 픽스";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "표 헤더 메뉴+인라인 편집"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "표 잘림·수정칸 픽스"]);
     }
   }
 

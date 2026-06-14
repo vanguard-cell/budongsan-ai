@@ -227,5 +227,5 @@ input::placeholder, textarea::placeholder {
   display: none !important;
 }
 .react-datepicker-popper {
-  z-index: 60 !important;
+  z-index: 80 !important;   /* 표 인라인 편집 팝오버(z-61) 위로 달력 표시 */
 }

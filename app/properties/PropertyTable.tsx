@@ -12,6 +12,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Property, PropertyType, DealType } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
 import { fmtNum, PROPERTY_TYPES, DEAL_TYPES } from "./helpers";
@@ -19,11 +20,11 @@ import KoreanDatePicker from "@/app/KoreanDatePicker";
 
 type SortKey = "newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho";
 type PriceRange = "all" | "u1" | "1to2" | "2to3" | "3to5" | "o5";
-type ColKey = "address" | "deal" | "price" | "ptype" | "owner" | "tenant" | "leaseEnd" | "balance" | "stage";
+type ColKey = "region" | "address" | "deal" | "price" | "ptype" | "owner" | "tenant" | "leaseEnd" | "balance" | "stage";
 type EditField = "price" | "owner" | "tenant" | "leaseEnd" | "balance" | "deal" | "ptype";
 
 const COL_LABEL: Record<ColKey, string> = {
-  address: "단지·동호", deal: "거래", price: "가격(만)", ptype: "유형",
+  region: "소재지", address: "단지·동호", deal: "거래", price: "가격(만)", ptype: "유형",
   owner: "집주인", tenant: "임차인", leaseEnd: "만기일", balance: "잔금일", stage: "단계",
 };
 
@@ -57,7 +58,26 @@ function priceStr(p: Property): string {
 }
 
 function addressStr(p: Property): string {
-  return [p.address, p.dong && `${p.dong}동`, p.ho && `${p.ho}호`].filter(Boolean).join(" ");
+  // address에 이미 동/호가 들어있으면 중복으로 붙이지 않음
+  const parts = [p.address];
+  if (p.dong && !p.address.includes(`${p.dong}동`)) parts.push(`${p.dong}동`);
+  if (p.ho && !p.address.includes(`${p.ho}호`)) parts.push(`${p.ho}호`);
+  return parts.filter(Boolean).join(" ");
+}
+
+/**
+ * 주소 분리 — "경기도 하남시 미사강변동 1100 힐스테이트 …" →
+ *   소재지: 첫 번지(숫자 또는 1143-1형)까지 / 단지·동호: 그 뒤 전부
+ * 번지를 못 찾으면 소재지 비우고 전체를 단지 칸에
+ */
+function splitAddress(full: string): { region: string; complex: string } {
+  const tokens = full.trim().split(/\s+/);
+  let cut = -1;
+  for (let i = 0; i < tokens.length; i++) {
+    if (/^\d+(-\d+)?$/.test(tokens[i])) { cut = i; break; }
+  }
+  if (cut === -1 || cut === tokens.length - 1) return { region: "", complex: full };
+  return { region: tokens.slice(0, cut + 1).join(" "), complex: tokens.slice(cut + 1).join(" ") };
 }
 
 function LeaseEndCell({ date }: { date?: string }) {
@@ -119,6 +139,7 @@ export default function PropertyTable({
     try { return new Set(JSON.parse(localStorage.getItem("dealdone_properties_hidden_cols") || "[]")); } catch { return new Set(); }
   });
   const [edit, setEdit] = useState<{ id: string; field: EditField } | null>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);   // 편집 팝오버 위치(셀 rect)
   const [draftA, setDraftA] = useState("");   // 주 값 (텍스트/날짜/선택)
   const [draftB, setDraftB] = useState("");   // 월세일 때 월세액
   const [undo, setUndo] = useState<{ id: string; prev: Partial<Property>; label: string } | null>(null);
@@ -139,9 +160,10 @@ export default function PropertyTable({
   const show = (k: ColKey) => !hidden.has(k);
 
   /* ── 인라인 편집 ── */
-  const startEdit = (p: Property, field: EditField) => {
+  const startEdit = (p: Property, field: EditField, e: React.MouseEvent) => {
     if (typeof window !== "undefined" && window.innerWidth < 640) return;  // 폰은 패널/모달로
     setOpenMenu(null);
+    setAnchorRect((e.currentTarget as HTMLElement).getBoundingClientRect());
     setEdit({ id: p.id, field });
     switch (field) {
       case "price":    setDraftA(p.price || ""); setDraftB(p.monthly || ""); break;
@@ -196,24 +218,38 @@ export default function PropertyTable({
     setUndo(null);
   };
 
-  /* 편집 팝오버 — 셀 위로 넉넉하게 떠서 입력 (노션식). ✓ 확인 / ✕ 취소 */
-  const EditWrap = ({ p, wide, children }: { p: Property; wide?: boolean; children: React.ReactNode }) => (
-    <div
-      className={`absolute left-0 top-0 z-40 ${wide ? "min-w-[300px]" : "min-w-[240px]"} bg-white dark:bg-slate-900 border-2 border-[var(--brand-blue)] rounded-xl shadow-2xl p-1.5 flex items-center gap-1.5`}
-      onClick={e => e.stopPropagation()}
-      onDoubleClick={e => e.stopPropagation()}
-    >
-      <div className="flex-1 min-w-0">{children}</div>
-      <button onClick={() => commit(p)} title="저장 (Enter)"
-        className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--brand-blue)] text-white hover:bg-[var(--brand-blue-dark)] shrink-0">
-        <span className="material-symbols-outlined text-[18px]">check</span>
-      </button>
-      <button onClick={() => setEdit(null)} title="취소 (Esc)"
-        className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 shrink-0">
-        <span className="material-symbols-outlined text-[18px]">close</span>
-      </button>
-    </div>
-  );
+  /* 편집 팝오버 — body 포털 + fixed (표 overflow 클리핑·잘림 방지)
+   * - 컴포넌트가 아닌 함수로 호출(인라인) → 타이핑 시 리마운트·포커스 유실 없음
+   * - ✓ 눌러야 저장 / ✕·바깥 클릭·Esc = 취소 (실수 방지) */
+  const popover = (p: Property, wide: boolean, children: React.ReactNode) => {
+    if (typeof document === "undefined" || !anchorRect) return null;
+    const width = wide ? 340 : 270;
+    let left = anchorRect.left;
+    if (left + width > window.innerWidth - 12) left = window.innerWidth - width - 12;
+    if (left < 12) left = 12;
+    const top = Math.min(anchorRect.bottom + 4, window.innerHeight - 96);
+    return createPortal(
+      <>
+        <div className="fixed inset-0 z-[60]" onClick={() => setEdit(null)} />
+        <div
+          style={{ position: "fixed", top, left, width }}
+          className="z-[61] bg-white dark:bg-slate-900 border-2 border-[var(--brand-blue)] rounded-xl shadow-2xl p-2 flex items-center gap-1.5"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="flex-1 min-w-0">{children}</div>
+          <button onClick={() => commit(p)} title="저장 (Enter)"
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-[var(--brand-blue)] text-white hover:bg-[var(--brand-blue-dark)] shrink-0">
+            <span className="material-symbols-outlined text-[18px]">check</span>
+          </button>
+          <button onClick={() => setEdit(null)} title="취소 (Esc)"
+            className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-slate-600 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 shrink-0">
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      </>,
+      document.body,
+    );
+  };
 
   const keyHandler = (p: Property) => (e: React.KeyboardEvent) => {
     if (e.key === "Enter") commit(p);
@@ -268,20 +304,23 @@ export default function PropertyTable({
       )}
 
       <div className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
-        <table className="w-full min-w-[880px] border-collapse text-[13px]">
+        <table className="w-full min-w-[980px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
-              <Th k="address" w="w-[26%]" menu={<>
+              <Th k="region" w="w-[15%]" menu={
+                <MenuItem icon="info" label="지역별 훑기용 — 정렬은 단지·동호 열에서" onClick={() => setOpenMenu(null)} />
+              } />
+              <Th k="address" w="w-[19%]" menu={<>
                 <MenuItem icon="schedule" label="최신 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
                 <MenuItem icon="apartment" label="동·호순" active={sortBy === "dongho"} onClick={() => { onSortChange("dongho"); setOpenMenu(null); }} />
               </>} />
-              <Th k="deal" w="w-[7%]" menu={<>
+              <Th k="deal" w="w-[6%]" menu={<>
                 {(["all", ...DEAL_TYPES] as const).map(t => (
                   <MenuItem key={t} icon={t === "all" ? "filter_list_off" : "filter_alt"} label={t === "all" ? "전체 보기" : `${t}만 보기`}
                     active={filterType === t} onClick={() => { onFilterTypeChange(t as "all" | DealType); setOpenMenu(null); }} />
                 ))}
               </>} />
-              <Th k="price" w="w-[11%]" menu={<>
+              <Th k="price" w="w-[10%]" menu={<>
                 <MenuItem icon="south" label="낮은 가격부터" active={sortBy === "price_asc"} onClick={() => { onSortChange("price_asc"); setOpenMenu(null); }} />
                 <MenuItem icon="north" label="높은 가격부터" active={sortBy === "price_desc"} onClick={() => { onSortChange("price_desc"); setOpenMenu(null); }} />
                 <div className="border-t border-gray-100 dark:border-slate-800 my-1" />
@@ -308,6 +347,7 @@ export default function PropertyTable({
             {list.map(p => {
               const stage = stageOf(p);
               const selected = p.id === selectedId;
+              const reg = splitAddress(addressStr(p));
               return (
                 <tr
                   key={p.id}
@@ -318,92 +358,83 @@ export default function PropertyTable({
                       : "hover:bg-gray-50/80 dark:hover:bg-slate-800/60"
                   }`}
                 >
+                  {show("region") && (
+                    <td className="px-2 py-2.5 text-gray-500 dark:text-gray-400 truncate max-w-0 text-[12px]" title={reg.region}>
+                      {reg.region || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                    </td>
+                  )}
                   {show("address") && (
-                    <td className={`px-2 py-2 font-semibold max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={addressStr(p)}>
-                      <span className="line-clamp-2 break-all leading-snug">{addressStr(p)}</span>
+                    <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>
+                      {reg.complex}
                     </td>
                   )}
                   {show("deal") && (
-                    <td className="relative px-2 py-2.5" onDoubleClick={() => startEdit(p, "deal")}>
+                    <td className="px-2 py-2.5" onDoubleClick={e => startEdit(p, "deal", e)}>
                       <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap ${DEAL_TINT[p.dealType] || "bg-gray-100 text-gray-600"}`}>
                         {p.dealType}
                       </span>
-                      {isEditing(p, "deal") && (
-                        <EditWrap p={p}>
-                          <select autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls}>
-                            {DEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                          </select>
-                        </EditWrap>
+                      {isEditing(p, "deal") && popover(p, false,
+                        <select autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls}>
+                          {DEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
                       )}
                     </td>
                   )}
                   {show("price") && (
-                    <td className="relative px-2 py-2.5 tabular-nums text-gray-900 dark:text-gray-100 whitespace-nowrap" onDoubleClick={() => startEdit(p, "price")}>
+                    <td className="px-2 py-2.5 tabular-nums text-gray-900 dark:text-gray-100 whitespace-nowrap" onDoubleClick={e => startEdit(p, "price", e)}>
                       {priceStr(p)}
-                      {isEditing(p, "price") && (
-                        <EditWrap p={p} wide={p.dealType === "월세"}>
-                          <div className="flex items-center gap-1">
-                            <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} placeholder={p.dealType === "월세" ? "보증금" : "가격"} className={inputCls} />
-                            {p.dealType === "월세" && (
-                              <>
-                                <span className="text-gray-400">/</span>
-                                <input value={draftB} onChange={e => setDraftB(e.target.value)} onKeyDown={keyHandler(p)} placeholder="월세" className={inputCls} />
-                              </>
-                            )}
-                          </div>
-                        </EditWrap>
+                      {isEditing(p, "price") && popover(p, p.dealType === "월세",
+                        <div className="flex items-center gap-1">
+                          <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} placeholder={p.dealType === "월세" ? "보증금" : "가격"} className={inputCls} />
+                          {p.dealType === "월세" && (
+                            <>
+                              <span className="text-gray-400">/</span>
+                              <input value={draftB} onChange={e => setDraftB(e.target.value)} onKeyDown={keyHandler(p)} placeholder="월세" className={inputCls} />
+                            </>
+                          )}
+                        </div>
                       )}
                     </td>
                   )}
                   {show("ptype") && (
-                    <td className="relative px-2 py-2.5 text-gray-600 dark:text-gray-400 truncate max-w-0" onDoubleClick={() => startEdit(p, "ptype")}>
+                    <td className="px-2 py-2.5 text-gray-600 dark:text-gray-400 truncate max-w-0" onDoubleClick={e => startEdit(p, "ptype", e)}>
                       {p.propertyType}
-                      {isEditing(p, "ptype") && (
-                        <EditWrap p={p}>
-                          <select autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls}>
-                            {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                          </select>
-                        </EditWrap>
+                      {isEditing(p, "ptype") && popover(p, false,
+                        <select autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls}>
+                          {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
                       )}
                     </td>
                   )}
                   {show("owner") && (
-                    <td className="relative px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={() => startEdit(p, "owner")}>
+                    <td className="px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={e => startEdit(p, "owner", e)}>
                       {p.ownerName || <span className="text-gray-300 dark:text-gray-600">—</span>}
-                      {isEditing(p, "owner") && (
-                        <EditWrap p={p}>
-                          <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls} />
-                        </EditWrap>
+                      {isEditing(p, "owner") && popover(p, false,
+                        <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} placeholder="집주인 이름" className={inputCls} />
                       )}
                     </td>
                   )}
                   {show("tenant") && (
-                    <td className="relative px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={() => startEdit(p, "tenant")}>
+                    <td className="px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={e => startEdit(p, "tenant", e)}>
                       {p.tenantName || <span className="text-gray-300 dark:text-gray-600">—</span>}
-                      {isEditing(p, "tenant") && (
-                        <EditWrap p={p}>
-                          <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} className={inputCls} />
-                        </EditWrap>
+                      {isEditing(p, "tenant") && popover(p, false,
+                        <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(p)} placeholder="임차인 이름" className={inputCls} />
                       )}
                     </td>
                   )}
                   {show("leaseEnd") && (
-                    <td className="relative px-2 py-2.5 whitespace-nowrap text-[12px]" onDoubleClick={() => startEdit(p, "leaseEnd")}>
+                    <td className="px-2 py-2.5 whitespace-nowrap text-[12px]" onDoubleClick={e => startEdit(p, "leaseEnd", e)}>
                       <LeaseEndCell date={p.leaseEndDate} />
-                      {isEditing(p, "leaseEnd") && (
-                        <EditWrap p={p} wide>
-                          <KoreanDatePicker value={draftA} onChange={setDraftA} accent="blue" portalId="dd-dp-portal" />
-                        </EditWrap>
+                      {isEditing(p, "leaseEnd") && popover(p, true,
+                        <KoreanDatePicker value={draftA} onChange={setDraftA} accent="blue" portalId="dd-dp-portal" />
                       )}
                     </td>
                   )}
                   {show("balance") && (
-                    <td className="relative px-2 py-2.5 whitespace-nowrap text-[12px]" onDoubleClick={() => startEdit(p, "balance")}>
+                    <td className="px-2 py-2.5 whitespace-nowrap text-[12px]" onDoubleClick={e => startEdit(p, "balance", e)}>
                       <DateCell date={p.balanceDate} />
-                      {isEditing(p, "balance") && (
-                        <EditWrap p={p} wide>
-                          <KoreanDatePicker value={draftA} onChange={setDraftA} accent="blue" portalId="dd-dp-portal" />
-                        </EditWrap>
+                      {isEditing(p, "balance") && popover(p, true,
+                        <KoreanDatePicker value={draftA} onChange={setDraftA} accent="blue" portalId="dd-dp-portal" />
                       )}
                     </td>
                   )}
