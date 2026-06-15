@@ -52,8 +52,8 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
       {/* 이름 + 배지 */}
       <div className="px-1">
         <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 leading-snug break-all">
-          {c.vip && <span className="text-amber-400 mr-1">★</span>}
           {c.name || "(이름없음)"}
+          {c.vip && <span className="text-amber-400 ml-1">★</span>}
         </p>
         <div className="flex flex-wrap gap-1.5 mt-2">
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{SIDE_LABELS[c.side]}</span>

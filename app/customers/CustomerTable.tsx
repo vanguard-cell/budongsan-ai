@@ -258,8 +258,8 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
                     selected ? "bg-[var(--tint-blue-bg)] outline outline-1 -outline-offset-1 outline-[var(--brand-blue)]" : "hover:bg-gray-50/80 dark:hover:bg-slate-800/60"}`}>
                   {show("name") && (
                     <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} onDoubleClick={e => startEdit(c, "name", e)}>
-                      {c.vip && <span className="text-amber-400 mr-0.5">★</span>}
                       {c.name || <span className="text-gray-300 dark:text-gray-600">(이름없음)</span>}
+                      {c.vip && <span className="text-amber-400 ml-0.5">★</span>}
                       {isEditing(c, "name") && popover(c, false, <input autoFocus value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={keyHandler(c)} placeholder="이름" className={inputCls} />)}
                     </td>
                   )}

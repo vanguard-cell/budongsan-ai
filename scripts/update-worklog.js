@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-12",
   day: "금",
-  category: "버그·디버그",
-  work: "표 뷰 전수 점검·버그 3건 수정 — 더블클릭 시 패널 중복열림(220ms 지연), 필터에서 빠진 행 실행취소 불능(엔티티 저장), ?focus 표모드 연계(패널 자동열림) + 타입·빌드 전체 통과",
-  commit: "e887229",
-  note: "매물·손님·만기 3개 표 공통 적용",
+  category: "UX 개선",
+  work: "만기 관리 표도 소재지/단지·동호 열 분리 (매물 표와 동일) — 첫 번지까지 소재지, 단지·동호 한 줄, 소재지 열은 맨 끝·숨김 가능",
+  commit: "83c2e75",
+  note: "splitAddress 공통 로직",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 표 뷰 버그 3건 수정" : "표 뷰 버그 3건 수정";
+      found.getCell(4).value = prev ? prev + " / 만기 표 소재지 분리" : "만기 표 소재지 분리";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "표 뷰 버그 3건 수정"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "만기 표 소재지 분리"]);
     }
   }
 
