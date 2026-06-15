@@ -10,11 +10,11 @@ import { createPortal } from "react-dom";
 import { type Contract, type ContractType, type Severity, dDay } from "./contracts";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 
-type ColKey = "address" | "type" | "price" | "tenant" | "landlord" | "start" | "end" | "sev";
+type ColKey = "address" | "type" | "price" | "tenant" | "landlord" | "start" | "end" | "sev" | "region";
 type EditField = "price" | "tenant" | "landlord" | "start" | "end" | "type";
 
 const COL_LABEL: Record<ColKey, string> = {
-  address: "단지·동호", type: "종류", price: "보증금/월세", tenant: "임차인", landlord: "임대인", start: "시작일", end: "만기일", sev: "상태",
+  address: "단지·동호", type: "종류", price: "보증금/월세", tenant: "임차인", landlord: "임대인", start: "시작일", end: "만기일", sev: "상태", region: "소재지",
 };
 
 const TYPE_TINT: Record<ContractType, string> = {
@@ -41,6 +41,17 @@ function addressStr(c: Contract): string {
   if (c.dong && !c.address.includes(`${c.dong}동`)) parts.push(`${c.dong}동`);
   if (c.ho && !c.address.includes(`${c.ho}호`)) parts.push(`${c.ho}호`);
   return parts.filter(Boolean).join(" ");
+}
+
+/** 주소 분리 — 첫 번지까지를 소재지, 그 뒤를 단지·동호 (매물 표와 동일) */
+function splitAddress(full: string): { region: string; complex: string } {
+  const tokens = full.trim().split(/\s+/);
+  let cut = -1;
+  for (let i = 0; i < tokens.length; i++) {
+    if (/^\d+(-\d+)?$/.test(tokens[i])) { cut = i; break; }
+  }
+  if (cut === -1 || cut === tokens.length - 1) return { region: "", complex: full };
+  return { region: tokens.slice(0, cut + 1).join(" "), complex: tokens.slice(cut + 1).join(" ") };
 }
 
 function EndCell({ date }: { date: string }) {
@@ -198,7 +209,7 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
 
   const isEditing = (c: Contract, f: EditField) => edit?.id === c.id && edit.field === f;
 
-  const RIGHT_ALIGN: ColKey[] = ["start", "end", "sev"];
+  const RIGHT_ALIGN: ColKey[] = ["start", "end", "sev", "region"];
   const Th = ({ k, w, menu }: { k: ColKey; w: string; menu: React.ReactNode }) => {
     if (!show(k)) return null;
     const alignRight = RIGHT_ALIGN.includes(k);
@@ -234,38 +245,42 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
       )}
 
       <div className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
-        <table className="w-full min-w-[860px] border-collapse text-[13px]">
+        <table className="w-full min-w-[960px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
-              <Th k="address" w="w-[24%]" menu={
+              <Th k="address" w="w-[22%]" menu={
                 <MenuItem icon="schedule" label="최근 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
               } />
-              <Th k="type" w="w-[7%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="price" w="w-[12%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="tenant" w="w-[11%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="landlord" w="w-[11%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="start" w="w-[11%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="end" w="w-[14%]" menu={<>
+              <Th k="type" w="w-[6%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="price" w="w-[11%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="tenant" w="w-[10%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="landlord" w="w-[10%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="start" w="w-[10%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="end" w="w-[13%]" menu={<>
                 <MenuItem icon="south" label="만기 빠른순" active={sortBy === "endAsc"} onClick={() => { onSortChange("endAsc"); setOpenMenu(null); }} />
                 <MenuItem icon="north" label="만기 늦은순" active={sortBy === "endDesc"} onClick={() => { onSortChange("endDesc"); setOpenMenu(null); }} />
               </>} />
-              <Th k="sev" w="w-[10%]" menu={<>
+              <Th k="sev" w="w-[8%]" menu={<>
                 {(["all", "danger", "warning", "caution", "safe"] as ContractFilter[]).map(f => {
                   const labels: Record<ContractFilter, string> = { all: "전체 보기", danger: "위험만", warning: "주의만", caution: "예고만", safe: "안전만" };
                   return <MenuItem key={f} icon={f === "all" ? "filter_list_off" : "filter_alt"} label={labels[f]} active={filter === f} onClick={() => { onFilterChange(f); setOpenMenu(null); }} />;
                 })}
               </>} />
+              <Th k="region" w="w-[14%]" menu={
+                <MenuItem icon="info" label="지역별 훑기용 — 정렬은 단지·동호 열에서" onClick={() => setOpenMenu(null)} />
+              } />
             </tr>
           </thead>
           <tbody>
             {list.map(({ c, s }) => {
               const selected = c.id === selectedId;
+              const reg = splitAddress(addressStr(c));
               return (
                 <tr key={c.id} onClick={() => handleRowClick(c)}
                   className={`border-b border-gray-100 dark:border-slate-800 last:border-0 cursor-pointer transition-colors ${
                     selected ? "bg-[var(--tint-blue-bg)] outline outline-1 -outline-offset-1 outline-[var(--brand-blue)]" : "hover:bg-gray-50/80 dark:hover:bg-slate-800/60"}`}>
                   {show("address") && (
-                    <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={addressStr(c)}>{addressStr(c)}</td>
+                    <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>{reg.complex}</td>
                   )}
                   {show("type") && (
                     <td className="px-2 py-2.5" onDoubleClick={e => startEdit(c, "type", e)}>
@@ -313,6 +328,11 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
                   {show("sev") && (
                     <td className="px-2 py-2.5">
                       <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap ${SEV_TINT[s]}`}>{SEV_LABEL[s]}</span>
+                    </td>
+                  )}
+                  {show("region") && (
+                    <td className="px-2 py-2.5 text-gray-500 dark:text-gray-400 truncate max-w-0 text-[12px]" title={reg.region}>
+                      {reg.region || <span className="text-gray-300 dark:text-gray-600">—</span>}
                     </td>
                   )}
                 </tr>

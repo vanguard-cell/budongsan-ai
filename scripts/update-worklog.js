@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-12",
   day: "금",
-  category: "신규 기능",
-  work: "손님 관리·만기 관리 페이지에도 표 뷰(엑셀형) 전체 적용 — 카드|표 토글, 행클릭 우측 패널, 헤더 정렬·필터·열숨기기, 더블클릭 인라인 편집(달력·✓확인·실행취소)",
-  commit: "7c88b5a",
-  note: "매물과 동일 패턴 / 매출·실거래·스케줄은 표 부적합으로 제외",
+  category: "버그·디버그",
+  work: "표 뷰 전수 점검·버그 3건 수정 — 더블클릭 시 패널 중복열림(220ms 지연), 필터에서 빠진 행 실행취소 불능(엔티티 저장), ?focus 표모드 연계(패널 자동열림) + 타입·빌드 전체 통과",
+  commit: "e887229",
+  note: "매물·손님·만기 3개 표 공통 적용",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 손님·만기 표 뷰 적용" : "손님·만기 표 뷰 적용";
+      found.getCell(4).value = prev ? prev + " / 표 뷰 버그 3건 수정" : "표 뷰 버그 3건 수정";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "손님·만기 표 뷰 적용"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "표 뷰 버그 3건 수정"]);
     }
   }
 
