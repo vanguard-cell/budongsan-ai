@@ -12,6 +12,8 @@ import {
   migrateFromLocalStorage,
 } from "@/lib/contracts-db";
 import UploadModal, { type MergeStrategy } from "./UploadModal";
+import ContractTable, { type ContractSort, type ContractFilter } from "./ContractTable";
+import ContractPanel from "./ContractPanel";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
@@ -77,6 +79,16 @@ export default function ExpiryPage() {
 
   const [editing, setEditing] = useState<Contract | null>(null);
   const [smsTarget, setSmsTarget] = useState<{ contract: Contract; target: ContactTarget } | null>(null);
+  // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
+  const [viewStyle, setViewStyleState] = useState<"card" | "table">(() => {
+    try { return localStorage.getItem("dealdone_contracts_view") === "table" ? "table" : "card"; } catch { return "card"; }
+  });
+  const setViewStyle = (v: "card" | "table") => {
+    setViewStyleState(v);
+    try { localStorage.setItem("dealdone_contracts_view", v); } catch {}
+  };
+  const [panelId, setPanelId] = useState<string | null>(null);    // 우측 패널 (표/카드 공용)
+  const [sortBy, setSortBy] = useState<ContractSort>("endAsc");   // 표 헤더 정렬
   const [showUpload, setShowUpload] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showSmsSettings, setShowSmsSettings] = useState(false);
@@ -146,8 +158,12 @@ export default function ExpiryPage() {
           c.landlordPhone.includes(q)
         );
       })
-      .sort((a, b) => a.d - b.d);
-  }, [contracts, filter, showClosed, query]);
+      .sort((a, b) => {
+        if (sortBy === "endDesc") return b.d - a.d;
+        if (sortBy === "newest") return b.c.createdAt - a.c.createdAt;
+        return a.d - b.d;   // endAsc (기본) — 만기 빠른순
+      });
+  }, [contracts, filter, showClosed, query, sortBy]);
 
   /* ── 요약 카운트 ── */
   const counts = useMemo(() => {
@@ -297,8 +313,8 @@ export default function ExpiryPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className={`p-4 sm:p-6 lg:p-8 transition-[padding] duration-300 ease-out ${panelId ? "xl:pr-[400px]" : ""}`}>
+      <div className={viewStyle === "table" ? "max-w-6xl mx-auto" : "max-w-4xl mx-auto"}>
 
         {/* 마이그레이션 안내 */}
         {migratedCount !== null && migratedCount > 0 && (
@@ -366,6 +382,18 @@ export default function ExpiryPage() {
                 </button>
               )}
             </div>
+            {/* 뷰 토글 — 카드 / 표 */}
+            <div className="inline-flex rounded-lg border border-[var(--sidebar-bd)] overflow-hidden text-xs font-semibold">
+              <button onClick={() => setViewStyle("card")}
+                className={`px-3 py-2 flex items-center gap-1 transition-colors ${viewStyle === "card" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
+                <span className="material-symbols-outlined text-[15px] leading-none">grid_view</span>카드
+              </button>
+              <button onClick={() => setViewStyle("table")}
+                className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "table" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
+                <span className="material-symbols-outlined text-[15px] leading-none">table_rows</span>표
+              </button>
+            </div>
+
             {/* 메인 액션 */}
             <button
               onClick={() => setEditing(emptyContract())}
@@ -428,6 +456,17 @@ export default function ExpiryPage() {
             isFirstUse={contracts.length === 0}
             onAdd={() => setEditing(emptyContract())}
           />
+        ) : viewStyle === "table" ? (
+          <ContractTable
+            list={filtered}
+            selectedId={panelId || undefined}
+            onRowClick={c => setPanelId(c.id)}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            filter={filter}
+            onFilterChange={setFilter}
+            onPatch={async (c, patch) => { if (user) await fsSaveContract(user.agencyId, { ...c, ...patch }); }}
+          />
         ) : (
           <div className="space-y-2.5">
             {filtered.map(({ c, d, s }) => (
@@ -455,6 +494,21 @@ export default function ExpiryPage() {
           ☁️ Google Cloud 서울 리전에 암호화 저장 — PC·폰 자동 동기화
         </p>
       </div>
+
+      {/* 우측 패널 — 표/카드 행 선택 시 상세 */}
+      <ContractPanel
+        contract={panelId ? contracts.find(x => x.id === panelId) || null : null}
+        onClose={() => setPanelId(null)}
+        onEdit={c => setEditing({ ...c })}
+        onSms={(c, target) => setSmsTarget({ contract: c, target })}
+        onCloneSameComplex={c => { cloneSameComplex(c); setPanelId(null); }}
+        onReopenAsProperty={c => jumpReopenAsProperty(c)}
+        onCloseContract={c => closeContract(c.id)}
+        onJumpCustomer={panelId && (() => {
+          const c = contracts.find(x => x.id === panelId);
+          return c?.linkedCustomerId && customers.some(cu => cu.id === c.linkedCustomerId);
+        })() ? (c => router.push(`/customers?focus=${c.linkedCustomerId}`)) : undefined}
+      />
 
       {/* 추가/수정 모달 */}
       {editing && (
