@@ -29,6 +29,8 @@ import {
 } from "./customer-types";
 import EditCustomerModal from "./EditCustomerModal";
 import KakaoParseModal from "./KakaoParseModal";
+import CustomerTable, { type CustSort } from "./CustomerTable";
+import CustomerPanel from "./CustomerPanel";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import CustomersUploadModal, { type CustMergeStrategy } from "./CustomersUploadModal";
@@ -69,6 +71,16 @@ export default function CustomersPage() {
   const [showExport, setShowExport] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [showKakaoParse, setShowKakaoParse] = useState(false);
+  // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
+  const [viewStyle, setViewStyleState] = useState<"card" | "table">(() => {
+    try { return localStorage.getItem("dealdone_customers_view") === "table" ? "table" : "card"; } catch { return "card"; }
+  });
+  const setViewStyle = (v: "card" | "table") => {
+    setViewStyleState(v);
+    try { localStorage.setItem("dealdone_customers_view", v); } catch {}
+  };
+  const [panelId, setPanelId] = useState<string | null>(null);   // 우측 패널 (표/카드 공용)
+  const [sortBy, setSortBy] = useState<CustSort>("followup");    // 표 헤더 정렬
 
   /* 로그인 가드 */
   useEffect(() => {
@@ -124,14 +136,16 @@ export default function CustomersPage() {
         );
       })
       .sort((a, b) => {
-        // 진행중인데 후속 연락 필요한 것 먼저
+        if (sortBy === "name") return (a.c.name || "").localeCompare(b.c.name || "", "ko");
+        if (sortBy === "newest") return b.c.createdAt - a.c.createdAt;
+        // followup(기본): 진행중·후속 연락 필요한 것 먼저
         if (a.c.status !== b.c.status) {
           const order: Record<string, number> = { active: 0, matched: 1, lost: 2, closed: 3 };
           return (order[a.c.status] ?? 9) - (order[b.c.status] ?? 9);
         }
         return a.d - b.d;
       });
-  }, [customers, filter, query]);
+  }, [customers, filter, query, sortBy]);
 
   /* 카운트 */
   const counts = useMemo(() => {
@@ -197,9 +211,11 @@ export default function CustomersPage() {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
 
+  const panelCustomer = panelId ? customers.find(x => x.id === panelId) || null : null;
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className={`p-4 sm:p-6 lg:p-8 transition-[padding] duration-300 ease-out ${panelCustomer ? "xl:pr-[400px]" : ""}`}>
+      <div className={viewStyle === "table" ? "max-w-6xl mx-auto" : "max-w-4xl mx-auto"}>
 
         {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 액션 */}
         <section className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
@@ -261,6 +277,18 @@ export default function CustomersPage() {
                 </button>
               )}
             </div>
+            {/* 뷰 토글 — 카드 / 표 */}
+            <div className="inline-flex rounded-lg border border-[var(--sidebar-bd)] overflow-hidden text-xs font-semibold">
+              <button onClick={() => setViewStyle("card")}
+                className={`px-3 py-2 flex items-center gap-1 transition-colors ${viewStyle === "card" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
+                <span className="material-symbols-outlined text-[15px] leading-none">grid_view</span>카드
+              </button>
+              <button onClick={() => setViewStyle("table")}
+                className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "table" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
+                <span className="material-symbols-outlined text-[15px] leading-none">table_rows</span>표
+              </button>
+            </div>
+
             {/* 메인 액션 */}
             <button
               onClick={() => setEditing(emptyCustomer())}
@@ -304,6 +332,17 @@ export default function CustomersPage() {
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : filtered.length === 0 ? (
           <EmptyState isFirstUse={customers.length === 0} onAdd={() => setEditing(emptyCustomer())} />
+        ) : viewStyle === "table" ? (
+          <CustomerTable
+            list={filtered}
+            selectedId={panelId || undefined}
+            onRowClick={c => setPanelId(c.id)}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            filter={filter}
+            onFilterChange={setFilter}
+            onPatch={async (c, patch) => { await fsSaveCustomer(user.agencyId, { ...c, ...patch }); }}
+          />
         ) : (
           <div className="space-y-2.5">
             {filtered.map(({ c, d, s }) => (
@@ -325,6 +364,14 @@ export default function CustomersPage() {
           💡 어머니 카톡 응대 자료 받으면 답변 초안 생성 기능 추가 예정 (Phase 2)
         </p>
       </div>
+
+      {/* 우측 패널 — 표/카드 행 선택 시 상세 */}
+      <CustomerPanel
+        customer={panelCustomer}
+        onClose={() => setPanelId(null)}
+        onEdit={c => setEditing({ ...c })}
+        onChangeStatus={(c, st) => changeStatus(c, st)}
+      />
 
       {editing && (
         <EditCustomerModal
