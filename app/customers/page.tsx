@@ -107,6 +107,13 @@ export default function CustomersPage() {
     return () => { unsub(); unsubC(); unsubP(); };
   }, [user]);
 
+  // ?focus=<id> 진입 시 — 표/카드 어느 뷰든 해당 손님 상세 패널 열기 (연계)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const focusId = new URLSearchParams(window.location.search).get("focus");
+    if (focusId) setPanelId(focusId);
+  }, []);
+
   /* 정렬 + 필터 — 후속 연락 일정 빠른 순 */
   const filtered = useMemo(() => {
     const withDday = customers.map(c => ({

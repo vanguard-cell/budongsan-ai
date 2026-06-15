@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-12",
   day: "금",
   category: "신규 기능",
-  work: "표 소재지/단지 열 분리(지역별 훑기) + 인라인 편집 팝오버를 body 포털·fixed로 — 잘림 완전 해소·타이핑 포커스 유지·✓확인 필수 / 소재지 열은 맨 끝(단계 뒤)으로",
-  commit: "dbbe1c5",
-  note: "소재지=첫 번지까지, 단지·동호 한 줄",
+  work: "손님 관리·만기 관리 페이지에도 표 뷰(엑셀형) 전체 적용 — 카드|표 토글, 행클릭 우측 패널, 헤더 정렬·필터·열숨기기, 더블클릭 인라인 편집(달력·✓확인·실행취소)",
+  commit: "7c88b5a",
+  note: "매물과 동일 패턴 / 매출·실거래·스케줄은 표 부적합으로 제외",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 소재지 분리+팝오버 포털" : "소재지 분리+팝오버 포털";
+      found.getCell(4).value = prev ? prev + " / 손님·만기 표 뷰 적용" : "손님·만기 표 뷰 적용";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "소재지 분리+팝오버 포털"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "손님·만기 표 뷰 적용"]);
     }
   }
 

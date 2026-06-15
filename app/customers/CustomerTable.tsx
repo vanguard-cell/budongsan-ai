@@ -80,9 +80,18 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
   const [edit, setEdit] = useState<{ id: string; field: EditField } | null>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
   const [draft, setDraft] = useState("");
-  const [undo, setUndo] = useState<{ id: string; prev: Partial<Customer>; label: string } | null>(null);
+  const [undo, setUndo] = useState<{ entity: Customer; prev: Partial<Customer>; label: string } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current); }, []);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+  }, []);
+
+  const handleRowClick = (c: Customer) => {
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+    clickTimer.current = setTimeout(() => { if (!edit) onRowClick(c); }, 220);
+  };
 
   const toggleHide = (k: ColKey) => {
     setHidden(prev => {
@@ -97,6 +106,7 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
 
   const startEdit = (c: Customer, field: EditField, e: React.MouseEvent) => {
     if (typeof window !== "undefined" && window.innerWidth < 640) return;
+    if (clickTimer.current) clearTimeout(clickTimer.current);
     setOpenMenu(null);
     setAnchorRect((e.currentTarget as HTMLElement).getBoundingClientRect());
     setEdit({ id: c.id, field });
@@ -134,14 +144,13 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
     for (const k of Object.keys(patch)) (prev as Record<string, unknown>)[k] = rec[k] ?? "";
     await onPatch(c, patch);
     setEdit(null);
-    setUndo({ id: c.id, prev, label });
+    setUndo({ entity: { ...c, ...patch }, prev, label });
     if (undoTimer.current) clearTimeout(undoTimer.current);
     undoTimer.current = setTimeout(() => setUndo(null), 7000);
   };
   const doUndo = async () => {
     if (!undo) return;
-    const cur = list.find(x => x.c.id === undo.id)?.c;
-    if (cur) await onPatch(cur, undo.prev);
+    await onPatch(undo.entity, undo.prev);   // 필터에서 빠졌어도 복원
     setUndo(null);
   };
 
@@ -244,7 +253,7 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
             {list.map(({ c }) => {
               const selected = c.id === selectedId;
               return (
-                <tr key={c.id} onClick={() => { if (!edit) onRowClick(c); }}
+                <tr key={c.id} onClick={() => handleRowClick(c)}
                   className={`border-b border-gray-100 dark:border-slate-800 last:border-0 cursor-pointer transition-colors ${
                     selected ? "bg-[var(--tint-blue-bg)] outline outline-1 -outline-offset-1 outline-[var(--brand-blue)]" : "hover:bg-gray-50/80 dark:hover:bg-slate-800/60"}`}>
                   {show("name") && (

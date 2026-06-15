@@ -142,10 +142,20 @@ export default function PropertyTable({
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);   // 편집 팝오버 위치(셀 rect)
   const [draftA, setDraftA] = useState("");   // 주 값 (텍스트/날짜/선택)
   const [draftB, setDraftB] = useState("");   // 월세일 때 월세액
-  const [undo, setUndo] = useState<{ id: string; prev: Partial<Property>; label: string } | null>(null);
+  const [undo, setUndo] = useState<{ entity: Property; prev: Partial<Property>; label: string } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);  // 단일클릭 지연(더블클릭 시 패널 안 열리게)
 
-  useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current); }, []);
+  useEffect(() => () => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+  }, []);
+
+  /* 행 단일클릭 → 220ms 후 패널 (그 사이 더블클릭이 오면 startEdit가 타이머 취소) */
+  const handleRowClick = (p: Property) => {
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+    clickTimer.current = setTimeout(() => { if (!edit) onRowClick(p); }, 220);
+  };
 
   const toggleHide = (k: ColKey) => {
     setHidden(prev => {
@@ -162,6 +172,7 @@ export default function PropertyTable({
   /* ── 인라인 편집 ── */
   const startEdit = (p: Property, field: EditField, e: React.MouseEvent) => {
     if (typeof window !== "undefined" && window.innerWidth < 640) return;  // 폰은 패널/모달로
+    if (clickTimer.current) clearTimeout(clickTimer.current);  // 패널 열림 취소
     setOpenMenu(null);
     setAnchorRect((e.currentTarget as HTMLElement).getBoundingClientRect());
     setEdit({ id: p.id, field });
@@ -206,15 +217,14 @@ export default function PropertyTable({
     for (const k of Object.keys(patch)) (prev as Record<string, unknown>)[k] = pRec[k] ?? "";
     await onPatch(p, patch);
     setEdit(null);
-    setUndo({ id: p.id, prev, label });
+    setUndo({ entity: { ...p, ...patch }, prev, label });
     if (undoTimer.current) clearTimeout(undoTimer.current);
     undoTimer.current = setTimeout(() => setUndo(null), 7000);
   };
 
   const doUndo = async () => {
     if (!undo) return;
-    const cur = list.find(x => x.id === undo.id);
-    if (cur) await onPatch(cur, undo.prev);
+    await onPatch(undo.entity, undo.prev);   // 필터에서 빠졌어도 저장된 엔티티로 복원
     setUndo(null);
   };
 
@@ -353,7 +363,7 @@ export default function PropertyTable({
               return (
                 <tr
                   key={p.id}
-                  onClick={() => { if (!edit) onRowClick(p); }}
+                  onClick={() => handleRowClick(p)}
                   className={`border-b border-gray-100 dark:border-slate-800 last:border-0 cursor-pointer transition-colors ${
                     selected
                       ? "bg-[var(--tint-blue-bg)] outline outline-1 -outline-offset-1 outline-[var(--brand-blue)]"
