@@ -307,10 +307,7 @@ export default function PropertyTable({
         <table className="w-full min-w-[980px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
-              <Th k="region" w="w-[15%]" menu={
-                <MenuItem icon="info" label="지역별 훑기용 — 정렬은 단지·동호 열에서" onClick={() => setOpenMenu(null)} />
-              } />
-              <Th k="address" w="w-[19%]" menu={<>
+              <Th k="address" w="w-[24%]" menu={<>
                 <MenuItem icon="schedule" label="최신 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
                 <MenuItem icon="apartment" label="동·호순" active={sortBy === "dongho"} onClick={() => { onSortChange("dongho"); setOpenMenu(null); }} />
               </>} />
@@ -341,6 +338,9 @@ export default function PropertyTable({
               <Th k="leaseEnd" w="w-[12%]" menu={<MenuItem icon="event_busy" label="만기 빠른순" active={sortBy === "lease_end"} onClick={() => { onSortChange("lease_end"); setOpenMenu(null); }} />} />
               <Th k="balance" w="w-[10%]" menu={<MenuItem icon="account_balance_wallet" label="잔금 빠른순" active={sortBy === "balance"} onClick={() => { onSortChange("balance"); setOpenMenu(null); }} />} />
               <Th k="stage" w="w-[8%]" menu={<MenuItem icon="info" label="날짜로 자동 계산됩니다" onClick={() => setOpenMenu(null)} />} />
+              <Th k="region" w="w-[15%]" menu={
+                <MenuItem icon="info" label="지역별 훑기용 — 정렬은 단지·동호 열에서" onClick={() => setOpenMenu(null)} />
+              } />
             </tr>
           </thead>
           <tbody>
@@ -358,11 +358,6 @@ export default function PropertyTable({
                       : "hover:bg-gray-50/80 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  {show("region") && (
-                    <td className="px-2 py-2.5 text-gray-500 dark:text-gray-400 truncate max-w-0 text-[12px]" title={reg.region}>
-                      {reg.region || <span className="text-gray-300 dark:text-gray-600">—</span>}
-                    </td>
-                  )}
                   {show("address") && (
                     <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>
                       {reg.complex}
@@ -443,6 +438,11 @@ export default function PropertyTable({
                       <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap ${stage.cls}`}>
                         {stage.label}
                       </span>
+                    </td>
+                  )}
+                  {show("region") && (
+                    <td className="px-2 py-2.5 text-gray-500 dark:text-gray-400 truncate max-w-0 text-[12px]" title={reg.region}>
+                      {reg.region || <span className="text-gray-300 dark:text-gray-600">—</span>}
                     </td>
                   )}
                 </tr>

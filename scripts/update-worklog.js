@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-12",
   day: "금",
   category: "신규 기능",
-  work: "표 잘림·수정칸 픽스 — 단지·동호 2줄 표시, 인라인 편집을 셀 위 팝오버(240~300px, 큰 입력칸·✓✕)로 확대",
-  commit: "9adc064",
-  note: "",
+  work: "표 소재지/단지 열 분리(지역별 훑기) + 인라인 편집 팝오버를 body 포털·fixed로 — 잘림 완전 해소·타이핑 포커스 유지·✓확인 필수",
+  commit: "e461fd2",
+  note: "소재지=첫 번지까지, 단지·동호 한 줄",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 표 잘림·수정칸 픽스" : "표 잘림·수정칸 픽스";
+      found.getCell(4).value = prev ? prev + " / 소재지 분리+팝오버 포털" : "소재지 분리+팝오버 포털";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "표 잘림·수정칸 픽스"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "소재지 분리+팝오버 포털"]);
     }
   }
 
