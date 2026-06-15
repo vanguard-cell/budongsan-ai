@@ -248,15 +248,15 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
         <table className="w-full min-w-[960px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
-              <Th k="address" w="w-[22%]" menu={
+              <Th k="address" w="w-[30%]" menu={
                 <MenuItem icon="schedule" label="최근 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
               } />
               <Th k="type" w="w-[6%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="price" w="w-[11%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="tenant" w="w-[10%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="landlord" w="w-[10%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="start" w="w-[10%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="end" w="w-[13%]" menu={<>
+              <Th k="price" w="w-[10%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="tenant" w="w-[9%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="landlord" w="w-[9%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="start" w="w-[9%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="end" w="w-[11%]" menu={<>
                 <MenuItem icon="south" label="만기 빠른순" active={sortBy === "endAsc"} onClick={() => { onSortChange("endAsc"); setOpenMenu(null); }} />
                 <MenuItem icon="north" label="만기 늦은순" active={sortBy === "endDesc"} onClick={() => { onSortChange("endDesc"); setOpenMenu(null); }} />
               </>} />
@@ -266,7 +266,7 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
                   return <MenuItem key={f} icon={f === "all" ? "filter_list_off" : "filter_alt"} label={labels[f]} active={filter === f} onClick={() => { onFilterChange(f); setOpenMenu(null); }} />;
                 })}
               </>} />
-              <Th k="region" w="w-[14%]" menu={
+              <Th k="region" w="w-[8%]" menu={
                 <MenuItem icon="info" label="지역별 훑기용 — 정렬은 단지·동호 열에서" onClick={() => setOpenMenu(null)} />
               } />
             </tr>

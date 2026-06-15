@@ -233,11 +233,11 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
                 <MenuItem icon="schedule" label="최근 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
                 <MenuItem icon="star" label="VIP만 보기" active={filter === "vip"} onClick={() => { onFilterChange("vip"); setOpenMenu(null); }} />
               </>} />
-              <Th k="phone" w="w-[14%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="side" w="w-[8%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="budget" w="w-[17%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="area" w="w-[17%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="followUp" w="w-[14%]" menu={<MenuItem icon="event" label="연락 임박순" active={sortBy === "followup"} onClick={() => { onSortChange("followup"); setOpenMenu(null); }} />} />
+              <Th k="phone" w="w-[13%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="side" w="w-[7%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="budget" w="w-[19%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="area" w="w-[21%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="followUp" w="w-[13%]" menu={<MenuItem icon="event" label="연락 임박순" active={sortBy === "followup"} onClick={() => { onSortChange("followup"); setOpenMenu(null); }} />} />
               <Th k="status" w="w-[10%]" menu={<>
                 {(["all", "needFollowup", "matched", "lost", "closed"] as CustFilter[]).map(f => {
                   const labels: Record<CustFilter, string> = { all: "전체 보기", needFollowup: "후속 연락 필요", vip: "VIP만", matched: "매칭만", lost: "이탈만", closed: "거래 완료만" };

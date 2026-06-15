@@ -319,7 +319,7 @@ export default function PropertyTable({
         <table className="w-full min-w-[980px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
-              <Th k="address" w="w-[24%]" menu={<>
+              <Th k="address" w="w-[30%]" menu={<>
                 <MenuItem icon="schedule" label="최신 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
                 <MenuItem icon="apartment" label="동·호순" active={sortBy === "dongho"} onClick={() => { onSortChange("dongho"); setOpenMenu(null); }} />
               </>} />
@@ -329,7 +329,7 @@ export default function PropertyTable({
                     active={filterType === t} onClick={() => { onFilterTypeChange(t as "all" | DealType); setOpenMenu(null); }} />
                 ))}
               </>} />
-              <Th k="price" w="w-[10%]" menu={<>
+              <Th k="price" w="w-[9%]" menu={<>
                 <MenuItem icon="south" label="낮은 가격부터" active={sortBy === "price_asc"} onClick={() => { onSortChange("price_asc"); setOpenMenu(null); }} />
                 <MenuItem icon="north" label="높은 가격부터" active={sortBy === "price_desc"} onClick={() => { onSortChange("price_desc"); setOpenMenu(null); }} />
                 <div className="border-t border-gray-100 dark:border-slate-800 my-1" />
@@ -338,19 +338,19 @@ export default function PropertyTable({
                     onClick={() => { onPriceRangeChange(r.key); setOpenMenu(null); }} />
                 ))}
               </>} />
-              <Th k="ptype" w="w-[8%]" menu={<>
+              <Th k="ptype" w="w-[7%]" menu={<>
                 <MenuItem icon="filter_list_off" label="전체 보기" active={filterPropType === "all"} onClick={() => { onFilterPropTypeChange("all"); setOpenMenu(null); }} />
                 {PROPERTY_TYPES.map(t => (
                   <MenuItem key={t} icon="filter_alt" label={`${t}만 보기`} active={filterPropType === t}
                     onClick={() => { onFilterPropTypeChange(t); setOpenMenu(null); }} />
                 ))}
               </>} />
-              <Th k="owner" w="w-[9%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="tenant" w="w-[9%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="leaseEnd" w="w-[12%]" menu={<MenuItem icon="event_busy" label="만기 빠른순" active={sortBy === "lease_end"} onClick={() => { onSortChange("lease_end"); setOpenMenu(null); }} />} />
-              <Th k="balance" w="w-[10%]" menu={<MenuItem icon="account_balance_wallet" label="잔금 빠른순" active={sortBy === "balance"} onClick={() => { onSortChange("balance"); setOpenMenu(null); }} />} />
-              <Th k="stage" w="w-[8%]" menu={<MenuItem icon="info" label="날짜로 자동 계산됩니다" onClick={() => setOpenMenu(null)} />} />
-              <Th k="region" w="w-[15%]" menu={
+              <Th k="owner" w="w-[8%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="tenant" w="w-[8%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
+              <Th k="leaseEnd" w="w-[10%]" menu={<MenuItem icon="event_busy" label="만기 빠른순" active={sortBy === "lease_end"} onClick={() => { onSortChange("lease_end"); setOpenMenu(null); }} />} />
+              <Th k="balance" w="w-[8%]" menu={<MenuItem icon="account_balance_wallet" label="잔금 빠른순" active={sortBy === "balance"} onClick={() => { onSortChange("balance"); setOpenMenu(null); }} />} />
+              <Th k="stage" w="w-[6%]" menu={<MenuItem icon="info" label="날짜로 자동 계산됩니다" onClick={() => setOpenMenu(null)} />} />
+              <Th k="region" w="w-[8%]" menu={
                 <MenuItem icon="info" label="지역별 훑기용 — 정렬은 단지·동호 열에서" onClick={() => setOpenMenu(null)} />
               } />
             </tr>
