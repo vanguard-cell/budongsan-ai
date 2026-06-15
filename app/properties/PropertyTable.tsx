@@ -260,20 +260,22 @@ export default function PropertyTable({
 
   const isEditing = (p: Property, f: EditField) => edit?.id === p.id && edit.field === f;
 
-  /* 헤더 th — 클릭 시 메뉴 */
+  /* 헤더 th — 클릭 시 메뉴. 오른쪽 끝 열들은 메뉴가 왼쪽으로 열려야 잘리지 않음 */
+  const RIGHT_ALIGN: ColKey[] = ["leaseEnd", "balance", "stage", "region"];
   const Th = ({ k, w, menu }: { k: ColKey; w: string; menu: React.ReactNode }) => {
     if (!show(k)) return null;
+    const alignRight = RIGHT_ALIGN.includes(k);
     return (
       <th className={`relative text-left font-medium px-2 py-2.5 ${w}`}>
         <button
           onClick={e => { e.stopPropagation(); setOpenMenu(openMenu === k ? null : k); }}
-          className={`flex items-center gap-0.5 rounded-md px-1 -mx-1 transition-colors ${openMenu === k ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "hover:text-gray-700 dark:hover:text-gray-200"}`}
+          className={`flex items-center gap-0.5 rounded-md px-1 -mx-1 whitespace-nowrap transition-colors ${openMenu === k ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "hover:text-gray-700 dark:hover:text-gray-200"}`}
         >
           {COL_LABEL[k]}
           <span className="material-symbols-outlined text-[14px] leading-none">expand_more</span>
         </button>
         {openMenu === k && (
-          <div className="absolute left-0 top-full mt-1 z-30 w-44 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-1.5 font-normal normal-case">
+          <div className={`absolute ${alignRight ? "right-0" : "left-0"} top-full mt-1 z-30 w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-1.5 font-normal normal-case`}>
             {menu}
             {k !== "address" && (
               <>
