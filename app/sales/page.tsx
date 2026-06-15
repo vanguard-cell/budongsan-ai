@@ -72,7 +72,7 @@ export default function SalesPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-3xl mx-auto">
+      <div className="w-full">
 
         {/* Stitch 톤 페이지 헤더 */}
         <section className="mb-6">

@@ -93,7 +93,7 @@ export default function MarketPricePage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full">
 
         {/* 헤더 */}
         <section className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">

@@ -416,7 +416,7 @@ export default function PropertiesPage() {
 
   return (
     <div className={`p-4 sm:p-6 lg:p-8 transition-[padding] duration-300 ease-out ${panelProp ? "xl:pr-[400px]" : ""}`}>
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full">
 
         {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 액션 버튼 그룹 */}
         <section className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
