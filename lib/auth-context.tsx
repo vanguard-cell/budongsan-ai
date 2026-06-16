@@ -71,10 +71,12 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
 
   if (userSnap.exists()) {
     const data = userSnap.data();
-    // 활동 기록 — 마지막 접속 시각 + 누적 접속 횟수 (유료전환용 사용량 데이터)
+    // 활동 기록 — 마지막 접속 + 누적 횟수 + 날짜별 접속(일/주/월 접속일 집계용)
+    const today = new Date().toISOString().slice(0, 10);   // YYYY-MM-DD
     updateDoc(userRef, {
       lastLoginAt: serverTimestamp(),
       loginCount: increment(1),
+      [`loginDays.${today}`]: increment(1),
     }).catch(e => console.error("[auth] 활동 기록 실패:", e));
 
     // 역할 결정 — agency.owner === uid 이면 대표, 아니면 파트너
@@ -118,6 +120,7 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
     createdAt: serverTimestamp(),
     lastLoginAt: serverTimestamp(),
     loginCount: 1,
+    loginDays: { [new Date().toISOString().slice(0, 10)]: 1 },
   });
 
   return {

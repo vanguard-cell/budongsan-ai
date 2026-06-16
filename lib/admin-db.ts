@@ -22,6 +22,11 @@ export interface UserUsage {
   createdAt: number;       // 가입일
   lastLoginAt: number;     // 마지막 접속 (0이면 기록 없음)
   loginCount: number;      // 누적 접속 횟수
+  // 접속일(서로 다른 날짜) — 오늘/이번주/이번달/전체
+  loginDaysToday: number;  // 오늘 접속(1=했음)
+  loginDaysWeek: number;   // 최근 7일 접속일 수
+  loginDaysMonth: number;  // 최근 30일 접속일 수
+  loginDaysTotal: number;  // 전체 접속일 수
   // 데이터량
   properties: number;
   contracts: number;
@@ -34,6 +39,22 @@ function toMillis(v: unknown): number {
   if (v instanceof Timestamp) return v.toMillis();
   if (typeof v === "number") return v;
   return 0;
+}
+
+/** loginDays 맵({"YYYY-MM-DD": 횟수}) → 오늘/주/월/전체 접속일 수 */
+function countLoginDays(map: unknown): { today: number; week: number; month: number; total: number } {
+  if (!map || typeof map !== "object") return { today: 0, week: 0, month: 0, total: 0 };
+  const days = Object.keys(map as Record<string, unknown>).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const ms = (d: string) => new Date(d + "T00:00:00").getTime();
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  return {
+    today: days.includes(todayStr) ? 1 : 0,
+    week:  days.filter(d => now - ms(d) < 7 * DAY).length,
+    month: days.filter(d => now - ms(d) < 30 * DAY).length,
+    total: days.length,
+  };
 }
 
 /** 특정 컬렉션의 문서 개수 (서버 집계 — 효율적) */
@@ -67,6 +88,7 @@ export async function fetchAllUsersUsage(): Promise<UserUsage[]> {
           ])
         : [0, 0, 0, 0];
 
+      const ld = countLoginDays(data.loginDays);
       return {
         uid: d.id,
         email: (data.email as string) || "",
@@ -75,6 +97,10 @@ export async function fetchAllUsersUsage(): Promise<UserUsage[]> {
         createdAt: toMillis(data.createdAt),
         lastLoginAt: toMillis(data.lastLoginAt),
         loginCount: (data.loginCount as number) || 0,
+        loginDaysToday: ld.today,
+        loginDaysWeek: ld.week,
+        loginDaysMonth: ld.month,
+        loginDaysTotal: ld.total,
         properties, contracts, customers, schedules,
         total: properties + contracts + customers + schedules,
       } as UserUsage;

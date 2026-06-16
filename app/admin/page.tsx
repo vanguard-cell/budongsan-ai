@@ -163,6 +163,17 @@ export default function AdminPage() {
                   <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 font-medium ml-auto">접속 {u.loginCount}회</span>
                 </div>
 
+                {/* 접속일 — 오늘 / 이번주 / 이번달 / 전체 (서로 다른 날짜 수) */}
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] mb-2.5">
+                  <span className="text-gray-400 mr-0.5">접속일</span>
+                  <span className={`px-2 py-0.5 rounded-full border ${u.loginDaysToday ? "bg-green-50 text-green-700 border-green-200 font-medium" : "bg-gray-50 text-gray-400 border-gray-100"}`}>
+                    오늘 {u.loginDaysToday ? "접속" : "미접속"}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">주 {u.loginDaysWeek}일</span>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">월 {u.loginDaysMonth}일</span>
+                  <span className="px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-100">누적 {u.loginDaysTotal}일</span>
+                </div>
+
                 {/* 매물 열람 버튼 */}
                 {u.properties > 0 && (
                   <button
