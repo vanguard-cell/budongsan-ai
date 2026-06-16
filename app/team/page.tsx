@@ -92,7 +92,7 @@ export default function TeamPage() {
   const memberInfo = agency?.memberInfo || {};
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div>
       <div className="max-w-2xl mx-auto">
 
         {/* 헤더 */}

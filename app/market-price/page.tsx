@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import {
   subscribeMarketPrices, saveMarketPrice, deleteMarketPrice, emptyMarketPrice,
+  saveMarketPricesBatch, sampleMarketPrices,
   type MarketPrice,
 } from "@/lib/market-price-db";
 import ComplexPickerWidget from "@/app/ComplexPicker";
@@ -87,12 +88,23 @@ export default function MarketPricePage() {
     await deleteMarketPrice(user.agencyId, id);
   };
 
+  const loadSamples = async () => {
+    if (!user) return;
+    if (items.length > 0 && !confirm("기존 기록이 있습니다. 예시 실거래가를 추가할까요?")) return;
+    await saveMarketPricesBatch(user.agencyId, sampleMarketPrices());
+  };
+  const clearAll = async () => {
+    if (!user) return;
+    if (!confirm("⚠️ 기록된 모든 실거래 최고가를 삭제합니다. 진행할까요?")) return;
+    for (const m of items) await deleteMarketPrice(user.agencyId, m.id);
+  };
+
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div>
       <div className="w-full">
 
         {/* 헤더 */}
@@ -106,13 +118,33 @@ export default function MarketPricePage() {
               단지별 실거래 최고가를 기록해두고 상담 시 참고하세요
             </p>
           </div>
-          <button
-            onClick={() => setEditing(emptyMarketPrice())}
-            className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95 self-start sm:self-auto"
-          >
-            <span className="material-symbols-outlined text-lg">add</span>
-            최고가 기록
-          </button>
+          <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+            <button
+              onClick={loadSamples}
+              title="예시 실거래가 5건 추가"
+              className="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-base">science</span>
+              <span className="hidden sm:inline">예시</span>
+            </button>
+            {items.length > 0 && (
+              <button
+                onClick={clearAll}
+                title="모든 실거래가 기록 삭제"
+                className="px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-red-600 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-base">delete_sweep</span>
+                <span className="hidden sm:inline">전체 삭제</span>
+              </button>
+            )}
+            <button
+              onClick={() => setEditing(emptyMarketPrice())}
+              className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              최고가 기록
+            </button>
+          </div>
         </section>
 
         {/* 검색 */}
@@ -137,9 +169,15 @@ export default function MarketPricePage() {
             </div>
             <div className="text-xs text-gray-500 mb-4">단지별 실거래 최고가를 기록해보세요</div>
             {!query && (
-              <button onClick={() => setEditing(emptyMarketPrice())} className="text-sm px-4 py-2 rounded-full border-2 border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-semibold">
-                + 첫 기록 추가
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <button onClick={() => setEditing(emptyMarketPrice())} className="text-sm px-4 py-2 rounded-full border-2 border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-semibold">
+                  + 첫 기록 추가
+                </button>
+                <button onClick={loadSamples} className="text-sm px-4 py-2 rounded-full border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-gray-300 font-semibold flex items-center gap-1">
+                  <span className="material-symbols-outlined text-base">science</span>
+                  예시 데이터 넣기
+                </button>
+              </div>
             )}
           </div>
         ) : (

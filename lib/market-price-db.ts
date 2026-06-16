@@ -92,3 +92,39 @@ export async function saveMarketPrice(agencyId: string, m: MarketPrice): Promise
 export async function deleteMarketPrice(agencyId: string, id: string): Promise<void> {
   await deleteDoc(ref(agencyId, id));
 }
+
+/** 다건 일괄 추가 (예시 데이터용) */
+export async function saveMarketPricesBatch(agencyId: string, list: MarketPrice[]): Promise<void> {
+  for (const m of list) await saveMarketPrice(agencyId, m);
+}
+
+/** N일 전 날짜 (YYYY-MM-DD) */
+function dayAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+const mid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+/** 예시 실거래 최고가 5건 — 단지 2곳, 평형별 */
+export function sampleMarketPrices(): MarketPrice[] {
+  const now = Date.now();
+  const mk = (over: Partial<MarketPrice>): MarketPrice => ({
+    id: mid(), complexName: "", area: "", unitType: "",
+    saleHigh: "", jeonseHigh: "", wolseDeposit: "", wolseMonthly: "", dealDate: "",
+    memo: "", createdAt: now,
+    ...over,
+  });
+  return [
+    mk({ complexName: "힐스테이트 미사역 그랑파사쥬", area: "84", unitType: "84A",
+         saleHigh: "82000", jeonseHigh: "52000", dealDate: dayAgo(12), memo: "로열층 · 한강뷰" }),
+    mk({ complexName: "힐스테이트 미사역 그랑파사쥬", area: "59", unitType: "59B",
+         saleHigh: "61000", jeonseHigh: "40000", dealDate: dayAgo(28), memo: "" }),
+    mk({ complexName: "미사효성 해링턴타워 더퍼스트", area: "42", unitType: "",
+         wolseDeposit: "1000", wolseMonthly: "75", dealDate: dayAgo(8), memo: "역세권 오피스텔" }),
+    mk({ complexName: "미사효성 해링턴타워 더퍼스트", area: "42", unitType: "",
+         jeonseHigh: "23000", dealDate: dayAgo(40), memo: "전세 매물 다수" }),
+    mk({ complexName: "미사강변 푸르지오", area: "101", unitType: "101C",
+         saleHigh: "98000", dealDate: dayAgo(20), memo: "대형 평형 · 급매 소진" }),
+  ];
+}

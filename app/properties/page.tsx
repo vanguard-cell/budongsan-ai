@@ -427,7 +427,7 @@ export default function PropertiesPage() {
   const panelProp = panelId ? properties.find(x => x.id === panelId) || null : null;
 
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 transition-[padding] duration-300 ease-out ${panelProp ? "xl:pr-[400px]" : ""}`}>
+    <div className={`transition-[padding] duration-300 ease-out ${panelProp ? "xl:pr-[400px]" : ""}`}>
       <div className="w-full">
 
         {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 액션 버튼 그룹 */}

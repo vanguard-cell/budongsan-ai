@@ -183,6 +183,54 @@ export async function savePropertiesBatch(agencyId: string, list: Property[]): P
   for (const p of list) await saveProperty(agencyId, p);
 }
 
+/**
+ * 예시 매출 데이터 — 거래완료 매물 5건 (잔금일 + 중개수수료 보유)
+ * /sales 페이지는 properties에서 commission·balanceDate를 집계하므로
+ * 매출 예시는 거래완료 매물 형태로 추가한다. (최근 몇 개월 + 예정 1건)
+ */
+export function sampleSalesProperties(): Property[] {
+  const now = Date.now();
+  const base = (over: Partial<Property>): Property => ({
+    ...emptyProperty(),
+    id: uid(),
+    createdAt: now,
+    status: "closed",
+    ...over,
+  });
+  return [
+    base({
+      address: "경기도 하남시 미사강변동 1100 힐스테이트 미사역 그랑파사쥬 101동 1902호",
+      propertyType: "아파트", dealType: "매매", price: "82000",
+      ownerName: "김국환", commission: "738",
+      balanceDate: dateOffset(-6), memo: "[예시 매출] 매매 거래완료",
+    }),
+    base({
+      address: "경기도 하남시 미사강변동 1100 힐스테이트 미사역 그랑파사쥬 201동 1502호",
+      propertyType: "아파트", dealType: "전세", price: "45000",
+      ownerName: "조서영", commission: "180",
+      balanceDate: dateOffset(-35), memo: "[예시 매출] 전세 거래완료",
+    }),
+    base({
+      address: "경기도 하남시 미사강변동 1087 미사효성 해링턴타워 더퍼스트 101동 2717호",
+      propertyType: "오피스텔", dealType: "월세", price: "1000", monthly: "75",
+      ownerName: "최재현", commission: "75",
+      balanceDate: dateOffset(-68), memo: "[예시 매출] 월세 거래완료",
+    }),
+    base({
+      address: "경기도 하남시 미사강변동 1143-1 미사강변 오벨리스크 제6층 제101-613호",
+      propertyType: "상가", dealType: "월세", price: "10000", monthly: "150",
+      ownerName: "최령", commission: "300",
+      balanceDate: dateOffset(-95), memo: "[예시 매출] 상가 월세 거래완료",
+    }),
+    base({
+      address: "경기도 하남시 망월동 1099-1 망월동 공공주택지구 11-1 1023호",
+      propertyType: "오피스텔", dealType: "전세", price: "22770",
+      ownerName: "정우성", commission: "205",
+      balanceDate: dateOffset(20), status: "active", memo: "[예시 매출] 잔금 예정",
+    }),
+  ];
+}
+
 function col(agencyId: string) {
   return collection(db, "agencies", agencyId, "properties");
 }

@@ -18,12 +18,12 @@ const CATEGORY_FILL = {
 };
 
 const ENTRY = {
-  date: "2026-06-12",
-  day: "금",
-  category: "UX 개선",
-  work: "스케줄 2단 레이아웃(좌 달력 고정·우 필터/목록) + 항목 클릭 우측 상세 패널(약속/계약·중도금·잔금/손님 분기, 전화·문자·이동). 컬럼검색·접속일집계·AI메뉴 숨김도 같은 날",
-  commit: "2ecc1ff",
-  note: "약속 카드 액션은 패널로 이동",
+  date: "2026-06-16",
+  day: "화",
+  category: "신규 기능",
+  work: "스케줄·매출·실거래 최고가에 예시 데이터 버튼 추가(sample 생성기 + batch 저장, 예시/삭제 버튼). 매출은 [예시 매출] 태그 매물만 선별 삭제. 더불어 시안A 여백 이중적용 정리(페이지 루트 패딩 제거→공통 셸 일원화)",
+  commit: "PENDING",
+  note: "예시 일정/실거래 5건, 거래완료 예시 매물 5건",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 스케줄 2단+패널" : "스케줄 2단+패널";
+      found.getCell(4).value = prev ? prev + " / 예시데이터 3페이지" : "예시데이터 3페이지";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "스케줄 2단+패널"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "예시데이터 3페이지"]);
     }
   }
 

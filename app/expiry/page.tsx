@@ -322,7 +322,7 @@ export default function ExpiryPage() {
   }
 
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 transition-[padding] duration-300 ease-out ${panelId ? "xl:pr-[400px]" : ""}`}>
+    <div className={`transition-[padding] duration-300 ease-out ${panelId ? "xl:pr-[400px]" : ""}`}>
       <div className="w-full">
 
         {/* 마이그레이션 안내 */}

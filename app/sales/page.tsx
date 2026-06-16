@@ -15,7 +15,10 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { subscribeProperties, type Property } from "@/lib/properties-db";
+import {
+  subscribeProperties, savePropertiesBatch, deleteProperty, sampleSalesProperties,
+  type Property,
+} from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
 import { computeSalesStats, fmtNum, formatMonthKo, formatManToKorean } from "@/lib/sales";
@@ -44,6 +47,20 @@ export default function SalesPage() {
 
   const stats = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
 
+  // 예시 매출 = "[예시 매출]" 태그가 달린 거래완료 매물
+  const sampleProps = useMemo(() => properties.filter(p => (p.memo || "").startsWith("[예시 매출]")), [properties]);
+
+  const loadSamples = async () => {
+    if (!user) return;
+    if (sampleProps.length > 0 && !confirm("이미 예시 매출이 있습니다. 더 추가할까요?")) return;
+    await savePropertiesBatch(user.agencyId, sampleSalesProperties());
+  };
+  const clearSamples = async () => {
+    if (!user || sampleProps.length === 0) return;
+    if (!confirm(`예시 매출 ${sampleProps.length}건(거래완료 예시 매물)을 삭제합니다.\n실제 매물은 영향받지 않습니다. 진행할까요?`)) return;
+    for (const p of sampleProps) await deleteProperty(user.agencyId, p.id);
+  };
+
   // 최근 12개월 막대 그래프 데이터
   const chartData = useMemo(() => {
     const months: { key: string; label: string; value: number; isFuture: boolean }[] = [];
@@ -71,24 +88,46 @@ export default function SalesPage() {
   const thisMonthLabel = `${new Date().getMonth() + 1}월`;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div>
       <div className="w-full">
 
         {/* Stitch 톤 페이지 헤더 */}
-        <section className="mb-6">
-          <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-            <span className="material-symbols-outlined text-[var(--brand-blue)] dark:text-blue-400" style={{ fontSize: "2rem" }}>payments</span>
-            매출 관리
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
-            잔금일 기준으로 월별 중개 수수료 매출이 자동 집계됩니다
-          </p>
+        <section className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">
+          <div>
+            <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+              <span className="material-symbols-outlined text-[var(--brand-blue)] dark:text-blue-400" style={{ fontSize: "2rem" }}>payments</span>
+              매출 관리
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+              잔금일 기준으로 월별 중개 수수료 매출이 자동 집계됩니다
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
+            <button
+              onClick={loadSamples}
+              title="예시 매출(거래완료 매물) 5건 추가"
+              className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-base">science</span>
+              <span className="hidden sm:inline">예시</span>
+            </button>
+            {sampleProps.length > 0 && (
+              <button
+                onClick={clearSamples}
+                title="예시 매출만 삭제 (실제 매물 제외)"
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-red-600 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-base">delete_sweep</span>
+                <span className="hidden sm:inline">예시 삭제</span>
+              </button>
+            )}
+          </div>
         </section>
 
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : stats.count === 0 ? (
-          <EmptyState />
+          <EmptyState onLoadSample={loadSamples} />
         ) : (
           <>
             {/* 핵심 KPI 4종 */}
@@ -262,7 +301,7 @@ function DealCard({ label, value, accent }: { label: string; value: number; acce
   );
 }
 
-function EmptyState() {
+function EmptyState({ onLoadSample }: { onLoadSample: () => void }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
       <div className="text-5xl mb-3">📊</div>
@@ -271,9 +310,15 @@ function EmptyState() {
         내 매물 관리에서 <strong>[계약 진행]</strong> 모달을 열어<br />
         <strong>잔금일</strong>과 <strong>중개 수수료</strong>를 입력하면 여기에 자동 집계됩니다.
       </div>
-      <Link href="/properties" className="inline-block text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
-        🏘️ 매물 관리로 이동
-      </Link>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Link href="/properties" className="inline-block text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
+          🏘️ 매물 관리로 이동
+        </Link>
+        <button onClick={onLoadSample} className="text-sm px-4 py-2 rounded-full border border-gray-300 text-gray-600 font-semibold flex items-center gap-1">
+          <span className="material-symbols-outlined text-base">science</span>
+          예시 데이터 넣기
+        </button>
+      </div>
     </div>
   );
 }

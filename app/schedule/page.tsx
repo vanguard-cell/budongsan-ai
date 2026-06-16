@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   subscribeSchedules, saveSchedule, deleteSchedule, emptySchedule,
+  saveSchedulesBatch, sampleSchedules,
   type Schedule, type ScheduleType,
 } from "@/lib/schedules-db";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
@@ -198,13 +199,23 @@ export default function SchedulePage() {
     if (!user) return;
     await saveSchedule(user.agencyId, { ...s, status: s.status === "done" ? "scheduled" : "done" });
   };
+  const loadSamples = async () => {
+    if (!user) return;
+    if (schedules.length > 0 && !confirm("기존 일정이 있습니다. 예시 일정을 추가할까요?")) return;
+    await saveSchedulesBatch(user.agencyId, sampleSchedules());
+  };
+  const clearAll = async () => {
+    if (!user) return;
+    if (!confirm("⚠️ 등록한 모든 일정(약속·계약일·중도금일·잔금일)을 삭제합니다.\n매물·손님에서 자동으로 따라오는 날짜는 영향받지 않습니다. 진행할까요?")) return;
+    for (const s of schedules) await deleteSchedule(user.agencyId, s.id);
+  };
 
   if (authLoading || !user) return (
     <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>
   );
 
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 transition-[padding] duration-300 ease-out ${panelItem ? "xl:pr-[400px]" : ""}`}>
+    <div className={`transition-[padding] duration-300 ease-out ${panelItem ? "xl:pr-[400px]" : ""}`}>
       <div className="w-full">
 
         {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 빠른 등록 */}
@@ -243,6 +254,24 @@ export default function SchedulePage() {
             >
               + 잔금일
             </button>
+            <button
+              onClick={loadSamples}
+              title="예시 일정 5건 추가"
+              className="text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-base">science</span>
+              <span className="hidden sm:inline">예시</span>
+            </button>
+            {schedules.length > 0 && (
+              <button
+                onClick={clearAll}
+                title="등록한 모든 일정 삭제"
+                className="text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-base">delete_sweep</span>
+                <span className="hidden sm:inline">전체 삭제</span>
+              </button>
+            )}
           </div>
         </section>
 

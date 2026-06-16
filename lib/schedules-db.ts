@@ -106,3 +106,44 @@ export async function saveSchedule(agencyId: string, s: Schedule): Promise<void>
 export async function deleteSchedule(agencyId: string, id: string): Promise<void> {
   await deleteDoc(ref(agencyId, id));
 }
+
+/** 다건 일괄 추가 (예시 데이터용) */
+export async function saveSchedulesBatch(agencyId: string, list: Schedule[]): Promise<void> {
+  for (const s of list) await saveSchedule(agencyId, s);
+}
+
+/** N일 후 날짜 (YYYY-MM-DD) */
+function dayOffset(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+const sid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+/** 예시 일정 5건 — 약속·계약일·중도금일·잔금일 골고루 */
+export function sampleSchedules(): Schedule[] {
+  const now = Date.now();
+  const mk = (over: Partial<Schedule>): Schedule => ({
+    id: sid(), date: dayOffset(0), time: "10:00",
+    visitorName: "", visitorPhone: "", propertyAddress: "",
+    scheduleType: "집보기", memo: "", status: "scheduled", createdAt: now,
+    ...over,
+  });
+  return [
+    mk({ date: dayOffset(0),  time: "14:00", visitorName: "이수민", visitorPhone: "010-3344-5566",
+         propertyAddress: "힐스테이트 미사역 그랑파사쥬 101동 1902호", scheduleType: "집보기",
+         memo: "신혼부부 · 남향 선호" }),
+    mk({ date: dayOffset(1),  time: "11:00", visitorName: "박정훈", visitorPhone: "010-7788-9900",
+         propertyAddress: "미사강변 오벨리스크 101-613호", scheduleType: "집보기",
+         memo: "1층 상가 카페 자리 문의" }),
+    mk({ date: dayOffset(3),  time: "15:30", visitorName: "김국환", visitorPhone: "010-5205-1111",
+         propertyAddress: "힐스테이트 미사역 그랑파사쥬 101동 1902호", scheduleType: "계약일",
+         memo: "매매 계약 · 계약금 5,500만" }),
+    mk({ date: dayOffset(6),  time: "13:00", visitorName: "조현민", visitorPhone: "010-7924-1111",
+         propertyAddress: "망월동 공공주택지구 11-1 1023호", scheduleType: "중도금일",
+         memo: "중도금 입금 확인 필요" }),
+    mk({ date: dayOffset(12), time: "10:30", visitorName: "권다솜", visitorPhone: "010-9242-3333",
+         propertyAddress: "미사효성 해링턴타워 더퍼스트 101동 2717호", scheduleType: "잔금일",
+         memo: "잔금 + 입주 · 관리비 정산" }),
+  ];
+}
