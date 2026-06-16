@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-12",
   day: "금",
-  category: "UX 개선",
-  work: "내 매물 상단 단순화 — 큰 카드 2묶음 → 요약 4타일, 거래·유형은 필터칩으로 강등, 단지조회 접기. 만기·손님과 동일 2단 구조로 통일 (5단→3단)",
-  commit: "49cc307",
-  note: "VIP 별표 이름뒤·관리페이지 전폭·컬럼폭 재배분도 같은 날",
+  category: "신규 기능",
+  work: "표 컬럼 헤더 검색(매물·만기 단지/소재지, 손님 이름) + 유저관리 일/주/월 접속일 집계(로그인 날짜 누적). 내 매물 상단 단순화·VIP별표·관리페이지 전폭도 같은 날",
+  commit: "62a969d",
+  note: "접속일은 배포 시점부터 누적",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 내 매물 상단 단순화" : "내 매물 상단 단순화";
+      found.getCell(4).value = prev ? prev + " / 컬럼검색+접속일집계" : "컬럼검색+접속일집계";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "내 매물 상단 단순화"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "컬럼검색+접속일집계"]);
     }
   }
 

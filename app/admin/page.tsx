@@ -160,7 +160,6 @@ export default function AdminPage() {
                   <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">⏰ 계약 {u.contracts}</span>
                   <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100">👥 손님 {u.customers}</span>
                   <span className="px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-100">📅 일정 {u.schedules}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100 font-medium ml-auto">접속 {u.loginCount}회</span>
                 </div>
 
                 {/* 접속일 — 오늘 / 이번주 / 이번달 / 전체 (서로 다른 날짜 수) */}
