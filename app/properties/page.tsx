@@ -75,6 +75,7 @@ export default function PropertiesPage() {
   };
   // 우측 패널 — 표/카드에서 선택된 매물 (id로 보관해 실시간 갱신 반영)
   const [panelId, setPanelId] = useState<string | null>(null);
+  const [showComplexSearch, setShowComplexSearch] = useState(false);   // 단지·동·호 조회 접기/펼치기
   // 즐겨찾기 (localStorage)
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem("property_pins") || "[]")); } catch { return new Set(); }
@@ -593,113 +594,30 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        {/* ── 매물 상태 탭 — Stitch 톤 큰 카드 (Material Symbols + 보조 메트릭) ── */}
-        {!showClosed && (
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-5">
-            {/* 미계약 카드 — 그린 틴트 + 선택 시 진한 테두리·링·체크 */}
-            <button
-              onClick={() => setViewMode("available")}
-              className={`group text-left rounded-xl p-3 sm:p-4 transition-all border ${
-                viewMode === "available"
-                  ? "bg-[var(--tint-green-bg)] border-[#1D9E75] ring-2 ring-[#1D9E75]/25"
-                  : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-700 hover:shadow-md hover:-translate-y-0.5"
-              }`}
-            >
-              {/* 헤더: 아이콘 + 라벨 + 선택 체크 */}
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-50 dark:bg-emerald-950/60 group-hover:bg-emerald-100">
-                    <span
-                      className="material-symbols-outlined text-xl text-emerald-600 dark:text-emerald-400"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      storefront
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "available" ? "text-[var(--tint-green-tx)]" : "text-gray-900 dark:text-gray-100"}`}>
-                      미계약 매물
-                    </div>
-                  </div>
-                </div>
-                {viewMode === "available" && (
-                  <span className="material-symbols-outlined text-[20px] text-[#1D9E75] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    check_circle
-                  </span>
-                )}
-              </div>
-              {/* 큰 숫자 */}
-              <div className="flex items-baseline gap-1 mt-2">
-                <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums leading-none ${viewMode === "available" ? "text-[var(--tint-green-tx)]" : "text-gray-400 dark:text-gray-500"}`}>
-                  {counts.available}
-                </span>
-                <span className={`text-xs font-medium ${viewMode === "available" ? "text-[var(--tint-green-tx2)]" : "text-gray-400"}`}>건</span>
-              </div>
-              {/* 보조 메트릭 */}
-              <div className={`mt-3 pt-2.5 border-t flex items-center gap-1 text-[11px] ${
-                viewMode === "available"
-                  ? "border-[var(--tint-green-bd)] text-[var(--tint-green-tx2)]"
-                  : "border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400"
-              }`}>
-                <span className="material-symbols-outlined text-sm">fiber_new</span>
-                이번 주 신규
-                <span className={`ml-auto font-bold ${viewMode === "available" ? "text-[var(--tint-green-tx)]" : "text-gray-400"}`}>
-                  {counts.thisWeekNew}건
-                </span>
-              </div>
-            </button>
-
-            {/* 계약진행중 카드 — 블루 틴트 + 선택 시 진한 테두리·링·체크 */}
-            <button
-              onClick={() => setViewMode("contracted")}
-              className={`group text-left rounded-xl p-3 sm:p-4 transition-all border ${
-                viewMode === "contracted"
-                  ? "bg-[var(--tint-blue-bg)] border-[#2383E2] ring-2 ring-[#2383E2]/25"
-                  : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-700 hover:shadow-md hover:-translate-y-0.5"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-blue-50 dark:bg-blue-950/60 group-hover:bg-blue-100">
-                    <span
-                      className="material-symbols-outlined text-xl text-blue-600 dark:text-blue-400"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      handshake
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <div className={`text-sm sm:text-base font-bold leading-tight ${viewMode === "contracted" ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`}>
-                      계약진행중
-                    </div>
-                  </div>
-                </div>
-                {viewMode === "contracted" && (
-                  <span className="material-symbols-outlined text-[20px] text-[#2383E2] shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    check_circle
-                  </span>
-                )}
-              </div>
-              <div className="flex items-baseline gap-1 mt-2">
-                <span className={`text-3xl sm:text-4xl font-extrabold tabular-nums leading-none ${viewMode === "contracted" ? "text-[var(--tint-blue-tx)]" : "text-gray-400 dark:text-gray-500"}`}>
-                  {counts.contracted}
-                </span>
-                <span className={`text-xs font-medium ${viewMode === "contracted" ? "text-[var(--tint-blue-tx2)]" : "text-gray-400"}`}>건</span>
-              </div>
-              <div className={`mt-3 pt-2.5 border-t flex items-center gap-1 text-[11px] ${
-                viewMode === "contracted"
-                  ? "border-[var(--tint-blue-bd)] text-[var(--tint-blue-tx2)]"
-                  : "border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400"
-              }`}>
-                <span className="material-symbols-outlined text-sm">event_upcoming</span>
-                잔금 30일 이내
-                <span className={`ml-auto font-bold ${viewMode === "contracted" ? "text-[var(--tint-blue-tx)]" : counts.balanceSoon > 0 ? "text-orange-600 dark:text-orange-400" : "text-gray-400"}`}>
-                  {counts.balanceSoon}건
-                </span>
-              </div>
-            </button>
-          </div>
-        )}
+        {/* ── 요약 4카드 (만기·손님 페이지와 동일 구조) ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+          <PropSummaryTile
+            tint="green" label="미계약" count={counts.available}
+            sub={`이번 주 신규 ${counts.thisWeekNew}건`}
+            active={!showClosed && viewMode === "available"}
+            onClick={() => { setShowClosed(false); setViewMode("available"); }}
+          />
+          <PropSummaryTile
+            tint="blue" label="계약 진행" count={counts.contracted}
+            active={!showClosed && viewMode === "contracted"}
+            onClick={() => { setShowClosed(false); setViewMode("contracted"); }}
+          />
+          <PropSummaryTile
+            tint="red" label="잔금 임박" count={counts.balanceSoon} sub="30일 이내"
+            active={!showClosed && viewMode === "contracted" && sortBy === "balance"}
+            onClick={() => { setShowClosed(false); setViewMode("contracted"); setSortBy("balance"); }}
+          />
+          <PropSummaryTile
+            tint="gray" label="거래완료" count={properties.filter(p => p.status === "closed").length}
+            active={showClosed}
+            onClick={() => setShowClosed(true)}
+          />
+        </div>
 
         {/* ── 수수료 매출 요약 — Stitch 톤 (grid-12 + sparkline + emerald gradient) ── */}
         {!showClosed && viewMode === "contracted" && (() => {
@@ -781,49 +699,40 @@ export default function PropertiesPage() {
           );
         })()}
 
-        {/* 대분류: 매물 유형 필터 */}
-        <div className="mb-3">
-          <div className="text-[11px] text-gray-500 mb-1.5 ml-1">🏢 매물 유형</div>
-          <div className="flex gap-1.5 flex-wrap">
+        {/* 검색 + 필터 (한 박스로 통합 — 거래종류·유형 칩 + 검색 + 단지조회 + 가격대 + 정렬) */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 mb-4">
+          {/* 거래종류 칩 */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            <span className="text-[11px] text-gray-500 shrink-0 w-8">거래</span>
+            {(["all", "매매", "전세", "월세"] as const).map(t => (
+              <button key={t} onClick={() => setFilterType(t)}
+                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                  filterType === t
+                    ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                }`}>
+                {t === "all" ? "전체" : t} <span className={filterType === t ? "opacity-90" : "text-gray-400"}>{counts[t === "all" ? "all" : t]}</span>
+              </button>
+            ))}
+          </div>
+          {/* 매물유형 칩 */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            <span className="text-[11px] text-gray-500 shrink-0 w-8">유형</span>
             {(["all", ...PROPERTY_TYPES] as const).map(t => {
               const cnt = propTypeCounts[t] ?? 0;
-              const label = t === "all" ? "전체"
-                : t === "빌라/다세대" ? "빌라"
-                : t === "원룸/투룸" ? "원룸"
-                : t;
+              const label = t === "all" ? "전체" : t === "빌라/다세대" ? "빌라" : t === "원룸/투룸" ? "원룸" : t;
               return (
-                <button
-                  key={t}
-                  onClick={() => { setFilterPropType(t); setFilterType("all"); }}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                <button key={t} onClick={() => { setFilterPropType(t); setFilterType("all"); }}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
                     filterPropType === t
                       ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
-                  }`}
-                >
+                      : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                  }`}>
                   {label} <span className={filterPropType === t ? "opacity-90" : "text-gray-400"}>{cnt}</span>
                 </button>
               );
             })}
           </div>
-        </div>
-
-        {/* 중분류: 거래종류 요약 카드 */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {(["all", "매매", "전세", "월세"] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setFilterType(t)}
-              className={`rounded-xl border p-3 text-center transition-all ${filterType === t ? "bg-[var(--tint-blue-bg)] border-[#2383E2] ring-2 ring-[#2383E2]/25 text-[var(--tint-blue-tx)]" : "bg-white border-gray-200 text-gray-700 hover:border-blue-300"}`}
-            >
-              <div className="text-lg font-bold">{counts[t === "all" ? "all" : t]}</div>
-              <div className="text-[10px] mt-0.5 opacity-80">{t === "all" ? "전체" : t}</div>
-            </button>
-          ))}
-        </div>
-
-        {/* 검색 + 필터 */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 mb-4">
           <input
             type="text"
             placeholder="🔍 주소 · 집주인 이름 · 연락처 검색"
@@ -832,10 +741,17 @@ export default function PropertiesPage() {
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
           />
 
-          {/* 단지 → 동 → 호 조회 (선방 스타일 드롭다운) */}
+          {/* 단지 → 동 → 호 조회 — 평소 접힘, "단지로 찾기" 클릭 시 펼침 */}
           {complexList.length > 0 && (
-            <div className="border border-emerald-100 rounded-xl bg-emerald-50/40 p-2.5 mb-2">
-              <div className="text-[11px] text-emerald-700 font-medium mb-1.5">🏢 단지·동·호 조회</div>
+            <div className="mb-2">
+              <button onClick={() => setShowComplexSearch(v => !v)}
+                className="flex items-center gap-1 text-[12px] font-semibold text-[var(--brand-blue)] dark:text-blue-400 hover:underline">
+                <span className="material-symbols-outlined text-[16px] leading-none">{showComplexSearch ? "expand_less" : "manage_search"}</span>
+                단지·동·호로 찾기
+                {(selectedComplex || selectedDong || selectedHo) && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-[var(--brand-blue)]" />}
+              </button>
+              {showComplexSearch && (
+              <div className="border border-blue-100 rounded-xl bg-blue-50/40 p-2.5 mt-1.5">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {/* 단지 드롭다운 */}
                 <select value={selectedComplex}
@@ -864,6 +780,8 @@ export default function PropertiesPage() {
               {(selectedComplex || selectedDong || selectedHo) && (
                 <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
                   className="mt-1.5 text-[11px] text-gray-500 hover:text-red-600">✕ 조회 초기화</button>
+              )}
+              </div>
               )}
             </div>
           )}
@@ -1148,6 +1066,39 @@ export default function PropertiesPage() {
       )}
 
     </div>
+  );
+}
+
+/* 요약 타일 — 만기·손님 페이지와 동일 구조 (연한 틴트 + 선택 시 진한 테두리·링·체크) */
+function PropSummaryTile({ tint, label, count, sub, active, onClick }: {
+  tint: "green" | "blue" | "red" | "gray";
+  label: string;
+  count: number;
+  sub?: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const C = {
+    green: { bg: "var(--tint-green-bg)", tx: "var(--tint-green-tx)", tx2: "var(--tint-green-tx2)", ring: "#1D9E75" },
+    blue:  { bg: "var(--tint-blue-bg)",  tx: "var(--tint-blue-tx)",  tx2: "var(--tint-blue-tx2)",  ring: "#2383E2" },
+    red:   { bg: "var(--tint-red-bg)",   tx: "var(--tint-red-tx)",   tx2: "var(--tint-red-tx2)",   ring: "#E24B4A" },
+    gray:  { bg: "var(--tint-gray-bg)",  tx: "#5F5E5B",              tx2: "#9B9A97",               ring: "#888780" },
+  }[tint];
+  return (
+    <button
+      onClick={onClick}
+      className={`text-left rounded-xl p-3 border transition-all hover:-translate-y-0.5 ${active ? "" : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:shadow-md"}`}
+      style={active ? { background: C.bg, borderColor: C.ring, boxShadow: `0 0 0 2px ${C.ring}33` } : undefined}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-semibold" style={{ color: active ? C.tx : "#6b7280" }}>{label}</span>
+        {active && <span className="material-symbols-outlined text-[16px] leading-none" style={{ color: C.ring }}>check_circle</span>}
+      </div>
+      <div className="text-2xl font-bold mt-1 tabular-nums" style={{ color: count > 0 ? C.tx : "#9ca3af" }}>
+        {count}<span className="text-xs font-semibold ml-0.5" style={{ color: C.tx2 }}>건</span>
+      </div>
+      <div className="text-[10.5px] mt-0.5 truncate" style={{ color: C.tx2 }}>{sub || " "}</div>
+    </button>
   );
 }
 
