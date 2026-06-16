@@ -68,7 +68,10 @@ export default function StitchLayout({ children }: { children: React.ReactNode }
           open ? "sm:pl-56 lg:pl-64" : "sm:pl-0"
         }`}
       >
-        {children}
+        {/* 콘텐츠 여백 — 가장자리에 붙지 않게 가벼운 패딩(구분감). 시안 A */}
+        <div className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-6">
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-12",
   day: "금",
-  category: "신규 기능",
-  work: "표 컬럼 헤더 검색(매물·만기 단지/소재지, 손님 이름) + 유저관리 일/주/월 접속일 집계(로그인 날짜 누적). 내 매물 상단 단순화·VIP별표·관리페이지 전폭도 같은 날",
-  commit: "62a969d",
-  note: "접속일은 배포 시점부터 누적",
+  category: "UX 개선",
+  work: "스케줄 2단 레이아웃(좌 달력 고정·우 필터/목록) + 항목 클릭 우측 상세 패널(약속/계약·중도금·잔금/손님 분기, 전화·문자·이동). 컬럼검색·접속일집계·AI메뉴 숨김도 같은 날",
+  commit: "2ecc1ff",
+  note: "약속 카드 액션은 패널로 이동",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 컬럼검색+접속일집계" : "컬럼검색+접속일집계";
+      found.getCell(4).value = prev ? prev + " / 스케줄 2단+패널" : "스케줄 2단+패널";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "컬럼검색+접속일집계"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "스케줄 2단+패널"]);
     }
   }
 
