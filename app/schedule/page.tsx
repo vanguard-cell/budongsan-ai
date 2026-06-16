@@ -98,8 +98,9 @@ export default function SchedulePage() {
     return () => { u1(); u2(); u3(); };
   }, [user]);
 
-  /* 통합 아이템 생성 — 만기일 제거, Property의 4개 날짜 추가 */
-  const unified = useMemo<UnifiedItem[]>(() => {
+  /* 베이스 아이템 — 만기일 제거, Property의 4개 날짜 추가.
+     filter·selectedDate는 적용하지 않음(탭/달력 카운트가 흔들리지 않게). showPast만 적용. */
+  const baseItems = useMemo<UnifiedItem[]>(() => {
     const items: UnifiedItem[] = [];
 
     // ① 사용자가 등록한 일정 (집보기·계약일·중도금일·잔금일·기타)
@@ -126,7 +127,6 @@ export default function SchedulePage() {
       }
     }
 
-
     // ③ 손님 후속연락 — "약속" 카테고리로 통합
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
@@ -135,7 +135,12 @@ export default function SchedulePage() {
       items.push({ key: `f-${cu.id}`, source: "appointment", date: cu.nextFollowUp, time: "", customer: cu });
     }
 
-    return items
+    return items;
+  }, [schedules, customers, properties, showPast]);
+
+  /* 우측 목록 — baseItems에 filter + 선택 날짜 적용 */
+  const unified = useMemo<UnifiedItem[]>(() => {
+    return baseItems
       .filter(i => filter === "all" || i.source === filter)
       .filter(i => !selectedDate || i.date === selectedDate)
       .sort((a, b) => {
@@ -143,28 +148,13 @@ export default function SchedulePage() {
         if (d !== 0) return d;
         return a.time.localeCompare(b.time);
       });
-  }, [schedules, customers, properties, filter, showPast, selectedDate]);
+  }, [baseItems, filter, selectedDate]);
 
-  /* 캘린더용 — 필터 + 날짜 선택 무시한 전체 일정 (지난 일정 포함 표시) */
-  const calendarItems = useMemo<CalendarItem[]>(() => {
-    const items: CalendarItem[] = [];
-    for (const s of schedules) {
-      if (s.status === "cancelled") continue;
-      items.push({ date: s.date, source: scheduleTypeToSource(s.scheduleType) });
-    }
-    for (const p of properties) {
-      if (p.status !== "active") continue;
-      if (p.contractDate)    items.push({ date: p.contractDate,    source: "contractDate" });
-      if (p.downPaymentDate) items.push({ date: p.downPaymentDate, source: "downPaymentDate" });
-      if (p.balanceDate)     items.push({ date: p.balanceDate,     source: "balanceDate" });
-    }
-    for (const cu of customers) {
-      if (!cu.nextFollowUp) continue;
-      if (cu.status === "closed" || cu.status === "lost") continue;
-      items.push({ date: cu.nextFollowUp, source: "appointment" });
-    }
-    return items;
-  }, [schedules, customers, properties]);
+  /* 캘린더 점 — baseItems와 동일 집합(필터·선택 무시), 달력은 dot+카운트 표시 */
+  const calendarItems = useMemo<CalendarItem[]>(
+    () => baseItems.map(i => ({ date: i.date, source: i.source })),
+    [baseItems],
+  );
 
   /* 날짜별 그룹 */
   const grouped = useMemo(() => {
@@ -176,16 +166,16 @@ export default function SchedulePage() {
     return Object.entries(map);
   }, [unified]);
 
-  const todayCount = unified.filter(i => isToday(i.date)).length;
+  const todayCount = baseItems.filter(i => isToday(i.date)).length;
 
-  /* 필터별 카운트 */
+  /* 필터별 카운트 — baseItems 기준(현재 선택한 필터와 무관하게 고정) */
   const counts = useMemo(() => ({
-    all:             unified.length,
-    appointment:     unified.filter(i => i.source === "appointment").length,
-    contractDate:    unified.filter(i => i.source === "contractDate").length,
-    downPaymentDate: unified.filter(i => i.source === "downPaymentDate").length,
-    balanceDate:     unified.filter(i => i.source === "balanceDate").length,
-  }), [unified]);
+    all:             baseItems.length,
+    appointment:     baseItems.filter(i => i.source === "appointment").length,
+    contractDate:    baseItems.filter(i => i.source === "contractDate").length,
+    downPaymentDate: baseItems.filter(i => i.source === "downPaymentDate").length,
+    balanceDate:     baseItems.filter(i => i.source === "balanceDate").length,
+  }), [baseItems]);
 
   const upsert = async (s: Schedule) => {
     if (!user) return;
