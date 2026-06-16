@@ -12,6 +12,7 @@ import { subscribeCustomers } from "@/lib/customers-db";
 import { dDay } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
+import SideDrawer from "@/app/components/SideDrawer";
 
 /* ── 타입 ── */
 type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
@@ -74,6 +75,7 @@ export default function SchedulePage() {
   const [filter,     setFilter]     = useState<SourceFilter>("all");
   const [showPast,   setShowPast]   = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [panelItem,  setPanelItem]  = useState<UnifiedItem | null>(null);   // 우측 상세 패널
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/schedule");
@@ -202,8 +204,8 @@ export default function SchedulePage() {
   );
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-2xl mx-auto">
+    <div className={`p-4 sm:p-6 lg:p-8 transition-[padding] duration-300 ease-out ${panelItem ? "xl:pr-[400px]" : ""}`}>
+      <div className="w-full">
 
         {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 빠른 등록 */}
         <section className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-5">
@@ -244,12 +246,18 @@ export default function SchedulePage() {
           </div>
         </section>
 
-        {/* 월별 캘린더 — 한눈에 보기 */}
-        <MonthCalendar
-          items={calendarItems}
-          onSelectDate={setSelectedDate}
-          selectedDate={selectedDate}
-        />
+        <div className="flex flex-col lg:flex-row gap-5 items-start">
+          {/* ── 좌측: 월별 캘린더 (넓은 화면에선 고정) ── */}
+          <div className="w-full lg:w-[440px] lg:shrink-0 lg:sticky lg:top-20">
+            <MonthCalendar
+              items={calendarItems}
+              onSelectDate={setSelectedDate}
+              selectedDate={selectedDate}
+            />
+          </div>
+
+          {/* ── 우측: 필터 + 목록 ── */}
+          <div className="flex-1 min-w-0 w-full">
 
         {/* 오늘 알림 */}
         {todayCount > 0 && !selectedDate && (
@@ -330,23 +338,101 @@ export default function SchedulePage() {
 
                 <div className="space-y-2">
                   {items.map(item => {
-                    if (item.schedule)
-                      return <ScheduleCard key={item.key} schedule={item.schedule} properties={properties}
-                               onEdit={() => setEditing({ ...item.schedule! })}
-                               onDone={() => done(item.schedule!)}
-                               onDelete={() => remove(item.schedule!.id)} />;
-                    if (item.property && item.propertyKind)
-                      return <PropertyDateCard key={item.key} property={item.property} kind={item.propertyKind} />;
-                    if (item.customer)
-                      return <FollowUpCard key={item.key} customer={item.customer} />;
-                    return null;
+                    const inner =
+                      item.schedule ? <ScheduleCard schedule={item.schedule} properties={properties} />
+                      : item.property && item.propertyKind ? <PropertyDateCard property={item.property} kind={item.propertyKind} />
+                      : item.customer ? <FollowUpCard customer={item.customer} />
+                      : null;
+                    if (!inner) return null;
+                    return (
+                      <div key={item.key} onClick={() => setPanelItem(item)} className="cursor-pointer">
+                        {inner}
+                      </div>
+                    );
                   })}
                 </div>
               </div>
             ))}
           </div>
         )}
+          </div>{/* 우측 끝 */}
+        </div>{/* 2단 끝 */}
       </div>
+
+      {/* ── 우측 상세 패널 (항목 클릭 시) ── */}
+      {panelItem && (() => {
+        const it = panelItem;
+        const s = it.schedule, p = it.property, c = it.customer;
+        const accent = it.source === "appointment" ? "#2383E2"
+          : it.source === "contractDate" ? "#7F77DD"
+          : it.source === "downPaymentDate" ? "#D4537E" : "#EF9F27";
+        const phoneChip = (label: string, name: string | undefined, phone: string | undefined, kind: "owner" | "tenant" | "visitor") => {
+          if (!phone) return null;
+          const cls = kind === "owner" ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+            : kind === "tenant" ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
+            : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100";
+          const tag = name ? `${label} ${name}` : label;
+          return (
+            <span className="inline-flex items-center rounded-full overflow-hidden border border-gray-200 dark:border-slate-600">
+              <a href={`tel:${phone.replace(/\D/g, "")}`} className={`inline-flex items-center gap-1 pl-2 pr-1.5 py-1 text-[11px] font-bold transition-colors ${cls}`}>
+                <span className="material-symbols-outlined text-[13px]">call</span>{tag}
+              </a>
+              <a href={`sms:${phone.replace(/\D/g, "")}`} className={`inline-flex items-center px-1.5 py-1 border-l border-gray-200 dark:border-slate-600 transition-colors ${cls}`}>
+                <span className="material-symbols-outlined text-[13px]">sms</span>
+              </a>
+            </span>
+          );
+        };
+        return (
+          <SideDrawer open onClose={() => setPanelItem(null)} title="일정 상세" icon="event" accent={accent}>
+            {s && (
+              <div className="px-1 space-y-3">
+                <div>
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${TYPE_COLORS[s.scheduleType]}`}>{s.scheduleType}</span>
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{s.date} {s.time}</span>
+                    {s.status === "done" && <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-green-100 text-green-700">완료</span>}
+                  </div>
+                  <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{s.propertyAddress || "주소 미입력"}</p>
+                </div>
+                {phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}
+                {s.memo && <p className="text-[12px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-lg px-2.5 py-2">💬 {s.memo}</p>}
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  <button onClick={() => { setEditing({ ...s }); setPanelItem(null); }} className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">edit</span>수정</button>
+                  <button onClick={() => { done(s); }} className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 text-[12px] font-bold hover:bg-gray-50 dark:hover:bg-slate-800"><span className="material-symbols-outlined text-[15px] text-emerald-600">{s.status === "done" ? "undo" : "task_alt"}</span>{s.status === "done" ? "미완료로" : "완료 처리"}</button>
+                </div>
+                <button onClick={() => { remove(s.id); setPanelItem(null); }} className="w-full py-2 rounded-lg text-[11px] font-semibold text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">삭제</button>
+              </div>
+            )}
+            {p && it.propertyKind && (
+              <div className="px-1 space-y-3">
+                <div>
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold text-white" style={{ backgroundColor: accent }}>
+                      {it.propertyKind === "contractDate" ? "계약일" : it.propertyKind === "downPaymentDate" ? "중도금일" : "잔금일"}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{p.dealType} · {it.date}</span>
+                  </div>
+                  <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{p.address}</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {phoneChip("집주인", p.ownerName, p.ownerPhone, "owner")}
+                  {phoneChip("임차인", p.tenantName, p.tenantPhone, "tenant")}
+                </div>
+                <button onClick={() => router.push(`/properties?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">domain</span>매물 상세 보기</button>
+              </div>
+            )}
+            {c && (
+              <div className="px-1 space-y-3">
+                <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100">{c.name || "고객님"}</p>
+                <div className="text-[12px] text-gray-600 dark:text-gray-300">다음 연락 예정 · {c.nextFollowUp}</div>
+                {phoneChip("손님", c.name, c.phone, "visitor")}
+                <button onClick={() => router.push(`/customers?focus=${c.id}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">group</span>손님 상세 보기</button>
+              </div>
+            )}
+          </SideDrawer>
+        );
+      })()}
 
       {editing && (
         <ScheduleModal
@@ -361,15 +447,14 @@ export default function SchedulePage() {
   );
 }
 
-/* ── 약속 카드 ── */
-function ScheduleCard({ schedule: s, properties, onEdit, onDone, onDelete }: {
+/* ── 약속 카드 (클릭 시 우측 패널, 액션은 패널에서) ── */
+function ScheduleCard({ schedule: s, properties }: {
   schedule: Schedule; properties: Property[];
-  onEdit: () => void; onDone: () => void; onDelete: () => void;
 }) {
   const isDone = s.status === "done";
   const linkedProp = s.propertyId ? properties.find(p => p.id === s.propertyId) : null;
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${isDone ? "bg-gray-50/60 border-gray-200 opacity-60" : "bg-white border-gray-200 shadow-sm"}`}>
+    <div className={`rounded-2xl border p-3 sm:p-4 transition-all hover:shadow-md hover:border-blue-300 ${isDone ? "bg-gray-50/60 border-gray-200 opacity-60" : "bg-white border-gray-200 shadow-sm"}`}>
       <div className="flex items-start gap-3">
         <div className={`flex-shrink-0 w-14 text-center rounded-xl py-2 ${isDone ? "bg-gray-100" : "bg-blue-50"}`}>
           <div className="text-[10px] text-blue-400 font-medium">약속</div>
@@ -390,20 +475,14 @@ function ScheduleCard({ schedule: s, properties, onEdit, onDone, onDelete }: {
           {s.visitorPhone && (
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <span className="text-gray-500 shrink-0">{s.visitorName || "방문자"}</span>
-              <a href={`tel:${s.visitorPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(s.visitorPhone)}</a>
-              <a href={`sms:${s.visitorPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${s.visitorName ? ` ${s.visitorName}님` : ""}, 미사금빛공인중개사입니다.\n${s.date} ${s.time} ${s.propertyAddress} ${s.scheduleType} 약속 확인드립니다.`)}`}
+              <a onClick={e => e.stopPropagation()} href={`tel:${s.visitorPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(s.visitorPhone)}</a>
+              <a onClick={e => e.stopPropagation()} href={`sms:${s.visitorPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${s.visitorName ? ` ${s.visitorName}님` : ""}, 미사금빛공인중개사입니다.\n${s.date} ${s.time} ${s.propertyAddress} ${s.scheduleType} 약속 확인드립니다.`)}`}
                 className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto">문자</a>
             </div>
           )}
           {s.memo && <div className="mt-1 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-1">💬 {s.memo}</div>}
         </div>
-      </div>
-      <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
-        <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors">수정</button>
-        <button onClick={onDone} className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${isDone ? "border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600" : "border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-600"}`}>
-          {isDone ? "미완료로" : "완료 처리"}
-        </button>
-        <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors ml-auto">삭제</button>
+        <span className="material-symbols-outlined text-gray-300 text-[18px] shrink-0 self-center">chevron_right</span>
       </div>
     </div>
   );
@@ -443,13 +522,13 @@ function PropertyDateCard({ property: p, kind }: { property: Property; kind: Pro
           {p.ownerPhone && (
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <span className="text-gray-500 shrink-0">집주인 {p.ownerName || ""}</span>
-              <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.ownerPhone)}</a>
+              <a onClick={e => e.stopPropagation()} href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.ownerPhone)}</a>
             </div>
           )}
           {p.tenantPhone && (
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
               <span className="text-gray-500 shrink-0">임차인 {p.tenantName || ""}</span>
-              <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
+              <a onClick={e => e.stopPropagation()} href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
             </div>
           )}
           <div className="mt-1 text-[11px] text-gray-500">{m.label} {date}</div>
@@ -484,8 +563,8 @@ function FollowUpCard({ customer: c }: { customer: Customer }) {
           {c.preferredArea && <div className="text-xs text-gray-500 mt-0.5">희망: {c.preferredArea}</div>}
           {c.phone && (
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              <a href={`tel:${c.phone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(c.phone)}</a>
-              <a href={`sms:${c.phone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요 ${c.name}님, 미사금빛공인중개사입니다.\n안녕하신지요? 좋은 매물 있어 연락드립니다.`)}`}
+              <a onClick={e => e.stopPropagation()} href={`tel:${c.phone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(c.phone)}</a>
+              <a onClick={e => e.stopPropagation()} href={`sms:${c.phone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요 ${c.name}님, 미사금빛공인중개사입니다.\n안녕하신지요? 좋은 매물 있어 연락드립니다.`)}`}
                 className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto">문자</a>
             </div>
           )}
