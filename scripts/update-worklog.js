@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-12",
   day: "금",
   category: "UX 개선",
-  work: "만기 관리 표도 소재지/단지·동호 열 분리 (매물 표와 동일) — 첫 번지까지 소재지, 단지·동호 한 줄, 소재지 열은 맨 끝·숨김 가능",
-  commit: "83c2e75",
-  note: "splitAddress 공통 로직",
+  work: "내 매물 상단 단순화 — 큰 카드 2묶음 → 요약 4타일, 거래·유형은 필터칩으로 강등, 단지조회 접기. 만기·손님과 동일 2단 구조로 통일 (5단→3단)",
+  commit: "49cc307",
+  note: "VIP 별표 이름뒤·관리페이지 전폭·컬럼폭 재배분도 같은 날",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 만기 표 소재지 분리" : "만기 표 소재지 분리";
+      found.getCell(4).value = prev ? prev + " / 내 매물 상단 단순화" : "내 매물 상단 단순화";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "만기 표 소재지 분리"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "내 매물 상단 단순화"]);
     }
   }
 

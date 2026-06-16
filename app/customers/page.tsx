@@ -81,6 +81,8 @@ export default function CustomersPage() {
   };
   const [panelId, setPanelId] = useState<string | null>(null);   // 우측 패널 (표/카드 공용)
   const [sortBy, setSortBy] = useState<CustSort>("followup");    // 표 헤더 정렬
+  const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
+  const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
 
   /* 로그인 가드 */
   useEffect(() => {
@@ -133,6 +135,10 @@ export default function CustomersPage() {
         return true;
       })
       .filter(({ c }) => {
+        const nameTerm = (colSearch.name || "").trim().toLowerCase();
+        return !nameTerm || (c.name || "").toLowerCase().includes(nameTerm);
+      })
+      .filter(({ c }) => {
         if (!query.trim()) return true;
         const q = query.trim().toLowerCase();
         return (
@@ -152,7 +158,7 @@ export default function CustomersPage() {
         }
         return a.d - b.d;
       });
-  }, [customers, filter, query, sortBy]);
+  }, [customers, filter, query, sortBy, colSearch]);
 
   /* 카운트 */
   const counts = useMemo(() => {
@@ -348,6 +354,8 @@ export default function CustomersPage() {
             onSortChange={setSortBy}
             filter={filter}
             onFilterChange={setFilter}
+            colSearch={colSearch}
+            onColSearch={onColSearch}
             onPatch={async (c, patch) => { await fsSaveCustomer(user.agencyId, { ...c, ...patch }); }}
           />
         ) : (

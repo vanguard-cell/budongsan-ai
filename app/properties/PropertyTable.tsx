@@ -124,6 +124,9 @@ interface Props {
   onFilterPropTypeChange: (t: "all" | PropertyType) => void;
   priceRange: PriceRange;
   onPriceRangeChange: (r: PriceRange) => void;
+  /* 컬럼 헤더 검색 (단지·동호 / 소재지) */
+  colSearch: Record<string, string>;
+  onColSearch: (col: string, term: string) => void;
   /* 4단계 — 인라인 편집 저장 */
   onPatch: (p: Property, patch: Partial<Property>) => Promise<void>;
 }
@@ -132,6 +135,7 @@ export default function PropertyTable({
   list, selectedId, onRowClick,
   sortBy, onSortChange, filterType, onFilterTypeChange,
   filterPropType, onFilterPropTypeChange, priceRange, onPriceRangeChange,
+  colSearch, onColSearch,
   onPatch,
 }: Props) {
   const [openMenu, setOpenMenu] = useState<ColKey | null>(null);
@@ -270,6 +274,29 @@ export default function PropertyTable({
 
   const isEditing = (p: Property, f: EditField) => edit?.id === p.id && edit.field === f;
 
+  /* 컬럼 헤더 검색 입력 — 단지·동호 / 소재지 (함수 호출로 인라인 → 포커스 유지) */
+  const searchInput = (col: ColKey) => (
+    <div className="px-0.5 pb-1.5 mb-1 border-b border-gray-100 dark:border-slate-800">
+      <div className="relative">
+        <span className="material-symbols-outlined absolute left-1.5 top-1/2 -translate-y-1/2 text-[14px] text-gray-400 pointer-events-none">search</span>
+        <input
+          value={colSearch[col] || ""}
+          onChange={e => onColSearch(col, e.target.value)}
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+          placeholder={`${COL_LABEL[col]} 검색`}
+          className="w-full pl-6 pr-6 py-1.5 text-[12px] rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        />
+        {colSearch[col] && (
+          <button onClick={e => { e.stopPropagation(); onColSearch(col, ""); }} title="검색 지우기"
+            className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   /* 헤더 th — 클릭 시 메뉴. 오른쪽 끝 열들은 메뉴가 왼쪽으로 열려야 잘리지 않음 */
   const RIGHT_ALIGN: ColKey[] = ["leaseEnd", "balance", "stage", "region"];
   const Th = ({ k, w, menu }: { k: ColKey; w: string; menu: React.ReactNode }) => {
@@ -279,10 +306,10 @@ export default function PropertyTable({
       <th className={`relative text-left font-medium px-2 py-2.5 ${w}`}>
         <button
           onClick={e => { e.stopPropagation(); setOpenMenu(openMenu === k ? null : k); }}
-          className={`flex items-center gap-0.5 rounded-md px-1 -mx-1 whitespace-nowrap transition-colors ${openMenu === k ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "hover:text-gray-700 dark:hover:text-gray-200"}`}
+          className={`flex items-center gap-0.5 rounded-md px-1 -mx-1 whitespace-nowrap transition-colors ${openMenu === k || colSearch[k] ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)] font-bold" : "hover:text-gray-700 dark:hover:text-gray-200"}`}
         >
           {COL_LABEL[k]}
-          <span className="material-symbols-outlined text-[14px] leading-none">expand_more</span>
+          <span className="material-symbols-outlined text-[14px] leading-none">{colSearch[k] ? "search" : "expand_more"}</span>
         </button>
         {openMenu === k && (
           <div className={`absolute ${alignRight ? "right-0" : "left-0"} top-full mt-1 z-30 w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-1.5 font-normal normal-case`}>
@@ -320,6 +347,7 @@ export default function PropertyTable({
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
               <Th k="address" w="w-[30%]" menu={<>
+                {searchInput("address")}
                 <MenuItem icon="schedule" label="최신 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
                 <MenuItem icon="apartment" label="동·호순" active={sortBy === "dongho"} onClick={() => { onSortChange("dongho"); setOpenMenu(null); }} />
               </>} />
@@ -350,9 +378,10 @@ export default function PropertyTable({
               <Th k="leaseEnd" w="w-[10%]" menu={<MenuItem icon="event_busy" label="만기 빠른순" active={sortBy === "lease_end"} onClick={() => { onSortChange("lease_end"); setOpenMenu(null); }} />} />
               <Th k="balance" w="w-[8%]" menu={<MenuItem icon="account_balance_wallet" label="잔금 빠른순" active={sortBy === "balance"} onClick={() => { onSortChange("balance"); setOpenMenu(null); }} />} />
               <Th k="stage" w="w-[6%]" menu={<MenuItem icon="info" label="날짜로 자동 계산됩니다" onClick={() => setOpenMenu(null)} />} />
-              <Th k="region" w="w-[8%]" menu={
+              <Th k="region" w="w-[8%]" menu={<>
+                {searchInput("region")}
                 <MenuItem icon="info" label="지역별 훑기용 — 정렬은 단지·동호 열에서" onClick={() => setOpenMenu(null)} />
-              } />
+              </>} />
             </tr>
           </thead>
           <tbody>

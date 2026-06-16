@@ -69,10 +69,12 @@ interface Props {
   onSortChange: (s: CustSort) => void;
   filter: CustFilter;
   onFilterChange: (f: CustFilter) => void;
+  colSearch: Record<string, string>;
+  onColSearch: (col: string, term: string) => void;
   onPatch: (c: Customer, patch: Partial<Customer>) => Promise<void>;
 }
 
-export default function CustomerTable({ list, selectedId, onRowClick, sortBy, onSortChange, filter, onFilterChange, onPatch }: Props) {
+export default function CustomerTable({ list, selectedId, onRowClick, sortBy, onSortChange, filter, onFilterChange, colSearch, onColSearch, onPatch }: Props) {
   const [openMenu, setOpenMenu] = useState<ColKey | null>(null);
   const [hidden, setHidden] = useState<Set<ColKey>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem("dealdone_customers_hidden_cols") || "[]")); } catch { return new Set(); }
@@ -188,6 +190,28 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
 
   const isEditing = (c: Customer, f: EditField) => edit?.id === c.id && edit.field === f;
 
+  const searchInput = (col: ColKey) => (
+    <div className="px-0.5 pb-1.5 mb-1 border-b border-gray-100 dark:border-slate-800">
+      <div className="relative">
+        <span className="material-symbols-outlined absolute left-1.5 top-1/2 -translate-y-1/2 text-[14px] text-gray-400 pointer-events-none">search</span>
+        <input
+          value={colSearch[col] || ""}
+          onChange={e => onColSearch(col, e.target.value)}
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+          placeholder={`${COL_LABEL[col]} 검색`}
+          className="w-full pl-6 pr-6 py-1.5 text-[12px] rounded-md border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+        />
+        {colSearch[col] && (
+          <button onClick={e => { e.stopPropagation(); onColSearch(col, ""); }} title="검색 지우기"
+            className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   const RIGHT_ALIGN: ColKey[] = ["followUp", "status"];
   const Th = ({ k, w, menu }: { k: ColKey; w: string; menu: React.ReactNode }) => {
     if (!show(k)) return null;
@@ -195,9 +219,9 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
     return (
       <th className={`relative text-left font-medium px-2 py-2.5 ${w}`}>
         <button onClick={e => { e.stopPropagation(); setOpenMenu(openMenu === k ? null : k); }}
-          className={`flex items-center gap-0.5 rounded-md px-1 -mx-1 whitespace-nowrap transition-colors ${openMenu === k ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "hover:text-gray-700 dark:hover:text-gray-200"}`}>
+          className={`flex items-center gap-0.5 rounded-md px-1 -mx-1 whitespace-nowrap transition-colors ${openMenu === k || colSearch[k] ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)] font-bold" : "hover:text-gray-700 dark:hover:text-gray-200"}`}>
           {COL_LABEL[k]}
-          <span className="material-symbols-outlined text-[14px] leading-none">expand_more</span>
+          <span className="material-symbols-outlined text-[14px] leading-none">{colSearch[k] ? "search" : "expand_more"}</span>
         </button>
         {openMenu === k && (
           <div className={`absolute ${alignRight ? "right-0" : "left-0"} top-full mt-1 z-30 w-48 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-1.5 font-normal normal-case`}>
@@ -229,6 +253,7 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
               <Th k="name" w="w-[16%]" menu={<>
+                {searchInput("name")}
                 <MenuItem icon="sort_by_alpha" label="이름순" active={sortBy === "name"} onClick={() => { onSortChange("name"); setOpenMenu(null); }} />
                 <MenuItem icon="schedule" label="최근 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
                 <MenuItem icon="star" label="VIP만 보기" active={filter === "vip"} onClick={() => { onFilterChange("vip"); setOpenMenu(null); }} />

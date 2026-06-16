@@ -89,6 +89,8 @@ export default function ExpiryPage() {
   };
   const [panelId, setPanelId] = useState<string | null>(null);    // 우측 패널 (표/카드 공용)
   const [sortBy, setSortBy] = useState<ContractSort>("endAsc");   // 표 헤더 정렬
+  const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
+  const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
   const [showUpload, setShowUpload] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showSmsSettings, setShowSmsSettings] = useState(false);
@@ -143,10 +145,17 @@ export default function ExpiryPage() {
   /* ── 정렬 + 필터 ── */
   const filtered = useMemo(() => {
     const withDday = contracts.map(c => ({ c, d: dDay(c.endDate), s: severityOf(dDay(c.endDate)) }));
+    const addrTerm = (colSearch.address || "").trim().toLowerCase();
+    const regionTerm = (colSearch.region || "").trim().toLowerCase();
 
     return withDday
       .filter(({ c }) => (showClosed ? c.status === "closed" : c.status === "active"))
       .filter(({ s }) => (filter === "all" ? true : s === filter))
+      .filter(({ c }) => {
+        if (!addrTerm && !regionTerm) return true;
+        const addr = [c.address, c.dong, c.ho].filter(Boolean).join(" ").toLowerCase();
+        return (!addrTerm || addr.includes(addrTerm)) && (!regionTerm || addr.includes(regionTerm));
+      })
       .filter(({ c }) => {
         if (!query.trim()) return true;
         const q = query.trim().toLowerCase();
@@ -163,7 +172,7 @@ export default function ExpiryPage() {
         if (sortBy === "newest") return b.c.createdAt - a.c.createdAt;
         return a.d - b.d;   // endAsc (기본) — 만기 빠른순
       });
-  }, [contracts, filter, showClosed, query, sortBy]);
+  }, [contracts, filter, showClosed, query, sortBy, colSearch]);
 
   /* ── 요약 카운트 ── */
   const counts = useMemo(() => {
@@ -465,6 +474,8 @@ export default function ExpiryPage() {
             onSortChange={setSortBy}
             filter={filter}
             onFilterChange={setFilter}
+            colSearch={colSearch}
+            onColSearch={onColSearch}
             onPatch={async (c, patch) => { if (user) await fsSaveContract(user.agencyId, { ...c, ...patch }); }}
           />
         ) : (

@@ -76,6 +76,8 @@ export default function PropertiesPage() {
   // 우측 패널 — 표/카드에서 선택된 매물 (id로 보관해 실시간 갱신 반영)
   const [panelId, setPanelId] = useState<string | null>(null);
   const [showComplexSearch, setShowComplexSearch] = useState(false);   // 단지·동·호 조회 접기/펼치기
+  const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
+  const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
   // 즐겨찾기 (localStorage)
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem("property_pins") || "[]")); } catch { return new Set(); }
@@ -113,7 +115,7 @@ export default function PropertiesPage() {
   // 필터·정렬·검색·탭 변경 시 1페이지로 리셋
   useEffect(() => {
     setPage(1);
-  }, [query, filterType, filterPropType, priceRange, sortBy, viewMode, showClosed, occFilter]);
+  }, [query, filterType, filterPropType, priceRange, sortBy, viewMode, showClosed, occFilter, colSearch]);
 
   const upsert = async (p: Property): Promise<boolean> => {
     if (!user) return false;
@@ -285,10 +287,19 @@ export default function PropertiesPage() {
       ? properties.filter(p => p.status === "closed")
       : properties.filter(p => p.status === "active").filter(matchView);
 
+    // 컬럼 헤더 검색 (단지·동호 / 소재지) — 둘 다 전체 주소 텍스트로 매칭
+    const addrTerm = (colSearch.address || "").trim().toLowerCase();
+    const regionTerm = (colSearch.region || "").trim().toLowerCase();
+
     const result = baseList
       .filter(p => filterPropType === "all" || p.propertyType === filterPropType)
       .filter(p => filterType === "all" || p.dealType === filterType)
       .filter(p => !occFilter || p.occupancy === occFilter)
+      .filter(p => {
+        if (!addrTerm && !regionTerm) return true;
+        const addr = [p.address, p.dong, p.ho].filter(Boolean).join(" ").toLowerCase();
+        return (!addrTerm || addr.includes(addrTerm)) && (!regionTerm || addr.includes(regionTerm));
+      })
       .filter(p => {
         if (!query.trim()) return true;
         const q = query.toLowerCase();
@@ -337,7 +348,7 @@ export default function PropertiesPage() {
       const bp = pinnedIds.has(b.id) ? 0 : 1;
       return ap - bp;
     });
-  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo]);
+  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo, colSearch]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -943,6 +954,8 @@ export default function PropertiesPage() {
                   onFilterPropTypeChange={setFilterPropType}
                   priceRange={priceRange}
                   onPriceRangeChange={setPriceRange}
+                  colSearch={colSearch}
+                  onColSearch={onColSearch}
                   onPatch={async (p, patch) => { await saveProperty(user.agencyId, { ...p, ...patch }); }}
                 />
               ) : (
