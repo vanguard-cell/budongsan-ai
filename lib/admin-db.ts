@@ -11,6 +11,7 @@ import {
   collection, getDocs, getCountFromServer, Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { kstDateStr } from "./kst";
 
 export const ADMIN_EMAIL = "vpfldh87@gmail.com";
 
@@ -45,7 +46,7 @@ function toMillis(v: unknown): number {
 function countLoginDays(map: unknown): { today: number; week: number; month: number; total: number } {
   if (!map || typeof map !== "object") return { today: 0, week: 0, month: 0, total: 0 };
   const days = Object.keys(map as Record<string, unknown>).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = kstDateStr();
   const ms = (d: string) => new Date(d + "T00:00:00").getTime();
   const now = Date.now();
   const DAY = 24 * 60 * 60 * 1000;

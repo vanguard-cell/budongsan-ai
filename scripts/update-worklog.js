@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "건의함 칸반 보드 재설계: status 3단계(문의/진행중/완료) + lastReplyBy. 관리자 첫 답변 시 진행중 자동전환, 유저 답글은 칸 유지(강제 pending 제거). 노션식 3칼럼 보드 + 카드 클릭 우측 채팅 패널 + PC 드래그/폰 버튼 이동. 완료는 관리자·문의자 둘 다, 확인 추적 유지",
-  commit: "acf5539",
-  note: "보안규칙 변경 불필요(owner update 허용). setStatus 공용 추가",
+  work: "유저 관리(admin) 표 뷰 전환: 한 줄=한 유저(접속·데이터 컬럼) + 헤더 정렬 + 행 클릭 우측 패널(접속일·데이터내역·매물 열람) + 카드/표 토글. 페이지 전폭+공통 여백 통일. 건의함 여백도 다른 페이지와 통일",
+  commit: "2a52d90",
+  note: "매물 열람 모달 → 우측 패널로 이동",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 건의함 칸반보드" : "건의함 칸반보드";
+      found.getCell(4).value = prev ? prev + " / 유저관리 표뷰" : "유저관리 표뷰";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "건의함 칸반보드"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "유저관리 표뷰"]);
     }
   }
 

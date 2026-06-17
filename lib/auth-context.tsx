@@ -20,6 +20,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { kstDateStr } from "./kst";
 
 /**
  * 사용자 역할
@@ -72,7 +73,7 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
   if (userSnap.exists()) {
     const data = userSnap.data();
     // 활동 기록 — 마지막 접속 + 누적 횟수 + 날짜별 접속(일/주/월 접속일 집계용)
-    const today = new Date().toISOString().slice(0, 10);   // YYYY-MM-DD
+    const today = kstDateStr();   // 한국(KST) 달력 날짜 YYYY-MM-DD
     updateDoc(userRef, {
       lastLoginAt: serverTimestamp(),
       loginCount: increment(1),
@@ -120,7 +121,7 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
     createdAt: serverTimestamp(),
     lastLoginAt: serverTimestamp(),
     loginCount: 1,
-    loginDays: { [new Date().toISOString().slice(0, 10)]: 1 },
+    loginDays: { [kstDateStr()]: 1 },
   });
 
   return {
