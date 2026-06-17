@@ -8,9 +8,10 @@ import {
   saveSchedulesBatch, sampleSchedules,
   type Schedule, type ScheduleType,
 } from "@/lib/schedules-db";
-import { subscribeProperties, type Property } from "@/lib/properties-db";
+import { subscribeProperties, emptyProperty, type Property } from "@/lib/properties-db";
 import { subscribeCustomers } from "@/lib/customers-db";
-import { dDay } from "@/app/expiry/contracts";
+import { subscribeContracts } from "@/lib/contracts-db";
+import { dDay, type Contract } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 import SideDrawer from "@/app/components/SideDrawer";
@@ -29,6 +30,7 @@ interface UnifiedItem {
   customer?: Customer;
   property?: Property;
   propertyKind?: PropertyDateKind;  // Property에서 어느 날짜인지
+  contract?: Contract;              // 만기로 이전된 계약(있으면 매물 대신 만기로 연결)
 }
 
 const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약일", "중도금일", "잔금일", "기타"];
@@ -46,6 +48,26 @@ function scheduleTypeToSource(t: ScheduleType): ItemSource {
   if (t === "중도금일") return "downPaymentDate";
   if (t === "잔금일")   return "balanceDate";
   return "appointment"; // 집보기·기타
+}
+
+/** 만기 계약을 스케줄 표시용 Property 형태로 변환 (계약일·중도금·잔금 날짜 + 연락처) */
+function contractToDisplayProp(ct: Contract): Property {
+  return {
+    ...emptyProperty(),
+    id: ct.fromPropertyId || ct.id,
+    address: ct.address,
+    dealType: ct.type,
+    price: ct.deposit || "",
+    monthly: ct.monthly || "",
+    dong: ct.dong || "",
+    ho: ct.ho || "",
+    ownerName: ct.landlordName, ownerPhone: ct.landlordPhone,
+    tenantName: ct.tenantName, tenantPhone: ct.tenantPhone,
+    contractDate: ct.contractDate || "",
+    downPaymentDate: ct.downPaymentDate || "",
+    balanceDate: ct.balanceDate || "",
+    status: "active",
+  };
 }
 
 function formatPhone(raw: string): string {
@@ -71,6 +93,7 @@ export default function SchedulePage() {
   const [schedules,  setSchedules]  = useState<Schedule[]>([]);
   const [customers,  setCustomers]  = useState<Customer[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [contracts,  setContracts]  = useState<Contract[]>([]);   // 만기로 이전된 계약(잔금 등 날짜 보존)
   const [loaded,     setLoaded]     = useState(false);
   const [editing,    setEditing]    = useState<Schedule | null>(null);
   const [filter,     setFilter]     = useState<SourceFilter>("all");
@@ -95,7 +118,8 @@ export default function SchedulePage() {
     const u1 = subscribeSchedules(user.agencyId,  list => { setSchedules(list);  setLoaded(true); });
     const u2 = subscribeCustomers(user.agencyId,  setCustomers);
     const u3 = subscribeProperties(user.agencyId, setProperties);
-    return () => { u1(); u2(); u3(); };
+    const u4 = subscribeContracts(user.agencyId,  setContracts);
+    return () => { u1(); u2(); u3(); u4(); };
   }, [user]);
 
   /* 베이스 아이템 — 만기일 제거, Property의 4개 날짜 추가.
@@ -135,8 +159,25 @@ export default function SchedulePage() {
       items.push({ key: `f-${cu.id}`, source: "appointment", date: cu.nextFollowUp, time: "", customer: cu });
     }
 
+    // ④ 만기로 이전된 계약의 계약일·중도금일·잔금일
+    //   (매물을 만기로 보내도 잔금 등 일정이 사라지지 않게 — 어머니 피드백 버그픽스)
+    for (const ct of contracts) {
+      if (ct.status === "closed") continue;
+      const dp = contractToDisplayProp(ct);
+      const dates: { kind: PropertyDateKind; date?: string; source: ItemSource }[] = [
+        { kind: "contractDate",    date: ct.contractDate,    source: "contractDate" },
+        { kind: "downPaymentDate", date: ct.downPaymentDate, source: "downPaymentDate" },
+        { kind: "balanceDate",     date: ct.balanceDate,     source: "balanceDate" },
+      ];
+      for (const { kind, date, source } of dates) {
+        if (!date) continue;
+        if (!showPast && !isFuture(date)) continue;
+        items.push({ key: `c-${ct.id}-${kind}`, source, date, time: "", property: dp, propertyKind: kind, contract: ct });
+      }
+    }
+
     return items;
-  }, [schedules, customers, properties, showPast]);
+  }, [schedules, customers, properties, contracts, showPast]);
 
   /* 우측 목록 — baseItems에 filter + 선택 날짜 적용 */
   const unified = useMemo<UnifiedItem[]>(() => {
@@ -438,7 +479,11 @@ export default function SchedulePage() {
                   {phoneChip("집주인", p.ownerName, p.ownerPhone, "owner")}
                   {phoneChip("임차인", p.tenantName, p.tenantPhone, "tenant")}
                 </div>
-                <button onClick={() => router.push(`/properties?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">domain</span>매물 상세 보기</button>
+                {it.contract ? (
+                  <button onClick={() => router.push(`/expiry?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">event_repeat</span>만기 계약 보기</button>
+                ) : (
+                  <button onClick={() => router.push(`/properties?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">domain</span>매물 상세 보기</button>
+                )}
               </div>
             )}
             {c && (

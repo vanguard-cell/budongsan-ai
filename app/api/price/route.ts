@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "조건에 맞는 실거래 데이터가 없습니다. 단지명·면적을 확인하거나 비워두고 다시 시도해보세요." });
     }
 
-    // ── 최고가 모드 — 최근 12개월 내 최고 거래 1건 (실거래 최고가 기록용) ──
+    // ── 최고가 모드 — 최근 6개월 내 최고 거래 1건 (실거래 최고가 기록용) ──
     if (mode === "max") {
       const fmtDate = (t: RawItem) =>
         `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day || "1").padStart(2, "0")}`;

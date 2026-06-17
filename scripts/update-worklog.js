@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-16",
   day: "화",
-  category: "신규 기능",
-  work: "스케줄·매출·실거래 최고가에 예시 데이터 버튼 추가(sample 생성기 + batch 저장, 예시/삭제 버튼). 매출은 [예시 매출] 태그 매물만 선별 삭제. 더불어 시안A 여백 이중적용 정리(페이지 루트 패딩 제거→공통 셸 일원화)",
-  commit: "7cb81a5",
-  note: "예시 일정/실거래 5건, 거래완료 예시 매물 5건",
+  category: "디자인",
+  work: "매출관리 페이지 재설계(8박스→3블록: 히어로+전월대비, 추이 그래프 확대, 거래종류 비중 막대+월별 명세). 스케줄 카운트 정합성 수정(달력 13 vs 탭 7 → baseItems 통일). 전 페이지 여백 2단계 확대",
+  commit: "c1a8ac1",
+  note: "KpiCard/DealCard→MiniStat/DealBar, 초소형 글자 제거",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 예시데이터 3페이지" : "예시데이터 3페이지";
+      found.getCell(4).value = prev ? prev + " / 매출재설계+여백확대" : "매출재설계+여백확대";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "예시데이터 3페이지"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "매출재설계+여백확대"]);
     }
   }
 

@@ -376,6 +376,11 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onConfirm, onDele
   const [img, setImg] = useState("");
   const [sending, setSending] = useState(false);
   const [zoom, setZoom] = useState<string | null>(null);
+  // 기본 접힘 — 목록이 길게 늘어지지 않게. 확인/답변 필요한 건은 자동 펼침
+  const needsAttention =
+    (isAdmin && item.status !== "done") ||                          // 관리자: 미처리
+    (isMine && item.status === "done" && !item.userConfirmed);      // 본인: 확인 대기
+  const [open, setOpen] = useState(needsAttention);
 
   const pickImage = async (file: File | undefined) => {
     if (!file) return;
@@ -393,31 +398,51 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onConfirm, onDele
   const fmtTime = (ms: number) =>
     new Date(ms).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
+  const preview = item.thread[0]?.text || item.text || (item.thread[0]?.image ? "📷 사진" : "(내용 없음)");
+  const lastAt = item.thread[item.thread.length - 1]?.createdAt || item.createdAt;
+
   return (
-    <div className={`rounded-2xl border p-4 ${item.status === "done" ? "bg-green-50/40 border-green-200" : "bg-white border-gray-200"}`}>
-      {/* 헤더 */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${item.status === "done" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
-          {item.status === "done" ? "✅ 처리완료" : "⏳ 대기중"}
-        </span>
-        {/* 확인 상태 배지 — 처리완료 건만 */}
-        {item.status === "done" && (
-          item.userConfirmed ? (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-0.5">
-              <span className="material-symbols-outlined text-xs">how_to_reg</span> 확인됨
-            </span>
-          ) : (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center gap-0.5 animate-pulse">
-              <span className="material-symbols-outlined text-xs">hourglass_top</span> 확인 대기
-            </span>
-          )
-        )}
-        {isAdmin && (
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">
-            👤 {item.submittedBy.name || item.submittedBy.email}
+    <div className={`rounded-2xl border ${item.status === "done" ? "bg-green-50/40 border-green-200" : "bg-white border-gray-200"}`}>
+      {/* 헤더 — 클릭하면 펼침/접힘 */}
+      <button onClick={() => setOpen(o => !o)} className="w-full text-left p-4 flex flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${item.status === "done" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+            {item.status === "done" ? "✅ 처리완료" : "⏳ 대기중"}
           </span>
+          {/* 확인 상태 배지 — 처리완료 건만 */}
+          {item.status === "done" && (
+            item.userConfirmed ? (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-0.5">
+                <span className="material-symbols-outlined text-xs">how_to_reg</span> 확인됨
+              </span>
+            ) : (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center gap-0.5 animate-pulse">
+                <span className="material-symbols-outlined text-xs">hourglass_top</span> 확인 대기
+              </span>
+            )
+          )}
+          {isAdmin && (
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">
+              👤 {item.submittedBy.name || item.submittedBy.email}
+            </span>
+          )}
+          <span className="ml-auto flex items-center gap-1.5 text-[11px] text-gray-400">
+            <span className="flex items-center gap-0.5">💬 {item.thread.length}</span>
+            <span className={`material-symbols-outlined text-lg text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}>expand_more</span>
+          </span>
+        </div>
+        {/* 접힘 상태 — 첫 메시지 한 줄 미리보기 */}
+        {!open && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700 truncate flex-1 min-w-0">{preview}</span>
+            <span className="text-[10px] text-gray-400 shrink-0">{fmtTime(lastAt)}</span>
+          </div>
         )}
-      </div>
+      </button>
+
+      {/* 펼침 상태 — 전체 대화 + 입력 + 액션 */}
+      {open && (
+      <div className="px-4 pb-4">
 
       {/* 유저(본인) — 처리완료 미확인 시 확인 버튼 강조 */}
       {!isAdmin && isMine && item.status === "done" && !item.userConfirmed && (
@@ -512,6 +537,9 @@ function FeedbackCard({ item, isAdmin, isMine, onSend, onDone, onConfirm, onDele
           </button>
         )}
       </div>
+
+      </div>
+      )}
 
       {/* 이미지 확대 */}
       {zoom && (
