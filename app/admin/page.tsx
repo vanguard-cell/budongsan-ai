@@ -105,7 +105,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className={`px-6 sm:px-10 lg:px-16 pt-6 sm:pt-8 pb-12 transition-[padding] duration-300 ${panelUser ? "xl:pr-[400px]" : ""}`}>
+      <div className={`px-6 sm:px-10 lg:px-24 pt-6 sm:pt-8 pb-12 transition-[padding] duration-300 ${panelUser ? "xl:pr-[400px]" : ""}`}>
 
         {/* 상단 바 */}
         <div className="flex items-center justify-between gap-2 mb-4">

@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-16",
   day: "화",
-  category: "신규 기능",
-  work: "유저 관리(admin) 표 뷰 전환: 한 줄=한 유저(접속·데이터 컬럼) + 헤더 정렬 + 행 클릭 우측 패널(접속일·데이터내역·매물 열람) + 카드/표 토글. 페이지 전폭+공통 여백 통일. 건의함 여백도 다른 페이지와 통일",
-  commit: "2a52d90",
-  note: "매물 열람 모달 → 우측 패널로 이동",
+  category: "버그·디버그",
+  work: "접속일 '오늘 접속인데 미접속' 버그 수정: loginDays 키·오늘 판정이 UTC라 KST 00~09시 접속이 전날로 기록됨 → lib/kst.ts(kstDateStr)로 로그인기록·집계 날짜를 한국 달력 기준 통일",
+  commit: "1ad0859",
+  note: "과거 UTC 기록은 소급 보정 안됨(다음 접속부터 정상)",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 유저관리 표뷰" : "유저관리 표뷰";
+      found.getCell(4).value = prev ? prev + " / 접속일 KST픽스" : "접속일 KST픽스";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "유저관리 표뷰"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "접속일 KST픽스"]);
     }
   }
 
