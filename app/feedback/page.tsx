@@ -147,7 +147,7 @@ export default function FeedbackPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className={`max-w-6xl mx-auto px-3 sm:px-5 py-4 sm:py-6 transition-[padding] duration-300 ${panelId ? "xl:pr-[400px]" : ""}`}>
+      <div className={`px-6 sm:px-10 lg:px-16 pt-6 sm:pt-8 pb-12 transition-[padding] duration-300 ${panelId ? "xl:pr-[400px]" : ""}`}>
 
         {/* 상단 바 */}
         <div className="flex items-center justify-between gap-2 mb-4">

@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-16",
   day: "화",
-  category: "버그·디버그",
-  work: "건의함 처리: ①만기 이전 시 잔금일정 사라짐 → 스케줄에 contracts 구독 추가(계약일/중도금/잔금 표시, 패널은 만기로 연결). ②실거래 최고가 6개월·매매전세월세 max 정상 확인. ③건의함 카드 접이식 전환(기본 접힘+미리보기, 클릭 펼침, 미처리/확인대기는 자동 펼침)",
-  commit: "80c77c6",
-  note: "매출 빠짐은 이미 contracts 집계로 정상이었음",
+  category: "신규 기능",
+  work: "건의함 칸반 보드 재설계: status 3단계(문의/진행중/완료) + lastReplyBy. 관리자 첫 답변 시 진행중 자동전환, 유저 답글은 칸 유지(강제 pending 제거). 노션식 3칼럼 보드 + 카드 클릭 우측 채팅 패널 + PC 드래그/폰 버튼 이동. 완료는 관리자·문의자 둘 다, 확인 추적 유지",
+  commit: "acf5539",
+  note: "보안규칙 변경 불필요(owner update 허용). setStatus 공용 추가",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 건의함3건처리" : "건의함3건처리";
+      found.getCell(4).value = prev ? prev + " / 건의함 칸반보드" : "건의함 칸반보드";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "건의함3건처리"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "건의함 칸반보드"]);
     }
   }
 
