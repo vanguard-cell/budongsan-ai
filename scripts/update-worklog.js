@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "손님 여정 타임라인 1단계: CustomerEvent/history + deriveCustomerTimeline(등록·보여준매물·후속)·mergedCustomerTimeline, logCustomerEvent. CustomerPanel 여정 타임라인 + 빠른기록(전화·문자·집보기·포기·메모) + 상태변경 자동기록. 만기 '계약 종료'→'관리 종료(보관)' 이름 변경",
-  commit: "e71b521",
-  note: "보여준 매물(날짜·반응) 기존 데이터로 즉시 타임라인화. 2단계=가로 타임라인 뷰 예정",
+  work: "손님 가로 타임라인 뷰 2단계: CustomerTimeline(행=손님, 가로축=월, 점=활동, 오늘 점선·범례, 시간창 자동) + 손님관리 뷰토글에 '타임라인' 추가(카드/표/타임라인). mergedCustomerTimeline 재사용해 기존 데이터로 즉시 표시. Pipedrive 연락처 타임라인 톤",
+  commit: "d41185a",
+  note: "1단계(손님 패널 여정 타임라인)에 이어 가로 뷰까지 완성",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 손님 여정 타임라인" : "손님 여정 타임라인";
+      found.getCell(4).value = prev ? prev + " / 손님 가로 타임라인뷰" : "손님 가로 타임라인뷰";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "손님 여정 타임라인"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "손님 가로 타임라인뷰"]);
     }
   }
 
