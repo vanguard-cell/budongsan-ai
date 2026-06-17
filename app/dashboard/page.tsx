@@ -202,7 +202,7 @@ export default function DashboardPage() {
     : null;
 
   return (
-    <div className={`p-5 lg:p-8 transition-[padding] duration-300 ease-out ${drawer ? "xl:pr-[400px]" : ""}`}>
+    <div className={`transition-[padding] duration-300 ease-out ${drawer ? "xl:pr-[400px]" : ""}`}>
       <div className="space-y-8">
         {/* ─── 1) 인사 ─── */}
         <header>
