@@ -220,7 +220,7 @@ export default function ExpiryPage() {
 
   const closeContract = async (id: string) => {
     if (!user) return;
-    if (!confirm("이 계약을 '종료' 상태로 변경할까요? (삭제는 아니며 종료된 계약 보기에서 확인 가능합니다)")) return;
+    if (!confirm("이 계약을 '관리 종료(보관)'할까요?\n더 이상 관리하지 않는 계약을 목록에서 내려 보관합니다. (삭제 아님 · 종료 보기에서 다시 확인·복구 가능)")) return;
     const target = contracts.find(c => c.id === id);
     if (!target) return;
     await fsSaveContract(user.agencyId, { ...target, status: "closed" });
@@ -455,7 +455,7 @@ export default function ExpiryPage() {
                 onChange={e => setShowClosed(e.target.checked)}
                 className="w-3.5 h-3.5 accent-blue-600"
               />
-              종료된 계약 보기
+              종료·보관 보기
             </label>
           </div>
           <input

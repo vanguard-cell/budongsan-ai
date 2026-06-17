@@ -12,6 +12,8 @@ import {
   setDoc,
   deleteDoc,
   getDocs,
+  updateDoc,
+  arrayUnion,
   query,
   orderBy,
   onSnapshot,
@@ -20,7 +22,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Customer, ShownProperty, CustomerSide, DealKind, CustomerStatus } from "@/app/customers/customer-types";
+import type { Customer, CustomerEvent, ShownProperty, CustomerSide, DealKind, CustomerStatus } from "@/app/customers/customer-types";
 import { uid as newCustomerId } from "@/app/customers/customer-types";
 
 function customersCol(agencyId: string) {
@@ -48,7 +50,28 @@ function fromDoc(id: string, data: Record<string, unknown>): Customer {
     shownProperties: Array.isArray(data.shownProperties) ? (data.shownProperties as ShownProperty[]) : [],
     memo:           (data.memo as string) || "",
     createdAt,
+    history:        Array.isArray(data.history) ? (data.history as CustomerEvent[]) : [],
   };
+}
+
+/** 손님 여정 이벤트 1건 추가 (arrayUnion — 기존 이력 보존) */
+export async function logCustomerEvent(
+  agencyId: string,
+  customerId: string,
+  ev: Omit<CustomerEvent, "at"> & { at?: number },
+): Promise<void> {
+  const event: CustomerEvent = {
+    at: ev.at ?? Date.now(),
+    by: ev.by,
+    kind: ev.kind,
+    text: ev.text,
+    ...(ev.reaction ? { reaction: ev.reaction } : {}),
+  };
+  try {
+    await updateDoc(customerDoc(agencyId, customerId), { history: arrayUnion(event) });
+  } catch (e) {
+    console.error("[logCustomerEvent] 실패:", e);
+  }
 }
 
 /** 실시간 구독 — 후속 연락 일정 빠른 순 (Infinity는 뒤로) */

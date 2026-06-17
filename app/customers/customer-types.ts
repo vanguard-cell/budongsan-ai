@@ -12,6 +12,15 @@ export interface ShownProperty {
   note: string;
 }
 
+/** 손님 여정 이벤트 (활동 로그 — 하이브리드: 적용 시점부터 누적) */
+export interface CustomerEvent {
+  at: number;     // 발생 시각 (ms)
+  by: string;     // 기록한 사람
+  kind: "create" | "shown" | "call" | "sms" | "visit" | "status" | "drop" | "note" | "followup";
+  text: string;
+  reaction?: "positive" | "neutral" | "negative" | "";
+}
+
 export interface Customer {
   id: string;
   name: string;
@@ -27,6 +36,7 @@ export interface Customer {
   shownProperties: ShownProperty[];
   memo: string;
   createdAt: number;
+  history?: CustomerEvent[];   // 여정 활동 이력 (전화·문자·상태변경·포기·메모)
 }
 
 export const uid = () =>
@@ -98,6 +108,30 @@ export function formatPhone(raw: string): string {
   if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
   if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
   return raw;
+}
+
+/** 기존 필드에서 파생되는 여정 이벤트 (등록·보여준 매물·후속연락) — 과거 데이터도 즉시 표시 */
+export function deriveCustomerTimeline(c: Customer): CustomerEvent[] {
+  const evs: CustomerEvent[] = [];
+  const dayMs = (ymd: string) => new Date(ymd.slice(0, 10) + "T00:00:00").getTime();
+  if (c.createdAt) evs.push({ at: c.createdAt, by: "", kind: "create", text: "손님 등록" });
+  for (const sp of c.shownProperties || []) {
+    if (!sp.address) continue;
+    const when = sp.shownAt ? dayMs(sp.shownAt) : c.createdAt;
+    const reactLabel = sp.reaction === "positive" ? "긍정" : sp.reaction === "negative" ? "부정" : sp.reaction === "neutral" ? "중립" : "";
+    const tail = [reactLabel, sp.note].filter(Boolean).join(" · ");
+    evs.push({ at: when, by: "", kind: "shown", text: `${sp.address} 보여줌${tail ? ` · ${tail}` : ""}`, reaction: sp.reaction });
+  }
+  if (c.nextFollowUp) evs.push({ at: new Date(c.nextFollowUp.slice(0, 10) + "T00:00:00").getTime(), by: "", kind: "followup", text: "후속 연락 예정" });
+  return evs;
+}
+
+/** 파생 + 기록 이력을 합쳐 최신순 정렬 (중복 텍스트는 기록 우선) */
+export function mergedCustomerTimeline(c: Customer): CustomerEvent[] {
+  const logged = c.history || [];
+  const loggedTexts = new Set(logged.map(e => e.text));
+  const derived = deriveCustomerTimeline(c).filter(e => !loggedTexts.has(e.text));
+  return [...logged, ...derived].sort((a, b) => b.at - a.at);
 }
 
 export function telUrl(phone: string): string { return `tel:${phone.replace(/\D/g, "")}`; }

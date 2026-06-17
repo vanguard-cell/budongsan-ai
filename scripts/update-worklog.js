@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "Attio/Pipedrive 벤치마킹 2종: ①매출관리 인사이트 확장(파이프라인 퍼널·단계 전환율·성사율 + 활동상태 스케줄 집계) ②매물 히스토리 타임라인 하이브리드(파생+기록, PropertyEvent/logPropertyEvent/mergedTimeline, 패널에 활동메모 추가)",
-  commit: "6be9fc8",
-  note: "여백 px-24(노션) 통일·홈 이중패딩 제거·접속일 KST픽스도 같은 날",
+  work: "만기 관리 재계약(연장) 흐름 추가: Contract status에 renewed + renewedFromId, renewContract(새 기간 active 생성·직전 계약 renewed 보존), ContractPanel 재계약 버튼 + RenewModal(재계약일·만기일·가격·수수료). 종료보기에 renewed 포함, 스케줄은 비활성 계약 제외",
+  commit: "d3ddf7e",
+  note: "재계약 수수료=재계약일 기준 새 매출(중복 아님). Pipedrive 프로세스 검토 후 진행",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 인사이트+히스토리" : "인사이트+히스토리";
+      found.getCell(4).value = prev ? prev + " / 재계약 흐름" : "재계약 흐름";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "인사이트+히스토리"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "재계약 흐름"]);
     }
   }
 

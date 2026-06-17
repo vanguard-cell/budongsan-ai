@@ -9,9 +9,11 @@ import {
   saveCustomer as fsSaveCustomer,
   deleteCustomer as fsDeleteCustomer,
   saveCustomersBatch,
+  logCustomerEvent,
 } from "@/lib/customers-db";
 import {
   Customer,
+  type CustomerEvent,
   FollowUpSeverity,
   SIDE_LABELS,
   DEAL_KIND_LABELS,
@@ -190,12 +192,29 @@ export default function CustomersPage() {
     await fsDeleteCustomer(user.agencyId, id);
   };
 
+  const STATUS_LABEL: Record<Customer["status"], string> = { active: "진행 중", matched: "매칭", closed: "거래 완료", lost: "이탈" };
   const changeStatus = async (c: Customer, status: Customer["status"]) => {
     if (!user) return;
     if (status === "lost") {
       if (!confirm(`${c.name || "이 손님"}을(를) 이탈 처리할까요?\n이탈 처리 후에는 상단 [이탈] 필터에서 다시 확인하고 복구할 수 있습니다.`)) return;
     }
+    if (c.status === status) return;
     await fsSaveCustomer(user.agencyId, { ...c, status });
+    await logCustomerEvent(user.agencyId, c.id, {
+      by: user.displayName || user.email || "나",
+      kind: "status",
+      text: `상태 변경 → ${STATUS_LABEL[status]}`,
+    });
+  };
+
+  const addCustomerEvent = async (c: Customer, ev: Omit<CustomerEvent, "at" | "by">) => {
+    if (!user) return;
+    await logCustomerEvent(user.agencyId, c.id, {
+      by: user.displayName || user.email || "나",
+      kind: ev.kind,
+      text: ev.text,
+      ...(ev.reaction ? { reaction: ev.reaction } : {}),
+    });
   };
 
   const loadSamples = async () => {
@@ -386,6 +405,7 @@ export default function CustomersPage() {
         onClose={() => setPanelId(null)}
         onEdit={c => setEditing({ ...c })}
         onChangeStatus={(c, st) => changeStatus(c, st)}
+        onAddEvent={addCustomerEvent}
       />
 
       {editing && (

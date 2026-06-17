@@ -116,7 +116,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onC
           <ActionBtn icon="edit" label="수정" onClick={() => onEdit(c)} />
           <ActionBtn icon="content_copy" label="같은 단지 추가" onClick={() => onCloneSameComplex(c)} />
           <ActionBtn icon="campaign" label="매물로 재모집" onClick={() => onReopenAsProperty(c)} />
-          <ActionBtn icon="check_circle" label="계약 종료" onClick={() => onCloseContract(c)} />
+          <ActionBtn icon="inventory_2" label="관리 종료(보관)" onClick={() => onCloseContract(c)} />
         </div>
         {onJumpCustomer && (
           <button onClick={() => onJumpCustomer(c)}
