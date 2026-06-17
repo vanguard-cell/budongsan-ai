@@ -8,11 +8,21 @@
  * - 수정은 폼이 길어서 기존 모달을 띄움 (패널 = 보기·빠른 액션 전용)
  */
 
-import type { Property } from "@/lib/properties-db";
+import { useState } from "react";
+import { mergedTimeline, type Property, type PropertyEvent } from "@/lib/properties-db";
 import SideDrawer from "@/app/components/SideDrawer";
 import { fmtNum, formatPhone } from "./helpers";
 import { stageOf } from "./PropertyTable";
 import { dDay } from "@/app/expiry/contracts";
+
+const EVENT_DOT: Record<PropertyEvent["kind"], string> = {
+  create: "bg-gray-400", stage: "bg-blue-400", progress: "bg-amber-500",
+  complete: "bg-emerald-500", expiry: "bg-gray-500", link: "bg-purple-500", note: "bg-blue-400",
+};
+function fmtEventTime(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getMonth() + 1}.${d.getDate()}`;
+}
 
 const STAGE_ACCENT: Record<string, string> = {
   "미계약": "#1D9E75",
@@ -73,10 +83,20 @@ interface Props {
   onCloneSameComplex: (p: Property) => void;
   onProgress: (p: Property) => void;
   onComplete: (p: Property) => void;
+  onAddNote: (p: Property, text: string) => Promise<void>;
 }
 
-export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSameComplex, onProgress, onComplete }: Props) {
+export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSameComplex, onProgress, onComplete, onAddNote }: Props) {
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
   if (!p) return null;
+  const timeline = mergedTimeline(p);
+  const addNote = async () => {
+    if (!note.trim() || saving) return;
+    setSaving(true);
+    try { await onAddNote(p, note.trim()); setNote(""); }
+    finally { setSaving(false); }
+  };
   const stage = stageOf(p);
   const accent = STAGE_ACCENT[stage.label] || "#2383E2";
   const address = [p.address, p.dong && `${p.dong}동`, p.ho && `${p.ho}호`].filter(Boolean).join(" ");
@@ -142,6 +162,39 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
           <ActionBtn icon="fact_check" label="계약 진행" onClick={() => onProgress(p)} />
           <ActionBtn icon="task_alt" label="거래완료 → 만기" onClick={() => onComplete(p)} primary />
         </div>
+      </div>
+
+      {/* 히스토리 */}
+      <div className="px-1 mt-4">
+        <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-2">히스토리</p>
+        {/* 메모 추가 */}
+        <div className="flex items-center gap-1.5 mb-3">
+          <input
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") addNote(); }}
+            placeholder="활동 메모 추가 (예: 집주인 통화함)"
+            className="flex-1 min-w-0 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-[12px] bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)]"
+          />
+          <button onClick={addNote} disabled={!note.trim() || saving}
+            className="shrink-0 px-3 py-1.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold disabled:opacity-40 hover:bg-[var(--brand-blue-dark)]">
+            {saving ? "…" : "기록"}
+          </button>
+        </div>
+        {timeline.length === 0 ? (
+          <p className="text-[11px] text-gray-400 dark:text-gray-500">아직 기록된 이력이 없습니다.</p>
+        ) : (
+          <div className="relative pl-4">
+            <div className="absolute left-[4px] top-1.5 bottom-1.5 w-px bg-gray-200 dark:bg-slate-700" />
+            {timeline.map((e, i) => (
+              <div key={i} className="relative mb-3 last:mb-0">
+                <span className={`absolute -left-4 top-1 w-2 h-2 rounded-full ${EVENT_DOT[e.kind]}`} />
+                <div className="text-[12px] text-gray-800 dark:text-gray-200 leading-snug">{e.text}</div>
+                <div className="text-[10px] text-gray-400 dark:text-gray-500">{fmtEventTime(e.at)}{e.by ? ` · ${e.by}` : ""}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </SideDrawer>
   );

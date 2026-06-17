@@ -4,7 +4,7 @@
  */
 
 import {
-  collection, doc, setDoc, deleteDoc, getDocs,
+  collection, doc, setDoc, deleteDoc, getDocs, updateDoc, arrayUnion,
   query, orderBy, onSnapshot, serverTimestamp, Timestamp,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -17,6 +17,14 @@ export type PropertyStatus = "active" | "closed";
 export type Occupancy = "" | "tenant" | "owner" | "vacant";
 /** 정기 관리 주기 — "" 없음 / 3m·6m·12m */
 export type ManageCycle = "" | "3m" | "6m" | "12m";
+
+/** 히스토리(활동 로그) 한 건 — 매물 진행 이력 + 수동 메모 */
+export interface PropertyEvent {
+  at: number;     // 발생 시각 (ms)
+  by: string;     // 기록한 사람
+  kind: "create" | "stage" | "progress" | "complete" | "expiry" | "link" | "note";
+  text: string;   // 표시 문구
+}
 
 export interface Property {
   id: string;
@@ -53,6 +61,7 @@ export interface Property {
   memo: string;
   status: PropertyStatus;
   createdAt: number;
+  history?: PropertyEvent[];   // 활동 이력 (하이브리드 — 적용 시점부터 누적)
 }
 
 /** 관리 태그 프리셋 */
@@ -271,7 +280,41 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     manageTags:      Array.isArray(d.manageTags) ? (d.manageTags as string[]) : [],
     memo:         (d.memo         as string) || "",
     status:       (d.status       as PropertyStatus) || "active",
+    history:      Array.isArray(d.history) ? (d.history as PropertyEvent[]) : [],
   };
+}
+
+/** 활동 이력 1건 추가 (arrayUnion — 기존 이력 보존) */
+export async function logPropertyEvent(
+  agencyId: string,
+  propertyId: string,
+  ev: Omit<PropertyEvent, "at"> & { at?: number },
+): Promise<void> {
+  const event: PropertyEvent = { at: ev.at ?? Date.now(), by: ev.by, kind: ev.kind, text: ev.text };
+  try {
+    await updateDoc(ref(agencyId, propertyId), { history: arrayUnion(event) });
+  } catch (e) {
+    console.error("[logPropertyEvent] 실패:", e);
+  }
+}
+
+/** 기존 필드에서 파생되는 타임라인 (등록·계약·중도금·잔금) — 저장 안 된 과거 데이터도 표시 */
+export function derivePropertyTimeline(p: Property): PropertyEvent[] {
+  const evs: PropertyEvent[] = [];
+  const dayMs = (ymd: string) => new Date(ymd.slice(0, 10) + "T00:00:00").getTime();
+  if (p.createdAt) evs.push({ at: p.createdAt, by: "", kind: "create", text: "매물 등록" });
+  if (p.contractDate)    evs.push({ at: dayMs(p.contractDate),    by: "", kind: "progress", text: `계약일 ${p.contractDate.slice(0, 10)}` });
+  if (p.downPaymentDate) evs.push({ at: dayMs(p.downPaymentDate), by: "", kind: "progress", text: `중도금일 ${p.downPaymentDate}` });
+  if (p.balanceDate)     evs.push({ at: dayMs(p.balanceDate),     by: "", kind: "progress", text: `잔금일 ${p.balanceDate}` });
+  return evs;
+}
+
+/** 파생 + 기록 이력을 합쳐 최신순 정렬 (중복 텍스트는 기록 우선) */
+export function mergedTimeline(p: Property): PropertyEvent[] {
+  const logged = p.history || [];
+  const loggedTexts = new Set(logged.map(e => e.text));
+  const derived = derivePropertyTimeline(p).filter(e => !loggedTexts.has(e.text));
+  return [...logged, ...derived].sort((a, b) => b.at - a.at);
 }
 
 export function subscribeProperties(agencyId: string, onChange: (list: Property[]) => void): Unsubscribe {

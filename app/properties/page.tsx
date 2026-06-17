@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
-  sampleProperties, savePropertiesBatch,
+  sampleProperties, savePropertiesBatch, logPropertyEvent,
   type Property, type PropertyType, type DealType, type Occupancy,
 } from "@/lib/properties-db";
 import { dDay, type Contract } from "@/app/expiry/contracts";
@@ -1045,6 +1045,11 @@ export default function PropertiesPage() {
           onSave={async (updated) => {
             if (!user) return;
             await saveProperty(user.agencyId, { ...updated });
+            await logPropertyEvent(user.agencyId, updated.id, {
+              by: user.displayName || user.email || "나",
+              kind: "progress",
+              text: "계약 진행 정보 입력",
+            });
             setProgressing(null);
           }}
         />
@@ -1058,6 +1063,14 @@ export default function PropertiesPage() {
         onCloneSameComplex={p => { cloneSameComplex(p); setPanelId(null); }}
         onProgress={p => setProgressing({ ...p })}
         onComplete={p => close(p)}
+        onAddNote={async (p, text) => {
+          if (!user) return;
+          await logPropertyEvent(user.agencyId, p.id, {
+            by: user.displayName || user.email || "나",
+            kind: "note",
+            text,
+          });
+        }}
       />
 
       {showUpload && (
