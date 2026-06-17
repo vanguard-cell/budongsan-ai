@@ -87,6 +87,14 @@ export default function SalesPage() {
 
   const thisMonthLabel = `${new Date().getMonth() + 1}월`;
 
+  // 전월 대비 증감률 — 지난달 실적이 있을 때만
+  const lastMonthKey = (() => {
+    const d = new Date(); d.setMonth(d.getMonth() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  })();
+  const lastMonthVal = stats.byMonth[lastMonthKey] || 0;
+  const momPct = lastMonthVal > 0 ? Math.round((stats.thisMonth - lastMonthVal) / lastMonthVal * 100) : null;
+
   return (
     <div>
       <div className="w-full">
@@ -129,124 +137,114 @@ export default function SalesPage() {
         ) : stats.count === 0 ? (
           <EmptyState onLoadSample={loadSamples} />
         ) : (
-          <>
-            {/* 핵심 KPI 4종 */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-              <KpiCard
-                label={`이번 달 (${thisMonthLabel})`}
-                value={stats.thisMonth}
-                accent="emerald"
-                primary
-              />
-              <KpiCard
-                label="올해 누적"
-                value={stats.thisYear}
-                accent="blue"
-              />
-              <KpiCard
-                label="예정 매출"
-                value={stats.pending}
-                accent="orange"
-                hint="잔금일이 아직 미래인 매물"
-              />
-              <KpiCard
-                label="전체 누적"
-                value={stats.grand}
-                accent="purple"
-                hint={`평균 ${fmtNum(stats.avgPerDeal)}만원 / 건`}
-              />
-            </div>
-
-            {/* 거래종류별 합계 */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
-              <div className="text-sm font-bold text-gray-800 mb-3">🏷️ 거래종류별 매출 (누적)</div>
-              <div className="grid grid-cols-3 gap-2">
-                <DealCard label="매매" value={stats.byDealType.매매} accent="red" />
-                <DealCard label="전세" value={stats.byDealType.전세} accent="blue" />
-                <DealCard label="월세" value={stats.byDealType.월세} accent="emerald" />
+          <div className="space-y-5">
+            {/* ① 히어로 — 이번 달 매출 강조 + 보조 지표 */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
+              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                <div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">이번 달 매출 · {thisMonthLabel}</div>
+                  <div className="flex items-baseline gap-2 mt-1.5 flex-wrap">
+                    <span className="text-4xl font-bold text-gray-900 dark:text-gray-100 tabular-nums">{fmtNum(stats.thisMonth)}</span>
+                    <span className="text-base text-gray-500 dark:text-gray-400">만원</span>
+                    {momPct !== null && (
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${momPct >= 0 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-300"}`}>
+                        {momPct >= 0 ? "▲" : "▼"} 전월 대비 {momPct >= 0 ? "+" : ""}{momPct}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">≈ {formatManToKorean(stats.thisMonth)}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-5 sm:gap-8 shrink-0">
+                  <MiniStat label="올해 누적" value={stats.thisYear} />
+                  <MiniStat label="예정 매출" value={stats.pending} accent="orange" />
+                  <MiniStat label="평균 / 건" value={stats.avgPerDeal} sub={`총 ${stats.count}건`} />
+                </div>
               </div>
             </div>
 
-            {/* 월별 막대 그래프 (최근 12개월) */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
-              <div className="flex items-baseline justify-between mb-3">
-                <div className="text-sm font-bold text-gray-800">📊 최근 12개월 매출 추이</div>
-                <div className="text-[10px] text-gray-400">단위: 만원</div>
+            {/* ② 월별 추이 그래프 (크게) */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
+              <div className="flex items-baseline justify-between mb-4">
+                <div className="text-base font-bold text-gray-800 dark:text-gray-100">월별 매출 추이</div>
+                <div className="text-xs text-gray-400">최근 12개월 · 단위 만원</div>
               </div>
-              <div className="flex items-end gap-1 h-32 px-1">
+              <div className="flex items-end gap-1.5 h-44">
                 {chartData.map(d => (
-                  <div key={d.key} className="flex-1 flex flex-col items-center justify-end h-full">
+                  <div key={d.key} className="flex-1 flex flex-col items-center justify-end h-full group">
+                    {d.value > 0 && (
+                      <div className="text-[10px] text-gray-400 mb-1 tabular-nums">{Math.round(d.value)}</div>
+                    )}
                     <div
                       className={`w-full rounded-t-md transition-all ${d.isFuture ? "bg-orange-300" : d.value === stats.thisMonth && d.value > 0 ? "bg-emerald-600" : "bg-emerald-400"}`}
-                      style={{ height: `${(d.value / maxValue) * 100}%`, minHeight: d.value > 0 ? "8px" : "1px" }}
+                      style={{ height: `${(d.value / maxValue) * 100}%`, minHeight: d.value > 0 ? "10px" : "2px" }}
                       title={`${d.key}: ${fmtNum(d.value)}만원`}
                     />
-                    <div className={`text-[9px] mt-1 ${d.isFuture ? "text-orange-500" : "text-gray-500"}`}>{d.label}</div>
-                    {d.value > 0 && (
-                      <div className="text-[8px] text-gray-400">{Math.round(d.value)}</div>
-                    )}
                   </div>
                 ))}
               </div>
-              <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100 text-[10px]">
-                <span className="inline-flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400"></span>
-                  <span className="text-gray-600">실현 매출</span>
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600"></span>
-                  <span className="text-gray-600">이번 달</span>
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-orange-300"></span>
-                  <span className="text-gray-600">예정 (미래 잔금)</span>
-                </span>
+              <div className="flex gap-1.5 mt-2 border-t border-gray-100 dark:border-slate-800 pt-2">
+                {chartData.map(d => (
+                  <div key={d.key} className={`flex-1 text-center text-[11px] ${d.isFuture ? "text-orange-500 font-medium" : d.value === stats.thisMonth && d.value > 0 ? "text-emerald-600 font-semibold" : "text-gray-400"}`}>{d.label}</div>
+                ))}
+              </div>
+              <div className="flex items-center gap-4 mt-3 text-xs text-gray-600 dark:text-gray-300">
+                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-400"></span>실현</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-600"></span>이번 달</span>
+                <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-orange-300"></span>예정 (미래 잔금)</span>
               </div>
             </div>
 
-            {/* 월별 명세 — 펼침 */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
-              <div className="text-sm font-bold text-gray-800 mb-3">📋 월별 매출 명세</div>
-              <div className="space-y-2">
-                {stats.allMonths.map(m => {
-                  const isOpen = openMonth === m;
-                  const items = stats.itemsByMonth[m] || [];
-                  return (
-                    <div key={m} className="border border-gray-200 rounded-xl overflow-hidden">
-                      <button
-                        onClick={() => setOpenMonth(isOpen ? null : m)}
-                        className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-500">{isOpen ? "▼" : "▶"}</span>
-                          <span className="text-sm font-semibold text-gray-800">{formatMonthKo(m)}</span>
-                          <span className="text-[10px] text-gray-400">({items.length}건)</span>
-                        </div>
-                        <span className="text-sm font-bold text-emerald-700">{fmtNum(stats.byMonth[m])}만원</span>
-                      </button>
-                      {isOpen && (
-                        <div className="bg-gray-50 border-t border-gray-200 px-3 py-2 space-y-1.5">
-                          {items.map(p => (
-                            <div key={p.id} className="flex items-center gap-2 text-xs">
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-600 shrink-0">{p.dealType}</span>
-                              <span className="text-gray-700 truncate flex-1">{p.address}</span>
-                              <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate}</span>
-                              <span className="text-xs font-semibold text-emerald-700 shrink-0">{fmtNum(p.commission)}만</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+            {/* ③ 거래종류 비중 + 월별 명세 */}
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-5">
+              {/* 거래종류 비중 */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
+                <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-4">거래종류 비중</div>
+                <div className="space-y-3.5">
+                  <DealBar label="매매" value={stats.byDealType.매매} total={stats.grand} color="#E24B4A" />
+                  <DealBar label="전세" value={stats.byDealType.전세} total={stats.grand} color="#378ADD" />
+                  <DealBar label="월세" value={stats.byDealType.월세} total={stats.grand} color="#1D9E75" />
+                </div>
+              </div>
+
+              {/* 월별 명세 — 펼침 */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
+                <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">월별 명세</div>
+                <div className="divide-y divide-gray-100 dark:divide-slate-800">
+                  {stats.allMonths.map(m => {
+                    const isOpen = openMonth === m;
+                    const items = stats.itemsByMonth[m] || [];
+                    return (
+                      <div key={m}>
+                        <button
+                          onClick={() => setOpenMonth(isOpen ? null : m)}
+                          className="w-full py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors rounded-lg px-1"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`material-symbols-outlined text-base text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`}>chevron_right</span>
+                            <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatMonthKo(m)}</span>
+                            <span className="text-xs text-gray-400">({items.length}건)</span>
+                          </div>
+                          <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">{fmtNum(stats.byMonth[m])}만원</span>
+                        </button>
+                        {isOpen && (
+                          <div className="pb-2 pl-7 pr-1 space-y-1.5">
+                            {items.map(p => (
+                              <div key={p.id} className="flex items-center gap-2 text-xs">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 shrink-0">{p.dealType}</span>
+                                <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{p.address}</span>
+                                <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate}</span>
+                                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">{fmtNum(p.commission)}만</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-
-            {/* 향후 계획 안내 */}
-            <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 text-[11px] text-blue-700">
-              💡 <strong>향후 계획</strong>: 홈 대시보드에 이번 달 매출 카드 추가, 연간 목표 설정, 손익 계산, 세금 신고 자료 PDF 생성
-            </div>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -255,47 +253,36 @@ export default function SalesPage() {
 
 /* ─────── 컴포넌트 ─────── */
 
-function KpiCard({ label, value, accent, hint, primary }: {
+/* 히어로 옆 보조 지표 */
+function MiniStat({ label, value, sub, accent }: {
   label: string;
   value: number;
-  accent: "emerald" | "blue" | "orange" | "purple";
-  hint?: string;
-  primary?: boolean;
+  sub?: string;
+  accent?: "orange";
 }) {
-  const ACCENTS: Record<typeof accent, { bg: string; text: string; border: string }> = {
-    emerald: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-    blue:    { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200" },
-    orange:  { bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-200" },
-    purple:  { bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200" },
-  };
-  const c = ACCENTS[accent];
+  const valColor = accent === "orange" ? "text-orange-600 dark:text-orange-400" : "text-gray-900 dark:text-gray-100";
   return (
-    <div className={`rounded-2xl border ${primary ? "border-2" : ""} ${c.border} ${c.bg} p-3`}>
-      <div className={`text-[10px] font-medium ${c.text} opacity-80`}>{label}</div>
-      <div className={`text-lg sm:text-xl font-bold ${c.text} mt-1`}>
-        {fmtNum(value)}<span className="text-[10px] font-normal ml-0.5 opacity-70">만</span>
+    <div>
+      <div className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">{label}</div>
+      <div className={`text-lg font-bold tabular-nums mt-0.5 ${valColor}`}>
+        {fmtNum(value)}<span className="text-[11px] font-normal text-gray-400 ml-0.5">만</span>
       </div>
-      <div className={`text-[9px] mt-0.5 ${c.text} opacity-60`}>≈ {formatManToKorean(value)}</div>
-      {hint && <div className="text-[9px] text-gray-500 mt-1 leading-tight">{hint}</div>}
+      {sub && <div className="text-[10px] text-gray-400 mt-0.5">{sub}</div>}
     </div>
   );
 }
 
-function DealCard({ label, value, accent }: { label: string; value: number; accent: "red" | "blue" | "emerald" }) {
-  const ACCENTS: Record<typeof accent, { dot: string; text: string }> = {
-    red:     { dot: "bg-red-400",     text: "text-red-700" },
-    blue:    { dot: "bg-blue-400",    text: "text-blue-700" },
-    emerald: { dot: "bg-emerald-400", text: "text-emerald-700" },
-  };
-  const c = ACCENTS[accent];
+/* 거래종류 비중 — 가로 막대 */
+function DealBar({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
-    <div className="border border-gray-200 rounded-xl p-2.5 text-center">
-      <div className="flex items-center justify-center gap-1 mb-1">
-        <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`}></span>
-        <span className="text-[10px] font-medium text-gray-600">{label}</span>
+    <div>
+      <div className="flex justify-between items-baseline text-sm mb-1.5">
+        <span className="text-gray-700 dark:text-gray-300 font-medium">{label}</span>
+        <span className="text-gray-500 dark:text-gray-400 tabular-nums">{fmtNum(value)}만 · {pct}%</span>
       </div>
-      <div className={`text-base font-bold ${c.text}`}>
-        {fmtNum(value)}<span className="text-[9px] font-normal text-gray-400 ml-0.5">만</span>
+      <div className="h-2 rounded-full bg-gray-100 dark:bg-slate-800 overflow-hidden">
+        <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>
   );
