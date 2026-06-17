@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import SideDrawer from "@/app/components/SideDrawer";
 import { fetchAllUsersUsage, summarize, ADMIN_EMAIL, type UserUsage, type UsageSummary } from "@/lib/admin-db";
 import { fetchProperties, type Property } from "@/lib/properties-db";
 
@@ -12,7 +13,7 @@ function fmtDate(ms: number): string {
   return new Date(ms).toLocaleDateString("ko-KR", { year: "2-digit", month: "2-digit", day: "2-digit" });
 }
 function fmtRelative(ms: number): string {
-  if (!ms) return "접속 기록 없음";
+  if (!ms) return "기록 없음";
   const diff = Date.now() - ms;
   const day = 24 * 60 * 60 * 1000;
   const days = Math.floor(diff / day);
@@ -23,6 +24,9 @@ function fmtRelative(ms: number): string {
   return `${Math.floor(days / 30)}개월 전`;
 }
 
+type SortKey = "recent" | "name" | "props" | "loginDays" | "created";
+const VIEW_KEY = "dealdone_admin_view";
+
 export default function AdminPage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
@@ -32,22 +36,18 @@ export default function AdminPage() {
   const [summary, setSummary] = useState<UsageSummary | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
-  // 매물 열람 모달
-  const [viewing, setViewing] = useState<{ user: UserUsage; props: Property[] } | null>(null);
-  const [viewLoading, setViewLoading] = useState(false);
+  const [viewStyle, setViewStyle] = useState<"card" | "table">("table");
+  const [sortBy, setSortBy] = useState<SortKey>("recent");
 
-  const openUserProperties = async (u: UserUsage) => {
-    if (!u.agencyId) return;
-    setViewLoading(true);
-    try {
-      const props = await fetchProperties(u.agencyId);
-      setViewing({ user: u, props });
-    } catch (e) {
-      alert("매물 열람 실패: " + (e instanceof Error ? e.message : String(e)));
-    } finally {
-      setViewLoading(false);
-    }
-  };
+  // 우측 패널
+  const [panelUser, setPanelUser] = useState<UserUsage | null>(null);
+  const [panelProps, setPanelProps] = useState<Property[] | null>(null);
+  const [panelLoading, setPanelLoading] = useState(false);
+
+  useEffect(() => {
+    try { const v = localStorage.getItem(VIEW_KEY); if (v === "card" || v === "table") setViewStyle(v); } catch {}
+  }, []);
+  const changeView = (v: "card" | "table") => { setViewStyle(v); try { localStorage.setItem(VIEW_KEY, v); } catch {} };
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/admin");
@@ -69,11 +69,30 @@ export default function AdminPage() {
     })();
   }, [user, isAdmin]);
 
+  const openPanel = (u: UserUsage) => { setPanelUser(u); setPanelProps(null); };
+  const loadPanelProps = async () => {
+    if (!panelUser?.agencyId) return;
+    setPanelLoading(true);
+    try { setPanelProps(await fetchProperties(panelUser.agencyId)); }
+    catch (e) { alert("매물 열람 실패: " + (e instanceof Error ? e.message : String(e))); }
+    finally { setPanelLoading(false); }
+  };
+
+  const sorted = useMemo(() => {
+    const arr = [...users];
+    switch (sortBy) {
+      case "name":      arr.sort((a, b) => (a.displayName || a.email).localeCompare(b.displayName || b.email)); break;
+      case "props":     arr.sort((a, b) => b.properties - a.properties); break;
+      case "loginDays": arr.sort((a, b) => b.loginDaysTotal - a.loginDaysTotal); break;
+      case "created":   arr.sort((a, b) => b.createdAt - a.createdAt); break;
+      default:          arr.sort((a, b) => b.lastLoginAt - a.lastLoginAt);
+    }
+    return arr;
+  }, [users, sortBy]);
+
   if (authLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
-
-  // 관리자 아니면 차단
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center px-4">
@@ -85,25 +104,34 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50">
-      <div className="max-w-3xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+    <div className="min-h-screen bg-white">
+      <div className={`px-6 sm:px-10 lg:px-16 pt-6 sm:pt-8 pb-12 transition-[padding] duration-300 ${panelUser ? "xl:pr-[400px]" : ""}`}>
 
-        {/* 사용자 바 */}
-        <div className="flex items-center justify-end gap-2 mb-3 text-[11px] text-gray-500">
-          <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">👑 관리자</span>
-          <span>{user.email}</span>
-          <span className="text-gray-300">·</span>
-          <button onClick={() => { if (confirm("로그아웃?")) signOut(); }} className="hover:text-blue-600 hover:underline">로그아웃</button>
+        {/* 상단 바 */}
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-purple-600 text-white px-3 py-1.5 rounded-full text-sm font-bold">
+            <span className="material-symbols-outlined text-base">monitoring</span> 유저 사용 현황
+          </span>
+          <div className="flex items-center gap-2 text-[11px] text-gray-500">
+            <Link href="/dashboard" className="px-2.5 py-1 rounded-lg border border-gray-200 hover:border-blue-400 hover:text-blue-600 transition-colors">← 홈</Link>
+            <Link href="/feedback" className="px-2.5 py-1 rounded-lg border border-gray-200 hover:border-purple-400 hover:text-purple-600 transition-colors">건의함</Link>
+            <button onClick={() => { if (confirm("로그아웃?")) signOut(); }} className="hover:text-blue-600">로그아웃</button>
+          </div>
         </div>
 
-        {/* 헤더 */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-3">📊 유저 사용 현황</div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">전체 유저 관리</h1>
-          <p className="text-gray-500 text-xs sm:text-sm mb-4">접속·데이터량 — 유료 전환 검토용</p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Link href="/dashboard" className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors">← 대시보드</Link>
-            <Link href="/feedback" className="text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-full border border-gray-300 hover:border-purple-500 hover:text-purple-600 transition-colors">📬 건의함</Link>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">전체 유저 관리</h1>
+            <p className="text-gray-500 text-xs sm:text-sm mt-1">접속·데이터량 — 유료 전환 검토용</p>
+          </div>
+          {/* 카드/표 토글 */}
+          <div className="inline-flex self-start sm:self-auto rounded-lg border border-gray-200 overflow-hidden text-xs font-semibold">
+            <button onClick={() => changeView("card")} className={`px-3 py-2 flex items-center gap-1 transition-colors ${viewStyle === "card" ? "bg-purple-50 text-purple-700" : "bg-white text-gray-500 hover:text-gray-800"}`}>
+              <span className="material-symbols-outlined text-[15px] leading-none">grid_view</span>카드
+            </button>
+            <button onClick={() => changeView("table")} className={`px-3 py-2 flex items-center gap-1 transition-colors ${viewStyle === "table" ? "bg-purple-50 text-purple-700" : "bg-white text-gray-500 hover:text-gray-800"}`}>
+              <span className="material-symbols-outlined text-[15px] leading-none">table_rows</span>표
+            </button>
           </div>
         </div>
 
@@ -131,15 +159,59 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 유저 목록 */}
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : users.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">아직 가입한 유저가 없습니다</div>
+        ) : viewStyle === "table" ? (
+          /* ── 표 뷰 ── */
+          <div className="overflow-x-auto border border-gray-200 rounded-2xl bg-white">
+            <table className="w-full text-xs" style={{ minWidth: 720 }}>
+              <thead>
+                <tr className="bg-gray-50 text-gray-500 text-left">
+                  <Th label="유저" onClick={() => setSortBy("name")} active={sortBy === "name"} />
+                  <Th label="마지막 접속" onClick={() => setSortBy("recent")} active={sortBy === "recent"} />
+                  <th className="px-2 py-2.5 font-medium text-center">오늘</th>
+                  <Th label="주·월·누적" onClick={() => setSortBy("loginDays")} active={sortBy === "loginDays"} center />
+                  <Th label="매물" onClick={() => setSortBy("props")} active={sortBy === "props"} right />
+                  <th className="px-2 py-2.5 font-medium text-right">계약</th>
+                  <th className="px-2 py-2.5 font-medium text-right">손님</th>
+                  <th className="px-2 py-2.5 font-medium text-right">일정</th>
+                  <Th label="가입" onClick={() => setSortBy("created")} active={sortBy === "created"} />
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map(u => (
+                  <tr key={u.uid} onClick={() => openPanel(u)}
+                    className={`border-t border-gray-100 cursor-pointer transition-colors ${panelUser?.uid === u.uid ? "bg-purple-50" : "hover:bg-gray-50"}`}>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-gray-900">{u.displayName || "(이름없음)"}</span>
+                        {u.email === ADMIN_EMAIL && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">관리자</span>}
+                      </div>
+                      <div className="text-[11px] text-gray-400 truncate max-w-[180px]">{u.email}</div>
+                    </td>
+                    <td className={`px-2 py-2.5 ${u.lastLoginAt && Date.now() - u.lastLoginAt < 86400000 ? "text-emerald-600 font-medium" : "text-gray-500"}`}>{fmtRelative(u.lastLoginAt)}</td>
+                    <td className="px-2 py-2.5 text-center">
+                      <span className={`inline-block w-2 h-2 rounded-full ${u.loginDaysToday ? "bg-emerald-500" : "bg-gray-200"}`} />
+                    </td>
+                    <td className="px-2 py-2.5 text-center text-gray-600 tabular-nums">{u.loginDaysWeek} · {u.loginDaysMonth} · {u.loginDaysTotal}</td>
+                    <td className="px-2 py-2.5 text-right font-semibold text-gray-900 tabular-nums">{u.properties}</td>
+                    <td className="px-2 py-2.5 text-right text-gray-600 tabular-nums">{u.contracts}</td>
+                    <td className="px-2 py-2.5 text-right text-gray-600 tabular-nums">{u.customers}</td>
+                    <td className="px-2 py-2.5 text-right text-gray-600 tabular-nums">{u.schedules}</td>
+                    <td className="px-3 py-2.5 text-gray-400">{fmtDate(u.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <div className="space-y-2.5">
-            {users.map(u => (
-              <div key={u.uid} className="bg-white rounded-2xl border border-gray-200 p-3.5">
+          /* ── 카드 뷰 ── */
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {sorted.map(u => (
+              <div key={u.uid} onClick={() => openPanel(u)}
+                className={`bg-white rounded-2xl border p-3.5 cursor-pointer transition-all hover:shadow-sm ${panelUser?.uid === u.uid ? "border-purple-400 ring-1 ring-purple-300" : "border-gray-200 hover:border-purple-300"}`}>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -153,36 +225,13 @@ export default function AdminPage() {
                     <div className="text-[10px] text-gray-400">가입 {fmtDate(u.createdAt)}</div>
                   </div>
                 </div>
-
-                {/* 사용량 */}
-                <div className="flex flex-wrap gap-1.5 text-[11px] mb-2.5">
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">🏘️ 매물 {u.properties}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">⏰ 계약 {u.contracts}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100">👥 손님 {u.customers}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-100">📅 일정 {u.schedules}</span>
+                <div className="flex flex-wrap gap-1.5 text-[11px]">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">🏘️ {u.properties}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">⏰ {u.contracts}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100">👥 {u.customers}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-100">📅 {u.schedules}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">접속 누적 {u.loginDaysTotal}일</span>
                 </div>
-
-                {/* 접속일 — 오늘 / 이번주 / 이번달 / 전체 (서로 다른 날짜 수) */}
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px] mb-2.5">
-                  <span className="text-gray-400 mr-0.5">접속일</span>
-                  <span className={`px-2 py-0.5 rounded-full border ${u.loginDaysToday ? "bg-green-50 text-green-700 border-green-200 font-medium" : "bg-gray-50 text-gray-400 border-gray-100"}`}>
-                    오늘 {u.loginDaysToday ? "접속" : "미접속"}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">주 {u.loginDaysWeek}일</span>
-                  <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">월 {u.loginDaysMonth}일</span>
-                  <span className="px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-100">누적 {u.loginDaysTotal}일</span>
-                </div>
-
-                {/* 매물 열람 버튼 */}
-                {u.properties > 0 && (
-                  <button
-                    onClick={() => openUserProperties(u)}
-                    disabled={viewLoading}
-                    className="w-full text-[11px] py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 transition-colors disabled:opacity-50"
-                  >
-                    {viewLoading ? "불러오는 중…" : `🏘️ 이 유저의 매물 ${u.properties}건 열람`}
-                  </button>
-                )}
               </div>
             ))}
           </div>
@@ -193,42 +242,103 @@ export default function AdminPage() {
         </p>
       </div>
 
-      {/* 유저 매물 열람 모달 */}
-      {viewing && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setViewing(null)}>
-          <div className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-2xl">
-              <div>
-                <h2 className="text-base font-semibold">🏘️ {viewing.user.displayName || viewing.user.email}의 매물</h2>
-                <p className="text-[11px] text-gray-500">{viewing.props.length}건 · 읽기 전용</p>
+      {/* 우측 상세 패널 */}
+      {panelUser && (
+        <SideDrawer open onClose={() => setPanelUser(null)} title={panelUser.displayName || panelUser.email} icon="person" accent="#534AB7">
+          <div className="px-1 space-y-4">
+            {/* 기본 정보 */}
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[15px] text-gray-900">{panelUser.displayName || "(이름없음)"}</span>
+                {panelUser.email === ADMIN_EMAIL && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">관리자</span>}
               </div>
-              <button onClick={() => setViewing(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 text-lg">✕</button>
+              <div className="text-xs text-gray-500 break-all">{panelUser.email}</div>
+              <div className="text-[11px] text-gray-400 mt-1">가입 {fmtDate(panelUser.createdAt)} · 마지막 접속 {fmtRelative(panelUser.lastLoginAt)}</div>
             </div>
-            <div className="p-4 space-y-2">
-              {viewing.props.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">매물이 없습니다</p>
-              ) : viewing.props.map(p => (
-                <div key={p.id} className={`rounded-xl border p-3 ${p.status === "closed" ? "bg-gray-50/60 border-gray-200 opacity-70" : "bg-white border-gray-200"}`}>
-                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">{p.dealType}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.propertyType}</span>
-                    {p.status === "closed" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">거래완료</span>}
-                    <span className="text-sm font-bold text-gray-900 ml-auto">
-                      {p.dealType === "월세" ? `${p.price || "0"}/${p.monthly || "0"}만` : p.price ? `${parseInt(p.price.replace(/\D/g,""),10).toLocaleString()}만` : "—"}
-                    </span>
+
+            {/* 접속일 */}
+            <div>
+              <div className="text-[11px] font-bold text-gray-500 mb-1.5">접속일</div>
+              <div className="grid grid-cols-4 gap-1.5 text-center">
+                {[
+                  { l: "오늘", v: panelUser.loginDaysToday ? "접속" : "미접속", on: !!panelUser.loginDaysToday },
+                  { l: "주", v: `${panelUser.loginDaysWeek}일`, on: true },
+                  { l: "월", v: `${panelUser.loginDaysMonth}일`, on: true },
+                  { l: "누적", v: `${panelUser.loginDaysTotal}일`, on: true },
+                ].map(x => (
+                  <div key={x.l} className={`rounded-xl border py-2 ${x.on ? "bg-indigo-50 border-indigo-100" : "bg-gray-50 border-gray-100"}`}>
+                    <div className={`text-sm font-bold ${x.on ? "text-indigo-700" : "text-gray-400"}`}>{x.v}</div>
+                    <div className="text-[10px] text-gray-400">{x.l}</div>
                   </div>
-                  <div className="text-sm text-gray-800 break-all">{p.address || "—"}</div>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-500 mt-1">
-                    {p.ownerName && <span>집주인 {p.ownerName}</span>}
-                    {p.ownerPhone && <span>{p.ownerPhone}</span>}
-                    {p.leaseEndDate && <span>임대만기 {p.leaseEndDate}</span>}
+                ))}
+              </div>
+            </div>
+
+            {/* 데이터 내역 */}
+            <div>
+              <div className="text-[11px] font-bold text-gray-500 mb-1.5">데이터 내역</div>
+              <div className="grid grid-cols-4 gap-1.5 text-center">
+                {[
+                  { l: "매물", v: panelUser.properties, c: "text-emerald-700 bg-emerald-50 border-emerald-100" },
+                  { l: "계약", v: panelUser.contracts, c: "text-blue-700 bg-blue-50 border-blue-100" },
+                  { l: "손님", v: panelUser.customers, c: "text-orange-700 bg-orange-50 border-orange-100" },
+                  { l: "일정", v: panelUser.schedules, c: "text-gray-600 bg-gray-50 border-gray-100" },
+                ].map(x => (
+                  <div key={x.l} className={`rounded-xl border py-2 ${x.c}`}>
+                    <div className="text-sm font-bold tabular-nums">{x.v}</div>
+                    <div className="text-[10px] opacity-70">{x.l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 매물 열람 */}
+            <div>
+              {panelProps === null ? (
+                panelUser.properties > 0 ? (
+                  <button onClick={loadPanelProps} disabled={panelLoading}
+                    className="w-full text-[12px] py-2.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">domain</span>
+                    {panelLoading ? "불러오는 중…" : `이 유저의 매물 ${panelUser.properties}건 열람`}
+                  </button>
+                ) : (
+                  <div className="text-[11px] text-gray-400 text-center py-2">등록된 매물이 없습니다</div>
+                )
+              ) : (
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 mb-1.5">매물 {panelProps.length}건 (읽기 전용)</div>
+                  <div className="space-y-1.5 max-h-[40vh] overflow-y-auto pr-0.5">
+                    {panelProps.map(p => (
+                      <div key={p.id} className={`rounded-lg border p-2 ${p.status === "closed" ? "bg-gray-50/60 border-gray-200 opacity-70" : "bg-white border-gray-200"}`}>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">{p.dealType}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.propertyType}</span>
+                          <span className="text-[12px] font-bold text-gray-900 ml-auto">
+                            {p.dealType === "월세" ? `${p.price || "0"}/${p.monthly || "0"}만` : p.price ? `${parseInt(p.price.replace(/\D/g, ""), 10).toLocaleString()}만` : "—"}
+                          </span>
+                        </div>
+                        <div className="text-[12px] text-gray-700 break-all">{p.address || "—"}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        </div>
+        </SideDrawer>
       )}
     </div>
+  );
+}
+
+/* 정렬 가능한 헤더 셀 */
+function Th({ label, onClick, active, right, center }: { label: string; onClick: () => void; active: boolean; right?: boolean; center?: boolean }) {
+  return (
+    <th className={`px-2 py-2.5 font-medium whitespace-nowrap ${right ? "text-right" : center ? "text-center" : "text-left"}`}>
+      <button onClick={e => { e.stopPropagation(); onClick(); }} className={`inline-flex items-center gap-0.5 hover:text-purple-600 transition-colors ${active ? "text-purple-700 font-bold" : ""}`}>
+        {label}
+        {active && <span className="material-symbols-outlined text-[13px]">arrow_downward</span>}
+      </button>
+    </th>
   );
 }
