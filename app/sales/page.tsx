@@ -21,6 +21,7 @@ import {
 } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
+import { subscribeSchedules, type Schedule, type ScheduleType } from "@/lib/schedules-db";
 import { computeSalesStats, fmtNum, formatMonthKo, formatManToKorean } from "@/lib/sales";
 
 export default function SalesPage() {
@@ -28,6 +29,7 @@ export default function SalesPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [openMonth, setOpenMonth] = useState<string | null>(null);
 
@@ -42,10 +44,34 @@ export default function SalesPage() {
       setLoaded(true);
     });
     const u2 = subscribeContracts(user.agencyId, setContracts);
-    return () => { u1(); u2(); };
+    const u3 = subscribeSchedules(user.agencyId, setSchedules);
+    return () => { u1(); u2(); u3(); };
   }, [user]);
 
   const stats = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
+
+  // 파이프라인 퍼널 — 현재 매물 단계별 (등록=미계약, 계약진행, 거래완료)
+  const funnel = useMemo(() => {
+    const isContracted = (p: Property) => !!(p.contractDate || p.downPaymentDate || p.balanceDate);
+    const active = properties.filter(p => p.status === "active");
+    const available = active.filter(p => !isContracted(p)).length;
+    const contracted = active.filter(p => isContracted(p)).length;
+    const closed = properties.filter(p => p.status === "closed").length;
+    const total = available + contracted + closed;
+    return { available, contracted, closed, total, winRate: total > 0 ? Math.round((closed / total) * 100) : 0 };
+  }, [properties]);
+
+  // 활동 상태 — 스케줄을 유형별 + 완료/예정으로 집계
+  const activity = useMemo(() => {
+    const types: ScheduleType[] = ["집보기", "계약일", "중도금일", "잔금일", "기타"];
+    const byType = types.map(t => {
+      const list = schedules.filter(s => s.scheduleType === t && s.status !== "cancelled");
+      return { type: t, done: list.filter(s => s.status === "done").length, scheduled: list.filter(s => s.status === "scheduled").length };
+    }).filter(x => x.done + x.scheduled > 0);
+    const doneTotal = schedules.filter(s => s.status === "done").length;
+    const schedTotal = schedules.filter(s => s.status === "scheduled").length;
+    return { byType, doneTotal, schedTotal };
+  }, [schedules]);
 
   // 예시 매출 = "[예시 매출]" 태그가 달린 거래완료 매물
   const sampleProps = useMemo(() => properties.filter(p => (p.memo || "").startsWith("[예시 매출]")), [properties]);
@@ -194,7 +220,62 @@ export default function SalesPage() {
               </div>
             </div>
 
-            {/* ③ 거래종류 비중 + 월별 명세 */}
+            {/* ③ 파이프라인 퍼널 + 활동 상태 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* 파이프라인 건전성 */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
+                <div className="flex items-baseline justify-between mb-4">
+                  <div className="text-base font-bold text-gray-800 dark:text-gray-100">파이프라인 건전성</div>
+                  <div className="text-xs text-gray-500">성사율 <span className="font-bold text-emerald-600">{funnel.winRate}%</span></div>
+                </div>
+                {funnel.total === 0 ? (
+                  <div className="text-center text-xs text-gray-400 py-6">매물 데이터가 쌓이면 단계별 전환율이 표시됩니다</div>
+                ) : (
+                  <div className="space-y-2">
+                    <FunnelBar label="등록 (미계약)" value={funnel.available} max={funnel.total} color="#FAC775" />
+                    <ConvLabel from={funnel.available} to={funnel.contracted} />
+                    <FunnelBar label="계약 진행" value={funnel.contracted} max={funnel.total} color="#EF9F27" />
+                    <ConvLabel from={funnel.contracted} to={funnel.closed} />
+                    <FunnelBar label="거래완료 (성사)" value={funnel.closed} max={funnel.total} color="#1D9E75" />
+                  </div>
+                )}
+              </div>
+
+              {/* 활동 상태 */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
+                <div className="flex items-baseline justify-between mb-4">
+                  <div className="text-base font-bold text-gray-800 dark:text-gray-100">활동 상태</div>
+                  <div className="text-xs text-gray-500">완료 {activity.doneTotal} · 예정 {activity.schedTotal}</div>
+                </div>
+                {activity.byType.length === 0 ? (
+                  <div className="text-center text-xs text-gray-400 py-6">스케줄(약속·계약일 등)이 등록되면 표시됩니다</div>
+                ) : (
+                  <div className="space-y-3">
+                    {activity.byType.map(a => {
+                      const tot = a.done + a.scheduled;
+                      return (
+                        <div key={a.type}>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-gray-700 dark:text-gray-300 font-medium">{a.type}</span>
+                            <span className="text-gray-500 dark:text-gray-400">완료 {a.done} · 예정 {a.scheduled}</span>
+                          </div>
+                          <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-slate-800">
+                            <div className="bg-emerald-500" style={{ width: `${(a.done / tot) * 100}%` }} />
+                            <div className="bg-blue-400" style={{ width: `${(a.scheduled / tot) * 100}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="flex items-center gap-4 pt-1 text-[11px] text-gray-500">
+                      <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>완료</span>
+                      <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-blue-400"></span>예정</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ④ 거래종류 비중 + 월별 명세 */}
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-5">
               {/* 거래종류 비중 */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
@@ -269,6 +350,30 @@ function MiniStat({ label, value, sub, accent }: {
       </div>
       {sub && <div className="text-[10px] text-gray-400 mt-0.5">{sub}</div>}
     </div>
+  );
+}
+
+/* 파이프라인 퍼널 막대 */
+function FunnelBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  return (
+    <div>
+      <div className="flex justify-between items-baseline text-sm mb-1">
+        <span className="text-gray-700 dark:text-gray-300 font-medium">{label}</span>
+        <span className="text-gray-500 dark:text-gray-400 tabular-nums">{value}건</span>
+      </div>
+      <div className="h-3.5 rounded-md bg-gray-100 dark:bg-slate-800 overflow-hidden">
+        <div className="h-3.5 rounded-md transition-all" style={{ width: `${Math.max(pct, value > 0 ? 6 : 0)}%`, background: color }} />
+      </div>
+    </div>
+  );
+}
+
+/* 단계 간 전환율 라벨 */
+function ConvLabel({ from, to }: { from: number; to: number }) {
+  const pct = from > 0 ? Math.round((to / from) * 100) : 0;
+  return (
+    <div className="text-right text-[11px] text-gray-400 pr-1 -my-0.5">↓ 전환 {pct}%</div>
   );
 }
 
