@@ -36,14 +36,18 @@ export interface FeedbackMessage {
   createdAt: number;
 }
 
+/** 상태 3단계: pending=문의(접수), in_progress=진행중, done=완료 */
+export type FeedbackStatus = "pending" | "in_progress" | "done";
+
 export interface FeedbackItem {
   id: string;
   text: string;          // (레거시) 첫 문의 내용
-  status: "pending" | "done";
+  status: FeedbackStatus;
   createdAt: number;
   reply: string;         // (레거시) 단일 답변 — thread로 마이그레이션
   thread: FeedbackMessage[];  // 대화 스레드
   userConfirmed?: boolean;    // 처리완료를 문의자가 확인했는지 (확인 독촉용)
+  lastReplyBy?: "user" | "admin";  // 마지막 메시지 보낸 쪽 — "새 답글" 배지용
   submittedBy: {
     uid: string;
     email: string;
@@ -76,9 +80,10 @@ function fromDoc(id: string, data: Record<string, unknown>): FeedbackItem {
   }
 
   return {
-    id, text, status: (data.status as FeedbackItem["status"]) || "pending",
+    id, text, status: (data.status as FeedbackStatus) || "pending",
     createdAt, reply, thread, submittedBy,
     userConfirmed: (data.userConfirmed as boolean) ?? false,
+    lastReplyBy: (data.lastReplyBy as "user" | "admin") || undefined,
   };
 }
 
@@ -130,6 +135,7 @@ export async function addFeedback(
     createdAt: serverTimestamp(),
     reply: "",
     thread: [firstMsg],
+    lastReplyBy: "user",
     submittedBy: { uid, email, name },
   });
 }
@@ -164,10 +170,16 @@ export async function addMessage(
     ...(msg.image ? { image: msg.image } : {}),
   });
 
-  await updateDoc(ref, {
-    thread,
-    ...(msg.sender === "user" ? { status: "pending" } : {}),
-  });
+  // 칸반 상태 규칙:
+  //  · 관리자가 첫 답변을 달면 문의(pending) → 진행중(in_progress) 자동 전환
+  //  · 유저 답글은 상태를 바꾸지 않음(칸 튕김 방지). lastReplyBy로 "새 답글" 배지만.
+  const curStatus = (data.status as FeedbackStatus) || "pending";
+  const patch: Record<string, unknown> = { thread, lastReplyBy: msg.sender };
+  if (msg.sender === "admin" && curStatus === "pending") {
+    patch.status = "in_progress";
+  }
+
+  await updateDoc(ref, patch);
 }
 
 /** 상태 업데이트 (status / userConfirmed) */
@@ -178,14 +190,22 @@ export async function updateFeedback(
   await updateDoc(doc(db, "feedback", id), updates);
 }
 
-/** 처리완료 표시 (관리자) — 유저 확인 대기 상태로 리셋 */
+/** 칸반 상태 변경 — 드래그/버튼 공용. 완료로 가면 확인 대기 리셋 */
+export async function setStatus(id: string, status: FeedbackStatus): Promise<void> {
+  await updateDoc(doc(db, "feedback", id), {
+    status,
+    ...(status === "done" ? { userConfirmed: false } : {}),
+  });
+}
+
+/** 처리완료 표시 (관리자/문의자) — 유저 확인 대기 상태로 리셋 */
 export async function markDone(id: string): Promise<void> {
   await updateDoc(doc(db, "feedback", id), { status: "done", userConfirmed: false });
 }
 
-/** 다시 진행중으로 (관리자) */
+/** 다시 진행중으로 */
 export async function markPending(id: string): Promise<void> {
-  await updateDoc(doc(db, "feedback", id), { status: "pending", userConfirmed: false });
+  await updateDoc(doc(db, "feedback", id), { status: "in_progress", userConfirmed: false });
 }
 
 /** 문의자가 처리완료를 확인 ("확인했어요") */

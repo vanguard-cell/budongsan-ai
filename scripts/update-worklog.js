@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-16",
   day: "화",
-  category: "디자인",
-  work: "매출관리 페이지 재설계(8박스→3블록: 히어로+전월대비, 추이 그래프 확대, 거래종류 비중 막대+월별 명세). 스케줄 카운트 정합성 수정(달력 13 vs 탭 7 → baseItems 통일). 전 페이지 여백 2단계 확대",
-  commit: "c1a8ac1",
-  note: "KpiCard/DealCard→MiniStat/DealBar, 초소형 글자 제거",
+  category: "버그·디버그",
+  work: "건의함 처리: ①만기 이전 시 잔금일정 사라짐 → 스케줄에 contracts 구독 추가(계약일/중도금/잔금 표시, 패널은 만기로 연결). ②실거래 최고가 6개월·매매전세월세 max 정상 확인. ③건의함 카드 접이식 전환(기본 접힘+미리보기, 클릭 펼침, 미처리/확인대기는 자동 펼침)",
+  commit: "80c77c6",
+  note: "매출 빠짐은 이미 contracts 집계로 정상이었음",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 매출재설계+여백확대" : "매출재설계+여백확대";
+      found.getCell(4).value = prev ? prev + " / 건의함3건처리" : "건의함3건처리";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "매출재설계+여백확대"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "건의함3건처리"]);
     }
   }
 
