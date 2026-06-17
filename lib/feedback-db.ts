@@ -71,7 +71,7 @@ function fromDoc(id: string, data: Record<string, unknown>): FeedbackItem {
   };
 
   // thread가 있으면 그대로, 없으면 레거시(text/reply)에서 구성
-  let thread: FeedbackMessage[] = Array.isArray(data.thread)
+  const thread: FeedbackMessage[] = Array.isArray(data.thread)
     ? (data.thread as FeedbackMessage[])
     : [];
   if (thread.length === 0) {
@@ -152,7 +152,7 @@ export async function addMessage(
   const data = (snap.data() as Record<string, unknown>) || {};
 
   // 기존 thread 확보 (없으면 레거시 text/reply에서 복원)
-  let thread: FeedbackMessage[] = Array.isArray(data.thread) ? [...(data.thread as FeedbackMessage[])] : [];
+  const thread: FeedbackMessage[] = Array.isArray(data.thread) ? [...(data.thread as FeedbackMessage[])] : [];
   if (thread.length === 0) {
     const text = (data.text as string) || "";
     const reply = (data.reply as string) || "";
