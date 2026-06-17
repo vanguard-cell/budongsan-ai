@@ -33,6 +33,7 @@ import EditCustomerModal from "./EditCustomerModal";
 import KakaoParseModal from "./KakaoParseModal";
 import CustomerTable, { type CustSort } from "./CustomerTable";
 import CustomerPanel from "./CustomerPanel";
+import CustomerTimeline from "./CustomerTimeline";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import CustomersUploadModal, { type CustMergeStrategy } from "./CustomersUploadModal";
@@ -74,10 +75,10 @@ export default function CustomersPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [showKakaoParse, setShowKakaoParse] = useState(false);
   // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
-  const [viewStyle, setViewStyleState] = useState<"card" | "table">(() => {
-    try { return localStorage.getItem("dealdone_customers_view") === "table" ? "table" : "card"; } catch { return "card"; }
+  const [viewStyle, setViewStyleState] = useState<"card" | "table" | "timeline">(() => {
+    try { const v = localStorage.getItem("dealdone_customers_view"); return v === "table" || v === "timeline" ? v : "card"; } catch { return "card"; }
   });
-  const setViewStyle = (v: "card" | "table") => {
+  const setViewStyle = (v: "card" | "table" | "timeline") => {
     setViewStyleState(v);
     try { localStorage.setItem("dealdone_customers_view", v); } catch {}
   };
@@ -319,6 +320,10 @@ export default function CustomersPage() {
                 className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "table" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
                 <span className="material-symbols-outlined text-[15px] leading-none">table_rows</span>표
               </button>
+              <button onClick={() => setViewStyle("timeline")}
+                className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "timeline" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
+                <span className="material-symbols-outlined text-[15px] leading-none">timeline</span>타임라인
+              </button>
             </div>
 
             {/* 메인 액션 */}
@@ -364,6 +369,12 @@ export default function CustomersPage() {
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : filtered.length === 0 ? (
           <EmptyState isFirstUse={customers.length === 0} onAdd={() => setEditing(emptyCustomer())} />
+        ) : viewStyle === "timeline" ? (
+          <CustomerTimeline
+            customers={filtered.map(x => x.c)}
+            selectedId={panelId || undefined}
+            onSelect={id => setPanelId(id)}
+          />
         ) : viewStyle === "table" ? (
           <CustomerTable
             list={filtered}

@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "만기 관리 재계약(연장) 흐름 추가: Contract status에 renewed + renewedFromId, renewContract(새 기간 active 생성·직전 계약 renewed 보존), ContractPanel 재계약 버튼 + RenewModal(재계약일·만기일·가격·수수료). 종료보기에 renewed 포함, 스케줄은 비활성 계약 제외",
-  commit: "d3ddf7e",
-  note: "재계약 수수료=재계약일 기준 새 매출(중복 아님). Pipedrive 프로세스 검토 후 진행",
+  work: "손님 여정 타임라인 1단계: CustomerEvent/history + deriveCustomerTimeline(등록·보여준매물·후속)·mergedCustomerTimeline, logCustomerEvent. CustomerPanel 여정 타임라인 + 빠른기록(전화·문자·집보기·포기·메모) + 상태변경 자동기록. 만기 '계약 종료'→'관리 종료(보관)' 이름 변경",
+  commit: "e71b521",
+  note: "보여준 매물(날짜·반응) 기존 데이터로 즉시 타임라인화. 2단계=가로 타임라인 뷰 예정",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 재계약 흐름" : "재계약 흐름";
+      found.getCell(4).value = prev ? prev + " / 손님 여정 타임라인" : "손님 여정 타임라인";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "재계약 흐름"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "손님 여정 타임라인"]);
     }
   }
 
