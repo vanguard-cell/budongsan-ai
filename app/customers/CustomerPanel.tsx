@@ -6,17 +6,13 @@
  */
 
 import { useState } from "react";
-import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline } from "./customer-types";
+import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual } from "./customer-types";
 import SideDrawer from "@/app/components/SideDrawer";
 
 const STATUS_ACCENT: Record<CustomerStatus, string> = {
   active: "#2383E2", matched: "#EF9F27", closed: "#1D9E75", lost: "#888780",
 };
 
-const EVENT_DOT: Record<CustomerEvent["kind"], string> = {
-  create: "bg-gray-400", shown: "bg-emerald-500", call: "bg-blue-400", sms: "bg-blue-400",
-  visit: "bg-purple-500", status: "bg-amber-500", drop: "bg-red-500", note: "bg-blue-400", followup: "bg-indigo-400",
-};
 function fmtEventTime(ms: number): string {
   const d = new Date(ms);
   return `${d.getMonth() + 1}.${d.getDate()}`;
@@ -50,11 +46,15 @@ interface Props {
   onEdit: (c: Customer) => void;
   onChangeStatus: (c: Customer, status: CustomerStatus) => void;
   onAddEvent: (c: Customer, ev: Omit<CustomerEvent, "at" | "by">) => Promise<void>;
+  onEditEvent: (c: Customer, idx: number, text: string) => Promise<void>;
+  onDeleteEvent: (c: Customer, idx: number) => Promise<void>;
 }
 
-export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeStatus, onAddEvent }: Props) {
+export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeStatus, onAddEvent, onEditEvent, onDeleteEvent }: Props) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
   if (!c) return null;
   const accent = STATUS_ACCENT[c.status];
   const dd = c.nextFollowUp ? followUpDDay(c.nextFollowUp) : null;
@@ -69,6 +69,16 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
     if (!note.trim()) return;
     await quickLog({ kind: "note", text: note.trim() });
     setNote("");
+  };
+  const saveEdit = async () => {
+    if (editIdx === null || !c) return;
+    if (!editText.trim()) { setEditIdx(null); return; }
+    await onEditEvent(c, editIdx, editText.trim());
+    setEditIdx(null);
+  };
+  const delEvent = async (idx: number) => {
+    if (!c || !confirm("이 기록을 삭제할까요?")) return;
+    await onDeleteEvent(c, idx);
   };
 
   return (
@@ -161,18 +171,51 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
         {timeline.length === 0 ? (
           <p className="text-[11px] text-gray-400 dark:text-gray-500">아직 기록된 이력이 없습니다.</p>
         ) : (
-          <div className="relative pl-4">
-            <div className="absolute left-[4px] top-1.5 bottom-1.5 w-px bg-gray-200 dark:bg-slate-700" />
-            {timeline.map((e, i) => (
-              <div key={i} className="relative mb-3 last:mb-0">
-                <span className={`absolute -left-4 top-1 w-2 h-2 rounded-full ${EVENT_DOT[e.kind]}`} />
-                <div className="text-[12px] text-gray-800 dark:text-gray-200 leading-snug">
-                  {e.text}
-                  {e.kind === "followup" && <span className="ml-1 text-[10px] text-indigo-500">예정</span>}
+          <div className="relative pl-7">
+            <div className="absolute left-[10px] top-2 bottom-2 w-px bg-gray-200 dark:bg-slate-700" />
+            {timeline.map((e, i) => {
+              const v = eventVisual(e);
+              const editable = e._idx !== undefined;     // 기록 이벤트만 수정·삭제
+              const isEditing = editIdx === e._idx;
+              return (
+                <div key={i} className="relative mb-3 last:mb-0 group">
+                  <span className="absolute -left-7 top-0.5 w-[21px] h-[21px] rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900" style={{ background: v.bg }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 12, color: v.fg }}>{v.icon}</span>
+                  </span>
+                  {isEditing ? (
+                    <div className="flex items-center gap-1.5">
+                      <input autoFocus value={editText} onChange={ev => setEditText(ev.target.value)}
+                        onKeyDown={ev => { if (ev.key === "Enter") saveEdit(); if (ev.key === "Escape") setEditIdx(null); }}
+                        className="flex-1 min-w-0 border border-[var(--brand-blue)] rounded-lg px-2 py-1 text-[12px] bg-white dark:bg-slate-800 focus:outline-none" />
+                      <button onClick={saveEdit} className="shrink-0 text-[11px] px-2 py-1 rounded-md bg-[var(--brand-blue)] text-white font-bold">저장</button>
+                      <button onClick={() => setEditIdx(null)} className="shrink-0 text-[11px] text-gray-400">취소</button>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-1">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] text-gray-800 dark:text-gray-200 leading-snug break-words">
+                          {e.text}
+                          {e.kind === "followup" && <span className="ml-1 text-[10px] text-indigo-500">예정</span>}
+                        </div>
+                        <div className="text-[10px] text-gray-400 dark:text-gray-500">{fmtEventTime(e.at)}{e.by ? ` · ${e.by}` : ""}</div>
+                      </div>
+                      {editable && (
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <button onClick={() => { setEditIdx(e._idx!); setEditText(e.text); }} title="수정"
+                            className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-[var(--brand-blue)] hover:bg-gray-100 dark:hover:bg-slate-800">
+                            <span className="material-symbols-outlined text-[15px]">edit</span>
+                          </button>
+                          <button onClick={() => delEvent(e._idx!)} title="삭제"
+                            className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-slate-800">
+                            <span className="material-symbols-outlined text-[15px]">delete</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="text-[10px] text-gray-400 dark:text-gray-500">{fmtEventTime(e.at)}{e.by ? ` · ${e.by}` : ""}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

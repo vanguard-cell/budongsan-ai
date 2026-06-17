@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "손님 가로 타임라인 뷰 2단계: CustomerTimeline(행=손님, 가로축=월, 점=활동, 오늘 점선·범례, 시간창 자동) + 손님관리 뷰토글에 '타임라인' 추가(카드/표/타임라인). mergedCustomerTimeline 재사용해 기존 데이터로 즉시 표시. Pipedrive 연락처 타임라인 톤",
-  commit: "d41185a",
-  note: "1단계(손님 패널 여정 타임라인)에 이어 가로 뷰까지 완성",
+  work: "손님 가로 타임라인 뷰 2단계: CustomerTimeline(행=손님, 가로축=월, 점=활동, 오늘 점선·범례). 별도 탭이 아니라 상단 고정(진행중 손님=active/matched, 접기 가능)+하단 전체 리스트(카드/표) 구조로 배치. mergedCustomerTimeline 재사용",
+  commit: "87e3410",
+  note: "Pipedrive 연락처 타임라인 톤. 진행중만 위, 전체는 아래 표",
 };
 
 (async () => {

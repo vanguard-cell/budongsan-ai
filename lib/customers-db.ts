@@ -74,6 +74,15 @@ export async function logCustomerEvent(
   }
 }
 
+/** 여정 이력 통째로 교체 (수정·삭제용 — 인덱스 기반 read-modify-write) */
+export async function setCustomerHistory(
+  agencyId: string,
+  customerId: string,
+  history: CustomerEvent[],
+): Promise<void> {
+  await updateDoc(customerDoc(agencyId, customerId), { history });
+}
+
 /** 실시간 구독 — 후속 연락 일정 빠른 순 (Infinity는 뒤로) */
 export function subscribeCustomers(
   agencyId: string,

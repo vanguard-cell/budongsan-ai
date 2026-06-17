@@ -126,12 +126,36 @@ export function deriveCustomerTimeline(c: Customer): CustomerEvent[] {
   return evs;
 }
 
+/** 타임라인 표시용 — 기록 이벤트는 history 배열 인덱스(_idx)를 달아 수정·삭제 가능하게 */
+export interface TimelineEntry extends CustomerEvent {
+  _idx?: number;   // c.history 내 위치 (기록 이벤트만, 파생은 undefined)
+}
+
 /** 파생 + 기록 이력을 합쳐 최신순 정렬 (중복 텍스트는 기록 우선) */
-export function mergedCustomerTimeline(c: Customer): CustomerEvent[] {
-  const logged = c.history || [];
+export function mergedCustomerTimeline(c: Customer): TimelineEntry[] {
+  const logged: TimelineEntry[] = (c.history || []).map((e, i) => ({ ...e, _idx: i }));
   const loggedTexts = new Set(logged.map(e => e.text));
   const derived = deriveCustomerTimeline(c).filter(e => !loggedTexts.has(e.text));
   return [...logged, ...derived].sort((a, b) => b.at - a.at);
+}
+
+/** 이벤트 종류·반응 → 색·아이콘 (의미 기반 — 긍정 초록 / 부정·포기 빨강 / 연락 파랑 / 방문 보라) */
+export function eventVisual(e: { kind: CustomerEvent["kind"]; reaction?: ShownProperty["reaction"] }): { bg: string; fg: string; icon: string; label: string } {
+  switch (e.kind) {
+    case "shown":
+      if (e.reaction === "positive") return { bg: "#E1F5EE", fg: "#085041", icon: "thumb_up", label: "보여줌 · 긍정" };
+      if (e.reaction === "negative") return { bg: "#FCEBEB", fg: "#A32D2D", icon: "thumb_down", label: "보여줌 · 부정" };
+      return { bg: "#E6F1FB", fg: "#185FA5", icon: "visibility", label: "매물 보여줌" };
+    case "call":     return { bg: "#E6F1FB", fg: "#185FA5", icon: "call", label: "전화" };
+    case "sms":      return { bg: "#E6F1FB", fg: "#185FA5", icon: "sms", label: "문자" };
+    case "visit":    return { bg: "#EEEDFE", fg: "#3C3489", icon: "directions_walk", label: "집보기" };
+    case "drop":     return { bg: "#FCEBEB", fg: "#A32D2D", icon: "cancel", label: "포기" };
+    case "status":   return { bg: "#FAEEDA", fg: "#854F0B", icon: "flag", label: "상태변경" };
+    case "note":     return { bg: "#FAEEDA", fg: "#854F0B", icon: "sticky_note_2", label: "메모" };
+    case "followup": return { bg: "#EEEDFE", fg: "#3C3489", icon: "event_upcoming", label: "예정" };
+    case "create":
+    default:         return { bg: "#F1EFE8", fg: "#5F5E5A", icon: "person_add", label: "손님 등록" };
+  }
 }
 
 export function telUrl(phone: string): string { return `tel:${phone.replace(/\D/g, "")}`; }

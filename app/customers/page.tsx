@@ -10,6 +10,7 @@ import {
   deleteCustomer as fsDeleteCustomer,
   saveCustomersBatch,
   logCustomerEvent,
+  setCustomerHistory,
 } from "@/lib/customers-db";
 import {
   Customer,
@@ -217,6 +218,18 @@ export default function CustomersPage() {
       text: ev.text,
       ...(ev.reaction ? { reaction: ev.reaction } : {}),
     });
+  };
+  const editCustomerEvent = async (c: Customer, idx: number, text: string) => {
+    if (!user) return;
+    const h = [...(c.history || [])];
+    if (!h[idx]) return;
+    h[idx] = { ...h[idx], text };
+    await setCustomerHistory(user.agencyId, c.id, h);
+  };
+  const deleteCustomerEvent = async (c: Customer, idx: number) => {
+    if (!user) return;
+    const h = (c.history || []).filter((_, i) => i !== idx);
+    await setCustomerHistory(user.agencyId, c.id, h);
   };
 
   const loadSamples = async () => {
@@ -433,6 +446,8 @@ export default function CustomersPage() {
         onEdit={c => setEditing({ ...c })}
         onChangeStatus={(c, st) => changeStatus(c, st)}
         onAddEvent={addCustomerEvent}
+        onEditEvent={editCustomerEvent}
+        onDeleteEvent={deleteCustomerEvent}
       />
 
       {editing && (
