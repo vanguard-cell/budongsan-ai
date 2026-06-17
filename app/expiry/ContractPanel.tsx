@@ -58,10 +58,11 @@ interface Props {
   onCloneSameComplex: (c: Contract) => void;
   onReopenAsProperty: (c: Contract) => void;
   onCloseContract: (c: Contract) => void;
+  onRenew: (c: Contract) => void;
   onJumpCustomer?: (c: Contract) => void;
 }
 
-export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onCloneSameComplex, onReopenAsProperty, onCloseContract, onJumpCustomer }: Props) {
+export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onCloneSameComplex, onReopenAsProperty, onCloseContract, onRenew, onJumpCustomer }: Props) {
   if (!c) return null;
   const dd = c.endDate ? dDay(c.endDate) : null;
   const sev = dd !== null ? severityOf(dd) : "safe";
@@ -106,8 +107,13 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onC
 
       <div className="px-1 mt-2">
         <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-1.5">작업</p>
+        {/* 재계약(연장) — 같은 임차인 연장. 만기 도래 시 핵심 액션 */}
+        <button onClick={() => onRenew(c)}
+          className="w-full mb-1.5 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-[12px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all active:scale-95">
+          <span className="material-symbols-outlined text-[16px]">autorenew</span>재계약(연장)
+        </button>
         <div className="grid grid-cols-2 gap-1.5">
-          <ActionBtn icon="edit" label="수정" onClick={() => onEdit(c)} primary />
+          <ActionBtn icon="edit" label="수정" onClick={() => onEdit(c)} />
           <ActionBtn icon="content_copy" label="같은 단지 추가" onClick={() => onCloneSameComplex(c)} />
           <ActionBtn icon="campaign" label="매물로 재모집" onClick={() => onReopenAsProperty(c)} />
           <ActionBtn icon="check_circle" label="계약 종료" onClick={() => onCloseContract(c)} />

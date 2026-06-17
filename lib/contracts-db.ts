@@ -60,6 +60,7 @@ function fromDoc(id: string, data: Record<string, unknown>): Contract {
     commission:       (data.commission       as string) || undefined,
     linkedCustomerId: (data.linkedCustomerId as string) || undefined,
     fromPropertyId:   (data.fromPropertyId   as string) || undefined,
+    renewedFromId:    (data.renewedFromId    as string) || undefined,
     memo: (data.memo as string) || "",
     status: (data.status as Contract["status"]) || "active",
     createdAt,
@@ -179,6 +180,47 @@ export async function moveToContract(
   await saveContract(agencyId, contract);
   await deleteProperty(agencyId, property.id);
   return contract;
+}
+
+/** 재계약(연장) 입력값 — 같은 임차인 기준 새 기간 */
+export interface RenewTerm {
+  startDate: string;   // 재계약일(새 시작일)
+  endDate: string;     // 새 만기일
+  deposit: string;     // 보증금 (변동 가능)
+  monthly: string;     // 월세 (변동 가능)
+  commission: string;  // 재계약 중개 수수료 (만원, 매출 집계용)
+}
+
+/**
+ * 재계약(연장) — 같은 물건·임차인이 새 기간으로 연장
+ * 1. 새 기간 계약을 active로 생성 (renewedFromId로 이전 계약 연결)
+ * 2. 직전 계약은 status="renewed"로 보존(이력) — 과거 매출은 그대로 유지
+ * → 새 수수료는 재계약 시점의 새 매출로 잡힘(중복 아님)
+ */
+export async function renewContract(
+  agencyId: string,
+  prev: Contract,
+  term: RenewTerm,
+): Promise<Contract> {
+  const next: Contract = {
+    ...prev,
+    id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
+    deposit: term.deposit,
+    monthly: term.monthly,
+    startDate: term.startDate,
+    endDate: term.endDate,
+    contractDate: term.startDate,
+    downPaymentDate: undefined,
+    balanceDate: term.startDate,            // 매출 집계 기준일 = 재계약일
+    commission: term.commission || undefined,
+    renewedFromId: prev.id,
+    fromPropertyId: undefined,
+    status: "active",
+    createdAt: Date.now(),
+  };
+  await saveContract(agencyId, next);
+  await saveContract(agencyId, { ...prev, status: "renewed" });
+  return next;
 }
 
 /** localStorage → Firestore 마이그레이션 (첫 로그인 시 1회) */

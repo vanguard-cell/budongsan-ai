@@ -1,7 +1,8 @@
 /* 계약 데이터 모델 + localStorage 헬퍼 */
 
 export type ContractType = "전세" | "월세" | "매매";
-export type ContractStatus = "active" | "closed";
+/** active=관리중 / renewed=재계약돼 이전 기간으로 종료(이력) / closed=종료 */
+export type ContractStatus = "active" | "closed" | "renewed";
 export type ContactTarget = "tenant" | "landlord";
 export type NotifyStage = "4m" | "3m" | "2m";
 
@@ -32,6 +33,7 @@ export interface Contract {
   commission?: string;      // 중개 수수료 (만원) — 매물에서 이전 시 보존, 매출 집계용
   linkedCustomerId?: string; // 손님 관리 연결 ID
   fromPropertyId?: string;   // 어떤 매물에서 이전됐는지 (이력)
+  renewedFromId?: string;    // 재계약: 직전 기간 계약 ID (이력 연결)
   memo: string;
   status: ContractStatus;
   createdAt: number;

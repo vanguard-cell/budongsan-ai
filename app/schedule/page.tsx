@@ -162,7 +162,7 @@ export default function SchedulePage() {
     // ④ 만기로 이전된 계약의 계약일·중도금일·잔금일
     //   (매물을 만기로 보내도 잔금 등 일정이 사라지지 않게 — 어머니 피드백 버그픽스)
     for (const ct of contracts) {
-      if (ct.status === "closed") continue;
+      if (ct.status !== "active") continue;
       const dp = contractToDisplayProp(ct);
       const dates: { kind: PropertyDateKind; date?: string; source: ItemSource }[] = [
         { kind: "contractDate",    date: ct.contractDate,    source: "contractDate" },

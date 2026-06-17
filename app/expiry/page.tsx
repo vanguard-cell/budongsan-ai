@@ -10,6 +10,8 @@ import {
   deleteContract as fsDeleteContract,
   saveContractsBatch,
   migrateFromLocalStorage,
+  renewContract,
+  type RenewTerm,
 } from "@/lib/contracts-db";
 import UploadModal, { type MergeStrategy } from "./UploadModal";
 import ContractTable, { type ContractSort, type ContractFilter } from "./ContractTable";
@@ -78,6 +80,7 @@ export default function ExpiryPage() {
   const [query, setQuery] = useState("");
 
   const [editing, setEditing] = useState<Contract | null>(null);
+  const [renewing, setRenewing] = useState<Contract | null>(null);   // 재계약(연장) 모달
   const [smsTarget, setSmsTarget] = useState<{ contract: Contract; target: ContactTarget } | null>(null);
   // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
   const [viewStyle, setViewStyleState] = useState<"card" | "table">(() => {
@@ -149,7 +152,7 @@ export default function ExpiryPage() {
     const regionTerm = (colSearch.region || "").trim().toLowerCase();
 
     return withDday
-      .filter(({ c }) => (showClosed ? c.status === "closed" : c.status === "active"))
+      .filter(({ c }) => (showClosed ? c.status !== "active" : c.status === "active"))
       .filter(({ s }) => (filter === "all" ? true : s === filter))
       .filter(({ c }) => {
         if (!addrTerm && !regionTerm) return true;
@@ -228,6 +231,13 @@ export default function ExpiryPage() {
     const target = contracts.find(c => c.id === id);
     if (!target) return;
     await fsSaveContract(user.agencyId, { ...target, status: "active" });
+  };
+
+  const doRenew = async (prev: Contract, term: RenewTerm) => {
+    if (!user) return;
+    await renewContract(user.agencyId, prev, term);
+    setRenewing(null);
+    setPanelId(null);
   };
 
   const deleteContract = async (id: string) => {
@@ -515,6 +525,7 @@ export default function ExpiryPage() {
         onCloneSameComplex={c => { cloneSameComplex(c); setPanelId(null); }}
         onReopenAsProperty={c => jumpReopenAsProperty(c)}
         onCloseContract={c => closeContract(c.id)}
+        onRenew={c => setRenewing({ ...c })}
         onJumpCustomer={panelId && (() => {
           const c = contracts.find(x => x.id === panelId);
           return c?.linkedCustomerId && customers.some(cu => cu.id === c.linkedCustomerId);
@@ -530,6 +541,15 @@ export default function ExpiryPage() {
             const ok = await upsertContract(c);
             if (ok) setEditing(null);
           }}
+        />
+      )}
+
+      {/* 재계약(연장) 모달 */}
+      {renewing && (
+        <RenewModal
+          contract={renewing}
+          onClose={() => setRenewing(null)}
+          onSave={term => doRenew(renewing, term)}
         />
       )}
 
@@ -841,6 +861,102 @@ function EmptyState({ isFirstUse, onAdd }: { isFirstUse: boolean; onAdd: () => v
           + 첫 계약 추가
         </button>
       )}
+    </div>
+  );
+}
+
+/* ───────── 재계약(연장) 모달 ───────── */
+function RenewModal({ contract, onClose, onSave }: {
+  contract: Contract;
+  onClose: () => void;
+  onSave: (term: RenewTerm) => void | Promise<void>;
+}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const plus2y = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().slice(0, 10); })();
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(plus2y);
+  const [deposit, setDeposit] = useState(contract.deposit || "");
+  const [monthly, setMonthly] = useState(contract.monthly || "");
+  const [commission, setCommission] = useState("");
+  const [saving, setSaving] = useState(false);
+  const isWolse = contract.type === "월세";
+  const where = [contract.address, contract.dong && `${contract.dong}동`, contract.ho && `${contract.ho}호`].filter(Boolean).join(" ");
+  const onlyDigits = (v: string) => v.replace(/[^\d]/g, "");
+  const fmt = (s: string) => { const n = parseInt(s.replace(/[^\d]/g, ""), 10); return isNaN(n) ? "" : n.toLocaleString(); };
+
+  const save = async () => {
+    if (!startDate || !endDate) { alert("재계약일과 새 만기일을 입력해주세요."); return; }
+    if (endDate <= startDate) { alert("새 만기일은 재계약일보다 뒤여야 합니다."); return; }
+    setSaving(true);
+    try { await onSave({ startDate, endDate, deposit, monthly: isWolse ? monthly : "", commission }); }
+    catch (e) { alert("재계약 처리 중 오류: " + (e instanceof Error ? e.message : String(e))); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-xl shadow-2xl max-h-[calc(100dvh-3rem)] sm:max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white dark:bg-slate-900 px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between z-10">
+          <div>
+            <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-emerald-600">autorenew</span> 재계약(연장)
+            </h3>
+            <p className="text-[11px] text-gray-500 mt-0.5 truncate max-w-[280px]">{where} · {contract.tenantName || "임차인"}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="p-5 space-y-3">
+          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 px-3 py-2 text-[11px] text-emerald-700 dark:text-emerald-300 leading-relaxed">
+            같은 임차인과 새 기간으로 연장합니다. 이전 기간은 이력으로 보존되고, 재계약 수수료는 이 시점의 새 매출로 잡힙니다.
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">재계약일 <span className="text-red-500">*</span></label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">새 만기일 <span className="text-red-500">*</span></label>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+                className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{isWolse ? "보증금" : "보증금/전세금"} (만원)</label>
+              <input type="text" inputMode="numeric" value={deposit} onChange={e => setDeposit(onlyDigits(e.target.value))} placeholder="변동 없으면 그대로"
+                className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              {fmt(deposit) && <div className="mt-1 text-[10px] text-gray-500">{fmt(deposit)}만원</div>}
+            </div>
+            {isWolse && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">월세 (만원)</label>
+                <input type="text" inputMode="numeric" value={monthly} onChange={e => setMonthly(onlyDigits(e.target.value))}
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-1">재계약 중개 수수료 (만원)</label>
+            <input type="text" inputMode="numeric" value={commission} onChange={e => setCommission(onlyDigits(e.target.value))} placeholder="매출에 잡을 수수료 (없으면 비워두기)"
+              className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            {fmt(commission) && <div className="mt-1 text-[10px] text-emerald-600">{fmt(commission)}만원 · {startDate.slice(0, 7)} 매출로 집계</div>}
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 bg-white dark:bg-slate-900 px-5 py-4 border-t border-gray-100 dark:border-slate-700 flex gap-2">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-gray-300 font-semibold text-sm">취소</button>
+          <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm disabled:opacity-50">
+            {saving ? "처리 중…" : "재계약 완료"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
