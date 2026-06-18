@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Schedule } from "@/lib/schedules-db";
 import { dDay } from "@/app/expiry/contracts";
-import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE } from "./helpers";
+import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, splitAddress } from "./helpers";
 
 const STYPE_COLORS: Record<string, string> = {
   "집보기": "bg-blue-100 text-blue-700",
@@ -115,8 +115,22 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
         </div>
       </div>
 
-      {/* ─── 2째줄: 주소 ─── */}
-      <div className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 break-all mb-2 leading-snug">{p.address || "—"}</div>
+      {/* ─── 2째줄: 단지·동호 위주 (주소는 보조) ─── */}
+      {(() => {
+        const { region, complex } = splitAddress(addressStr(p));
+        return (
+          <div className="mb-2">
+            {/* 단지·동호 — 큰 글씨 강조 */}
+            <div className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 break-all leading-snug">
+              {complex || p.address || "—"}
+            </div>
+            {/* 소재지(주소) — 작고 흐리게 보조 */}
+            {region && (
+              <div className="text-[11px] text-gray-400 dark:text-gray-500 break-all mt-0.5">{region}</div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ─── 3째줄: 임대차 정보 (만기 • 면적 • 타입 • 방향 • 입주상태) ─── */}
       {/* 구분점 — 진하고 명확, 앞 글자에 붙음 (Dot 음수마진) */}

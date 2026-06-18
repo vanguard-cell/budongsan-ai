@@ -15,7 +15,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Property, PropertyType, DealType } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
-import { fmtNum, PROPERTY_TYPES, DEAL_TYPES } from "./helpers";
+import { fmtNum, PROPERTY_TYPES, DEAL_TYPES, addressStr, splitAddress } from "./helpers";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 
 type SortKey = "newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho";
@@ -55,29 +55,6 @@ export function stageOf(p: Property): { label: string; cls: string } {
 function priceStr(p: Property): string {
   if (p.dealType === "월세") return `${fmtNum(p.price)}/${fmtNum(p.monthly)}`;
   return fmtNum(p.price);
-}
-
-function addressStr(p: Property): string {
-  // address에 이미 동/호가 들어있으면 중복으로 붙이지 않음
-  const parts = [p.address];
-  if (p.dong && !p.address.includes(`${p.dong}동`)) parts.push(`${p.dong}동`);
-  if (p.ho && !p.address.includes(`${p.ho}호`)) parts.push(`${p.ho}호`);
-  return parts.filter(Boolean).join(" ");
-}
-
-/**
- * 주소 분리 — "경기도 하남시 미사강변동 1100 힐스테이트 …" →
- *   소재지: 첫 번지(숫자 또는 1143-1형)까지 / 단지·동호: 그 뒤 전부
- * 번지를 못 찾으면 소재지 비우고 전체를 단지 칸에
- */
-function splitAddress(full: string): { region: string; complex: string } {
-  const tokens = full.trim().split(/\s+/);
-  let cut = -1;
-  for (let i = 0; i < tokens.length; i++) {
-    if (/^\d+(-\d+)?$/.test(tokens[i])) { cut = i; break; }
-  }
-  if (cut === -1 || cut === tokens.length - 1) return { region: "", complex: full };
-  return { region: tokens.slice(0, cut + 1).join(" "), complex: tokens.slice(cut + 1).join(" ") };
 }
 
 function LeaseEndCell({ date }: { date?: string }) {

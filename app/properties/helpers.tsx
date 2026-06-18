@@ -3,7 +3,7 @@
  * (page.tsx 분리 리팩토링으로 추출)
  */
 
-import type { PropertyType, DealType } from "@/lib/properties-db";
+import type { PropertyType, DealType, Property } from "@/lib/properties-db";
 
 
 export const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"];
@@ -63,5 +63,28 @@ export function m2ToPyeong(m2: string): string {
   const n = parseFloat((m2 || "").replace(/[^\d.]/g, ""));
   if (!n || isNaN(n)) return "";
   return (Math.round(n / 3.3058 * 10) / 10).toString();
+}
+
+/** 주소 + 동/호 합치기 (중복 방지) — "… 힐스테이트 101동 1902호" */
+export function addressStr(p: Property): string {
+  const parts = [p.address];
+  if (p.dong && !p.address.includes(`${p.dong}동`)) parts.push(`${p.dong}동`);
+  if (p.ho && !p.address.includes(`${p.ho}호`)) parts.push(`${p.ho}호`);
+  return parts.filter(Boolean).join(" ");
+}
+
+/**
+ * 주소 분리 — "경기도 하남시 미사강변동 1100 힐스테이트 101동 1902호" →
+ *   region(소재지): 첫 번지(숫자/1143-1형)까지 / complex(단지·동호): 그 뒤 전부
+ * 번지를 못 찾으면 소재지 비우고 전체를 단지 칸에
+ */
+export function splitAddress(full: string): { region: string; complex: string } {
+  const tokens = full.trim().split(/\s+/);
+  let cut = -1;
+  for (let i = 0; i < tokens.length; i++) {
+    if (/^\d+(-\d+)?$/.test(tokens[i])) { cut = i; break; }
+  }
+  if (cut === -1 || cut === tokens.length - 1) return { region: "", complex: full };
+  return { region: tokens.slice(0, cut + 1).join(" "), complex: tokens.slice(cut + 1).join(" ") };
 }
 
