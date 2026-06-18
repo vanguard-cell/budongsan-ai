@@ -191,7 +191,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
           <QuickChip icon="call" label="전화함" onClick={() => quickLog({ kind: "call", text: "전화 상담" })} disabled={saving} />
           <QuickChip icon="sms" label="문자함" onClick={() => quickLog({ kind: "sms", text: "문자 발송" })} disabled={saving} />
           <QuickChip icon="directions_walk" label="집보기" onClick={() => quickLog({ kind: "visit", text: "집보기 동행" })} disabled={saving} />
-          <QuickChip icon="cancel" label="포기" onClick={() => { const r = prompt("포기 사유 (선택)"); if (r === null) return; quickLog({ kind: "drop", text: r.trim() ? `포기 — ${r.trim()}` : "포기" }); }} disabled={saving} />
+          <QuickChip icon="cancel" label="포기" onClick={() => onChangeStatus(c, "lost")} disabled={saving} />
         </div>
         <div className="flex items-center gap-1.5 mb-3">
           <input

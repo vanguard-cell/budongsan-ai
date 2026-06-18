@@ -19,6 +19,7 @@ export interface CustomerEvent {
   kind: "create" | "shown" | "call" | "sms" | "visit" | "status" | "drop" | "note" | "followup";
   text: string;
   reaction?: "positive" | "neutral" | "negative" | "";
+  reason?: string;   // 포기·이탈 사유 (집계용 — drop 이벤트)
 }
 
 export interface Customer {

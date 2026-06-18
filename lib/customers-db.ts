@@ -66,6 +66,7 @@ export async function logCustomerEvent(
     kind: ev.kind,
     text: ev.text,
     ...(ev.reaction ? { reaction: ev.reaction } : {}),
+    ...(ev.reason ? { reason: ev.reason } : {}),
   };
   try {
     await updateDoc(customerDoc(agencyId, customerId), { history: arrayUnion(event) });

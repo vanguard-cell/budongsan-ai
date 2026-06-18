@@ -196,18 +196,24 @@ export default function CustomersPage() {
   };
 
   const STATUS_LABEL: Record<Customer["status"], string> = { active: "진행 중", matched: "매칭", closed: "거래 완료", lost: "이탈" };
+  const by = () => user?.displayName || user?.email || "나";
   const changeStatus = async (c: Customer, status: Customer["status"]) => {
     if (!user) return;
-    if (status === "lost") {
-      if (!confirm(`${c.name || "이 손님"}을(를) 이탈 처리할까요?\n이탈 처리 후에는 상단 [이탈] 필터에서 다시 확인하고 복구할 수 있습니다.`)) return;
-    }
     if (c.status === status) return;
+    // 포기·이탈 → 사유 수집 + drop 이벤트(단계가 '실패'로 이동)
+    if (status === "lost") {
+      if (!confirm(`${c.name || "이 손님"} 거래를 포기(이탈) 처리할까요?\n상단 [이탈] 필터에서 다시 복구할 수 있습니다.`)) return;
+      const r = (prompt("포기·이탈 사유 (선택 — 예: 가격 부담 / 위치 / 타이밍 / 연락두절)") ?? "").trim();
+      await fsSaveCustomer(user.agencyId, { ...c, status });
+      await logCustomerEvent(user.agencyId, c.id, {
+        by: by(), kind: "drop",
+        text: r ? `포기 — ${r}` : "포기(이탈)",
+        ...(r ? { reason: r } : {}),
+      });
+      return;
+    }
     await fsSaveCustomer(user.agencyId, { ...c, status });
-    await logCustomerEvent(user.agencyId, c.id, {
-      by: user.displayName || user.email || "나",
-      kind: "status",
-      text: `상태 변경 → ${STATUS_LABEL[status]}`,
-    });
+    await logCustomerEvent(user.agencyId, c.id, { by: by(), kind: "status", text: `상태 변경 → ${STATUS_LABEL[status]}` });
   };
 
   const addCustomerEvent = async (c: Customer, ev: Omit<CustomerEvent, "at" | "by">) => {
