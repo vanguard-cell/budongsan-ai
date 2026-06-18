@@ -15,6 +15,9 @@ import {
 import {
   Customer,
   type CustomerEvent,
+  type CustomerStage,
+  STAGE_META,
+  stageToStatus,
   FollowUpSeverity,
   SIDE_LABELS,
   DEAL_KIND_LABELS,
@@ -35,6 +38,7 @@ import KakaoParseModal from "./KakaoParseModal";
 import CustomerTable, { type CustSort } from "./CustomerTable";
 import CustomerPanel from "./CustomerPanel";
 import CustomerTimeline from "./CustomerTimeline";
+import CustomerBoard from "./CustomerBoard";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import CustomersUploadModal, { type CustMergeStrategy } from "./CustomersUploadModal";
@@ -76,10 +80,10 @@ export default function CustomersPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [showKakaoParse, setShowKakaoParse] = useState(false);
   // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
-  const [viewStyle, setViewStyleState] = useState<"card" | "table">(() => {
-    try { return localStorage.getItem("dealdone_customers_view") === "table" ? "table" : "card"; } catch { return "card"; }
+  const [viewStyle, setViewStyleState] = useState<"card" | "table" | "board">(() => {
+    try { const v = localStorage.getItem("dealdone_customers_view"); return v === "table" || v === "board" ? v : "card"; } catch { return "card"; }
   });
-  const setViewStyle = (v: "card" | "table") => {
+  const setViewStyle = (v: "card" | "table" | "board") => {
     setViewStyleState(v);
     try { localStorage.setItem("dealdone_customers_view", v); } catch {}
   };
@@ -216,6 +220,14 @@ export default function CustomersPage() {
     await logCustomerEvent(user.agencyId, c.id, { by: by(), kind: "status", text: `상태 변경 → ${STATUS_LABEL[status]}` });
   };
 
+  // 보드 드래그 — 단계 이동 (단계 + 상태 동기화)
+  const moveStage = async (c: Customer, stage: CustomerStage) => {
+    if (!user) return;
+    if (stage === "lost") { await changeStatus(c, "lost"); return; }   // 사유 prompt 포함
+    await fsSaveCustomer(user.agencyId, { ...c, stage, status: stageToStatus(stage) });
+    await logCustomerEvent(user.agencyId, c.id, { by: by(), kind: "status", text: `단계 → ${STAGE_META[stage].label}` });
+  };
+
   const addCustomerEvent = async (c: Customer, ev: Omit<CustomerEvent, "at" | "by">) => {
     if (!user) return;
     await logCustomerEvent(user.agencyId, c.id, {
@@ -340,6 +352,10 @@ export default function CustomersPage() {
                 className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "table" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
                 <span className="material-symbols-outlined text-[15px] leading-none">table_rows</span>표
               </button>
+              <button onClick={() => setViewStyle("board")}
+                className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "board" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
+                <span className="material-symbols-outlined text-[15px] leading-none">view_kanban</span>보드
+              </button>
             </div>
 
             {/* 메인 액션 */}
@@ -373,8 +389,8 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* 상단 — 진행 중인 손님 타임라인 */}
-        {loaded && (() => {
+        {/* 상단 — 진행 중인 손님 타임라인 (보드 뷰에선 숨김) */}
+        {loaded && viewStyle !== "board" && (() => {
           const activeList = customers.filter(c => c.status === "active" || c.status === "matched");
           if (activeList.length === 0) return null;
           return (
@@ -414,6 +430,13 @@ export default function CustomersPage() {
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : filtered.length === 0 ? (
           <EmptyState isFirstUse={customers.length === 0} onAdd={() => setEditing(emptyCustomer())} />
+        ) : viewStyle === "board" ? (
+          <CustomerBoard
+            customers={filtered.map(x => x.c)}
+            selectedId={panelId || undefined}
+            onSelect={id => setPanelId(id)}
+            onMoveStage={moveStage}
+          />
         ) : viewStyle === "table" ? (
           <CustomerTable
             list={filtered}

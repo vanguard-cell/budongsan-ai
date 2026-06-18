@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, deriveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
+import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, effectiveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
 import SideDrawer from "@/app/components/SideDrawer";
 
 const STATUS_ACCENT: Record<CustomerStatus, string> = {
@@ -105,7 +105,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
       <div className="px-1 mt-3">
         <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-1.5">거래 단계</p>
         {(() => {
-          const stage = deriveStage(c);
+          const stage = effectiveStage(c);
           if (stage === "lost") {
             return (
               <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 px-3 py-2 text-[12px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">

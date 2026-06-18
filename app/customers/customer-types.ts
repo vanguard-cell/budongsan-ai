@@ -38,6 +38,7 @@ export interface Customer {
   memo: string;
   createdAt: number;
   history?: CustomerEvent[];   // 여정 활동 이력 (전화·문자·상태변경·포기·메모)
+  stage?: CustomerStage;       // 보드에서 수동 지정한 단계 (없으면 자동 추론)
 }
 
 export const uid = () =>
@@ -72,6 +73,21 @@ export function deriveStage(c: Customer): CustomerStage {
   if (hasShown) return "shown";
   if (hasContact) return "contacted";
   return "inquiry";
+}
+
+/** 보드·퍼널에서 쓰는 실제 단계 — 종료 상태(완료·이탈)는 항상 우선, 그 외엔 수동지정→자동추론 */
+export function effectiveStage(c: Customer): CustomerStage {
+  if (c.status === "closed") return "won";
+  if (c.status === "lost") return "lost";
+  return c.stage ?? deriveStage(c);
+}
+
+/** 단계 → 손님 상태 동기화 (보드 드롭 시) */
+export function stageToStatus(stage: CustomerStage): CustomerStatus {
+  if (stage === "won") return "closed";
+  if (stage === "lost") return "lost";
+  if (stage === "negotiation") return "matched";
+  return "active";
 }
 
 export const SIDE_LABELS: Record<CustomerSide, string> = {
