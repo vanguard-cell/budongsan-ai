@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "파이프라인 1단계 - 거래 단계 정의: CustomerStage(문의/연락중/매물보여줌/협상/계약성사/실패) + STAGE_FLOW·STAGE_META + deriveStage(status+활동이력 자동추론). 손님 패널에 단계 스테퍼 표시(검증용). (같은 날 검색바 이동·타임라인 hover/겹침도)",
-  commit: "52130e7",
-  note: "Pipedrive식 파이프라인 준비. 다음 보드(칸반)+인사이트 대시보드",
+  work: "파이프라인 단계 정의 + 포기=실패 연동: CustomerStage/deriveStage(status+이력 자동추론) + 패널 단계 스테퍼. 포기 클릭 시 status=lost + 사유(reason) prompt → drop 이벤트 저장 → 단계가 '실패'로 이동(집계용 사유 확보)",
+  commit: "3e48377",
+  note: "per-매물 거절은 보여준매물 reaction. 다음 보드+인사이트 대시보드",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 파이프라인 단계정의" : "파이프라인 단계정의";
+      found.getCell(4).value = prev ? prev + " / 단계정의+포기연동" : "단계정의+포기연동";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "파이프라인 단계정의"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "단계정의+포기연동"]);
     }
   }
 
