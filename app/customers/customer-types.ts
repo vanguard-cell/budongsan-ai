@@ -42,6 +42,37 @@ export interface Customer {
 export const uid = () =>
   Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
+/* ───────── 거래 파이프라인 단계 ─────────
+   손님 = 거래(deal). 단계는 status + 활동 이력에서 자동 추론 (별도 입력 불필요)
+   흐름: 문의 → 연락중 → 매물 보여줌 → 협상 → 계약 성사 / (실패는 별도) */
+export type CustomerStage = "inquiry" | "contacted" | "shown" | "negotiation" | "won" | "lost";
+
+/** 진행 흐름 (실패 제외) — 보드 칼럼·퍼널 순서 */
+export const STAGE_FLOW: CustomerStage[] = ["inquiry", "contacted", "shown", "negotiation", "won"];
+
+export const STAGE_META: Record<CustomerStage, { label: string; short: string; bg: string; fg: string }> = {
+  inquiry:     { label: "문의",      short: "문의",   bg: "#F1EFE8", fg: "#5F5E5A" },
+  contacted:   { label: "연락중",    short: "연락",   bg: "#E6F1FB", fg: "#185FA5" },
+  shown:       { label: "매물 보여줌", short: "보여줌", bg: "#EEEDFE", fg: "#3C3489" },
+  negotiation: { label: "협상",      short: "협상",   bg: "#FAEEDA", fg: "#854F0B" },
+  won:         { label: "계약 성사",  short: "계약",   bg: "#E1F5EE", fg: "#085041" },
+  lost:        { label: "실패",      short: "실패",   bg: "#FCEBEB", fg: "#A32D2D" },
+};
+
+/** 손님의 현재 거래 단계 자동 추론 */
+export function deriveStage(c: Customer): CustomerStage {
+  if (c.status === "closed") return "won";
+  if (c.status === "lost") return "lost";
+  if (c.status === "matched") return "negotiation";
+  // active — 활동 이력으로 진척 판단
+  const kinds = new Set((c.history || []).map(e => e.kind));
+  const hasShown = (c.shownProperties && c.shownProperties.length > 0) || kinds.has("shown");
+  const hasContact = kinds.has("call") || kinds.has("sms") || kinds.has("visit");
+  if (hasShown) return "shown";
+  if (hasContact) return "contacted";
+  return "inquiry";
+}
+
 export const SIDE_LABELS: Record<CustomerSide, string> = {
   buyer:    "매수",
   seller:   "매도",

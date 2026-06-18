@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual } from "./customer-types";
+import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, deriveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
 import SideDrawer from "@/app/components/SideDrawer";
 
 const STATUS_ACCENT: Record<CustomerStatus, string> = {
@@ -99,6 +99,43 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
             </span>
           )}
         </div>
+      </div>
+
+      {/* 거래 단계 (자동 추론) */}
+      <div className="px-1 mt-3">
+        <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-1.5">거래 단계</p>
+        {(() => {
+          const stage = deriveStage(c);
+          if (stage === "lost") {
+            return (
+              <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 px-3 py-2 text-[12px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">cancel</span> 실패 (이탈)
+              </div>
+            );
+          }
+          const curIdx = STAGE_FLOW.indexOf(stage);
+          return (
+            <div className="flex items-start">
+              {STAGE_FLOW.map((st, i) => {
+                const meta = STAGE_META[st];
+                const done = i <= curIdx;
+                const isCur = i === curIdx;
+                return (
+                  <div key={st} className="flex-1 flex flex-col items-center relative">
+                    {i > 0 && (
+                      <div className="absolute top-[11px] left-[-50%] right-1/2 h-0.5" style={{ background: i <= curIdx ? meta.fg : "#E9E9E7" }} />
+                    )}
+                    <span className="relative z-10 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                      style={{ background: done ? meta.bg : "#F4F4F2", color: done ? meta.fg : "#B4B2A9", boxShadow: isCur ? `0 0 0 2px ${meta.fg}` : "none" }}>
+                      {done && !isCur ? "✓" : i + 1}
+                    </span>
+                    <span className="text-[9px] mt-1 text-center" style={{ color: done ? meta.fg : "#B4B2A9", fontWeight: isCur ? 700 : 400 }}>{meta.short}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* 정보 */}
