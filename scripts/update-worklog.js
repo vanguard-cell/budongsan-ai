@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "파이프라인 단계 정의 + 포기=실패 연동: CustomerStage/deriveStage(status+이력 자동추론) + 패널 단계 스테퍼. 포기 클릭 시 status=lost + 사유(reason) prompt → drop 이벤트 저장 → 단계가 '실패'로 이동(집계용 사유 확보)",
-  commit: "3e48377",
-  note: "per-매물 거절은 보여준매물 reaction. 다음 보드+인사이트 대시보드",
+  work: "파이프라인 보드(칸반)+인사이트 대시보드 구현. ①손님관리 '보드' 뷰: 단계 칼럼 칸반+드래그 이동(stage·status 동기화, 실패 사유), effectiveStage/stageToStatus. ②/insights: 수익(월/연)·처리현황·파이프라인 퍼널(전환%)·실패사유 분포·이번달 활동. 사이드바·더보기·셸 등록",
+  commit: "c8ceb25",
+  note: "Customer.stage 수동지정 필드 추가. 단계정의·포기연동에 이어 보드+대시보드 완성",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 단계정의+포기연동" : "단계정의+포기연동";
+      found.getCell(4).value = prev ? prev + " / 파이프라인 보드+인사이트" : "파이프라인 보드+인사이트";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "단계정의+포기연동"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "파이프라인 보드+인사이트"]);
     }
   }
 
