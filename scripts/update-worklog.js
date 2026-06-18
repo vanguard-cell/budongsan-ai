@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "손님 가로 타임라인 뷰 2단계: CustomerTimeline(행=손님, 가로축=월, 점=활동, 오늘 점선·범례). 별도 탭이 아니라 상단 고정(진행중 손님=active/matched, 접기 가능)+하단 전체 리스트(카드/표) 구조로 배치. mergedCustomerTimeline 재사용",
-  commit: "87e3410",
-  note: "Pipedrive 연락처 타임라인 톤. 진행중만 위, 전체는 아래 표",
+  work: "손님 여정 타임라인 업그레이드: ①기록 이벤트 수정·삭제(_idx + setCustomerHistory, 패널 hover 편집) ②의미 기반 색·아이콘 eventVisual(긍정 초록/부정·포기 빨강/연락 파랑/방문 보라, 보여줌은 반응색 자동) ③패널·가로 타임라인 색체계 통일+점 안 아이콘+범례. (앞서 2단계: 상단 진행중 타임라인+하단 전체표 배치)",
+  commit: "214e32b",
+  note: "잘못 누른 기록 삭제·집보기 메모 보강 가능. 파생 이벤트는 정보/매물에서 관리",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 손님 가로 타임라인뷰" : "손님 가로 타임라인뷰";
+      found.getCell(4).value = prev ? prev + " / 타임라인 수정삭제+색개선" : "타임라인 수정삭제+색개선";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "손님 가로 타임라인뷰"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "타임라인 수정삭제+색개선"]);
     }
   }
 
