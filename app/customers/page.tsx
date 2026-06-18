@@ -355,9 +355,9 @@ export default function CustomersPage() {
           <SummaryCard label="거래 완료" count={counts.closed} accent="gray" />
         </div>
 
-        {/* 필터 / 검색 */}
+        {/* 필터 */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
-          <div className="flex flex-wrap items-center gap-2 mb-3">
+          <div className="flex flex-wrap items-center gap-2">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>전체 ({counts.all})</FilterChip>
             <FilterChip active={filter === "needFollowup"} onClick={() => setFilter("needFollowup")}>🔔 후속 연락 ({counts.needFollowup})</FilterChip>
             <FilterChip active={filter === "vip"} onClick={() => setFilter("vip")}>⭐ VIP ({counts.vip})</FilterChip>
@@ -365,13 +365,6 @@ export default function CustomersPage() {
             <FilterChip active={filter === "lost"} onClick={() => setFilter("lost")}>이탈 ({counts.lost})</FilterChip>
             <FilterChip active={filter === "closed"} onClick={() => setFilter("closed")}>완료 ({counts.closed})</FilterChip>
           </div>
-          <input
-            type="text"
-            placeholder="🔍 이름 · 연락처 · 지역 · 메모 검색"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
         </div>
 
         {/* 상단 — 진행 중인 손님 타임라인 */}
@@ -398,6 +391,17 @@ export default function CustomersPage() {
             </div>
           );
         })()}
+
+        {/* 검색 — 진행중 타임라인과 전체 명단 사이 */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="🔍 이름 · 연락처 · 지역 · 메모 검색"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
         {/* 목록 — 전체 손님 리스트 */}
         {!loaded ? (
