@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "손님 가로 타임라인 hover·겹침 개선: 점/묶음에 마우스 올리면 body 포털 미리보기 팝업(이름+이벤트 목록+날짜), 같은날 겹친 점은 clusterEvents로 묶고 개수 배지 표시·hover 시 전부 표시. (같은 날 타임라인 수정삭제·의미색·아이콘도 이날)",
-  commit: "3c34bc3",
-  note: "포털이라 컨테이너 overflow에 안 잘림. 점 클릭=패널 열기 유지",
+  work: "파이프라인 1단계 - 거래 단계 정의: CustomerStage(문의/연락중/매물보여줌/협상/계약성사/실패) + STAGE_FLOW·STAGE_META + deriveStage(status+활동이력 자동추론). 손님 패널에 단계 스테퍼 표시(검증용). (같은 날 검색바 이동·타임라인 hover/겹침도)",
+  commit: "52130e7",
+  note: "Pipedrive식 파이프라인 준비. 다음 보드(칸반)+인사이트 대시보드",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 타임라인 hover·겹침" : "타임라인 hover·겹침";
+      found.getCell(4).value = prev ? prev + " / 파이프라인 단계정의" : "파이프라인 단계정의";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "타임라인 hover·겹침"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "파이프라인 단계정의"]);
     }
   }
 
