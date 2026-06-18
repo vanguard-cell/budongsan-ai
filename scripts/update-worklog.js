@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "손님 여정 타임라인 업그레이드: ①기록 이벤트 수정·삭제(_idx + setCustomerHistory, 패널 hover 편집) ②의미 기반 색·아이콘 eventVisual(긍정 초록/부정·포기 빨강/연락 파랑/방문 보라, 보여줌은 반응색 자동) ③패널·가로 타임라인 색체계 통일+점 안 아이콘+범례. (앞서 2단계: 상단 진행중 타임라인+하단 전체표 배치)",
-  commit: "214e32b",
-  note: "잘못 누른 기록 삭제·집보기 메모 보강 가능. 파생 이벤트는 정보/매물에서 관리",
+  work: "손님 가로 타임라인 hover·겹침 개선: 점/묶음에 마우스 올리면 body 포털 미리보기 팝업(이름+이벤트 목록+날짜), 같은날 겹친 점은 clusterEvents로 묶고 개수 배지 표시·hover 시 전부 표시. (같은 날 타임라인 수정삭제·의미색·아이콘도 이날)",
+  commit: "3c34bc3",
+  note: "포털이라 컨테이너 overflow에 안 잘림. 점 클릭=패널 열기 유지",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 타임라인 수정삭제+색개선" : "타임라인 수정삭제+색개선";
+      found.getCell(4).value = prev ? prev + " / 타임라인 hover·겹침" : "타임라인 hover·겹침";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "타임라인 수정삭제+색개선"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "타임라인 hover·겹침"]);
     }
   }
 
