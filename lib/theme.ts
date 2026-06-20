@@ -127,7 +127,7 @@ export const PAGE_THEMES: Record<PageKey, PageTheme> = {
     },
   },
   "customers": {
-    label: "손님 관리",
+    label: "고객 관리",
     icon: "group",
     emoji: "👥",
     href: "/customers",

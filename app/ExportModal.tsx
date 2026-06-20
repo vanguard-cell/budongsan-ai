@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 데이터 내보내기 모달 — 계약·손님 공용
+ * 데이터 내보내기 모달 — 계약·고객 공용
  *
  * - 범위: 진행중만 / 전체
  * - 개인정보 마스킹 옵션
@@ -48,7 +48,7 @@ export default function ExportModal({
     }
   };
 
-  const label = type === "contracts" ? "계약" : type === "customers" ? "손님" : "매물";
+  const label = type === "contracts" ? "계약" : type === "customers" ? "고객" : "매물";
   const targetCount = scope === "active" ? activeCount : totalCount;
 
   return (

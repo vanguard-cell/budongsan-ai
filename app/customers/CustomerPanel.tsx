@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 손님 우측 패널 — 표/카드에서 행 클릭 시 상세 (노션식 사이드 보기)
+ * 고객 우측 패널 — 표/카드에서 행 클릭 시 상세 (노션식 사이드 보기)
  * - SideDrawer 재사용 / 전화·문자 칩 + 수정 + 상태 빠른 변경
  */
 
@@ -82,7 +82,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
   };
 
   return (
-    <SideDrawer open onClose={onClose} title="손님 상세" icon="group" accent={accent}>
+    <SideDrawer open onClose={onClose} title="고객 상세" icon="group" accent={accent}>
       {/* 이름 + 배지 */}
       <div className="px-1">
         <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 leading-snug break-all">

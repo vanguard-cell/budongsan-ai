@@ -174,7 +174,7 @@ export default function PropertiesPage() {
 
   /**
    * 거래완료 처리 — 매매·전세·월세 모두 만기 관리로 이동 (통일)
-   * - 전월세는 임차인 정보 있으면 손님관리 자동 등록
+   * - 전월세는 임차인 정보 있으면 고객관리 자동 등록
    * - moveToContract: Property → Contract 변환 + Property 삭제
    */
   const close = async (p: Property) => {
@@ -238,7 +238,7 @@ export default function PropertiesPage() {
     for (const p of properties) await deleteProperty(user.agencyId, p.id);
   };
 
-  /** 기존 매물 임차인 → 손님관리 일괄 등록 (전·월세, linkedTenantId 없는 것만) */
+  /** 기존 매물 임차인 → 고객관리 일괄 등록 (전·월세, linkedTenantId 없는 것만) */
   const migrateTenantsToCustomers = async () => {
     if (!user) return;
     const targets = properties.filter(p =>
@@ -248,7 +248,7 @@ export default function PropertiesPage() {
       alert("일괄 등록할 임차인이 없습니다.");
       return;
     }
-    if (!confirm(`${targets.length}건의 매물 임차인을 손님관리에 일괄 등록할까요?`)) return;
+    if (!confirm(`${targets.length}건의 매물 임차인을 고객관리에 일괄 등록할까요?`)) return;
     let ok = 0, fail = 0;
     for (const p of targets) {
       try {
@@ -449,11 +449,11 @@ export default function PropertiesPage() {
             {properties.some(p => p.dealType !== "매매" && (p.tenantName || p.tenantPhone) && !p.linkedTenantId) && (
               <button
                 onClick={migrateTenantsToCustomers}
-                title="기존 매물의 임차인을 손님관리에 일괄 등록"
+                title="기존 매물의 임차인을 고객관리에 일괄 등록"
                 className="px-4 py-2.5 rounded-xl border border-blue-300 bg-blue-50 text-blue-700 text-sm font-bold flex items-center gap-1.5 hover:bg-blue-100 transition-all shadow-sm"
               >
                 <span className="material-symbols-outlined text-lg">sync</span>
-                기존 임차인 → 손님관리
+                기존 임차인 → 고객관리
               </button>
             )}
 
@@ -605,7 +605,7 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        {/* ── 요약 4카드 (만기·손님 페이지와 동일 구조) ── */}
+        {/* ── 요약 4카드 (만기·고객 페이지와 동일 구조) ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
           <PropSummaryTile
             tint="green" label="미계약" count={counts.available}
@@ -1095,7 +1095,7 @@ export default function PropertiesPage() {
   );
 }
 
-/* 요약 타일 — 만기·손님 페이지와 동일 구조 (연한 틴트 + 선택 시 진한 테두리·링·체크) */
+/* 요약 타일 — 만기·고객 페이지와 동일 구조 (연한 틴트 + 선택 시 진한 테두리·링·체크) */
 function PropSummaryTile({ tint, label, count, sub, active, onClick }: {
   tint: "green" | "blue" | "red" | "gray";
   label: string;

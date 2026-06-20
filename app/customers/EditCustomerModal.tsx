@@ -64,7 +64,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
   };
 
   return (
-    <Modal onClose={onClose} title={isNew ? "손님 추가" : "손님 수정"}>
+    <Modal onClose={onClose} title={isNew ? "고객 추가" : "고객 수정"}>
       <div className="space-y-3">
         {/* 기본 정보 */}
         <div className="grid grid-cols-2 gap-3">
@@ -113,7 +113,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
             onChange={e => setField("vip", e.target.checked)}
             className="w-4 h-4 accent-purple-600"
           />
-          <span className="font-medium text-gray-700">⭐ VIP 손님</span>
+          <span className="font-medium text-gray-700">⭐ VIP 고객</span>
           <span className="text-[11px] text-gray-400">(수수료 큰 매물 / 우선 응대)</span>
         </label>
 

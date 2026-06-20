@@ -10,7 +10,7 @@ const MAIN_TABS = [
   { href: "/dashboard",  icon: "home",       label: "홈" },
   { href: "/properties", icon: "domain",     label: "내 매물" },
   { href: "/expiry",     icon: "event_busy", label: "만기" },
-  { href: "/customers",  icon: "group",      label: "손님" },
+  { href: "/customers",  icon: "group",      label: "고객" },
   { href: "/more",       icon: "more_horiz", label: "더보기" },
 ];
 
@@ -19,7 +19,7 @@ const SIDEBAR_TABS = [
   { href: "/dashboard",  icon: "home",            label: "홈" },
   { href: "/properties", icon: "domain",          label: "내 매물 관리" },
   { href: "/expiry",     icon: "event_busy",      label: "만기 관리" },
-  { href: "/customers",  icon: "group",           label: "손님 관리" },
+  { href: "/customers",  icon: "group",           label: "고객 관리" },
   { href: "/schedule",     icon: "calendar_month",  label: "스케줄" },
   { href: "/sales",        icon: "payments",        label: "매출 관리" },
   { href: "/insights",     icon: "insights",        label: "인사이트" },

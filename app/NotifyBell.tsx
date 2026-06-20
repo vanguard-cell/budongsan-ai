@@ -151,7 +151,7 @@ export default function NotifyBell({ contracts, customers }: Props) {
 
                 <ToggleRow
                   label="후속 연락 알림"
-                  desc="오늘·내일 후속 연락 예정 손님 알림"
+                  desc="오늘·내일 후속 연락 예정 고객 알림"
                   value={settings.followupAlert}
                   onChange={(v) => toggleField("followupAlert", v)}
                   disabled={!settings.enabled}

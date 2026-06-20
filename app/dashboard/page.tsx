@@ -5,7 +5,7 @@
  *
  * 구성 (사용자 확정안):
  *  1) 인사 — "안녕하세요, OOO 대표님" (블루 강조) + 날짜 + 오늘 처리할 일 N건
- *  2) 상단 4카드 (순서 고정): 오늘 일정 / 잔금 관련 / 만기 임박 / 손님 관리
+ *  2) 상단 4카드 (순서 고정): 오늘 일정 / 잔금 관련 / 만기 임박 / 고객 관리
  *     — 상단 3px 색 띠 + 라벨·아이콘 + 큰 건수 + 대표 1건 미리보기
  *  3) 하단 박스 2개: 중요 알림 / 빠른 실행 (편집은 다음 단계)
  *
@@ -31,7 +31,7 @@ const C = {
   orange: "#EF9F27",  // 오늘 일정
   green:  "#1D9E75",  // 잔금
   red:    "#E24B4A",  // 만기·긴급
-  blue:   "#2383E2",  // 손님·브랜드 (노션 블루)
+  blue:   "#2383E2",  // 고객·브랜드 (노션 블루)
 } as const;
 
 /* 노션 톤 v2 틴트 — globals.css 토큰 (라이트/다크 자동 전환) */
@@ -150,7 +150,7 @@ export default function DashboardPage() {
   }, [contracts, activeProps]);
   const urgentExpiring = useMemo(() => expiringSoon.filter(x => dDay(x.endDate) <= 7), [expiringSoon]);
 
-  /* ── ④ 손님 관리 — 후속연락 임박·오늘·지남 ── */
+  /* ── ④ 고객 관리 — 후속연락 임박·오늘·지남 ── */
   const followUpNeeded = useMemo(() =>
     customers
       .filter(c => {
@@ -255,10 +255,10 @@ export default function DashboardPage() {
             tint="blue"
             badgeColor={C.red}
             icon="group"
-            label="손님 관리"
+            label="고객 관리"
             count={followUpNeeded.length}
             preview={previewCustomer}
-            emptyText="연락할 손님 없음"
+            emptyText="연락할 고객 없음"
             badge={overdueFollowUp.length > 0 ? `지남 ${overdueFollowUp.length}` : undefined}
             onClick={() => setDrawer("customer")}
           />
@@ -331,7 +331,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-3">
               <QuickAction icon="add_home"        label="매물 등록" href="/properties?new=1" />
               <QuickAction icon="post_add"        label="계약 추가" href="/expiry?new=1" />
-              <QuickAction icon="person_add"      label="손님 추가" href="/customers?new=1" />
+              <QuickAction icon="person_add"      label="고객 추가" href="/customers?new=1" />
               <QuickAction icon="calendar_add_on" label="약속 추가" href="/schedule?new=1" />
             </div>
           </div>
@@ -423,14 +423,14 @@ export default function DashboardPage() {
       <SideDrawer
         open={drawer === "customer"}
         onClose={() => setDrawer(null)}
-        title="손님 관리"
+        title="고객 관리"
         icon="group"
         accent={C.blue}
         count={followUpNeeded.length}
         moreHref="/customers"
       >
         {followUpNeeded.length === 0 ? (
-          <DrawerEmpty text="연락이 필요한 손님이 없습니다" />
+          <DrawerEmpty text="연락이 필요한 고객이 없습니다" />
         ) : (
           followUpNeeded.map(c => (
             <DrawerItem

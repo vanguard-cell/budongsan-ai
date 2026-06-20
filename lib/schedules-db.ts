@@ -21,7 +21,7 @@ export interface Schedule {
   visitorPhone: string;
   propertyAddress: string;
   propertyId?: string;   // 연결된 매물 ID
-  customerId?: string;   // 연결된 손님 ID
+  customerId?: string;   // 연결된 고객 ID
   scheduleType: ScheduleType;
   memo: string;
   status: ScheduleStatus;

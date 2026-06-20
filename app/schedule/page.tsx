@@ -151,7 +151,7 @@ export default function SchedulePage() {
       }
     }
 
-    // ③ 손님 후속연락 — "약속" 카테고리로 통합
+    // ③ 고객 후속연락 — "약속" 카테고리로 통합
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
       if (cu.status === "closed" || cu.status === "lost") continue;
@@ -237,7 +237,7 @@ export default function SchedulePage() {
   };
   const clearAll = async () => {
     if (!user) return;
-    if (!confirm("⚠️ 등록한 모든 일정(약속·계약일·중도금일·잔금일)을 삭제합니다.\n매물·손님에서 자동으로 따라오는 날짜는 영향받지 않습니다. 진행할까요?")) return;
+    if (!confirm("⚠️ 등록한 모든 일정(약속·계약일·중도금일·잔금일)을 삭제합니다.\n매물·고객에서 자동으로 따라오는 날짜는 영향받지 않습니다. 진행할까요?")) return;
     for (const s of schedules) await deleteSchedule(user.agencyId, s.id);
   };
 
@@ -378,7 +378,7 @@ export default function SchedulePage() {
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
             <div className="text-5xl mb-3">📅</div>
             <div className="text-base font-semibold text-gray-900 mb-1">일정이 없습니다</div>
-            <div className="text-xs text-gray-500 mb-4">약속을 추가하거나 만기·손님 탭을 확인해보세요</div>
+            <div className="text-xs text-gray-500 mb-4">약속을 추가하거나 만기·고객 탭을 확인해보세요</div>
             <button onClick={() => setEditing(emptySchedule())} className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold">
               + 약속 추가
             </button>
@@ -490,8 +490,8 @@ export default function SchedulePage() {
               <div className="px-1 space-y-3">
                 <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100">{c.name || "고객님"}</p>
                 <div className="text-[12px] text-gray-600 dark:text-gray-300">다음 연락 예정 · {c.nextFollowUp}</div>
-                {phoneChip("손님", c.name, c.phone, "visitor")}
-                <button onClick={() => router.push(`/customers?focus=${c.id}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">group</span>손님 상세 보기</button>
+                {phoneChip("고객", c.name, c.phone, "visitor")}
+                <button onClick={() => router.push(`/customers?focus=${c.id}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">group</span>고객 상세 보기</button>
               </div>
             )}
           </SideDrawer>
@@ -602,7 +602,7 @@ function PropertyDateCard({ property: p, kind }: { property: Property; kind: Pro
   );
 }
 
-/* ── 손님 후속연락 카드 ── */
+/* ── 고객 후속연락 카드 ── */
 function FollowUpCard({ customer: c }: { customer: Customer }) {
   const today = new Date().toISOString().slice(0, 10);
   const isOver = c.nextFollowUp < today;
@@ -613,7 +613,7 @@ function FollowUpCard({ customer: c }: { customer: Customer }) {
     <div className={`rounded-2xl border p-3 sm:p-4 ${bgColor}`}>
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 w-14 text-center rounded-xl py-2 bg-white/70">
-          <div className="text-[10px] text-blue-500 font-medium">손님</div>
+          <div className="text-[10px] text-blue-500 font-medium">고객</div>
           <div className={`text-xs font-bold ${isOver ? "text-red-600" : isToday2 ? "text-orange-600" : "text-blue-600"}`}>
             {isOver ? "지남" : isToday2 ? "오늘" : "예정"}
           </div>
@@ -755,13 +755,13 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               방문자
-              {form.customerId && <span className="ml-2 text-[11px] text-blue-600 font-normal">👥 손님연결</span>}
+              {form.customerId && <span className="ml-2 text-[11px] text-blue-600 font-normal">👥 고객연결</span>}
             </label>
             {customers.length > 0 && (
               <div className="relative mb-2">
                 <input value={custQuery} onChange={e => { setCustQuery(e.target.value); setShowCustList(true); }}
                   onFocus={() => setShowCustList(true)}
-                  placeholder="🔍 기존 손님에서 검색"
+                  placeholder="🔍 기존 고객에서 검색"
                   className="w-full border border-blue-200 rounded-xl px-3 py-2.5 text-sm bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400" autoComplete="off" />
                 {showCustList && filteredCusts.length > 0 && (
                   <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">

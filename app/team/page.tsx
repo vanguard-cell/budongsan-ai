@@ -70,7 +70,7 @@ export default function TeamPage() {
 
   const handleJoin = async () => {
     if (!user || !joinCode.trim()) return;
-    if (!confirm(`다른 사무실에 합류하면 지금 보던 데이터 대신\n그 사무실의 매물·손님·일정을 보게 됩니다.\n\n합류할까요?`)) return;
+    if (!confirm(`다른 사무실에 합류하면 지금 보던 데이터 대신\n그 사무실의 매물·고객·일정을 보게 됩니다.\n\n합류할까요?`)) return;
     setJoining(true);
     setJoinMsg("");
     try {
@@ -102,7 +102,7 @@ export default function TeamPage() {
             직원 관리
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
-            우리 사무실 멤버 — 매물·손님·일정을 함께 봅니다
+            우리 사무실 멤버 — 매물·고객·일정을 함께 봅니다
           </p>
         </section>
 

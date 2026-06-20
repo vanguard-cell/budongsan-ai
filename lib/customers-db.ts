@@ -1,5 +1,5 @@
 /**
- * 손님(Customer) Firestore CRUD
+ * 고객(Customer) Firestore CRUD
  *
  * 경로: /agencies/{agencyId}/customers/{customerId}
  *
@@ -54,7 +54,7 @@ function fromDoc(id: string, data: Record<string, unknown>): Customer {
   };
 }
 
-/** 손님 여정 이벤트 1건 추가 (arrayUnion — 기존 이력 보존) */
+/** 고객 여정 이벤트 1건 추가 (arrayUnion — 기존 이력 보존) */
 export async function logCustomerEvent(
   agencyId: string,
   customerId: string,
@@ -134,12 +134,12 @@ function normalizePhone(p: string): string {
 }
 
 /**
- * 임차인 정보로 손님 관리에 자동 등록 또는 기존 손님 매칭
+ * 임차인 정보로 고객 관리에 자동 등록 또는 기존 고객 매칭
  * - 전화번호 기준 중복 체크
- * - 있으면: 기존 손님 ID 반환, shownProperties에 매물 주소 추가
- * - 없으면: 신규 손님 생성 후 ID 반환
+ * - 있으면: 기존 고객 ID 반환, shownProperties에 매물 주소 추가
+ * - 없으면: 신규 고객 생성 후 ID 반환
  *
- * @returns 손님 ID (linkedTenantId로 매물에 저장)
+ * @returns 고객 ID (linkedTenantId로 매물에 저장)
  */
 export async function upsertTenantAsCustomer(
   agencyId: string,
@@ -163,7 +163,7 @@ export async function upsertTenantAsCustomer(
     note: "계약 체결 (매물 등록 시 자동 추가)",
   };
 
-  // 기존 손님 중복 체크 (전화번호 기준)
+  // 기존 고객 중복 체크 (전화번호 기준)
   if (normPhone) {
     const snap = await getDocs(customersCol(agencyId));
     for (const docSnap of snap.docs) {
@@ -183,7 +183,7 @@ export async function upsertTenantAsCustomer(
     }
   }
 
-  // 신규 손님 생성 (계약 체결된 임차인 — 매칭 상태로)
+  // 신규 고객 생성 (계약 체결된 임차인 — 매칭 상태로)
   const newCustomer: Customer = {
     id: newCustomerId(),
     name,
@@ -197,7 +197,7 @@ export async function upsertTenantAsCustomer(
     status: "matched",   // 매칭 = "전체" 필터에 보임. closed였을 땐 "완료" 탭에서만 보였음
     nextFollowUp: "",
     shownProperties: [newShown],
-    memo: "매물 등록 시 자동 생성된 손님 (계약 체결)",
+    memo: "매물 등록 시 자동 생성된 고객 (계약 체결)",
     createdAt: Date.now(),
   };
   await saveCustomer(agencyId, newCustomer);

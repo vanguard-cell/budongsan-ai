@@ -1,5 +1,5 @@
 /**
- * 데이터 내보내기 — 계약·손님을 엑셀로 다운로드
+ * 데이터 내보내기 — 계약·고객을 엑셀로 다운로드
  *
  * 디자인 원칙:
  *  1) 한방 호환성 — 컬럼명을 한방 엑셀과 유사하게 (재업로드 시 매핑 자동)
@@ -71,7 +71,7 @@ function contractsToRows(contracts: Contract[], maskPersonal: boolean) {
   });
 }
 
-/* ───────── 손님 → 엑셀 row 변환 ───────── */
+/* ───────── 고객 → 엑셀 row 변환 ───────── */
 function customersToRows(customers: Customer[], maskPersonal: boolean) {
   return customers.map(c => {
     const d = followUpDDay(c.nextFollowUp);
@@ -159,14 +159,14 @@ export function exportContracts(contracts: Contract[], opt: ExportOptions): { co
   return { count: rows.length, filename };
 }
 
-/* ───────── 손님 내보내기 ───────── */
+/* ───────── 고객 내보내기 ───────── */
 export function exportCustomers(customers: Customer[], opt: ExportOptions): { count: number; filename: string } {
   const filtered = opt.scope === "active"
     ? customers.filter(c => c.status === "active" || c.status === "matched")
     : customers;
   const rows = customersToRows(filtered, opt.maskPersonal);
 
-  const filename = `손님관리_${opt.scope === "active" ? "진행중" : "전체"}_${ymd()}.${opt.format}`;
+  const filename = `고객관리_${opt.scope === "active" ? "진행중" : "전체"}_${ymd()}.${opt.format}`;
 
   if (opt.format === "csv") {
     const csv = arrayToCSV(rows);
@@ -190,7 +190,7 @@ export function exportCustomers(customers: Customer[], opt: ExportOptions): { co
       { wch: 30 }, // 메모
       { wch: 12 }, // 등록일
     ];
-    XLSX.utils.book_append_sheet(wb, ws, "손님관리");
+    XLSX.utils.book_append_sheet(wb, ws, "고객관리");
     XLSX.writeFile(wb, filename);
   }
   return { count: rows.length, filename };

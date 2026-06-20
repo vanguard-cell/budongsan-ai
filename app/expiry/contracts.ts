@@ -31,7 +31,7 @@ export interface Contract {
   downPaymentDate?: string; // 중도금일
   balanceDate?: string;     // 잔금일
   commission?: string;      // 중개 수수료 (만원) — 매물에서 이전 시 보존, 매출 집계용
-  linkedCustomerId?: string; // 손님 관리 연결 ID
+  linkedCustomerId?: string; // 고객 관리 연결 ID
   fromPropertyId?: string;   // 어떤 매물에서 이전됐는지 (이력)
   renewedFromId?: string;    // 재계약: 직전 기간 계약 ID (이력 연결)
   memo: string;

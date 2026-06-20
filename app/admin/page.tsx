@@ -175,7 +175,7 @@ export default function AdminPage() {
                   <Th label="주·월·누적" onClick={() => setSortBy("loginDays")} active={sortBy === "loginDays"} center />
                   <Th label="매물" onClick={() => setSortBy("props")} active={sortBy === "props"} right />
                   <th className="px-2 py-2.5 font-medium text-right">계약</th>
-                  <th className="px-2 py-2.5 font-medium text-right">손님</th>
+                  <th className="px-2 py-2.5 font-medium text-right">고객</th>
                   <th className="px-2 py-2.5 font-medium text-right">일정</th>
                   <Th label="가입" onClick={() => setSortBy("created")} active={sortBy === "created"} />
                 </tr>
@@ -281,7 +281,7 @@ export default function AdminPage() {
                 {[
                   { l: "매물", v: panelUser.properties, c: "text-emerald-700 bg-emerald-50 border-emerald-100" },
                   { l: "계약", v: panelUser.contracts, c: "text-blue-700 bg-blue-50 border-blue-100" },
-                  { l: "손님", v: panelUser.customers, c: "text-orange-700 bg-orange-50 border-orange-100" },
+                  { l: "고객", v: panelUser.customers, c: "text-orange-700 bg-orange-50 border-orange-100" },
                   { l: "일정", v: panelUser.schedules, c: "text-gray-600 bg-gray-50 border-gray-100" },
                 ].map(x => (
                   <div key={x.l} className={`rounded-xl border py-2 ${x.c}`}>

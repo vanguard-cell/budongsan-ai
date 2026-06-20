@@ -103,7 +103,7 @@ export default function InsightsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">문의부터 계약까지 — 처리현황 · 전환율 · 수익 한눈에</p>
         </div>
         <div className="flex gap-1.5 self-start sm:self-auto">
-          <Link href="/customers" className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 transition-colors">손님 관리</Link>
+          <Link href="/customers" className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 transition-colors">고객 관리</Link>
           <Link href="/sales" className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 transition-colors">매출 상세</Link>
         </div>
       </section>
@@ -205,7 +205,7 @@ export default function InsightsPage() {
           </div>
 
           <p className="text-center text-[11px] text-gray-400 leading-relaxed">
-            📊 퍼널·활동·실패사유는 손님 활동 기록 기반 — 기능 추가 시점부터 누적됩니다 · 매출은 실시간 집계
+            📊 퍼널·활동·실패사유는 고객 활동 기록 기반 — 기능 추가 시점부터 누적됩니다 · 매출은 실시간 집계
           </p>
         </div>
       )}

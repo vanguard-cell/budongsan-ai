@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * 손님 가로 타임라인 뷰 (Pipedrive 연락처 타임라인 톤)
- * - 행 = 손님, 가로축 = 시간(월), 점 = 활동(보여준 매물·전화·포기·상태 등)
+ * 고객 가로 타임라인 뷰 (Pipedrive 연락처 타임라인 톤)
+ * - 행 = 고객, 가로축 = 시간(월), 점 = 활동(보여준 매물·전화·포기·상태 등)
  * - 행/점 클릭 → 우측 패널 열기
  */
 
@@ -77,7 +77,7 @@ export default function CustomerTimeline({ customers, selectedId, onSelect }: {
     <div className="border border-gray-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
       {/* 헤더 — 월 눈금 */}
       <div className="flex items-stretch bg-gray-50 dark:bg-slate-800/60 border-b border-gray-200 dark:border-slate-700">
-        <div className="w-[120px] sm:w-[150px] shrink-0 px-3 py-2 text-[11px] font-semibold text-gray-500">손님</div>
+        <div className="w-[120px] sm:w-[150px] shrink-0 px-3 py-2 text-[11px] font-semibold text-gray-500">고객</div>
         <div className="relative flex-1 h-8">
           {months.map((m, i) => (
             <span key={i} className="absolute top-2 text-[10.5px] text-gray-400" style={{ left: `${m.left}%` }}>{m.label}</span>
@@ -86,7 +86,7 @@ export default function CustomerTimeline({ customers, selectedId, onSelect }: {
         </div>
       </div>
 
-      {/* 행 — 손님별 */}
+      {/* 행 — 고객별 */}
       <div className="divide-y divide-gray-100 dark:divide-slate-800">
         {rows.map(({ c, evs }) => (
           <div key={c.id} onClick={() => onSelect(c.id)}
@@ -112,7 +112,7 @@ export default function CustomerTimeline({ customers, selectedId, onSelect }: {
                     onClick={ev => { ev.stopPropagation(); onSelect(c.id); }}
                     onMouseEnter={ev => {
                       const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
-                      setTip({ x: r.left + r.width / 2, y: r.top, name: c.name || "손님", evs: cl.evs });
+                      setTip({ x: r.left + r.width / 2, y: r.top, name: c.name || "고객", evs: cl.evs });
                     }}
                     onMouseLeave={() => setTip(null)}
                     className="absolute top-1/2 w-[18px] h-[18px] rounded-full flex items-center justify-center -translate-y-1/2 -translate-x-1/2 ring-2 ring-white dark:ring-slate-900 cursor-pointer hover:scale-125 transition-transform"

@@ -1,10 +1,10 @@
-/* 손님 CRM 데이터 모델 + 헬퍼 */
+/* 고객 CRM 데이터 모델 + 헬퍼 */
 
 export type CustomerSide = "buyer" | "seller" | "tenant" | "landlord" | "etc";
 export type DealKind = "live" | "invest" | "etc"; // 실거주 / 투자 / 기타
 export type CustomerStatus = "active" | "matched" | "lost" | "closed";
 
-/** 손님이 본 매물 한 건 */
+/** 고객이 본 매물 한 건 */
 export interface ShownProperty {
   address: string;
   shownAt: string;      // YYYY-MM-DD
@@ -12,7 +12,7 @@ export interface ShownProperty {
   note: string;
 }
 
-/** 손님 여정 이벤트 (활동 로그 — 하이브리드: 적용 시점부터 누적) */
+/** 고객 여정 이벤트 (활동 로그 — 하이브리드: 적용 시점부터 누적) */
 export interface CustomerEvent {
   at: number;     // 발생 시각 (ms)
   by: string;     // 기록한 사람
@@ -45,7 +45,7 @@ export const uid = () =>
   Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
 /* ───────── 거래 파이프라인 단계 ─────────
-   손님 = 거래(deal). 단계는 status + 활동 이력에서 자동 추론 (별도 입력 불필요)
+   고객 = 거래(deal). 단계는 status + 활동 이력에서 자동 추론 (별도 입력 불필요)
    흐름: 문의 → 연락중 → 매물 보여줌 → 협상 → 계약 성사 / (실패는 별도) */
 export type CustomerStage = "inquiry" | "contacted" | "shown" | "negotiation" | "won" | "lost";
 
@@ -61,7 +61,7 @@ export const STAGE_META: Record<CustomerStage, { label: string; short: string; b
   lost:        { label: "실패",      short: "실패",   bg: "#FCEBEB", fg: "#A32D2D" },
 };
 
-/** 손님의 현재 거래 단계 자동 추론 */
+/** 고객의 현재 거래 단계 자동 추론 */
 export function deriveStage(c: Customer): CustomerStage {
   if (c.status === "closed") return "won";
   if (c.status === "lost") return "lost";
@@ -82,7 +82,7 @@ export function effectiveStage(c: Customer): CustomerStage {
   return c.stage ?? deriveStage(c);
 }
 
-/** 단계 → 손님 상태 동기화 (보드 드롭 시) */
+/** 단계 → 고객 상태 동기화 (보드 드롭 시) */
 export function stageToStatus(stage: CustomerStage): CustomerStatus {
   if (stage === "won") return "closed";
   if (stage === "lost") return "lost";
@@ -162,7 +162,7 @@ export function formatPhone(raw: string): string {
 export function deriveCustomerTimeline(c: Customer): CustomerEvent[] {
   const evs: CustomerEvent[] = [];
   const dayMs = (ymd: string) => new Date(ymd.slice(0, 10) + "T00:00:00").getTime();
-  if (c.createdAt) evs.push({ at: c.createdAt, by: "", kind: "create", text: "손님 등록" });
+  if (c.createdAt) evs.push({ at: c.createdAt, by: "", kind: "create", text: "고객 등록" });
   for (const sp of c.shownProperties || []) {
     if (!sp.address) continue;
     const when = sp.shownAt ? dayMs(sp.shownAt) : c.createdAt;
@@ -202,7 +202,7 @@ export function eventVisual(e: { kind: CustomerEvent["kind"]; reaction?: ShownPr
     case "note":     return { bg: "#FAEEDA", fg: "#854F0B", icon: "sticky_note_2", label: "메모" };
     case "followup": return { bg: "#EEEDFE", fg: "#3C3489", icon: "event_upcoming", label: "예정" };
     case "create":
-    default:         return { bg: "#F1EFE8", fg: "#5F5E5A", icon: "person_add", label: "손님 등록" };
+    default:         return { bg: "#F1EFE8", fg: "#5F5E5A", icon: "person_add", label: "고객 등록" };
   }
 }
 
@@ -211,7 +211,7 @@ export function smsUrl(phone: string, body: string): string {
   return `sms:${phone.replace(/\D/g, "")}?body=${encodeURIComponent(body)}`;
 }
 
-/** 빈 손님 폼 */
+/** 빈 고객 폼 */
 export function emptyCustomer(): Customer {
   return {
     id: uid(),
@@ -239,7 +239,7 @@ function dateOffset(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** 예시 손님 5건 — 다양한 상태 */
+/** 예시 고객 5건 — 다양한 상태 */
 export function sampleCustomers(): Customer[] {
   const now = Date.now();
   return [
@@ -293,7 +293,7 @@ export function sampleCustomers(): Customer[] {
       shownProperties: [
         { address: "미사효성 해링턴타워 더퍼스트", shownAt: dateOffset(-3), reaction: "positive", note: "" },
       ],
-      memo: "투자 손님, 월세 안고 매매 선호. 현금 보유 확인됨.",
+      memo: "투자 고객, 월세 안고 매매 선호. 현금 보유 확인됨.",
       createdAt: now - 1000 * 60 * 60 * 24 * 30,
     },
     {

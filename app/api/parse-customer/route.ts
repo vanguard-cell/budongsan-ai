@@ -8,10 +8,10 @@ const DEMO_MODE =
 const client = DEMO_MODE ? null : new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 /**
- * 카톡 대화/문자 내용 → 손님 정보 자동 추출
+ * 카톡 대화/문자 내용 → 고객 정보 자동 추출
  *
  * 입력: text (카톡/문자 원문)
- * 출력: 손님 정보 JSON (name, phone, side, dealKind, budget, preferredArea, moveInDate, memo)
+ * 출력: 고객 정보 JSON (name, phone, side, dealKind, budget, preferredArea, moveInDate, memo)
  */
 export async function POST(req: NextRequest) {
   const { text } = await req.json();
@@ -35,10 +35,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const systemPrompt = `당신은 한국 부동산 중개사무소의 손님 관리 어시스턴트입니다. 카카오톡 대화나 문자 내용에서 손님 정보를 추출해 JSON으로 정리하세요.
+    const systemPrompt = `당신은 한국 부동산 중개사무소의 고객 관리 어시스턴트입니다. 카카오톡 대화나 문자 내용에서 고객 정보를 추출해 JSON으로 정리하세요.
 
 다음 필드만 JSON으로 반환:
-- name: 손님 이름 (모르면 "")
+- name: 고객 이름 (모르면 "")
 - phone: 연락처 (010-XXXX-XXXX 형식, 모르면 "")
 - side: "buyer"(매수) | "seller"(매도) | "tenant"(임차) | "landlord"(임대인) | "etc" 중 하나
 - dealKind: "live"(실거주) | "invest"(투자) | "etc" 중 하나

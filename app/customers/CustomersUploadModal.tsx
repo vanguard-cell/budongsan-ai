@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 손님 엑셀 업로드 모달 — 매물 패턴 재사용
+ * 고객 엑셀 업로드 모달 — 매물 패턴 재사용
  */
 
 import { useEffect, useRef, useState, useMemo } from "react";
@@ -67,7 +67,7 @@ export default function CustomersUploadModal({ existing, onClose, onConfirm }: P
   };
 
   return (
-    <Modal onClose={busy ? () => {} : onClose} title="👥 손님 엑셀 업로드">
+    <Modal onClose={busy ? () => {} : onClose} title="👥 고객 엑셀 업로드">
       {step === "file"    && <FileStep onPick={handleFile} busy={busy} err={err} />}
       {step === "mapping" && parsed && (
         <MappingStep parsed={parsed} mapping={mapping} onChange={setMapping}
@@ -111,7 +111,7 @@ function FileStep({ onPick, busy, err }: { onPick: (f: File) => void; busy: bool
       >
         <div className="text-4xl mb-2">👥</div>
         <div className="text-sm font-semibold text-gray-900 mb-1">
-          {busy ? "파일 읽는 중…" : "손님 엑셀을 끌어 놓거나 클릭"}
+          {busy ? "파일 읽는 중…" : "고객 엑셀을 끌어 놓거나 클릭"}
         </div>
         <div className="text-xs text-gray-500">.xlsx · .xls · .csv 지원</div>
         <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv"
@@ -242,7 +242,7 @@ function PreviewStep({ result, strategy, onStrategyChange, onConfirm, onBack, bu
         <label className="flex items-start gap-2 text-xs py-1.5 cursor-pointer">
           <input type="radio" checked={strategy === "addOnly"} onChange={() => onStrategyChange("addOnly")} className="mt-0.5 accent-blue-600" />
           <div>
-            <div className="font-medium text-gray-800">새 손님만 추가 (추천)</div>
+            <div className="font-medium text-gray-800">새 고객만 추가 (추천)</div>
             <div className="text-[11px] text-gray-500">중복 {dup}명 제외, 새 {newC}명만 추가</div>
           </div>
         </label>
@@ -285,7 +285,7 @@ function DoneStep({ imported, onClose }: { imported: number; onClose: () => void
   return (
     <div className="space-y-3 text-center py-4">
       <div className="text-5xl">✅</div>
-      <div className="text-base font-semibold text-gray-900">손님 {imported}명 추가 완료</div>
+      <div className="text-base font-semibold text-gray-900">고객 {imported}명 추가 완료</div>
       <div className="text-xs text-gray-500">PC·폰에서 자동 동기화됩니다.</div>
       <button onClick={onClose} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
         목록으로

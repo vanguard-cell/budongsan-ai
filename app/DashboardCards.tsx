@@ -8,7 +8,7 @@
  *
  * 어머니 우선순위 (인터뷰 BEST 1·2 반영):
  *   1) 만기 관리 — 4989 공백
- *   2) 손님 사후관리 — BEST 1 pain point
+ *   2) 고객 사후관리 — BEST 1 pain point
  *   3) 매물 문구 — 기존 기능
  */
 
@@ -86,7 +86,7 @@ export default function DashboardCards() {
             로그인하시면 PC·폰 자동 동기화됩니다
           </div>
           <div className="text-[11px] text-gray-600 mb-3">
-            만기 관리 · 손님 관리는 로그인이 필요해요
+            만기 관리 · 고객 관리는 로그인이 필요해요
           </div>
           <Link
             href="/login"
@@ -152,7 +152,7 @@ export default function DashboardCards() {
         <Card
           href="/customers"
           icon="👥"
-          title="손님 관리"
+          title="고객 관리"
           count={counts ? (counts.followupUrgent + counts.followupSoon) : null}
           countLabel="후속 필요"
           accent={counts && counts.followupUrgent > 0 ? "red" : "blue"}

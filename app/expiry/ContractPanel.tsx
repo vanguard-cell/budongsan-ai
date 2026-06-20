@@ -121,7 +121,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onC
         {onJumpCustomer && (
           <button onClick={() => onJumpCustomer(c)}
             className="w-full mt-1.5 py-2 rounded-lg text-[11px] font-semibold text-[var(--brand-blue)] dark:text-blue-400 hover:bg-[var(--tint-blue-bg)] transition-colors flex items-center justify-center gap-1">
-            <span className="material-symbols-outlined text-[14px]">person</span>연결된 손님 보기
+            <span className="material-symbols-outlined text-[14px]">person</span>연결된 고객 보기
           </button>
         )}
       </div>

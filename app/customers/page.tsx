@@ -98,7 +98,7 @@ export default function CustomersPage() {
     if (!authLoading && !user) router.replace("/login?redirect=/customers");
   }, [authLoading, user, router]);
 
-  // 홈 빠른 실행 "손님 추가" 진입 (?new=1) → 추가 모달 바로 열기
+  // 홈 빠른 실행 "고객 추가" 진입 (?new=1) → 추가 모달 바로 열기
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (new URLSearchParams(window.location.search).get("new") === "1") {
@@ -118,7 +118,7 @@ export default function CustomersPage() {
     return () => { unsub(); unsubC(); unsubP(); };
   }, [user]);
 
-  // ?focus=<id> 진입 시 — 표/카드 어느 뷰든 해당 손님 상세 패널 열기 (연계)
+  // ?focus=<id> 진입 시 — 표/카드 어느 뷰든 해당 고객 상세 패널 열기 (연계)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const focusId = new URLSearchParams(window.location.search).get("focus");
@@ -195,7 +195,7 @@ export default function CustomersPage() {
 
   const remove = async (id: string) => {
     if (!user) return;
-    if (!confirm("이 손님을 영구 삭제할까요? 되돌릴 수 없습니다.")) return;
+    if (!confirm("이 고객을 영구 삭제할까요? 되돌릴 수 없습니다.")) return;
     await fsDeleteCustomer(user.agencyId, id);
   };
 
@@ -206,7 +206,7 @@ export default function CustomersPage() {
     if (c.status === status) return;
     // 포기·이탈 → 사유 수집 + drop 이벤트(단계가 '실패'로 이동)
     if (status === "lost") {
-      if (!confirm(`${c.name || "이 손님"} 거래를 포기(이탈) 처리할까요?\n상단 [이탈] 필터에서 다시 복구할 수 있습니다.`)) return;
+      if (!confirm(`${c.name || "이 고객"} 거래를 포기(이탈) 처리할까요?\n상단 [이탈] 필터에서 다시 복구할 수 있습니다.`)) return;
       const r = (prompt("포기·이탈 사유 (선택 — 예: 가격 부담 / 위치 / 타이밍 / 연락두절)") ?? "").trim();
       await fsSaveCustomer(user.agencyId, { ...c, status });
       await logCustomerEvent(user.agencyId, c.id, {
@@ -253,14 +253,14 @@ export default function CustomersPage() {
   const loadSamples = async () => {
     if (!user) return;
     if (customers.length > 0) {
-      if (!confirm("기존 손님 데이터가 있습니다. 예시 데이터를 추가할까요?")) return;
+      if (!confirm("기존 고객 데이터가 있습니다. 예시 데이터를 추가할까요?")) return;
     }
     await saveCustomersBatch(user.agencyId, sampleCustomers());
   };
 
   const clearAll = async () => {
     if (!user) return;
-    if (!confirm("⚠️ 모든 손님 데이터를 삭제합니다. 정말 진행할까요?")) return;
+    if (!confirm("⚠️ 모든 고객 데이터를 삭제합니다. 정말 진행할까요?")) return;
     for (const c of customers) await fsDeleteCustomer(user.agencyId, c.id);
   };
 
@@ -287,7 +287,7 @@ export default function CustomersPage() {
           <div>
             <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
               <span className="material-symbols-outlined text-blue-600 dark:text-blue-400" style={{ fontSize: "2rem" }}>group</span>
-              손님 관리
+              고객 관리
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
               예산·관심지역·매물 매칭 이력 + 후속 연락 자동 알림
@@ -299,7 +299,7 @@ export default function CustomersPage() {
             {/* 카톡 붙여넣기 — 특별 강조 (AI 기능) */}
             <button
               onClick={() => setShowKakaoParse(true)}
-              title="카톡/문자 대화를 붙여넣으면 AI가 자동으로 손님 정보 추출"
+              title="카톡/문자 대화를 붙여넣으면 AI가 자동으로 고객 정보 추출"
               className="px-4 py-2.5 rounded-xl border border-yellow-300 bg-yellow-50 text-yellow-700 text-sm font-bold flex items-center gap-1.5 hover:bg-yellow-100 transition-all shadow-sm"
             >
               <span className="material-symbols-outlined text-lg">chat</span>
@@ -325,7 +325,7 @@ export default function CustomersPage() {
               </button>
               <button
                 onClick={loadSamples}
-                title="예시 손님 5건 추가"
+                title="예시 고객 5건 추가"
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-base">science</span>
@@ -334,7 +334,7 @@ export default function CustomersPage() {
               {customers.length > 0 && (
                 <button
                   onClick={clearAll}
-                  title="모든 손님 데이터 삭제"
+                  title="모든 고객 데이터 삭제"
                   className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-base">delete_sweep</span>
@@ -364,7 +364,7 @@ export default function CustomersPage() {
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">person_add</span>
-              손님 추가
+              고객 추가
             </button>
           </div>
         </section>
@@ -389,7 +389,7 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* 상단 — 진행 중인 손님 타임라인 (보드 뷰에선 숨김) */}
+        {/* 상단 — 진행 중인 고객 타임라인 (보드 뷰에선 숨김) */}
         {loaded && viewStyle !== "board" && (() => {
           const activeList = customers.filter(c => c.status === "active" || c.status === "matched");
           if (activeList.length === 0) return null;
@@ -398,7 +398,7 @@ export default function CustomersPage() {
               <button onClick={() => setTimelineOpen(o => !o)}
                 className="flex items-center gap-1.5 mb-2 text-sm font-bold text-gray-800 dark:text-gray-100 hover:text-[var(--brand-blue)] transition-colors">
                 <span className="material-symbols-outlined text-[18px] text-[var(--brand-blue)]">timeline</span>
-                진행 중인 손님 <span className="text-gray-400 font-medium">{activeList.length}</span>
+                진행 중인 고객 <span className="text-gray-400 font-medium">{activeList.length}</span>
                 <span className={`material-symbols-outlined text-[18px] text-gray-400 transition-transform ${timelineOpen ? "" : "-rotate-90"}`}>expand_more</span>
               </button>
               {timelineOpen && (
@@ -425,7 +425,7 @@ export default function CustomersPage() {
           />
         </div>
 
-        {/* 목록 — 전체 손님 리스트 */}
+        {/* 목록 — 전체 고객 리스트 */}
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
         ) : filtered.length === 0 ? (
@@ -492,14 +492,14 @@ export default function CustomersPage() {
         />
       )}
 
-      {/* 카톡 파싱 모달 — AI가 대화에서 손님 정보 추출 */}
+      {/* 카톡 파싱 모달 — AI가 대화에서 고객 정보 추출 */}
       {showKakaoParse && (
         <KakaoParseModal
           onClose={() => setShowKakaoParse(false)}
           onSave={async (c) => {
             await upsert({ ...c, id: c.id || uid() });
             setShowKakaoParse(false);
-            alert(`✅ 손님 "${c.name || c.phone || "(이름없음)"}"이(가) 등록되었습니다.`);
+            alert(`✅ 고객 "${c.name || c.phone || "(이름없음)"}"이(가) 등록되었습니다.`);
           }}
         />
       )}
@@ -560,7 +560,7 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
   );
 }
 
-/* ───── 손님 행 ───── */
+/* ───── 고객 행 ───── */
 function CustomerRow({
   customer: c, properties, dday, severity,
   onEdit, onDelete, onChangeStatus,
@@ -758,11 +758,11 @@ function EmptyState({ isFirstUse, onAdd }: { isFirstUse: boolean; onAdd: () => v
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
       <div className="text-5xl mb-3">{isFirstUse ? "👋" : "🔍"}</div>
       <div className="text-base font-semibold text-gray-900 mb-1">
-        {isFirstUse ? "아직 등록된 손님이 없습니다" : "조건에 맞는 손님이 없습니다"}
+        {isFirstUse ? "아직 등록된 고객이 없습니다" : "조건에 맞는 고객이 없습니다"}
       </div>
       <div className="text-xs text-gray-500 mb-4">
         {isFirstUse
-          ? "새 손님을 추가하면 후속 연락 일정을 자동 관리해드립니다"
+          ? "새 고객을 추가하면 후속 연락 일정을 자동 관리해드립니다"
           : "필터를 바꾸거나 검색어를 지워보세요"}
       </div>
       {isFirstUse && (
@@ -770,7 +770,7 @@ function EmptyState({ isFirstUse, onAdd }: { isFirstUse: boolean; onAdd: () => v
           onClick={onAdd}
           className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
         >
-          + 첫 손님 추가
+          + 첫 고객 추가
         </button>
       )}
     </div>

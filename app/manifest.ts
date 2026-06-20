@@ -12,7 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "DealDone — 부동산 매물 도우미",
     short_name: "DealDone",
     description:
-      "공인중개사 업무 보조 — 매물 문구 자동 생성, 만기 알림, 손님 관리, 실시간 동기화",
+      "공인중개사 업무 보조 — 매물 문구 자동 생성, 만기 알림, 고객 관리, 실시간 동기화",
     start_url: "/",
     display: "standalone",
     background_color: "#FAF7F0",
@@ -49,9 +49,9 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: "/icon-192.png", sizes: "192x192" }],
       },
       {
-        name: "손님 관리",
-        short_name: "손님",
-        description: "손님 사후관리 보드",
+        name: "고객 관리",
+        short_name: "고객",
+        description: "고객 사후관리 보드",
         url: "/customers",
         icons: [{ src: "/icon-192.png", sizes: "192x192" }],
       },

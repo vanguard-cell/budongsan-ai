@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s | DealDone",
   },
   description:
-    "공인중개사 업무 보조 — 매물 문구 자동 생성, 만기 알림, 손님 관리, 실시간 동기화",
+    "공인중개사 업무 보조 — 매물 문구 자동 생성, 만기 알림, 고객 관리, 실시간 동기화",
   applicationName: "DealDone",
   appleWebApp: {
     capable: true,

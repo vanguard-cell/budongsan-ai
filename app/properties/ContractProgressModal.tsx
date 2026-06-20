@@ -20,7 +20,7 @@ export default function ContractProgressModal({ property, customers, onClose, on
   const [showCustList, setShowCustList] = useState(false);
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
 
-  // 손님 검색 (이름 또는 전화번호)
+  // 고객 검색 (이름 또는 전화번호)
   const filteredCustomers = useMemo(() => {
     if (!custQuery.trim()) return customers.slice(0, 8);
     const q = custQuery.toLowerCase().replace(/\D/g, "") || custQuery.toLowerCase();
@@ -131,21 +131,21 @@ export default function ContractProgressModal({ property, customers, onClose, on
             </div>
           </div>
 
-          {/* 계약 상대방 정보 — 매매=매수인 / 전월세=임차인, 손님관리 검색 연동 */}
+          {/* 계약 상대방 정보 — 매매=매수인 / 전월세=임차인, 고객관리 검색 연동 */}
           {(() => {
             const partyLabel = form.dealType === "매매" ? "매수인" : "임차인";
             return (
             <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-2">
-              <div className="text-xs font-semibold text-orange-700">🤝 {partyLabel} (손님관리에서 불러오기)</div>
+              <div className="text-xs font-semibold text-orange-700">🤝 {partyLabel} (고객관리에서 불러오기)</div>
 
-              {/* 손님 검색 드롭다운 */}
+              {/* 고객 검색 드롭다운 */}
               {customers.length > 0 && (
                 <div className="relative">
                   <input
                     value={custQuery}
                     onChange={e => { setCustQuery(e.target.value); setShowCustList(true); }}
                     onFocus={() => setShowCustList(true)}
-                    placeholder="🔍 손님 이름 또는 전화번호 검색"
+                    placeholder="🔍 고객 이름 또는 전화번호 검색"
                     autoComplete="off"
                     className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
@@ -204,7 +204,7 @@ export default function ContractProgressModal({ property, customers, onClose, on
                     placeholder="70 (전세는 0)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
               </div>
-              <p className="text-[10px] text-orange-600 mt-1">💡 손님관리에 등록된 손님을 검색하거나 직접 입력하세요</p>
+              <p className="text-[10px] text-orange-600 mt-1">💡 고객관리에 등록된 고객을 검색하거나 직접 입력하세요</p>
             </div>
             );
           })()}

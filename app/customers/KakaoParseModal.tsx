@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * 카톡/문자 대화 붙여넣기 → AI 파싱 → 손님 자동 등록
+ * 카톡/문자 대화 붙여넣기 → AI 파싱 → 고객 자동 등록
  *
  * 흐름:
  *  1. 어머니가 카톡 대화 복사 후 textarea에 붙여넣기
  *  2. [AI 파싱] 클릭 → /api/parse-customer 호출
  *  3. 추출된 정보 확인 + 수정 가능
- *  4. [손님 등록] 클릭 → 저장
+ *  4. [고객 등록] 클릭 → 저장
  */
 
 import { useState } from "react";
@@ -93,7 +93,7 @@ export default function KakaoParseModal({ onClose, onSave }: Props) {
       <div className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[calc(100dvh-5rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between rounded-t-2xl">
           <div>
-            <h2 className="text-base font-semibold">📩 카톡 붙여넣기 → 손님 자동 등록</h2>
+            <h2 className="text-base font-semibold">📩 카톡 붙여넣기 → 고객 자동 등록</h2>
             <p className="text-[10px] text-gray-500 mt-0.5">
               {step === "input" ? "1단계: 대화 붙여넣고 AI 파싱" : "2단계: 추출 결과 확인 후 저장"}
             </p>
@@ -104,7 +104,7 @@ export default function KakaoParseModal({ onClose, onSave }: Props) {
         {step === "input" ? (
           <div className="p-5 space-y-3">
             <div className="rounded-xl bg-blue-50 border border-blue-200 p-3 text-[11px] text-blue-700">
-              💡 카톡에서 손님과의 대화 전체를 복사해서 아래 붙여넣으세요.<br />
+              💡 카톡에서 고객과의 대화 전체를 복사해서 아래 붙여넣으세요.<br />
               AI가 이름·연락처·예산·희망 지역·입주일을 자동 추출합니다.
             </div>
 
@@ -209,7 +209,7 @@ export default function KakaoParseModal({ onClose, onSave }: Props) {
                 disabled={saving}
                 className="flex-1 py-2.5 rounded-xl bg-[var(--brand-blue)] text-white text-sm font-semibold hover:bg-[var(--brand-blue-dark)] disabled:opacity-50"
               >
-                {saving ? "저장 중…" : "✅ 손님 등록"}
+                {saving ? "저장 중…" : "✅ 고객 등록"}
               </button>
             </div>
           </div>

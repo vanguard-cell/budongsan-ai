@@ -99,7 +99,7 @@ export default function ExpiryPage() {
   const [showSmsSettings, setShowSmsSettings] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
 
-  // 알림용 손님 데이터 (가벼운 구독)
+  // 알림용 고객 데이터 (가벼운 구독)
   useEffect(() => {
     if (!user) return;
     const unsub = subscribeCustomers(user.agencyId, setCustomers);
@@ -663,7 +663,7 @@ function ContractRow({
   onReopen: () => void;
   onDelete: () => void;
   onSms: (target: ContactTarget) => void;
-  onJumpCustomer?: () => void;        // 연결된 손님 점프
+  onJumpCustomer?: () => void;        // 연결된 고객 점프
   onReopenAsProperty?: () => void;    // 매물로 되돌리기 (재모집)
   onCloneSameComplex?: () => void;    // 같은 단지 다른 호수 빠른 등록
 }) {
@@ -738,7 +738,7 @@ function ContractRow({
         </div>
       </div>
 
-      {/* 액션 버튼 — 색 구분감 강화: 수정(회) / 같은단지(청록) / 손님(파) / 매물복귀(녹) / 종료(주황) / 삭제(빨) */}
+      {/* 액션 버튼 — 색 구분감 강화: 수정(회) / 같은단지(청록) / 고객(파) / 매물복귀(녹) / 종료(주황) / 삭제(빨) */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button
           onClick={onEdit}
@@ -758,10 +758,10 @@ function ContractRow({
         {onJumpCustomer && (
           <button
             onClick={onJumpCustomer}
-            title="연결된 손님 보기 (손님관리로 이동)"
+            title="연결된 고객 보기 (고객관리로 이동)"
             className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
           >
-            👥 손님 보기
+            👥 고객 보기
           </button>
         )}
         {onReopenAsProperty && !isClosed && (
