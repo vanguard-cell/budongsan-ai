@@ -9,8 +9,22 @@
  * - 그 외: 기존 BottomNav (PC 사이드바 + 모바일 탭바) + md:pl-56
  */
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import BottomNav from "./BottomNav";
+import { useAuth, recordPageView } from "@/lib/auth-context";
+
+/** 페이지 사용량 추적 — 경로 첫 구간(예: /customers/123 → "customers")별 카운트 */
+function PageTracker() {
+  const pathname = usePathname();
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user || pathname === "/login") return;
+    const seg = pathname.split("/").filter(Boolean)[0] || "dashboard"; // "/" → 홈
+    recordPageView(user.uid, seg);
+  }, [pathname, user]);
+  return null;
+}
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -34,6 +48,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <PageTracker />
       {/* 풀스크린(자체 사이드바·헤더) 페이지는 padding 없이, 일반 페이지는 sm:pl-56 */}
       <div className={isFullscreen ? "" : "sm:pl-56"}>
         {children}

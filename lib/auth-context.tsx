@@ -63,6 +63,20 @@ export function useAuth() {
 }
 
 /**
+ * 페이지 사용량 기록 — 어떤 메뉴를 얼마나 쓰는지 집계 (단순화 근거 데이터)
+ * 유저 문서에 pageViews.{경로} += 1. 본인 문서 self-update라 규칙 그대로 허용.
+ * 실패해도 조용히 무시 (사용 흐름 방해 금지).
+ */
+export function recordPageView(uid: string, pathKey: string): void {
+  if (!uid || !pathKey) return;
+  const userRef = doc(db, "users", uid);
+  updateDoc(userRef, {
+    [`pageViews.${pathKey}`]: increment(1),
+    lastPageAt: serverTimestamp(),
+  }).catch(() => { /* 비핵심 — 무시 */ });
+}
+
+/**
  * 사용자 문서 + 사무실(agency) 자동 생성 또는 조회
  * 같은 사용자가 다른 로그인 방식으로 들어와도 같은 agency를 사용 (이메일 기준)
  */

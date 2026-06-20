@@ -292,6 +292,39 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* 메뉴별 사용량 — 단순화 근거 (많이 쓰는 순) */}
+            {(() => {
+              const PAGE_LABEL: Record<string, string> = {
+                dashboard: "홈", properties: "매물", expiry: "만기", customers: "고객",
+                schedule: "스케줄", sales: "매출", insights: "인사이트", "market-price": "실거래",
+                team: "직원", feedback: "건의함", admin: "유저관리", more: "더보기", "ai-content": "AI문구",
+              };
+              const entries = Object.entries(panelUser.pageViews || {})
+                .filter(([, n]) => n > 0)
+                .sort((a, b) => b[1] - a[1]);
+              const max = entries[0]?.[1] || 1;
+              return (
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 mb-1.5">메뉴별 사용량 (많이 쓰는 순)</div>
+                  {entries.length === 0 ? (
+                    <div className="text-[11px] text-gray-400 py-2">아직 사용 기록이 없습니다 — 이 기능 추가 후 방문부터 누적됩니다.</div>
+                  ) : (
+                    <div className="space-y-1">
+                      {entries.map(([key, n]) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <div className="w-14 text-[11px] text-gray-600 shrink-0 text-right">{PAGE_LABEL[key] || key}</div>
+                          <div className="flex-1 h-4 rounded bg-gray-100 overflow-hidden">
+                            <div className="h-4 rounded bg-indigo-400" style={{ width: `${Math.max(4, (n / max) * 100)}%` }} />
+                          </div>
+                          <div className="w-10 text-[11px] text-gray-500 tabular-nums text-right shrink-0">{n}회</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* 매물 열람 */}
             <div>
               {panelProps === null ? (
