@@ -21,9 +21,9 @@ const ENTRY = {
   date: "2026-06-16",
   day: "화",
   category: "신규 기능",
-  work: "파이프라인 보드(칸반)+인사이트 대시보드 구현. ①손님관리 '보드' 뷰: 단계 칼럼 칸반+드래그 이동(stage·status 동기화, 실패 사유), effectiveStage/stageToStatus. ②/insights: 수익(월/연)·처리현황·파이프라인 퍼널(전환%)·실패사유 분포·이번달 활동. 사이드바·더보기·셸 등록",
-  commit: "c8ceb25",
-  note: "Customer.stage 수동지정 필드 추가. 단계정의·포기연동에 이어 보드+대시보드 완성",
+  work: "인사이트 보강+사이드바 깨짐 수정: 사이드바 nav에 min-h-0(항목 많아도 축소·스크롤, 하단 겹침 방지). 파이프라인 퍼널을 Pipedrive식 가로진행(단계 막대+다음단계 전환% 화살표)으로 재설계. 처리현황 가로 스택바(진행중/성사/실패) 추가. (앞서 보드+대시보드 구현, 단계정의·포기연동)",
+  commit: "a773a21",
+  note: "동시 작업분(손님→고객 명칭통일·페이지추적·또다른 사이드바픽스)과 rebase 머지",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 파이프라인 보드+인사이트" : "파이프라인 보드+인사이트";
+      found.getCell(4).value = prev ? prev + " / 인사이트 보강+사이드바픽스" : "인사이트 보강+사이드바픽스";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "파이프라인 보드+인사이트"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "인사이트 보강+사이드바픽스"]);
     }
   }
 
