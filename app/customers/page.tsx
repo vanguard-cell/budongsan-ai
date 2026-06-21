@@ -171,6 +171,16 @@ export default function CustomersPage() {
       });
   }, [customers, filter, query, sortBy, colSearch]);
 
+  /* 보드용 — 상태 필터 무시, 검색만 적용한 전체 고객 (계약 성사·실패 칼럼도 채워짐) */
+  const boardCustomers = useMemo(() => {
+    if (!query.trim()) return customers;
+    const q = query.trim().toLowerCase();
+    return customers.filter(c =>
+      c.name.toLowerCase().includes(q) || c.phone.includes(q) ||
+      c.preferredArea.toLowerCase().includes(q) || c.memo.toLowerCase().includes(q),
+    );
+  }, [customers, query]);
+
   /* 카운트 */
   const counts = useMemo(() => {
     const result = { all: 0, needFollowup: 0, vip: 0, matched: 0, lost: 0, closed: 0 };
@@ -430,15 +440,19 @@ export default function CustomersPage() {
         {/* 목록 — 전체 고객 리스트 */}
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
+        ) : viewStyle === "board" ? (
+          customers.length === 0 ? (
+            <EmptyState isFirstUse onAdd={() => setEditing(emptyCustomer())} />
+          ) : (
+            <CustomerBoard
+              customers={boardCustomers}
+              selectedId={panelId || undefined}
+              onSelect={id => setPanelId(id)}
+              onMoveStage={moveStage}
+            />
+          )
         ) : filtered.length === 0 ? (
           <EmptyState isFirstUse={customers.length === 0} onAdd={() => setEditing(emptyCustomer())} />
-        ) : viewStyle === "board" ? (
-          <CustomerBoard
-            customers={filtered.map(x => x.c)}
-            selectedId={panelId || undefined}
-            onSelect={id => setPanelId(id)}
-            onMoveStage={moveStage}
-          />
         ) : viewStyle === "table" ? (
           <CustomerTable
             list={filtered}

@@ -103,9 +103,6 @@ export default function InsightsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">문의부터 계약까지 — 처리현황 · 전환율 · 수익 한눈에</p>
         </div>
         <div className="flex gap-1.5 self-start sm:self-auto">
-          <Link href="/customers?view=board" className="text-xs px-3.5 py-2 rounded-lg bg-[var(--brand-blue)] text-white font-bold hover:bg-[var(--brand-blue-dark)] transition-colors flex items-center gap-1">
-            <span className="material-symbols-outlined text-[15px] leading-none">view_kanban</span>파이프라인 보드
-          </Link>
           <Link href="/customers" className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 transition-colors">고객 관리</Link>
           <Link href="/sales" className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:border-blue-400 hover:text-blue-600 transition-colors">매출 상세</Link>
         </div>
