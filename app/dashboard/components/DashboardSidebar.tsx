@@ -140,7 +140,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
       </div>
 
       {/* 주 메뉴 */}
-      <nav className="flex-grow space-y-1 overflow-y-auto">
+      <nav className="flex-grow min-h-0 space-y-1 overflow-y-auto">
         {NAV.map(item => {
           const active = isActive(item.href);
           return (

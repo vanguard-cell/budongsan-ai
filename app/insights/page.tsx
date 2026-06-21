@@ -6,7 +6,7 @@
  *  ③ 파이프라인 퍼널(문의→계약 전환율)  ④ 실패 사유 분포  ⑤ 이번 달 활동
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -139,36 +139,73 @@ export default function InsightsPage() {
             )}
           </div>
 
-          {/* ② 처리현황 */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <StatusCard label="진행 중" value={status.active} color="#2383E2" />
-            <StatusCard label="협상·매칭" value={status.matched} color="#BA7517" />
-            <StatusCard label="계약 성사" value={status.closed} color="#1D9E75" />
-            <StatusCard label="실패·이탈" value={status.lost} color="#A32D2D" />
+          {/* ② 처리 현황 */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
+            <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">처리 현황</div>
+            {(() => {
+              const inProg = status.active + status.matched;
+              const total = inProg + status.closed + status.lost;
+              const seg = [
+                { label: "진행 중", n: inProg, c: "#2383E2" },
+                { label: "계약 성사", n: status.closed, c: "#1D9E75" },
+                { label: "실패·이탈", n: status.lost, c: "#A32D2D" },
+              ];
+              return (
+                <>
+                  <div className="flex h-6 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-800 mb-2">
+                    {total === 0 ? <div className="flex-1" /> : seg.map(s => s.n > 0 && (
+                      <div key={s.label} style={{ width: `${(s.n / total) * 100}%`, background: s.c }} className="flex items-center justify-center" title={`${s.label} ${s.n}`}>
+                        {s.n / total > 0.08 && <span className="text-white text-[11px] font-bold">{s.n}</span>}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
+                    {seg.map(s => (
+                      <span key={s.label} className="inline-flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-sm" style={{ background: s.c }} />
+                        <span className="text-gray-600 dark:text-gray-300">{s.label}</span>
+                        <span className="font-bold tabular-nums" style={{ color: s.c }}>{s.n}</span>
+                      </span>
+                    ))}
+                    <span className="ml-auto text-gray-400">전체 {total}명</span>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5">
-            {/* ③ 퍼널 */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-5">
+            {/* ③ 퍼널 — 가로 진행 (문의 →%→ 연락 →%→ …) */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
               <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-4">파이프라인 퍼널 (문의 → 계약)</div>
-              <div className="space-y-2.5">
-                {funnel.map((f, i) => {
-                  const meta = STAGE_META[f.stage];
-                  const prev = i > 0 ? funnel[i - 1].count : null;
-                  const conv = prev && prev > 0 ? Math.round((f.count / prev) * 100) : null;
-                  return (
-                    <div key={f.stage}>
-                      <div className="flex items-center justify-between text-[12px] mb-1">
-                        <span className="font-medium" style={{ color: meta.fg }}>{meta.label}</span>
-                        <span className="text-gray-500">{f.count}명{conv !== null && <span className="text-gray-400"> · 전환 {conv}%</span>}</span>
-                      </div>
-                      <div className="h-5 rounded-lg bg-gray-100 dark:bg-slate-800 overflow-hidden">
-                        <div className="h-5 rounded-lg transition-all" style={{ width: `${Math.max(3, (f.count / maxFunnel) * 100)}%`, background: meta.fg }} />
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="overflow-x-auto">
+                <div className="flex items-stretch min-w-[460px]">
+                  {funnel.map((f, i) => {
+                    const meta = STAGE_META[f.stage];
+                    const barH = Math.max(10, (f.count / maxFunnel) * 130);
+                    const next = i < funnel.length - 1 ? funnel[i + 1] : null;
+                    const conv = next && f.count > 0 ? Math.round((next.count / f.count) * 100) : null;
+                    return (
+                      <Fragment key={f.stage}>
+                        <div className="flex-1 flex flex-col items-center min-w-0">
+                          <div className="flex flex-col items-center justify-end w-full" style={{ height: 150 }}>
+                            <span className="text-[12px] font-bold tabular-nums mb-1" style={{ color: meta.fg }}>{f.count}</span>
+                            <div className="w-full max-w-[56px] rounded-t-md" style={{ height: `${barH}px`, background: meta.fg }} />
+                          </div>
+                          <div className="text-[10.5px] mt-1.5 text-center leading-tight" style={{ color: meta.fg }}>{meta.label}</div>
+                        </div>
+                        {conv !== null && (
+                          <div className="flex flex-col items-center justify-center w-11 shrink-0" style={{ height: 150 }}>
+                            <span className="material-symbols-outlined text-gray-300 dark:text-slate-600 text-[18px]">arrow_forward</span>
+                            <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 rounded-full px-1.5 py-0.5 mt-0.5">{conv}%</span>
+                          </div>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </div>
               </div>
+              <p className="text-[10.5px] text-gray-400 mt-3">막대 = 해당 단계까지 도달한 손님 수 · 화살표 = 다음 단계 전환율</p>
             </div>
 
             {/* ④ 실패 사유 */}
@@ -218,14 +255,6 @@ function Mini({ label, value, accent }: { label: string; value: number; accent?:
     <div>
       <div className="text-xs text-gray-400 whitespace-nowrap">{label}</div>
       <div className="text-lg font-bold tabular-nums mt-0.5" style={{ color: accent || undefined }}>{fmtNum(value)}<span className="text-[11px] font-normal text-gray-400 ml-0.5">만</span></div>
-    </div>
-  );
-}
-function StatusCard({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 p-3 text-center">
-      <div className="text-2xl font-bold tabular-nums" style={{ color }}>{value}</div>
-      <div className="text-[11px] text-gray-500 mt-0.5">{label}</div>
     </div>
   );
 }
