@@ -99,11 +99,13 @@ export default function CustomersPage() {
   }, [authLoading, user, router]);
 
   // 홈 빠른 실행 "고객 추가" 진입 (?new=1) → 추가 모달 바로 열기
+  // 파이프라인 보드 직접 진입 (?view=board) → 보드 뷰로 열기
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (new URLSearchParams(window.location.search).get("new") === "1") {
-      setEditing(emptyCustomer());
-    }
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("new") === "1") setEditing(emptyCustomer());
+    const v = p.get("view");
+    if (v === "board" || v === "table" || v === "card") setViewStyle(v);
   }, []);
 
   /* 실시간 구독 */
