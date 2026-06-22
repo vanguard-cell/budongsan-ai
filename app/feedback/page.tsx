@@ -145,6 +145,10 @@ export default function FeedbackPage() {
   const hasNewReply = (it: FeedbackItem) =>
     !!it.lastReplyBy && (isAdmin ? it.lastReplyBy === "user" : it.lastReplyBy === "admin");
 
+  // 문의 번호 — 등록순(오래된 게 #1). 사용자·관리자·개발자가 같은 건을 #N으로 지칭하기 위함.
+  const orderNo = new Map<string, number>();
+  [...items].sort((a, b) => a.createdAt - b.createdAt).forEach((it, i) => orderNo.set(it.id, i + 1));
+
   return (
     <div className="min-h-screen bg-white">
       <div className={`px-6 sm:px-10 lg:px-24 pt-6 sm:pt-8 pb-12 transition-[padding] duration-300 ${panelId ? "xl:pr-[400px]" : ""}`}>
@@ -267,12 +271,15 @@ export default function FeedbackPage() {
                             panelId === item.id ? "border-blue-400 ring-1 ring-blue-300" : "border-gray-200"
                           }`}
                         >
-                          {isAdmin && (
-                            <div className="text-[10px] text-blue-600 mb-1 flex items-center gap-0.5">
-                              <span className="material-symbols-outlined text-[13px]">person</span>
-                              {item.submittedBy.name || item.submittedBy.email}
-                            </div>
-                          )}
+                          <div className="flex items-center gap-1 mb-1">
+                            <span className="text-[10px] font-bold text-purple-700 bg-purple-100 rounded px-1.5 py-0.5 shrink-0">#{orderNo.get(item.id)}</span>
+                            {isAdmin && (
+                              <span className="text-[10px] text-blue-600 flex items-center gap-0.5 truncate">
+                                <span className="material-symbols-outlined text-[13px]">person</span>
+                                {item.submittedBy.name || item.submittedBy.email}
+                              </span>
+                            )}
+                          </div>
                           <div className="text-[13px] text-gray-800 leading-snug line-clamp-2">{preview}</div>
                           <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
                             <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-[13px]">chat_bubble</span>{item.thread.length}</span>
@@ -312,6 +319,7 @@ export default function FeedbackPage() {
         <FeedbackPanel
           key={selected.id}
           item={selected}
+          no={orderNo.get(selected.id)}
           isAdmin={isAdmin}
           isMine={selected.submittedBy.uid === user.uid}
           onClose={() => setPanelId(null)}
@@ -326,8 +334,9 @@ export default function FeedbackPage() {
 }
 
 /* ── 우측 채팅 패널 ── */
-function FeedbackPanel({ item, isAdmin, isMine, onClose, onSend, onSetStatus, onConfirm, onDelete }: {
+function FeedbackPanel({ item, no, isAdmin, isMine, onClose, onSend, onSetStatus, onConfirm, onDelete }: {
   item: FeedbackItem;
+  no?: number;
   isAdmin: boolean;
   isMine: boolean;
   onClose: () => void;
@@ -353,7 +362,8 @@ function FeedbackPanel({ item, isAdmin, isMine, onClose, onSend, onSetStatus, on
     finally { setSending(false); }
   };
 
-  const title = item.thread[0]?.text?.slice(0, 24) || "건의 내용";
+  const baseTitle = item.thread[0]?.text?.slice(0, 22) || "건의 내용";
+  const title = no ? `#${no} · ${baseTitle}` : baseTitle;
 
   return (
     <SideDrawer open onClose={onClose} title={title} icon="forum" accent={STATUS_ACCENT[item.status]}>
