@@ -10,7 +10,8 @@
  *
  * 번호 규칙: 등록순(오래된 게 #1). 앱 화면의 #N과 동일.
  */
-const admin = require("firebase-admin");
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
 const path = require("path");
 const fs = require("fs");
 
@@ -25,10 +26,11 @@ if (!fs.existsSync(KEY_PATH)) {
   process.exit(1);
 }
 
-admin.initializeApp({
-  credential: admin.cert(require(KEY_PATH)),
+initializeApp({
+  credential: cert(require(KEY_PATH)),
   projectId: "budongsan-ai",
 });
+const dbf = getFirestore();
 
 const STATUS = { pending: "🆕 문의", in_progress: "🔧 진행중", done: "✅ 완료" };
 
@@ -39,7 +41,7 @@ function fmt(ts) {
 }
 
 (async () => {
-  const snap = await admin.firestore().collection("feedback").get();
+  const snap = await dbf.collection("feedback").get();
   const items = snap.docs.map(d => {
     const x = d.data();
     const createdAt = x.createdAt?.toMillis ? x.createdAt.toMillis() : (x.createdAt || 0);
