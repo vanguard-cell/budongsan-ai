@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: "2026-06-22",
   day: "월",
-  category: "UX 개선",
-  work: "고객 보드 정비: ① 상단 타임라인→축소 파이프라인 보드 통합(중복 제거, 높이 42vh+아래 목록 걸침). ② 우측 패널 잘림 수정(push xl→lg, SideDrawer pushAt prop). ③ 헤더 옆 단계별 한눈 요약 알약(문의·연락·보여줌·협상·계약·실패 건수). ④ 계약 성사 칸은 최근 30일 완료만 표시(지난 완료는 '완료' 필터 보존, '지난 완료 N건 더보기' 링크). 뷰토글 보드버튼 제거, 고아 CustomerTimeline.tsx 삭제.",
-  commit: "4035bf9",
-  note: "메뉴 사용량 추적 기능 작동 점검(보안규칙·빌드 OK)도 같이 진행. 커밋 a4b06b7→a7847fc→4035bf9",
+  category: "신규 기능",
+  work: "건의함 워크플로 + 단지검색(#34): ① 건의함에 문의번호 #N 표시(등록순). ② 서비스계정 키로 건의함 직접 읽기 스크립트(read-feedback.js) — 복붙 없이 #번호로 지칭. ③ [건의 #34] 매물 등록 단지검색 개선: complex-search API에 type 필터(오피스텔→오피스텔만/상가→상가만), POI 잡음 제거(단지만), 이름 끝 오피스텔·아파트 접미사 제거, PropertyModal 후보 주소 숨김+ComplexPicker 위젯 제거.",
+  commit: "0fb2091",
+  note: "보드 유동폭 그리드(패널 잘림)도 같이. 미완료 건의: #34(완료)·#33(상가검색)·#32(만기 매출중복).",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 고객 보드 정비(통합·요약·완료처리)" : "고객 보드 정비(통합·요약·완료처리)";
+      found.getCell(4).value = prev ? prev + " / 건의함 번호·자동읽기 + 단지검색(#34)" : "건의함 번호·자동읽기 + 단지검색(#34)";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "고객 보드 정비(통합·요약·완료처리)"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "건의함 번호·자동읽기 + 단지검색(#34)"]);
     }
   }
 
