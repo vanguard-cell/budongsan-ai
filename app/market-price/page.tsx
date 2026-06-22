@@ -51,6 +51,7 @@ export default function MarketPricePage() {
   const [items, setItems] = useState<MarketPrice[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<MarketPrice | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -138,11 +139,19 @@ export default function MarketPricePage() {
               </button>
             )}
             <button
+              onClick={() => setBulkOpen(true)}
+              title="단지 한 번 조회로 평형별 최고가를 한꺼번에"
+              className="px-4 py-2.5 rounded-xl border-2 border-violet-500 text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/30 text-sm font-bold flex items-center gap-1.5 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">auto_awesome</span>
+              평형별 조회
+            </button>
+            <button
               onClick={() => setEditing(emptyMarketPrice())}
-              className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
+              className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">add</span>
-              최고가 기록
+              <span className="hidden sm:inline">직접 입력</span>
             </button>
           </div>
         </section>
@@ -259,6 +268,14 @@ export default function MarketPricePage() {
           item={editing}
           onClose={() => setEditing(null)}
           onSave={async m => { if (user) { await saveMarketPrice(user.agencyId, m); setEditing(null); } }}
+        />
+      )}
+
+      {bulkOpen && (
+        <BulkLookupModal
+          existing={items}
+          onClose={() => setBulkOpen(false)}
+          onSave={async rows => { if (user) { await saveMarketPricesBatch(user.agencyId, rows); setBulkOpen(false); } }}
         />
       )}
     </div>
@@ -513,6 +530,162 @@ function MarketPriceModal({ item, onClose, onSave }: {
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-gray-300 font-semibold text-sm">취소</button>
           <button onClick={handleSave} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm disabled:opacity-50">
             {saving ? "저장 중…" : "저장"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 평형별 일괄 조회 모달 — 단지 한 번 조회로 모든 평형 최고가 ── */
+type BulkRow = { area: number; saleHigh: string; jeonseHigh: string; wolseDeposit: string; wolseMonthly: string; dealDate: string; checked: boolean };
+const BULK_TYPES = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸"];
+
+function BulkLookupModal({ existing, onClose, onSave }: {
+  existing: MarketPrice[];
+  onClose: () => void;
+  onSave: (rows: MarketPrice[]) => Promise<void>;
+}) {
+  const [complexName, setComplexName] = useState("");
+  const [propertyType, setPropertyType] = useState("아파트");
+  const [region, setRegion] = useState("하남시");
+  const [rows, setRows] = useState<BulkRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const lookup = async () => {
+    if (!complexName.trim()) { alert("단지명을 먼저 입력하세요."); return; }
+    setLoading(true); setRows([]); setMsg("국토부 실거래 조회 중… (최근 6개월 · 매매·전세·월세)");
+    try {
+      const base = { location: `${region} ${complexName}`, complexName, propertyType, mode: "byArea" };
+      const call = (dealType: string) =>
+        fetch("/api/price", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...base, dealType }) }).then(r => r.json());
+      const [sale, jeonse, wolse] = await Promise.all([call("매매"), call("전세"), call("월세")]);
+
+      const map = new Map<number, BulkRow>();
+      const get = (a: number) => {
+        if (!map.has(a)) map.set(a, { area: a, saleHigh: "", jeonseHigh: "", wolseDeposit: "", wolseMonthly: "", dealDate: "", checked: true });
+        return map.get(a)!;
+      };
+      type AreaSale = { area: number; price: number; date?: string };
+      type AreaRent = { area: number; deposit: number; monthly: number; date?: string };
+      (sale.byArea as AreaSale[] | undefined)?.forEach(d => { const r = get(d.area); r.saleHigh = String(d.price || ""); if (d.date) r.dealDate = d.date; });
+      (jeonse.byArea as AreaRent[] | undefined)?.forEach(d => { const r = get(d.area); r.jeonseHigh = String(d.deposit || ""); if (!r.dealDate && d.date) r.dealDate = d.date; });
+      (wolse.byArea as AreaRent[] | undefined)?.forEach(d => { const r = get(d.area); r.wolseDeposit = String(d.deposit || ""); r.wolseMonthly = String(d.monthly || ""); if (!r.dealDate && d.date) r.dealDate = d.date; });
+
+      const list = [...map.values()].sort((a, b) => a.area - b.area);
+      setRows(list);
+      setMsg(list.length === 0
+        ? `❌ ${sale.error || jeonse.error || wolse.error || "거래 내역이 없습니다. 단지명·유형·지역을 확인해주세요."}`
+        : `✅ ${list.length}개 평형 조회됨 — 저장할 평형을 고르세요`);
+    } catch { setMsg("❌ 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."); }
+    finally { setLoading(false); }
+  };
+
+  const toggle = (area: number) => setRows(rs => rs.map(r => r.area === area ? { ...r, checked: !r.checked } : r));
+  const allChecked = rows.length > 0 && rows.every(r => r.checked);
+  const toggleAll = () => setRows(rs => rs.map(r => ({ ...r, checked: !allChecked })));
+  const checkedCount = rows.filter(r => r.checked).length;
+
+  const save = async () => {
+    const picked = rows.filter(r => r.checked);
+    if (!picked.length) { alert("저장할 평형을 선택하세요."); return; }
+    setSaving(true);
+    try {
+      const out: MarketPrice[] = picked.map(r => {
+        // 같은 단지+면적 기존 기록이 있으면 그 id 재사용 → 재조회 시 중복 방지(덮어쓰기)
+        const ex = existing.find(m => m.complexName.trim() === complexName.trim() && Math.round(parseFloat(m.area)) === r.area);
+        const b = ex ? { ...ex } : emptyMarketPrice();
+        return { ...b, complexName: complexName.trim(), area: String(r.area), saleHigh: r.saleHigh, jeonseHigh: r.jeonseHigh, wolseDeposit: r.wolseDeposit, wolseMonthly: r.wolseMonthly, dealDate: r.dealDate };
+      });
+      await onSave(out);
+    } catch (e) { alert("저장 오류: " + (e instanceof Error ? e.message : String(e))); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-lg rounded-t-2xl sm:rounded-xl shadow-2xl max-h-[calc(100dvh-3rem)] sm:max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white dark:bg-slate-900 px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between z-10">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-violet-600">auto_awesome</span>평형별 최고가 한 번에 조회
+          </h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="p-5 space-y-3">
+          {/* 단지명 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">단지명 <span className="text-red-500">*</span></label>
+            <input value={complexName} onChange={e => setComplexName(e.target.value)} placeholder="예: 미사강변골든센트로"
+              className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            <div className="mt-2"><ComplexPickerWidget onSelect={it => setComplexName(it.name || it.address)} externalBuildingType={propertyType} /></div>
+          </div>
+
+          {/* 유형 + 지역 */}
+          <div className="grid grid-cols-4 gap-1.5">
+            {BULK_TYPES.map(t => (
+              <button key={t} type="button" onClick={() => setPropertyType(t)}
+                className={`py-2 rounded-xl text-xs font-semibold border transition-colors ${propertyType === t ? "bg-violet-600 text-white border-violet-600" : "bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700"}`}>
+                {t}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-500 shrink-0">지역(시/군/구)</label>
+            <input value={region} onChange={e => setRegion(e.target.value)} placeholder="하남시"
+              className="flex-1 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500" />
+          </div>
+
+          <button onClick={lookup} disabled={loading}
+            className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-1.5">
+            <span className="material-symbols-outlined text-lg">{loading ? "hourglass_top" : "search"}</span>
+            {loading ? "조회 중…" : "평형별 최고가 조회"}
+          </button>
+
+          {msg && <p className={`text-xs text-center ${msg.startsWith("❌") ? "text-red-500" : msg.startsWith("✅") ? "text-emerald-600" : "text-gray-500"}`}>{msg}</p>}
+
+          {/* 결과 표 */}
+          {rows.length > 0 && (
+            <div className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+              <table className="w-full text-xs">
+                <thead className="bg-gray-50 dark:bg-slate-800 text-gray-500">
+                  <tr>
+                    <th className="px-2 py-2 w-8"><input type="checkbox" checked={allChecked} onChange={toggleAll} className="accent-violet-600" /></th>
+                    <th className="px-2 py-2 text-left">평형</th>
+                    <th className="px-2 py-2 text-right">매매 최고</th>
+                    <th className="px-2 py-2 text-right">전세 최고</th>
+                    <th className="px-2 py-2 text-right">월세</th>
+                    <th className="px-2 py-2 text-right">거래일</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(r => (
+                    <tr key={r.area} onClick={() => toggle(r.area)}
+                      className={`border-t border-gray-100 dark:border-slate-800 cursor-pointer ${r.checked ? "bg-violet-50/50 dark:bg-violet-950/20" : "opacity-50"}`}>
+                      <td className="px-2 py-2 text-center"><input type="checkbox" checked={r.checked} onChange={() => toggle(r.area)} onClick={e => e.stopPropagation()} className="accent-violet-600" /></td>
+                      <td className="px-2 py-2 font-bold text-gray-800 dark:text-gray-100">{r.area}㎡<span className="text-gray-400 font-normal"> ({m2ToPyeong(String(r.area))}평)</span></td>
+                      <td className="px-2 py-2 text-right text-rose-600 dark:text-rose-400 font-semibold">{r.saleHigh ? fmtKorean(r.saleHigh) : "—"}</td>
+                      <td className="px-2 py-2 text-right text-blue-600 dark:text-blue-400 font-semibold">{r.jeonseHigh ? fmtKorean(r.jeonseHigh) : "—"}</td>
+                      <td className="px-2 py-2 text-right text-gray-600 dark:text-gray-300">{r.wolseMonthly ? `${fmtNum(r.wolseDeposit)}/${fmtNum(r.wolseMonthly)}` : "—"}</td>
+                      <td className="px-2 py-2 text-right text-gray-400">{r.dealDate ? r.dealDate.slice(2) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {rows.length > 0 && <p className="text-[11px] text-gray-400">💡 금액은 국토부 최근 6개월 실거래 <b>최고가</b>예요. 저장 후 평형/타입·메모는 카드에서 수정할 수 있어요.</p>}
+        </div>
+
+        <div className="sticky bottom-0 bg-white dark:bg-slate-900 px-5 py-4 border-t border-gray-100 dark:border-slate-700 flex gap-2">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-gray-300 font-semibold text-sm">닫기</button>
+          <button onClick={save} disabled={saving || checkedCount === 0}
+            className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm disabled:opacity-50">
+            {saving ? "저장 중…" : `선택 ${checkedCount}개 저장`}
           </button>
         </div>
       </div>

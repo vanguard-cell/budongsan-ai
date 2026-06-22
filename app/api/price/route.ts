@@ -68,6 +68,17 @@ export async function POST(req: NextRequest) {
   // 데모 모드
   if (!MOLIT_KEY || MOLIT_KEY === "여기에_공공데이터_키") {
     const isRent = dealType === "전세" || dealType === "월세";
+    // 평형별 일괄 조회 데모
+    if (mode === "byArea") {
+      return NextResponse.json({
+        isRent,
+        byArea: isRent
+          ? [{ area: 59, deposit: 40000, monthly: 0, date: "2025-05-10", count: 4 },
+             { area: 84, deposit: 52000, monthly: 0, date: "2025-06-02", count: 7 }]
+          : [{ area: 59, price: 61000, date: "2025-05-10", floor: "12층", count: 4 },
+             { area: 84, price: 82000, date: "2025-06-02", floor: "20층", count: 7 }],
+      });
+    }
     const mockTrades = isRent
       ? [{ date: "2025.03", deposit: 28000, monthly: 0, area: 39.71, floor: "15층" },
          { date: "2025.01", deposit: 27000, monthly: 0, area: 39.71, floor: "10층" }]
@@ -146,6 +157,47 @@ export async function POST(req: NextRequest) {
 
     if (!results.length) {
       return NextResponse.json({ error: "조건에 맞는 실거래 데이터가 없습니다. 단지명·면적을 확인하거나 비워두고 다시 시도해보세요." });
+    }
+
+    // ── 평형별 모드 — 단지의 모든 평형(전용면적)을 묶어 평형별 최고가 1건씩 반환 ──
+    if (mode === "byArea") {
+      const fmtDate = (t: RawItem) =>
+        `${t.year}-${String(t.month).padStart(2, "0")}-${String(t.day || "1").padStart(2, "0")}`;
+      const wantWolse = dealType === "월세" || dealType === "단기임대";
+      const groups = new Map<number, RawItem[]>();
+      for (const t of results) {
+        const a = Math.round(parseFloat(t.area));
+        if (isNaN(a)) continue;
+        if (!groups.has(a)) groups.set(a, []);
+        groups.get(a)!.push(t);
+      }
+      const byArea: Record<string, unknown>[] = [];
+      for (const [area, items] of groups) {
+        if (api.isRent) {
+          const pool = items.filter(t => {
+            const m = parseInt((t.monthly || "0").replace(/,/g, ""), 10) || 0;
+            return wantWolse ? m > 0 : m === 0;
+          });
+          if (!pool.length) continue;
+          let best: RawItem | null = null, bestKey = -1;
+          for (const t of pool) {
+            const dep = parseInt((t.deposit || "0").replace(/,/g, ""), 10) || 0;
+            const mon = parseInt((t.monthly || "0").replace(/,/g, ""), 10) || 0;
+            const key = wantWolse ? mon : dep;
+            if (key > bestKey) { bestKey = key; best = t; }
+          }
+          if (best) byArea.push({ area, deposit: parseInt((best.deposit || "0").replace(/,/g, ""), 10) || 0, monthly: parseInt((best.monthly || "0").replace(/,/g, ""), 10) || 0, date: fmtDate(best), count: pool.length });
+        } else {
+          let best: RawItem | null = null, bestAmt = -1;
+          for (const t of items) {
+            const amt = parseInt((t.amount || "0").replace(/,/g, ""), 10) || 0;
+            if (amt > bestAmt) { bestAmt = amt; best = t; }
+          }
+          if (best) byArea.push({ area, price: bestAmt, date: fmtDate(best), floor: best.floor, count: items.length });
+        }
+      }
+      byArea.sort((a, b) => (a.area as number) - (b.area as number));
+      return NextResponse.json({ byArea, isRent: api.isRent });
     }
 
     // ── 최고가 모드 — 최근 6개월 내 최고 거래 1건 (실거래 최고가 기록용) ──
