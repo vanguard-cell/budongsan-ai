@@ -18,12 +18,12 @@ const CATEGORY_FILL = {
 };
 
 const ENTRY = {
-  date: "2026-06-16",
-  day: "화",
-  category: "신규 기능",
-  work: "인사이트 보강+사이드바 깨짐 수정: 사이드바 nav에 min-h-0(항목 많아도 축소·스크롤, 하단 겹침 방지). 파이프라인 퍼널을 Pipedrive식 가로진행(단계 막대+다음단계 전환% 화살표)으로 재설계. 처리현황 가로 스택바(진행중/성사/실패) 추가. (앞서 보드+대시보드 구현, 단계정의·포기연동)",
-  commit: "a773a21",
-  note: "동시 작업분(손님→고객 명칭통일·페이지추적·또다른 사이드바픽스)과 rebase 머지",
+  date: "2026-06-22",
+  day: "월",
+  category: "UX 개선",
+  work: "고객 관리 상단 타임라인 → 축소 파이프라인 보드로 통합(중복 제거). 같은 자리에 보드 상시 노출(접기 가능), 높이 42vh 제한+단일 스크롤로 아래 고객 목록이 걸쳐 보이게. 우측 패널 잘림 수정: push 시작 폭 xl→lg + SideDrawer pushAt prop 추가(딤 배경 동기화). 뷰 토글 보드버튼 제거(카드/표만), ?view=board 딥링크는 카드+보드펼침 매핑. 고아 CustomerTimeline.tsx 삭제.",
+  commit: "a4b06b7",
+  note: "메뉴 사용량 추적 기능 작동 점검(보안규칙·빌드 OK)도 같이 진행",
 };
 
 (async () => {
@@ -52,9 +52,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 인사이트 보강+사이드바픽스" : "인사이트 보강+사이드바픽스";
+      found.getCell(4).value = prev ? prev + " / 타임라인→보드 통합·패널잘림 수정" : "타임라인→보드 통합·패널잘림 수정";
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "인사이트 보강+사이드바픽스"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "타임라인→보드 통합·패널잘림 수정"]);
     }
   }
 
