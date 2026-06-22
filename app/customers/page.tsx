@@ -174,14 +174,37 @@ export default function CustomersPage() {
   }, [customers, filter, query, sortBy, colSearch]);
 
   /* 보드용 — 상태 필터 무시, 검색만 적용한 전체 고객 (계약 성사·실패 칼럼도 채워짐) */
+  // 완료 시점 추정 — '거래 완료/계약 성사' 이벤트 시각 → 없으면 마지막 활동 → 생성일
+  const wonAt = (c: Customer): number => {
+    const evs = c.history || [];
+    const done = evs.filter(e => { const t = e.text || ""; return t.includes("거래 완료") || t.includes("계약 성사"); }).map(e => e.at);
+    if (done.length) return Math.max(...done);
+    if (evs.length) return Math.max(...evs.map(e => e.at));
+    return c.createdAt;
+  };
+  const WON_RECENT_DAYS = 30;
+
   const boardCustomers = useMemo(() => {
-    if (!query.trim()) return customers;
     const q = query.trim().toLowerCase();
-    return customers.filter(c =>
-      c.name.toLowerCase().includes(q) || c.phone.includes(q) ||
-      c.preferredArea.toLowerCase().includes(q) || c.memo.toLowerCase().includes(q),
-    );
+    if (q) {
+      // 검색 중엔 완료 포함 전부 (찾는 고객이 보드에서도 보이게)
+      return customers.filter(c =>
+        c.name.toLowerCase().includes(q) || c.phone.includes(q) ||
+        c.preferredArea.toLowerCase().includes(q) || c.memo.toLowerCase().includes(q),
+      );
+    }
+    // 기본 보드: 오래된 완료건(계약 성사)은 숨김 — 데이터는 그대로, '완료' 필터에서 전부 보임
+    const cutoff = Date.now() - WON_RECENT_DAYS * 86400000;
+    return customers.filter(c => effectiveStage(c) !== "won" || wonAt(c) >= cutoff);
   }, [customers, query]);
+
+  // 보드에서 숨긴 지난 완료 건수 (검색 중 아닐 때만 의미)
+  const hiddenWonCount = useMemo(() => {
+    if (query.trim()) return 0;
+    const totalWon = customers.filter(c => effectiveStage(c) === "won").length;
+    const shownWon = boardCustomers.filter(c => effectiveStage(c) === "won").length;
+    return totalWon - shownWon;
+  }, [customers, boardCustomers, query]);
 
   /* 보드 단계별 건수 — 헤더 옆 한눈 요약 (펼치든 접든 항상 보임) */
   const stageSummary = useMemo(() => {
@@ -442,6 +465,15 @@ export default function CustomersPage() {
                   onMoveStage={moveStage}
                   heightClass="max-h-[42vh]"
                 />
+                {hiddenWonCount > 0 && (
+                  <button
+                    onClick={() => setFilter("closed")}
+                    className="mt-1 w-full text-center text-[11px] text-gray-400 hover:text-[var(--brand-blue)] transition-colors py-1"
+                    title="지난 완료 건은 아래 [완료] 필터에서 전부 볼 수 있어요"
+                  >
+                    계약 성사 칸은 최근 30일만 표시 · 지난 완료 {hiddenWonCount}건 더 보기 →
+                  </button>
+                )}
               </div>
             )}
           </div>
