@@ -26,7 +26,8 @@ export default function CustomerBoard({ customers, selectedId, onSelect, onMoveS
 
   return (
     <div className={`overflow-auto pb-2 ${heightClass ?? ""}`}>
-      <div className="flex gap-3 min-w-max">
+      {/* 유동폭 6칼럼 그리드 — 폭이 줄면(패널 열림 등) 칼럼이 같이 좁아짐. 좁은 화면은 min-w로 가로스크롤 */}
+      <div className="grid grid-cols-6 gap-2 min-w-[660px]">
         {COLUMNS.map(stage => {
           const meta = STAGE_META[stage];
           const list = byStage(stage);
@@ -42,7 +43,7 @@ export default function CustomerBoard({ customers, selectedId, onSelect, onMoveS
                 const c = customers.find(x => x.id === id);
                 if (c && effectiveStage(c) !== stage) onMoveStage(c, stage);
               }}
-              className={`w-[210px] shrink-0 rounded-2xl p-2 transition-colors ${dragOver === stage ? "bg-blue-50 ring-2 ring-blue-300" : "bg-gray-50/70 dark:bg-slate-800/40"}`}
+              className={`min-w-0 rounded-2xl p-1.5 transition-colors ${dragOver === stage ? "bg-blue-50 ring-2 ring-blue-300" : "bg-gray-50/70 dark:bg-slate-800/40"}`}
             >
               <div className="flex items-center gap-1.5 px-1.5 py-1 mb-2">
                 <span className="w-2 h-2 rounded-full" style={{ background: meta.fg }} />
