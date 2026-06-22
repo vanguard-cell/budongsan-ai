@@ -145,9 +145,20 @@ export default function PropertyModal({ property, onClose, onSave }: {
                       {item.category && <span className="ml-auto text-[10px] text-gray-400 bg-gray-100 rounded px-1.5 py-0.5 shrink-0">{item.category}</span>}
                     </button>
                   ))}
+                  {/* 검색에 없으면 — 입력한 그대로 사용 (상가·신축 등 카카오 미등록 대응) */}
+                  {baseAddress.trim().length >= 2 && (
+                    <button type="button" onClick={() => setAddrSuggestions([])}
+                      className="w-full text-left px-3 py-2.5 text-[12px] text-blue-600 bg-blue-50/60 hover:bg-blue-100 border-t border-gray-100 transition-colors">
+                      ✏️ 찾는 게 없어요 — 입력한 <b>“{baseAddress.trim()}”</b> 그대로 사용
+                    </button>
+                  )}
                 </div>
               )}
             </div>
+            <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
+              💡 목록에서 고르거나, <b className="text-gray-500">단지·건물명을 직접 입력</b>해도 그대로 저장돼요.
+              (상가·신축처럼 검색에 안 잡히는 건 직접 타이핑하세요)
+            </p>
 
             {/* 동 / 호수 — 입력하면 주소에 자동 반영 */}
             <div className="grid grid-cols-2 gap-2 mt-2">
