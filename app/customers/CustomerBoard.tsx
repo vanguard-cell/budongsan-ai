@@ -14,17 +14,18 @@ import {
 
 const COLUMNS: CustomerStage[] = [...STAGE_FLOW, "lost"];
 
-export default function CustomerBoard({ customers, selectedId, onSelect, onMoveStage }: {
+export default function CustomerBoard({ customers, selectedId, onSelect, onMoveStage, heightClass }: {
   customers: Customer[];
   selectedId?: string;
   onSelect: (id: string) => void;
   onMoveStage: (c: Customer, stage: CustomerStage) => void;
+  heightClass?: string;   // 상단 상시 노출 시 높이 제한 (예: "max-h-[42vh]") — 아래 목록이 걸쳐 보이도록
 }) {
   const [dragOver, setDragOver] = useState<CustomerStage | null>(null);
   const byStage = (s: CustomerStage) => customers.filter(c => effectiveStage(c) === s);
 
   return (
-    <div className="overflow-x-auto pb-2">
+    <div className={`overflow-auto pb-2 ${heightClass ?? ""}`}>
       <div className="flex gap-3 min-w-max">
         {COLUMNS.map(stage => {
           const meta = STAGE_META[stage];

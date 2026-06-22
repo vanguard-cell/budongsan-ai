@@ -27,12 +27,14 @@ interface Props {
   count?: number;
   /** "전체 보기" 링크 — 해당 페이지로 이동 */
   moreHref?: string;
+  /** 본문을 밀어내는(push) 시작 폭 — 그 미만에선 오버레이(딤). 기본 xl(1280). 가로로 넓은 화면(보드 등)은 lg로 낮춤 */
+  pushAt?: "lg" | "xl";
   children: React.ReactNode;
 }
 
 export const DRAWER_WIDTH_CLASS = "xl:pr-[380px]";
 
-export default function SideDrawer({ open, onClose, title, icon, accent = "#2563EB", count, moreHref, children }: Props) {
+export default function SideDrawer({ open, onClose, title, icon, accent = "#2563EB", count, moreHref, pushAt = "xl", children }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -44,9 +46,9 @@ export default function SideDrawer({ open, onClose, title, icon, accent = "#2563
 
   return (
     <>
-      {/* 배경 dim — 폰(바텀시트)·중간 폭(overlay)에서만. xl+는 push라 불필요 */}
+      {/* 배경 dim — 폰(바텀시트)·중간 폭(overlay)에서만. push 폭 이상은 본문을 밀어내므로 불필요 */}
       <div
-        className="fixed inset-0 z-40 bg-black/30 xl:hidden animate-[backdrop-fade_.2s_ease-out]"
+        className={`fixed inset-0 z-40 bg-black/30 animate-[backdrop-fade_.2s_ease-out] ${pushAt === "lg" ? "lg:hidden" : "xl:hidden"}`}
         onClick={onClose}
       />
 

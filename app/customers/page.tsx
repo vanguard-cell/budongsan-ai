@@ -37,7 +37,6 @@ import EditCustomerModal from "./EditCustomerModal";
 import KakaoParseModal from "./KakaoParseModal";
 import CustomerTable, { type CustSort } from "./CustomerTable";
 import CustomerPanel from "./CustomerPanel";
-import CustomerTimeline from "./CustomerTimeline";
 import CustomerBoard from "./CustomerBoard";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
@@ -79,16 +78,16 @@ export default function CustomersPage() {
   const [showExport, setShowExport] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [showKakaoParse, setShowKakaoParse] = useState(false);
-  // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
-  const [viewStyle, setViewStyleState] = useState<"card" | "table" | "board">(() => {
-    try { const v = localStorage.getItem("dealdone_customers_view"); return v === "table" || v === "board" ? v : "card"; } catch { return "card"; }
+  // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억. (보드는 상단 상시 노출로 이동)
+  const [viewStyle, setViewStyleState] = useState<"card" | "table">(() => {
+    try { const v = localStorage.getItem("dealdone_customers_view"); return v === "table" ? "table" : "card"; } catch { return "card"; }
   });
-  const setViewStyle = (v: "card" | "table" | "board") => {
+  const setViewStyle = (v: "card" | "table") => {
     setViewStyleState(v);
     try { localStorage.setItem("dealdone_customers_view", v); } catch {}
   };
+  const [boardOpen, setBoardOpen] = useState(true);              // 상단 파이프라인 보드 접기
   const [panelId, setPanelId] = useState<string | null>(null);   // 우측 패널 (표/카드 공용)
-  const [timelineOpen, setTimelineOpen] = useState(true);        // 상단 진행중 타임라인 접기
   const [sortBy, setSortBy] = useState<CustSort>("followup");    // 표 헤더 정렬
   const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
   const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
@@ -105,7 +104,8 @@ export default function CustomersPage() {
     const p = new URLSearchParams(window.location.search);
     if (p.get("new") === "1") setEditing(emptyCustomer());
     const v = p.get("view");
-    if (v === "board" || v === "table" || v === "card") setViewStyle(v);
+    if (v === "table" || v === "card") setViewStyle(v);
+    else if (v === "board") { setViewStyle("card"); setBoardOpen(true); }  // 보드는 상단 상시 노출
   }, []);
 
   /* 실시간 구독 */
@@ -291,7 +291,7 @@ export default function CustomersPage() {
   const panelCustomer = panelId ? customers.find(x => x.id === panelId) || null : null;
 
   return (
-    <div className={`transition-[padding] duration-300 ease-out ${panelCustomer ? "xl:pr-[400px]" : ""}`}>
+    <div className={`transition-[padding] duration-300 ease-out ${panelCustomer ? "lg:pr-[400px]" : ""}`}>
       <div className="w-full">
 
         {/* Stitch 톤 페이지 헤더 — 좌측 제목 + 우측 액션 */}
@@ -364,10 +364,6 @@ export default function CustomersPage() {
                 className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "table" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
                 <span className="material-symbols-outlined text-[15px] leading-none">table_rows</span>표
               </button>
-              <button onClick={() => setViewStyle("board")}
-                className={`px-3 py-2 flex items-center gap-1 border-l border-[var(--sidebar-bd)] transition-colors ${viewStyle === "board" ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]" : "bg-white dark:bg-slate-900 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"}`}>
-                <span className="material-symbols-outlined text-[15px] leading-none">view_kanban</span>보드
-              </button>
             </div>
 
             {/* 메인 액션 */}
@@ -401,32 +397,30 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* 상단 — 진행 중인 고객 타임라인 (보드 뷰에선 숨김) */}
-        {loaded && viewStyle !== "board" && (() => {
-          const activeList = customers.filter(c => c.status === "active" || c.status === "matched");
-          if (activeList.length === 0) return null;
-          return (
-            <div className="mb-5">
-              <button onClick={() => setTimelineOpen(o => !o)}
-                className="flex items-center gap-1.5 mb-2 text-sm font-bold text-gray-800 dark:text-gray-100 hover:text-[var(--brand-blue)] transition-colors">
-                <span className="material-symbols-outlined text-[18px] text-[var(--brand-blue)]">timeline</span>
-                진행 중인 고객 <span className="text-gray-400 font-medium">{activeList.length}</span>
-                <span className={`material-symbols-outlined text-[18px] text-gray-400 transition-transform ${timelineOpen ? "" : "-rotate-90"}`}>expand_more</span>
-              </button>
-              {timelineOpen && (
-                <div className="max-h-[360px] overflow-y-auto rounded-2xl">
-                  <CustomerTimeline
-                    customers={activeList}
-                    selectedId={panelId || undefined}
-                    onSelect={id => setPanelId(id)}
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        {/* 상단 — 고객 파이프라인 보드 (단계 한눈 + 드래그 이동). 아래 목록이 걸쳐 보이도록 높이 제한 */}
+        {loaded && customers.length > 0 && (
+          <div className="mb-5">
+            <button onClick={() => setBoardOpen(o => !o)}
+              className="flex items-center gap-1.5 mb-2 text-sm font-bold text-gray-800 dark:text-gray-100 hover:text-[var(--brand-blue)] transition-colors">
+              <span className="material-symbols-outlined text-[18px] text-[var(--brand-blue)]">view_kanban</span>
+              진행 파이프라인 <span className="text-gray-400 font-medium">{boardCustomers.length}</span>
+              <span className={`material-symbols-outlined text-[18px] text-gray-400 transition-transform ${boardOpen ? "" : "-rotate-90"}`}>expand_more</span>
+            </button>
+            {boardOpen && (
+              <div className="rounded-2xl border border-[var(--sidebar-bd)] bg-gray-50/50 dark:bg-slate-800/30 p-2">
+                <CustomerBoard
+                  customers={boardCustomers}
+                  selectedId={panelId || undefined}
+                  onSelect={id => setPanelId(id)}
+                  onMoveStage={moveStage}
+                  heightClass="max-h-[42vh]"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* 검색 — 진행중 타임라인과 전체 명단 사이 */}
+        {/* 검색 — 상단 보드와 전체 명단 사이 */}
         <div className="mb-4">
           <input
             type="text"
@@ -440,17 +434,6 @@ export default function CustomersPage() {
         {/* 목록 — 전체 고객 리스트 */}
         {!loaded ? (
           <div className="text-center text-gray-400 py-12">불러오는 중…</div>
-        ) : viewStyle === "board" ? (
-          customers.length === 0 ? (
-            <EmptyState isFirstUse onAdd={() => setEditing(emptyCustomer())} />
-          ) : (
-            <CustomerBoard
-              customers={boardCustomers}
-              selectedId={panelId || undefined}
-              onSelect={id => setPanelId(id)}
-              onMoveStage={moveStage}
-            />
-          )
         ) : filtered.length === 0 ? (
           <EmptyState isFirstUse={customers.length === 0} onAdd={() => setEditing(emptyCustomer())} />
         ) : viewStyle === "table" ? (

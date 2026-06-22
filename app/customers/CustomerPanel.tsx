@@ -82,7 +82,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
   };
 
   return (
-    <SideDrawer open onClose={onClose} title="고객 상세" icon="group" accent={accent}>
+    <SideDrawer open onClose={onClose} title="고객 상세" icon="group" accent={accent} pushAt="lg">
       {/* 이름 + 배지 */}
       <div className="px-1">
         <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 leading-snug break-all">
