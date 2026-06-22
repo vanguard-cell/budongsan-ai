@@ -4,7 +4,6 @@
 
 import { useState, useRef } from "react";
 import type { Property, PropertyType, DealType, Occupancy, ManageCycle } from "@/lib/properties-db";
-import ComplexPickerWidget from "@/app/ComplexPicker";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, m2ToPyeong } from "./helpers";
 
 export default function PropertyModal({ property, onClose, onSave }: {
@@ -16,7 +15,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
   const [saving, setSaving] = useState(false);
   const isNew = !property.address;
   const addrTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [addrSuggestions, setAddrSuggestions] = useState<{ name: string; address: string }[]>([]);
+  const [addrSuggestions, setAddrSuggestions] = useState<{ name: string; address: string; category?: string }[]>([]);
   const [addrLoading, setAddrLoading] = useState(false);
   // 단지 선택 후 기본 주소 (동/호수 자동합산용)
   const [baseAddress, setBaseAddress] = useState(() => {
@@ -59,8 +58,9 @@ export default function PropertyModal({ property, onClose, onSave }: {
     addrTimerRef.current = setTimeout(async () => {
       setAddrLoading(true);
       try {
-        const res = await fetch(`/api/complex-search?q=${encodeURIComponent(val)}`);
-        setAddrSuggestions((await res.json()).slice(0, 6));
+        // 선택된 매물 유형으로 필터 (오피스텔→오피스텔만, 상가→상가만). 단지명만 반환됨
+        const res = await fetch(`/api/complex-search?q=${encodeURIComponent(val)}&type=${encodeURIComponent(form.propertyType)}&pages=2`);
+        setAddrSuggestions((await res.json()).slice(0, 8));
       } catch { setAddrSuggestions([]); }
       finally { setAddrLoading(false); }
     }, 350);
@@ -127,29 +127,26 @@ export default function PropertyModal({ property, onClose, onSave }: {
 
           {/* 주소 + 동/호수 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">단지명 검색 <span className="text-red-400">*</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              단지명 검색 <span className="text-red-400">*</span>
+              <span className="text-[11px] text-gray-400 font-normal ml-1">· {form.propertyType} 단지만 표시</span>
+            </label>
             <div className="relative">
               <input value={baseAddress} onChange={e => handleAddressChange(e.target.value)}
-                placeholder="단지명 또는 주소 검색"
+                placeholder={`단지명 검색 (예: 미사강변골든센트로)`}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" autoComplete="off" />
               {addrLoading && <div className="absolute right-3 top-2.5 text-xs text-gray-400">검색 중…</div>}
               {addrSuggestions.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-72 overflow-y-auto">
                   {addrSuggestions.map((item, i) => (
                     <button key={i} type="button" onClick={() => selectComplex(item.name, item.address)}
-                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors">
-                      <div className="text-sm font-medium text-gray-800">{item.name}</div>
-                      <div className="text-xs text-gray-500">{item.address}</div>
+                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-800">{item.name}</span>
+                      {item.category && <span className="ml-auto text-[10px] text-gray-400 bg-gray-100 rounded px-1.5 py-0.5 shrink-0">{item.category}</span>}
                     </button>
                   ))}
                 </div>
               )}
-            </div>
-            <div className="mt-1.5">
-              <ComplexPickerWidget
-                onSelect={item => selectComplex(item.name, item.address)}
-                externalBuildingType={form.propertyType}
-              />
             </div>
 
             {/* 동 / 호수 — 입력하면 주소에 자동 반영 */}
