@@ -20,6 +20,7 @@ import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import { subscribeCustomers } from "@/lib/customers-db";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
+import { subscribeFeedback, ADMIN_EMAIL, type FeedbackItem } from "@/lib/feedback-db";
 import type { Contract } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import { dDay } from "@/app/expiry/contracts";
@@ -83,6 +84,7 @@ export default function DashboardPage() {
   const [customers, setCustomers]   = useState<Customer[]>([]);
   const [schedules, setSchedules]   = useState<Schedule[]>([]);
   const [drawer, setDrawer]         = useState<DrawerType>(null);
+  const [feedback, setFeedback]     = useState<FeedbackItem[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/dashboard");
@@ -94,8 +96,15 @@ export default function DashboardPage() {
     const u2 = subscribeContracts(user.agencyId, setContracts);
     const u3 = subscribeCustomers(user.agencyId, setCustomers);
     const u4 = subscribeSchedules(user.agencyId, setSchedules);
-    return () => { u1(); u2(); u3(); u4(); };
+    const u5 = subscribeFeedback(user.uid, user.email === ADMIN_EMAIL, setFeedback);
+    return () => { u1(); u2(); u3(); u4(); u5(); };
   }, [user]);
+
+  /* ── 내 문의에 도착한 관리자 답변 (아직 내가 답 안 한 것) ── */
+  const newReplies = useMemo(
+    () => feedback.filter(f => f.submittedBy.uid === user?.uid && f.lastReplyBy === "admin"),
+    [feedback, user],
+  );
 
   const todayStr = todayISO();
   const activeProps = useMemo(() => properties.filter(p => p.status === "active"), [properties]);
@@ -216,6 +225,25 @@ export default function DashboardPage() {
             </span>
           </p>
         </header>
+
+        {/* ─── 문의 답변 도착 알림 ─── */}
+        {newReplies.length > 0 && (
+          <Link href="/feedback" className="block group">
+            <div className="flex items-center gap-3 rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-r from-violet-50 to-blue-50 dark:from-violet-950/40 dark:to-blue-950/30 px-4 py-3.5 shadow-sm hover:shadow-md transition-all animate-[backdrop-fade_.3s_ease-out]">
+              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white">
+                <span className="material-symbols-outlined">mark_chat_read</span>
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-950">{newReplies.length}</span>
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-violet-900 dark:text-violet-100">💬 문의하신 내용에 답변이 도착했어요</p>
+                <p className="text-xs text-violet-700/80 dark:text-violet-300/80 mt-0.5 truncate">
+                  건의함 {newReplies.length}건에 새 답변이 왔어요 — 눌러서 확인하세요
+                </p>
+              </div>
+              <span className="material-symbols-outlined text-violet-400 group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+            </div>
+          </Link>
+        )}
 
         {/* ─── 2) 상단 4카드 (순서 고정) ─── */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
