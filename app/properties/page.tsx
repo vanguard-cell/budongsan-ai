@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
   sampleProperties, savePropertiesBatch, logPropertyEvent,
@@ -135,7 +135,9 @@ export default function PropertiesPage() {
         return false;
       }
     }
+    const isEdit = properties.some(x => x.id === p.id);
     await saveProperty(user.agencyId, p);
+    recordFeatureUse(user.uid, isEdit ? "prop_edit" : "prop_add");
     return true;
   };
 
@@ -151,6 +153,7 @@ export default function PropertiesPage() {
    *   → 단지 내 매물 빠르게 여러 건 등록 가능
    */
   const cloneSameComplex = (p: Property) => {
+    recordFeatureUse(user?.uid, "prop_same");
     const baseAddress = p.address
       .replace(/ ?\d+동/g, "")
       .replace(/ ?\d+호/g, "")
@@ -193,6 +196,7 @@ export default function PropertiesPage() {
         linkedCustomerId = id || linkedCustomerId;
       }
       await moveToContract(user.agencyId, p, linkedCustomerId);
+      recordFeatureUse(user.uid, "prop_to_expiry");
       setTimeout(() => alert(`✅ ${p.dealType} 거래완료 — 만기 관리로 이동되었습니다.`), 100);
     } catch (e) {
       console.error("[close] 실패:", e);
@@ -222,6 +226,7 @@ export default function PropertiesPage() {
     for (const p of toSave) {
       await saveProperty(user.agencyId, p);
     }
+    recordFeatureUse(user.uid, "prop_excel");
   };
 
   const loadSamples = async () => {
@@ -1050,6 +1055,7 @@ export default function PropertiesPage() {
               kind: "progress",
               text: "계약 진행 정보 입력",
             });
+            recordFeatureUse(user.uid, "prop_contract");
             setProgressing(null);
           }}
         />

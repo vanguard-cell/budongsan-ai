@@ -8,7 +8,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
   subscribeMarketPrices, saveMarketPrice, deleteMarketPrice, emptyMarketPrice,
   saveMarketPricesBatch, sampleMarketPrices,
@@ -267,7 +267,7 @@ export default function MarketPricePage() {
         <MarketPriceModal
           item={editing}
           onClose={() => setEditing(null)}
-          onSave={async m => { if (user) { await saveMarketPrice(user.agencyId, m); setEditing(null); } }}
+          onSave={async m => { if (user) { await saveMarketPrice(user.agencyId, m); recordFeatureUse(user.uid, "mp_manual"); setEditing(null); } }}
         />
       )}
 
@@ -275,7 +275,7 @@ export default function MarketPricePage() {
         <BulkLookupModal
           existing={items}
           onClose={() => setBulkOpen(false)}
-          onSave={async rows => { if (user) { await saveMarketPricesBatch(user.agencyId, rows); setBulkOpen(false); } }}
+          onSave={async rows => { if (user) { await saveMarketPricesBatch(user.agencyId, rows); recordFeatureUse(user.uid, "mp_bulk"); setBulkOpen(false); } }}
         />
       )}
     </div>

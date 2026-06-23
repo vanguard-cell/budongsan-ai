@@ -35,6 +35,7 @@ export interface UserUsage {
   schedules: number;
   total: number;           // 데이터 총합
   pageViews: Record<string, number>;  // 메뉴별 방문 횟수 (단순화 근거)
+  features: Record<string, number>;   // 기능별 사용 횟수 (단순화 근거 — 메뉴보다 정밀)
 }
 
 function toMillis(v: unknown): number {
@@ -106,6 +107,7 @@ export async function fetchAllUsersUsage(): Promise<UserUsage[]> {
         properties, contracts, customers, schedules,
         total: properties + contracts + customers + schedules,
         pageViews: (data.pageViews && typeof data.pageViews === "object" ? data.pageViews : {}) as Record<string, number>,
+        features: (data.features && typeof data.features === "object" ? data.features : {}) as Record<string, number>,
       } as UserUsage;
     }),
   );

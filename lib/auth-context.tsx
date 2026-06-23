@@ -77,6 +77,19 @@ export function recordPageView(uid: string, pathKey: string): void {
 }
 
 /**
+ * 기능 사용량 기록 — 어떤 '행동'을 얼마나 하는지 집계 (단순화 근거: 메뉴 방문보다 정밀)
+ * 유저 문서에 features.{키} += 1. 본인 self-update. 실패해도 조용히 무시.
+ * 호출 예: recordFeatureUse(user.uid, "prop_add")
+ */
+export function recordFeatureUse(uid: string | undefined, key: string): void {
+  if (!uid || !key) return;
+  updateDoc(doc(db, "users", uid), {
+    [`features.${key}`]: increment(1),
+    lastFeatureAt: serverTimestamp(),
+  }).catch(() => { /* 비핵심 — 무시 */ });
+}
+
+/**
  * 사용자 문서 + 사무실(agency) 자동 생성 또는 조회
  * 같은 사용자가 다른 로그인 방식으로 들어와도 같은 agency를 사용 (이메일 기준)
  */

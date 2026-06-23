@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
   subscribeSchedules, saveSchedule, deleteSchedule, emptySchedule,
   saveSchedulesBatch, sampleSchedules,
@@ -220,7 +220,9 @@ export default function SchedulePage() {
 
   const upsert = async (s: Schedule) => {
     if (!user) return;
+    const isNew = !schedules.some(x => x.id === s.id);
     await saveSchedule(user.agencyId, s);
+    if (isNew) recordFeatureUse(user.uid, "sched_add");
   };
   const remove = async (id: string) => {
     if (!user || !confirm("이 일정을 삭제할까요?")) return;
@@ -228,7 +230,9 @@ export default function SchedulePage() {
   };
   const done = async (s: Schedule) => {
     if (!user) return;
-    await saveSchedule(user.agencyId, { ...s, status: s.status === "done" ? "scheduled" : "done" });
+    const markingDone = s.status !== "done";
+    await saveSchedule(user.agencyId, { ...s, status: markingDone ? "done" : "scheduled" });
+    if (markingDone) recordFeatureUse(user.uid, "sched_done");
   };
   const loadSamples = async () => {
     if (!user) return;

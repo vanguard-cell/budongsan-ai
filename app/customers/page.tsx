@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
   subscribeCustomers,
   saveCustomer as fsSaveCustomer,
@@ -235,7 +235,9 @@ export default function CustomersPage() {
   /* CRUD */
   const upsert = async (c: Customer) => {
     if (!user) return;
+    const isNew = !customers.some(x => x.id === c.id);
     await fsSaveCustomer(user.agencyId, c);
+    if (isNew) recordFeatureUse(user.uid, "cust_add");
   };
 
   const remove = async (id: string) => {
@@ -271,10 +273,12 @@ export default function CustomersPage() {
     if (stage === "lost") { await changeStatus(c, "lost"); return; }   // 사유 prompt 포함
     await fsSaveCustomer(user.agencyId, { ...c, stage, status: stageToStatus(stage) });
     await logCustomerEvent(user.agencyId, c.id, { by: by(), kind: "status", text: `단계 → ${STAGE_META[stage].label}` });
+    recordFeatureUse(user.uid, "cust_stage");
   };
 
   const addCustomerEvent = async (c: Customer, ev: Omit<CustomerEvent, "at" | "by">) => {
     if (!user) return;
+    recordFeatureUse(user.uid, "cust_log");
     await logCustomerEvent(user.agencyId, c.id, {
       by: user.displayName || user.email || "나",
       kind: ev.kind,
@@ -556,6 +560,7 @@ export default function CustomersPage() {
           onClose={() => setShowKakaoParse(false)}
           onSave={async (c) => {
             await upsert({ ...c, id: c.id || uid() });
+            recordFeatureUse(user.uid, "cust_kakao");
             setShowKakaoParse(false);
             alert(`✅ 고객 "${c.name || c.phone || "(이름없음)"}"이(가) 등록되었습니다.`);
           }}

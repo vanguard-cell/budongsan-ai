@@ -325,6 +325,44 @@ export default function AdminPage() {
               );
             })()}
 
+            {/* 기능별 사용량 — 단순화 근거 (메뉴 방문보다 정밀, 많이 쓰는 순) */}
+            {(() => {
+              const FEATURE_LABEL: Record<string, string> = {
+                prop_add: "매물 등록", prop_edit: "매물 수정", prop_contract: "계약 진행",
+                prop_to_expiry: "만기로 보내기", prop_same: "같은단지 추가", prop_excel: "매물 엑셀업로드",
+                complex_pick: "단지 선택", cust_add: "고객 등록", cust_kakao: "카톡 붙여넣기",
+                cust_stage: "고객 단계이동", cust_log: "고객 여정기록",
+                contract_renew: "재계약(연장)", contract_reopen: "매물로 되돌리기", contract_close: "관리 종료",
+                sched_add: "스케줄 추가", sched_done: "스케줄 완료",
+                mp_bulk: "실거래 평형별조회", mp_manual: "실거래 직접입력",
+                ai_generate: "AI 문구생성", fb_new: "건의함 작성",
+              };
+              const entries = Object.entries(panelUser.features || {})
+                .filter(([, n]) => n > 0)
+                .sort((a, b) => b[1] - a[1]);
+              const max = entries[0]?.[1] || 1;
+              return (
+                <div>
+                  <div className="text-[11px] font-bold text-gray-500 mb-1.5">기능별 사용량 (실제 행동, 많이 쓰는 순)</div>
+                  {entries.length === 0 ? (
+                    <div className="text-[11px] text-gray-400 py-2">아직 기능 사용 기록이 없습니다 — 이 기능 추가 후 행동부터 누적됩니다.</div>
+                  ) : (
+                    <div className="space-y-1">
+                      {entries.map(([key, n]) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <div className="w-20 text-[11px] text-gray-600 shrink-0 text-right">{FEATURE_LABEL[key] || key}</div>
+                          <div className="flex-1 h-4 rounded bg-gray-100 overflow-hidden">
+                            <div className="h-4 rounded bg-emerald-400" style={{ width: `${Math.max(4, (n / max) * 100)}%` }} />
+                          </div>
+                          <div className="w-10 text-[11px] text-gray-500 tabular-nums text-right shrink-0">{n}회</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* 매물 열람 */}
             <div>
               {panelProps === null ? (

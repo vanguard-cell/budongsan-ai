@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import SideDrawer from "@/app/components/SideDrawer";
 import {
   subscribeFeedback,
@@ -96,6 +96,7 @@ export default function FeedbackPage() {
         text.trim(),
         newImage || undefined,
       );
+      recordFeatureUse(user.uid, "fb_new");
       setText("");
       setNewImage("");
       setShowCompose(false);

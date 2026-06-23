@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import ComplexPickerWidget from "@/app/ComplexPicker";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
   subscribeContracts,
   saveContract as fsSaveContract,
@@ -224,6 +224,7 @@ export default function ExpiryPage() {
     const target = contracts.find(c => c.id === id);
     if (!target) return;
     await fsSaveContract(user.agencyId, { ...target, status: "closed" });
+    recordFeatureUse(user.uid, "contract_close");
   };
 
   const reopenContract = async (id: string) => {
@@ -236,6 +237,7 @@ export default function ExpiryPage() {
   const doRenew = async (prev: Contract, term: RenewTerm) => {
     if (!user) return;
     await renewContract(user.agencyId, prev, term);
+    recordFeatureUse(user.uid, "contract_renew");
     setRenewing(null);
     setPanelId(null);
   };
@@ -289,6 +291,7 @@ export default function ExpiryPage() {
       await saveProperty(user.agencyId, prop);
       // 2. 원 계약을 closed로 (이력 보존)
       await fsSaveContract(user.agencyId, { ...c, status: "closed" });
+      recordFeatureUse(user.uid, "contract_reopen");
       // 3. 매물 관리 페이지로 자동 이동 — 사용자가 결과 즉시 확인
       router.push("/properties");
     } catch (e) {

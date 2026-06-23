@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import InstallPrompt from "../InstallPrompt";
 import ComplexPickerWidget from "../ComplexPicker";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 
 /* ───────── 타입 ───────── */
 interface AgencyInfo { name: string; rep: string; phone: string; directions: string; intro: string; }
@@ -132,6 +133,7 @@ function SectionHead({ step, title, desc }: { step: string; title: string; desc:
 
 /* ───────── 메인 ───────── */
 export default function Home() {
+  const { user } = useAuth();
   const [form, setForm] = useState<FormData>({
     propertyType: "아파트", dealType: "매매", location: "", complexName: "",
     deposit: "", monthly: "", price: "",
@@ -318,6 +320,7 @@ export default function Home() {
       const res = await fetch("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ form, agency: agencySaved ? agency : null, locationInfo }) });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      recordFeatureUse(user?.uid, "ai_generate");
       setResult(data);
       setActiveTab("naver");
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
