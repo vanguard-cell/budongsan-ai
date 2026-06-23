@@ -14,8 +14,9 @@ import { subscribeCustomers } from "@/lib/customers-db";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
-import { computeSalesStats, fmtNum, formatManToKorean } from "@/lib/sales";
+import { computeSalesStats, fmtNum } from "@/lib/sales";
 import { effectiveStage, STAGE_FLOW, STAGE_META, type Customer } from "@/app/customers/customer-types";
+import PeriodPicker, { type Period, periodLabel } from "@/app/components/PeriodPicker";
 
 export default function InsightsPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function InsightsPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [period, setPeriod] = useState<Period | null>(null);   // 활동·실패사유 기간
 
   useEffect(() => { if (!authLoading && !user) router.replace("/login?redirect=/insights"); }, [authLoading, user, router]);
   useEffect(() => {
@@ -36,13 +38,19 @@ export default function InsightsPage() {
 
   const sales = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
 
-  const byYear = useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const [ym, v] of Object.entries(sales.byMonth)) { const y = ym.slice(0, 4); m[y] = (m[y] || 0) + v; }
-    return Object.entries(m).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [sales]);
+  // 기간 칩 — 매출 월 + 고객 활동 이벤트가 있는 월
+  const months = useMemo(() => {
+    const set = new Set<string>(sales.allMonths);
+    for (const c of customers) for (const e of c.history || []) set.add(new Date(e.at).toISOString().slice(0, 7));
+    return [...set].sort().reverse();
+  }, [customers, sales.allMonths]);
 
-  // 처리현황
+  useEffect(() => {
+    if (period || !loaded) return;
+    setPeriod({ mode: "month", key: months[0] || new Date().toISOString().slice(0, 7) });
+  }, [loaded, months, period]);
+
+  // 처리현황 — "현재" 스냅샷
   const status = useMemo(() => ({
     active: customers.filter(c => c.status === "active").length,
     matched: customers.filter(c => c.status === "matched").length,
@@ -50,46 +58,38 @@ export default function InsightsPage() {
     lost: customers.filter(c => c.status === "lost").length,
   }), [customers]);
 
-  // 퍼널 — 단계별 "도달" 수 (실패 제외)
+  // 퍼널 — "현재" 단계별 도달 수 (실패 제외)
   const funnel = useMemo(() => {
     const nonLost = customers.filter(c => effectiveStage(c) !== "lost");
     const idxOf = (c: Customer) => STAGE_FLOW.indexOf(effectiveStage(c));
     return STAGE_FLOW.map((st, i) => ({ stage: st, count: nonLost.filter(c => idxOf(c) >= i).length }));
   }, [customers]);
 
-  // 실패 사유 분포
-  const failReasons = useMemo(() => {
-    const m: Record<string, number> = {};
-    let total = 0;
-    for (const c of customers) {
-      if (c.status !== "lost") continue;
-      total++;
-      const drops = (c.history || []).filter(e => e.kind === "drop");
-      const last = drops[drops.length - 1];
-      const reason = (last?.reason || "기타").trim() || "기타";
-      m[reason] = (m[reason] || 0) + 1;
-    }
-    return { total, list: Object.entries(m).sort((a, b) => b[1] - a[1]) };
-  }, [customers]);
-
-  // 이번 달 활동
-  const activity = useMemo(() => {
-    const ym = new Date().toISOString().slice(0, 7);
-    let call = 0, visit = 0, shown = 0;
+  // 선택 기간 집계 — 활동·성과·실패사유 (이벤트 날짜 기준)
+  const agg = useMemo(() => {
+    const res = { call: 0, visit: 0, shown: 0, won: 0, lost: 0, fail: {} as Record<string, number>, failTotal: 0 };
+    if (!period) return res;
+    const inPeriod = (at: number) => {
+      const ym = new Date(at).toISOString().slice(0, 7);
+      return period.mode === "year" ? ym.slice(0, 4) === period.key : ym === period.key;
+    };
     for (const c of customers) for (const e of c.history || []) {
-      if (new Date(e.at).toISOString().slice(0, 7) !== ym) continue;
-      if (e.kind === "call" || e.kind === "sms") call++;
-      else if (e.kind === "visit") visit++;
-      else if (e.kind === "shown") shown++;
+      if (!inPeriod(e.at)) continue;
+      if (e.kind === "call" || e.kind === "sms") res.call++;
+      else if (e.kind === "visit") res.visit++;
+      else if (e.kind === "shown") res.shown++;
+      else if (e.kind === "drop") { res.lost++; res.failTotal++; const r = (e.reason || "기타").trim() || "기타"; res.fail[r] = (res.fail[r] || 0) + 1; }
+      else if (e.kind === "status" && /(거래 완료|계약 성사)/.test(e.text || "")) res.won++;
     }
-    const today = new Date().toISOString().slice(0, 10);
-    const upcoming = customers.filter(c => c.nextFollowUp && c.nextFollowUp >= today && c.status !== "closed" && c.status !== "lost").length;
-    return { call, visit, shown, upcoming };
-  }, [customers]);
+    return res;
+  }, [customers, period]);
+  const failList = useMemo(() => Object.entries(agg.fail).sort((a, b) => b[1] - a[1]), [agg]);
 
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
 
-  const thisMonthLabel = `${new Date().getMonth() + 1}월`;
+  const periodTitle = period ? periodLabel(period) : "";
+  const today = new Date().toISOString().slice(0, 10);
+  const upcoming = customers.filter(c => c.nextFollowUp && c.nextFollowUp >= today && c.status !== "closed" && c.status !== "lost").length;
   const maxFunnel = Math.max(1, funnel[0]?.count || 1);
 
   return (
@@ -113,35 +113,32 @@ export default function InsightsPage() {
       ) : (
         <div className="space-y-5">
 
-          {/* ① 수익 */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">이번 달 매출 · {thisMonthLabel}</div>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-gray-100 tabular-nums">{fmtNum(sales.thisMonth)}</span>
-                  <span className="text-base text-gray-500">만원</span>
-                </div>
-                <div className="text-xs text-gray-400 mt-0.5">≈ {formatManToKorean(sales.thisMonth)}</div>
+          {/* 수익 요약 (간단) — 상세·기간별은 매출 페이지 */}
+          <Link href="/sales" className="block group">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 flex items-center justify-between gap-4 hover:shadow-md transition-all">
+              <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 min-w-0">
+                <span className="text-sm font-bold text-gray-800 dark:text-gray-100 shrink-0">💰 수익</span>
+                <SumInline label="이번 달" v={sales.thisMonth} />
+                <SumInline label="올해" v={sales.thisYear} />
+                <SumInline label="누적" v={sales.grand} />
               </div>
-              <div className="grid grid-cols-3 gap-5 sm:gap-8 shrink-0">
-                <Mini label="올해 누적" value={sales.thisYear} />
-                <Mini label="예정 매출" value={sales.pending} accent="#BA7517" />
-                <Mini label="전체 누적" value={sales.grand} />
-              </div>
+              <span className="text-xs text-[var(--brand-blue)] dark:text-blue-400 flex items-center gap-0.5 shrink-0 whitespace-nowrap">
+                매출 상세<span className="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+              </span>
             </div>
-            {byYear.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 flex flex-wrap gap-x-6 gap-y-2">
-                {byYear.map(([y, v]) => (
-                  <div key={y} className="text-sm"><span className="text-gray-400">{y}년</span> <span className="font-bold text-gray-800 dark:text-gray-200 tabular-nums">{fmtNum(v)}만</span></div>
-                ))}
-              </div>
-            )}
+          </Link>
+
+          {/* 기간 선택 — 활동·성과·실패사유가 이 기간으로 */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm px-4 py-3">
+            {period && <PeriodPicker months={months} value={period} onChange={setPeriod} accent="#2383E2" />}
           </div>
 
-          {/* ② 처리 현황 */}
+          {/* ② 처리 현황 (현재) */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
-            <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">처리 현황</div>
+            <div className="flex items-baseline gap-2 mb-3">
+              <div className="text-base font-bold text-gray-800 dark:text-gray-100">처리 현황</div>
+              <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-500">현재</span>
+            </div>
             {(() => {
               const inProg = status.active + status.matched;
               const total = inProg + status.closed + status.lost;
@@ -177,7 +174,10 @@ export default function InsightsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-5">
             {/* ③ 퍼널 — 가로 진행 (문의 →%→ 연락 →%→ …) */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
-              <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-4">파이프라인 퍼널 (문의 → 계약)</div>
+              <div className="flex items-baseline gap-2 mb-4">
+                <div className="text-base font-bold text-gray-800 dark:text-gray-100">파이프라인 퍼널 (문의 → 계약)</div>
+                <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-500">현재</span>
+              </div>
               <div className="overflow-x-auto">
                 <div className="flex items-stretch min-w-[460px]">
                   {funnel.map((f, i) => {
@@ -208,16 +208,16 @@ export default function InsightsPage() {
               <p className="text-[10.5px] text-gray-400 mt-3">막대 = 해당 단계까지 도달한 손님 수 · 화살표 = 다음 단계 전환율</p>
             </div>
 
-            {/* ④ 실패 사유 */}
+            {/* ④ 실패 사유 — 선택 기간 */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
               <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">실패 사유</div>
-              <div className="text-xs text-gray-400 mb-3">총 {failReasons.total}건 이탈</div>
-              {failReasons.list.length === 0 ? (
-                <p className="text-[12px] text-gray-400 py-4">아직 이탈 사유 데이터가 없습니다.</p>
+              <div className="text-xs text-gray-400 mb-3">{periodTitle} · 총 {agg.failTotal}건 이탈</div>
+              {failList.length === 0 ? (
+                <p className="text-[12px] text-gray-400 py-4">이 기간엔 이탈 기록이 없어요.</p>
               ) : (
                 <div className="space-y-2.5">
-                  {failReasons.list.map(([reason, n]) => {
-                    const pct = failReasons.total > 0 ? Math.round((n / failReasons.total) * 100) : 0;
+                  {failList.map(([reason, n]) => {
+                    const pct = agg.failTotal > 0 ? Math.round((n / agg.failTotal) * 100) : 0;
                     return (
                       <div key={reason}>
                         <div className="flex justify-between text-[12px] mb-1"><span className="text-gray-700 dark:text-gray-300 truncate">{reason}</span><span className="text-gray-400 shrink-0 ml-2">{n}건 · {pct}%</span></div>
@@ -230,19 +230,22 @@ export default function InsightsPage() {
             </div>
           </div>
 
-          {/* ⑤ 이번 달 활동 */}
+          {/* ⑤ 활동 + 성과 — 선택 기간 */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
-            <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">이번 달 활동</div>
+            <div className="flex items-baseline justify-between mb-3">
+              <div className="text-base font-bold text-gray-800 dark:text-gray-100">{periodTitle} 활동</div>
+              <div className="text-xs text-gray-500">성과 · 성사 <span className="font-bold text-emerald-600">{agg.won}</span> · 실패 <span className="font-bold text-red-500">{agg.lost}</span></div>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <ActivityCard icon="call" label="전화·문자" value={activity.call} />
-              <ActivityCard icon="directions_walk" label="집보기 동행" value={activity.visit} />
-              <ActivityCard icon="visibility" label="매물 보여줌" value={activity.shown} />
-              <ActivityCard icon="event_upcoming" label="예정 후속연락" value={activity.upcoming} accent />
+              <ActivityCard icon="call" label="전화·문자" value={agg.call} />
+              <ActivityCard icon="directions_walk" label="집보기 동행" value={agg.visit} />
+              <ActivityCard icon="visibility" label="매물 보여줌" value={agg.shown} />
+              <ActivityCard icon="event_upcoming" label="예정 후속연락" value={upcoming} accent />
             </div>
           </div>
 
           <p className="text-center text-[11px] text-gray-400 leading-relaxed">
-            📊 퍼널·활동·실패사유는 고객 활동 기록 기반 — 기능 추가 시점부터 누적됩니다 · 매출은 실시간 집계
+            📊 처리현황·퍼널은 <b>현재</b> 상태 · 활동·성과·실패사유는 <b>선택 기간</b> 기준 (고객 활동 기록 기반 — 기능 추가 시점부터 누적)
           </p>
         </div>
       )}
@@ -250,12 +253,12 @@ export default function InsightsPage() {
   );
 }
 
-function Mini({ label, value, accent }: { label: string; value: number; accent?: string }) {
+function SumInline({ label, v }: { label: string; v: number }) {
   return (
-    <div>
-      <div className="text-xs text-gray-400 whitespace-nowrap">{label}</div>
-      <div className="text-lg font-bold tabular-nums mt-0.5" style={{ color: accent || undefined }}>{fmtNum(value)}<span className="text-[11px] font-normal text-gray-400 ml-0.5">만</span></div>
-    </div>
+    <span className="text-sm whitespace-nowrap">
+      <span className="text-gray-400">{label} </span>
+      <span className="font-bold text-gray-800 dark:text-gray-100 tabular-nums">{fmtNum(v)}만</span>
+    </span>
   );
 }
 function ActivityCard({ icon, label, value, accent }: { icon: string; label: string; value: number; accent?: boolean }) {
