@@ -21,17 +21,16 @@ import {
 } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
-import { subscribeSchedules, type Schedule, type ScheduleType } from "@/lib/schedules-db";
-import { computeSalesStats, fmtNum, formatMonthKo, formatManToKorean } from "@/lib/sales";
+import { computeSalesStats, slicePeriodStats, fmtNum, formatManToKorean } from "@/lib/sales";
+import PeriodPicker, { type Period, periodLabel } from "@/app/components/PeriodPicker";
 
 export default function SalesPage() {
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [openMonth, setOpenMonth] = useState<string | null>(null);
+  const [period, setPeriod] = useState<Period | null>(null);   // 선택 기간 (월/년)
 
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/sales");
@@ -44,34 +43,23 @@ export default function SalesPage() {
       setLoaded(true);
     });
     const u2 = subscribeContracts(user.agencyId, setContracts);
-    const u3 = subscribeSchedules(user.agencyId, setSchedules);
-    return () => { u1(); u2(); u3(); };
+    return () => { u1(); u2(); };
   }, [user]);
 
   const stats = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
 
-  // 파이프라인 퍼널 — 현재 매물 단계별 (등록=미계약, 계약진행, 거래완료)
-  const funnel = useMemo(() => {
-    const isContracted = (p: Property) => !!(p.contractDate || p.downPaymentDate || p.balanceDate);
-    const active = properties.filter(p => p.status === "active");
-    const available = active.filter(p => !isContracted(p)).length;
-    const contracted = active.filter(p => isContracted(p)).length;
-    const closed = properties.filter(p => p.status === "closed").length;
-    const total = available + contracted + closed;
-    return { available, contracted, closed, total, winRate: total > 0 ? Math.round((closed / total) * 100) : 0 };
-  }, [properties]);
+  // 선택 기간 기본값 — 데이터 있는 최신 월 (없으면 이번 달)
+  useEffect(() => {
+    if (period || !loaded) return;
+    const latest = stats.allMonths[0] || new Date().toISOString().slice(0, 7);
+    setPeriod({ mode: "month", key: latest });
+  }, [loaded, stats.allMonths, period]);
 
-  // 활동 상태 — 스케줄을 유형별 + 완료/예정으로 집계
-  const activity = useMemo(() => {
-    const types: ScheduleType[] = ["집보기", "계약일", "중도금일", "잔금일", "기타"];
-    const byType = types.map(t => {
-      const list = schedules.filter(s => s.scheduleType === t && s.status !== "cancelled");
-      return { type: t, done: list.filter(s => s.status === "done").length, scheduled: list.filter(s => s.status === "scheduled").length };
-    }).filter(x => x.done + x.scheduled > 0);
-    const doneTotal = schedules.filter(s => s.status === "done").length;
-    const schedTotal = schedules.filter(s => s.status === "scheduled").length;
-    return { byType, doneTotal, schedTotal };
-  }, [schedules]);
+  // 선택 기간 슬라이스 — hero·거래종류·명세가 이걸로 바뀜
+  const slice = useMemo(
+    () => period ? slicePeriodStats(stats, period.mode, period.key) : null,
+    [stats, period],
+  );
 
   // 예시 매출 = "[예시 매출]" 태그가 달린 거래완료 매물
   const sampleProps = useMemo(() => properties.filter(p => (p.memo || "").startsWith("[예시 매출]")), [properties]);
@@ -111,15 +99,18 @@ export default function SalesPage() {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
 
-  const thisMonthLabel = `${new Date().getMonth() + 1}월`;
+  const sliceTotal = slice?.total ?? 0;
+  const periodTitle = period ? periodLabel(period) : "";
 
-  // 전월 대비 증감률 — 지난달 실적이 있을 때만
-  const lastMonthKey = (() => {
-    const d = new Date(); d.setMonth(d.getMonth() - 1);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  // 전월 대비 증감률 — 월 모드 + 이전 달 실적 있을 때만
+  const momPct = (() => {
+    if (!period || period.mode !== "month") return null;
+    const [y, m] = period.key.split("-").map(Number);
+    const d = new Date(y, m - 2, 1);
+    const prevKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const prev = stats.byMonth[prevKey] || 0;
+    return prev > 0 ? Math.round((sliceTotal - prev) / prev * 100) : null;
   })();
-  const lastMonthVal = stats.byMonth[lastMonthKey] || 0;
-  const momPct = lastMonthVal > 0 ? Math.round((stats.thisMonth - lastMonthVal) / lastMonthVal * 100) : null;
 
   return (
     <div>
@@ -164,13 +155,18 @@ export default function SalesPage() {
           <EmptyState onLoadSample={loadSamples} />
         ) : (
           <div className="space-y-5">
-            {/* ① 히어로 — 이번 달 매출 강조 + 보조 지표 */}
+            {/* 기간 선택 — hero·거래종류·명세를 이 기간으로 */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm px-4 py-3">
+              {period && <PeriodPicker months={stats.allMonths} value={period} onChange={setPeriod} accent="#1D9E75" />}
+            </div>
+
+            {/* ① 히어로 — 선택 기간 매출 강조 + 보조 지표 */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
               <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
                 <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">이번 달 매출 · {thisMonthLabel}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{periodTitle} 매출 <span className="text-gray-400">· {slice?.count ?? 0}건</span></div>
                   <div className="flex items-baseline gap-2 mt-1.5 flex-wrap">
-                    <span className="text-4xl font-bold text-gray-900 dark:text-gray-100 tabular-nums">{fmtNum(stats.thisMonth)}</span>
+                    <span className="text-4xl font-bold text-gray-900 dark:text-gray-100 tabular-nums">{fmtNum(sliceTotal)}</span>
                     <span className="text-base text-gray-500 dark:text-gray-400">만원</span>
                     {momPct !== null && (
                       <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${momPct >= 0 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-300"}`}>
@@ -178,12 +174,12 @@ export default function SalesPage() {
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">≈ {formatManToKorean(stats.thisMonth)}</div>
+                  <div className="text-xs text-gray-400 mt-1">≈ {formatManToKorean(sliceTotal)}</div>
                 </div>
                 <div className="grid grid-cols-3 gap-5 sm:gap-8 shrink-0">
                   <MiniStat label="올해 누적" value={stats.thisYear} />
                   <MiniStat label="예정 매출" value={stats.pending} accent="orange" />
-                  <MiniStat label="평균 / 건" value={stats.avgPerDeal} sub={`총 ${stats.count}건`} />
+                  <MiniStat label="전체 누적" value={stats.grand} sub={`총 ${stats.count}건`} />
                 </div>
               </div>
             </div>
@@ -220,109 +216,43 @@ export default function SalesPage() {
               </div>
             </div>
 
-            {/* ③ 파이프라인 퍼널 + 활동 상태 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {/* 파이프라인 건전성 */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
-                <div className="flex items-baseline justify-between mb-4">
-                  <div className="text-base font-bold text-gray-800 dark:text-gray-100">파이프라인 건전성</div>
-                  <div className="text-xs text-gray-500">성사율 <span className="font-bold text-emerald-600">{funnel.winRate}%</span></div>
-                </div>
-                {funnel.total === 0 ? (
-                  <div className="text-center text-xs text-gray-400 py-6">매물 데이터가 쌓이면 단계별 전환율이 표시됩니다</div>
-                ) : (
-                  <div className="space-y-2">
-                    <FunnelBar label="등록 (미계약)" value={funnel.available} max={funnel.total} color="#FAC775" />
-                    <ConvLabel from={funnel.available} to={funnel.contracted} />
-                    <FunnelBar label="계약 진행" value={funnel.contracted} max={funnel.total} color="#EF9F27" />
-                    <ConvLabel from={funnel.contracted} to={funnel.closed} />
-                    <FunnelBar label="거래완료 (성사)" value={funnel.closed} max={funnel.total} color="#1D9E75" />
-                  </div>
-                )}
-              </div>
-
-              {/* 활동 상태 */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
-                <div className="flex items-baseline justify-between mb-4">
-                  <div className="text-base font-bold text-gray-800 dark:text-gray-100">활동 상태</div>
-                  <div className="text-xs text-gray-500">완료 {activity.doneTotal} · 예정 {activity.schedTotal}</div>
-                </div>
-                {activity.byType.length === 0 ? (
-                  <div className="text-center text-xs text-gray-400 py-6">스케줄(약속·계약일 등)이 등록되면 표시됩니다</div>
-                ) : (
-                  <div className="space-y-3">
-                    {activity.byType.map(a => {
-                      const tot = a.done + a.scheduled;
-                      return (
-                        <div key={a.type}>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-gray-700 dark:text-gray-300 font-medium">{a.type}</span>
-                            <span className="text-gray-500 dark:text-gray-400">완료 {a.done} · 예정 {a.scheduled}</span>
-                          </div>
-                          <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 dark:bg-slate-800">
-                            <div className="bg-emerald-500" style={{ width: `${(a.done / tot) * 100}%` }} />
-                            <div className="bg-blue-400" style={{ width: `${(a.scheduled / tot) * 100}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div className="flex items-center gap-4 pt-1 text-[11px] text-gray-500">
-                      <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>완료</span>
-                      <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-blue-400"></span>예정</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ④ 거래종류 비중 + 월별 명세 */}
+            {/* ③ 거래종류 비중(기간) + 기간 명세 */}
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-5">
-              {/* 거래종류 비중 */}
+              {/* 거래종류 비중 — 선택 기간 */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
-                <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-4">거래종류 비중</div>
-                <div className="space-y-3.5">
-                  <DealBar label="매매" value={stats.byDealType.매매} total={stats.grand} color="#E24B4A" />
-                  <DealBar label="전세" value={stats.byDealType.전세} total={stats.grand} color="#378ADD" />
-                  <DealBar label="월세" value={stats.byDealType.월세} total={stats.grand} color="#1D9E75" />
-                </div>
+                <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-1">거래종류 비중</div>
+                <div className="text-xs text-gray-400 mb-4">{periodTitle} 기준</div>
+                {slice && slice.total > 0 ? (
+                  <div className="space-y-3.5">
+                    <DealBar label="매매" value={slice.byDealType.매매} total={slice.total} color="#E24B4A" />
+                    <DealBar label="전세" value={slice.byDealType.전세} total={slice.total} color="#378ADD" />
+                    <DealBar label="월세" value={slice.byDealType.월세} total={slice.total} color="#1D9E75" />
+                  </div>
+                ) : (
+                  <div className="text-center text-xs text-gray-400 py-8">이 기간엔 매출이 없어요</div>
+                )}
               </div>
 
-              {/* 월별 명세 — 펼침 */}
+              {/* 기간 명세 — 선택 기간의 거래 목록 */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
-                <div className="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">월별 명세</div>
-                <div className="divide-y divide-gray-100 dark:divide-slate-800">
-                  {stats.allMonths.map(m => {
-                    const isOpen = openMonth === m;
-                    const items = stats.itemsByMonth[m] || [];
-                    return (
-                      <div key={m}>
-                        <button
-                          onClick={() => setOpenMonth(isOpen ? null : m)}
-                          className="w-full py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors rounded-lg px-1"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className={`material-symbols-outlined text-base text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`}>chevron_right</span>
-                            <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatMonthKo(m)}</span>
-                            <span className="text-xs text-gray-400">({items.length}건)</span>
-                          </div>
-                          <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">{fmtNum(stats.byMonth[m])}만원</span>
-                        </button>
-                        {isOpen && (
-                          <div className="pb-2 pl-7 pr-1 space-y-1.5">
-                            {items.map(p => (
-                              <div key={p.id} className="flex items-center gap-2 text-xs">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 shrink-0">{p.dealType}</span>
-                                <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{p.address}</span>
-                                <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate}</span>
-                                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0">{fmtNum(p.commission)}만</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="flex items-baseline justify-between mb-3">
+                  <div className="text-base font-bold text-gray-800 dark:text-gray-100">명세 · {periodTitle}</div>
+                  <div className="text-xs text-gray-400">{slice?.count ?? 0}건 · {fmtNum(sliceTotal)}만</div>
                 </div>
+                {slice && slice.items.length > 0 ? (
+                  <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[360px] overflow-y-auto">
+                    {slice.items.map(p => (
+                      <div key={p.id} className="flex items-center gap-2 text-xs py-2.5">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 shrink-0">{p.dealType}</span>
+                        <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{p.address}</span>
+                        <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate}</span>
+                        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0 tabular-nums">{fmtNum(p.commission)}만</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-xs text-gray-400 py-8">이 기간엔 거래가 없어요 — 위에서 다른 기간을 눌러보세요</div>
+                )}
               </div>
             </div>
           </div>
@@ -350,30 +280,6 @@ function MiniStat({ label, value, sub, accent }: {
       </div>
       {sub && <div className="text-[10px] text-gray-400 mt-0.5">{sub}</div>}
     </div>
-  );
-}
-
-/* 파이프라인 퍼널 막대 */
-function FunnelBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
-  return (
-    <div>
-      <div className="flex justify-between items-baseline text-sm mb-1">
-        <span className="text-gray-700 dark:text-gray-300 font-medium">{label}</span>
-        <span className="text-gray-500 dark:text-gray-400 tabular-nums">{value}건</span>
-      </div>
-      <div className="h-3.5 rounded-md bg-gray-100 dark:bg-slate-800 overflow-hidden">
-        <div className="h-3.5 rounded-md transition-all" style={{ width: `${Math.max(pct, value > 0 ? 6 : 0)}%`, background: color }} />
-      </div>
-    </div>
-  );
-}
-
-/* 단계 간 전환율 라벨 */
-function ConvLabel({ from, to }: { from: number; to: number }) {
-  const pct = from > 0 ? Math.round((to / from) * 100) : 0;
-  return (
-    <div className="text-right text-[11px] text-gray-400 pr-1 -my-0.5">↓ 전환 {pct}%</div>
   );
 }
 

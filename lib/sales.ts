@@ -95,6 +95,26 @@ export function computeSalesStats(properties: Property[], contracts: Contract[] 
   return stats;
 }
 
+/** 선택 기간(월 "YYYY-MM" / 년 "YYYY")으로 매출 슬라이스 — 거래종류·명세·합계 */
+export function slicePeriodStats(stats: SalesStats, mode: "month" | "year", key: string) {
+  const months = mode === "year"
+    ? stats.allMonths.filter(m => m.startsWith(key))
+    : stats.allMonths.filter(m => m === key);
+  const items: Property[] = [];
+  for (const m of months) items.push(...(stats.itemsByMonth[m] || []));
+  const byDealType = { "매매": 0, "전세": 0, "월세": 0, "기타": 0 } as Record<DealType | "기타", number>;
+  let total = 0;
+  for (const p of items) {
+    const amt = parseInt((p.commission || "0").replace(/\D/g, ""), 10) || 0;
+    total += amt;
+    const dt = (p.dealType ?? "기타") as DealType | "기타";
+    byDealType[dt] = (byDealType[dt] || 0) + amt;
+  }
+  // 명세는 최신 잔금일 순
+  items.sort((a, b) => (b.balanceDate || "").localeCompare(a.balanceDate || ""));
+  return { total, byDealType, items, count: items.length };
+}
+
 /** 천 단위 콤마 */
 export function fmtNum(n: number | string): string {
   const v = typeof n === "string" ? parseInt(n.replace(/\D/g, ""), 10) : n;
