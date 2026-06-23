@@ -107,9 +107,9 @@ export default function DashboardPage() {
     () => feedback.filter(f => f.submittedBy.uid === user?.uid && f.lastReplyBy === "admin"),
     [feedback, user],
   );
-  /* ── 답변이 필요한 문의 (사용자가 마지막 발언) — 관리자 관점 ── */
+  /* ── 처리 필요한 문의 — 관리자 관점: 문의(pending) 칸이거나 사용자가 마지막 발언 ── */
   const adminTodo = useMemo(
-    () => (isAdmin ? feedback.filter(f => f.lastReplyBy === "user") : []),
+    () => (isAdmin ? feedback.filter(f => f.status === "pending" || f.lastReplyBy === "user") : []),
     [feedback, isAdmin],
   );
 
