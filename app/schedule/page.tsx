@@ -312,7 +312,7 @@ export default function SchedulePage() {
 
         <div className="rounded-2xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900 shadow-sm flex flex-col lg:flex-row">
           {/* ── 좌측: 월별 캘린더 (통합 카드 좌측, 넓은 화면에선 고정) ── */}
-          <div className="w-full lg:w-[420px] lg:shrink-0 p-3 sm:p-4 lg:border-r border-gray-100 dark:border-slate-800 lg:sticky lg:top-4 self-start">
+          <div className="w-full lg:w-[420px] lg:shrink-0 p-3 sm:p-4 lg:border-r border-gray-100 dark:border-slate-800 self-start">
             <MonthCalendar
               flat
               items={calendarItems}
@@ -389,7 +389,7 @@ export default function SchedulePage() {
             </button>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-5 lg:max-h-[480px] lg:overflow-y-auto lg:pr-1.5">
             {grouped.map(([date, items]) => (
               <div key={date}>
                 {/* 날짜 헤더 */}

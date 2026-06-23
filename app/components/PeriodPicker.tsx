@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 /**
  * 공용 기간 선택기 — [월별 / 년도별] 토글 + 데이터 있는 기간 칩
  * 매출·인사이트에서 공유. 선택하면 부모가 아래 내용을 그 기간으로 재계산.
@@ -23,13 +25,22 @@ export default function PeriodPicker({
   onChange: (p: Period) => void;
   accent?: string;
 }) {
-  const monthList = [...new Set(months)].sort().reverse();
-  const yearList = [...new Set(months.map(m => m.slice(0, 4)))].sort().reverse();
+  // 오름차순 — 왼→오 시간순, 최신이 오른쪽
+  const monthList = [...new Set(months)].sort();
+  const yearList = [...new Set(months.map(m => m.slice(0, 4)))].sort();
   const list = value.mode === "year" ? yearList : monthList;
+
+  // 칩 줄 — 최신(오른쪽)이 보이게 자동 스크롤
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [value.mode, list.length]);
 
   const setMode = (mode: PeriodMode) => {
     if (mode === value.mode) return;
-    const next = (mode === "year" ? yearList : monthList)[0] || "";
+    const arr = mode === "year" ? yearList : monthList;
+    const next = arr[arr.length - 1] || "";   // 최신
     onChange({ mode, key: next });
   };
 
@@ -48,8 +59,8 @@ export default function PeriodPicker({
           </button>
         ))}
       </div>
-      {/* 기간 칩 (가로 스크롤) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto flex-1 min-w-0 pb-0.5">
+      {/* 기간 칩 (가로 스크롤, 최신이 오른쪽) */}
+      <div ref={scrollRef} className="flex items-center gap-1.5 overflow-x-auto flex-1 min-w-0 pb-0.5">
         {list.length === 0 && <span className="text-[11px] text-gray-400">데이터 없음</span>}
         {list.map(key => {
           const active = value.key === key;
