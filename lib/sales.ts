@@ -56,9 +56,25 @@ export function computeSalesStats(properties: Property[], contracts: Contract[] 
   // 내 매물 + 만기로 이전된 계약(수수료 보존)을 함께 집계
   const all = [...properties, ...contracts.map(contractToSalesProperty)];
 
+  // ── 중복 매출 제거 ──
+  // 같은 단지·호·거래종류는 1건(최신 잔금일)만 집계한다.
+  // 만기↔매물 '되돌리기'를 반복하면 원 계약이 closed로 보존되며 수수료를 그대로 갖는데,
+  // 그게 새 계약과 함께 매출로 이중 집계되던 문제(어머니 피드백)를 여기서 차단.
+  const normAddr = (a: string) =>
+    (a || "").replace(/제\s*\d+\s*층|제|블럭|블록/g, "").replace(/[\s()\-]/g, "").toLowerCase();
+  const commOf = (p: Property) => parseInt((p.commission || "0").replace(/\D/g, ""), 10) || 0;
+  const dedup = new Map<string, Property>();
   for (const p of all) {
-    const amt = parseInt((p.commission || "0").replace(/\D/g, ""), 10) || 0;
-    if (amt === 0 || !p.balanceDate) continue;
+    if (commOf(p) === 0 || !p.balanceDate) continue;
+    const key = `${normAddr(p.address)}|${p.dealType || ""}`;
+    const ex = dedup.get(key);
+    if (!ex || p.balanceDate > ex.balanceDate || (p.balanceDate === ex.balanceDate && commOf(p) > commOf(ex))) {
+      dedup.set(key, p);
+    }
+  }
+
+  for (const p of dedup.values()) {
+    const amt = commOf(p);
 
     const month = p.balanceDate.slice(0, 7);
     stats.byMonth[month] = (stats.byMonth[month] || 0) + amt;
