@@ -100,10 +100,17 @@ export default function DashboardPage() {
     return () => { u1(); u2(); u3(); u4(); u5(); };
   }, [user]);
 
-  /* ── 내 문의에 도착한 관리자 답변 (아직 내가 답 안 한 것) ── */
+  const isAdmin = user?.email === ADMIN_EMAIL;
+
+  /* ── 내 문의에 도착한 관리자 답변 (아직 내가 답 안 한 것) — 사용자 관점 ── */
   const newReplies = useMemo(
     () => feedback.filter(f => f.submittedBy.uid === user?.uid && f.lastReplyBy === "admin"),
     [feedback, user],
+  );
+  /* ── 답변이 필요한 문의 (사용자가 마지막 발언) — 관리자 관점 ── */
+  const adminTodo = useMemo(
+    () => (isAdmin ? feedback.filter(f => f.lastReplyBy === "user") : []),
+    [feedback, isAdmin],
   );
 
   const todayStr = todayISO();
@@ -226,8 +233,24 @@ export default function DashboardPage() {
           </p>
         </header>
 
-        {/* ─── 문의 답변 도착 알림 ─── */}
-        {newReplies.length > 0 && (
+        {/* ─── 건의함 알림 — 관리자: 답변 필요한 문의 / 사용자: 내 문의 답변 도착 ─── */}
+        {isAdmin && adminTodo.length > 0 ? (
+          <Link href="/feedback" className="block group">
+            <div className="flex items-center gap-3 rounded-2xl border border-rose-200 dark:border-rose-800 bg-gradient-to-r from-rose-50 to-amber-50 dark:from-rose-950/40 dark:to-amber-950/30 px-4 py-3.5 shadow-sm hover:shadow-md transition-all animate-[backdrop-fade_.3s_ease-out]">
+              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-600 text-white">
+                <span className="material-symbols-outlined">mark_chat_unread</span>
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-950">{adminTodo.length}</span>
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-rose-900 dark:text-rose-100">🔔 답변이 필요한 문의가 있어요</p>
+                <p className="text-xs text-rose-700/80 dark:text-rose-300/80 mt-0.5 truncate">
+                  건의함에 새 문의·답글 {adminTodo.length}건 — 눌러서 답변하세요
+                </p>
+              </div>
+              <span className="material-symbols-outlined text-rose-400 group-hover:translate-x-0.5 transition-transform">chevron_right</span>
+            </div>
+          </Link>
+        ) : newReplies.length > 0 ? (
           <Link href="/feedback" className="block group">
             <div className="flex items-center gap-3 rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-r from-violet-50 to-blue-50 dark:from-violet-950/40 dark:to-blue-950/30 px-4 py-3.5 shadow-sm hover:shadow-md transition-all animate-[backdrop-fade_.3s_ease-out]">
               <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white">
@@ -243,7 +266,7 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined text-violet-400 group-hover:translate-x-0.5 transition-transform">chevron_right</span>
             </div>
           </Link>
-        )}
+        ) : null}
 
         {/* ─── 2) 상단 4카드 (순서 고정) ─── */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
