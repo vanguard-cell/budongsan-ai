@@ -22,6 +22,8 @@ interface Props {
   items: CalendarItem[];
   onSelectDate: (date: string | null) => void;
   selectedDate: string | null;
+  /** 통합 카드 안에 넣을 때 — 자체 테두리·배경 제거 */
+  flat?: boolean;
 }
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -65,7 +67,7 @@ function todayStr(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export default function MonthCalendar({ items, onSelectDate, selectedDate }: Props) {
+export default function MonthCalendar({ items, onSelectDate, selectedDate, flat }: Props) {
   const today = todayStr();
   const initial = selectedDate || today;
   const [cursor, setCursor] = useState<{ y: number; m: number }>(() => {
@@ -128,7 +130,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate }: Pro
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
+    <div className={flat ? "" : "bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4"}>
       {/* 월 헤더 */}
       <div className="flex items-center justify-between mb-3">
         <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">‹</button>

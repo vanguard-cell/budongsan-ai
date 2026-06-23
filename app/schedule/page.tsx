@@ -310,18 +310,19 @@ export default function SchedulePage() {
           </div>
         </section>
 
-        <div className="flex flex-col lg:flex-row gap-5 items-start">
-          {/* ── 좌측: 월별 캘린더 (넓은 화면에선 고정) ── */}
-          <div className="w-full lg:w-[440px] lg:shrink-0 lg:sticky lg:top-20">
+        <div className="rounded-2xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900 shadow-sm flex flex-col lg:flex-row">
+          {/* ── 좌측: 월별 캘린더 (통합 카드 좌측, 넓은 화면에선 고정) ── */}
+          <div className="w-full lg:w-[420px] lg:shrink-0 p-3 sm:p-4 lg:border-r border-gray-100 dark:border-slate-800 lg:sticky lg:top-4 self-start">
             <MonthCalendar
+              flat
               items={calendarItems}
               onSelectDate={setSelectedDate}
               selectedDate={selectedDate}
             />
           </div>
 
-          {/* ── 우측: 필터 + 목록 ── */}
-          <div className="flex-1 min-w-0 w-full">
+          {/* ── 우측: 필터 + 목록 (통합 카드 우측) ── */}
+          <div className="flex-1 min-w-0 w-full p-3 sm:p-4 lg:border-t-0 border-t border-gray-100 dark:border-slate-800">
 
         {/* 오늘 알림 */}
         {todayCount > 0 && !selectedDate && (
