@@ -42,6 +42,17 @@ const TYPE_COLORS: Record<ScheduleType, string> = {
   "기타":     "bg-gray-100 text-gray-600",
 };
 
+/** 목록 한 줄 — 종류색 막대 + 짧은 라벨 (시안 A) */
+const SOURCE_BAR: Record<ItemSource, string> = {
+  appointment:     "#2383E2",
+  contractDate:    "#7F77DD",
+  downPaymentDate: "#D4537E",
+  balanceDate:     "#EF9F27",
+};
+const SCHEDULE_SHORT: Record<ScheduleType, string> = {
+  "집보기": "집보기", "계약일": "계약", "중도금일": "중도금", "잔금일": "잔금", "기타": "기타",
+};
+
 /** schedule.scheduleType → 필터 분류 (계약/중도금/잔금은 별도, 집보기/기타는 약속) */
 function scheduleTypeToSource(t: ScheduleType): ItemSource {
   if (t === "계약일")   return "contractDate";
@@ -401,20 +412,12 @@ export default function SchedulePage() {
                   <span className="text-[11px]">{items.length}건</span>
                 </div>
 
-                <div className="space-y-2">
-                  {items.map(item => {
-                    const inner =
-                      item.schedule ? <ScheduleCard schedule={item.schedule} properties={properties} />
-                      : item.property && item.propertyKind ? <PropertyDateCard property={item.property} kind={item.propertyKind} />
-                      : item.customer ? <FollowUpCard customer={item.customer} />
-                      : null;
-                    if (!inner) return null;
-                    return (
-                      <div key={item.key} onClick={() => setPanelItem(item)} className="cursor-pointer">
-                        {inner}
-                      </div>
-                    );
-                  })}
+                <div className="space-y-1.5">
+                  {items.map(item => (
+                    <div key={item.key} onClick={() => setPanelItem(item)}>
+                      <CompactRow item={item} />
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -516,130 +519,35 @@ export default function SchedulePage() {
   );
 }
 
-/* ── 약속 카드 (클릭 시 우측 패널, 액션은 패널에서) ── */
-function ScheduleCard({ schedule: s, properties }: {
-  schedule: Schedule; properties: Property[];
-}) {
-  const isDone = s.status === "done";
-  const linkedProp = s.propertyId ? properties.find(p => p.id === s.propertyId) : null;
+/* ── 목록 한 줄 (시안 A): 시간/D-day · 종류색 막대 · 단지명 · › ── */
+function CompactRow({ item }: { item: UnifiedItem }) {
+  let lead = "", label = "", title = "", done = false;
+  if (item.schedule) {
+    const s = item.schedule;
+    lead = s.time || "";
+    label = SCHEDULE_SHORT[s.scheduleType] || s.scheduleType;
+    title = s.propertyAddress || "주소 미입력";
+    done = s.status === "done";
+  } else if (item.property && item.propertyKind) {
+    label = item.propertyKind === "contractDate" ? "계약" : item.propertyKind === "downPaymentDate" ? "중도금" : "잔금";
+    title = item.property.address;
+  } else if (item.customer) {
+    label = "후속";
+    title = item.customer.name + (item.customer.preferredArea ? ` · ${item.customer.preferredArea}` : "");
+  }
+  if (!lead) {
+    const dd = dDay(item.date);
+    lead = dd === Infinity ? "" : dd < 0 ? `${-dd}일전` : dd === 0 ? "오늘" : `D-${dd}`;
+  }
+  const bar = SOURCE_BAR[item.source];
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 transition-all hover:shadow-md hover:border-blue-300 ${isDone ? "bg-gray-50/60 border-gray-200 opacity-60" : "bg-white border-gray-200 shadow-sm"}`}>
-      <div className="flex items-start gap-3">
-        <div className={`flex-shrink-0 w-14 text-center rounded-xl py-2 ${isDone ? "bg-gray-100" : "bg-blue-50"}`}>
-          <div className="text-[10px] text-blue-400 font-medium">약속</div>
-          <div className={`text-sm font-bold ${isDone ? "text-gray-400" : "text-blue-700"}`}>{s.time}</div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 mb-1">
-            <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${TYPE_COLORS[s.scheduleType]}`}>{s.scheduleType}</span>
-            {isDone && <span className="text-[11px] px-1.5 py-0.5 rounded bg-green-100 text-green-700">완료</span>}
-            {linkedProp && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">🏘️ 매물연결</span>}
-          </div>
-          <div className="text-sm font-semibold text-gray-800 break-all">{s.propertyAddress || "주소 미입력"}</div>
-          {linkedProp && (
-            <div className="mt-1 text-[11px] text-emerald-700 bg-emerald-50 rounded px-2 py-1">
-              {linkedProp.dealType} {linkedProp.propertyType}{linkedProp.price ? ` · ${linkedProp.price}만` : ""}{linkedProp.ownerName ? ` · 집주인 ${linkedProp.ownerName}` : ""}
-            </div>
-          )}
-          {s.visitorPhone && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              <span className="text-gray-500 shrink-0">{s.visitorName || "방문자"}</span>
-              <a onClick={e => e.stopPropagation()} href={`tel:${s.visitorPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(s.visitorPhone)}</a>
-              <a onClick={e => e.stopPropagation()} href={`sms:${s.visitorPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${s.visitorName ? ` ${s.visitorName}님` : ""}, 미사금빛공인중개사입니다.\n${s.date} ${s.time} ${s.propertyAddress} ${s.scheduleType} 약속 확인드립니다.`)}`}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto">문자</a>
-            </div>
-          )}
-          {s.memo && <div className="mt-1 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-1">💬 {s.memo}</div>}
-        </div>
-        <span className="material-symbols-outlined text-gray-300 text-[18px] shrink-0 self-center">chevron_right</span>
-      </div>
-    </div>
-  );
-}
-
-/* ── 내 매물 계약 진행 날짜 카드 (계약일·중도금일·잔금일) ── */
-function PropertyDateCard({ property: p, kind }: { property: Property; kind: PropertyDateKind }) {
-  const date =
-    kind === "contractDate"    ? p.contractDate
-    : kind === "downPaymentDate" ? p.downPaymentDate
-    : p.balanceDate;
-
-  const kindMeta: Record<PropertyDateKind, { label: string; icon: string; mainColor: string; badgeColor: string; bgColor: string }> = {
-    contractDate:    { label: "계약일",   icon: "📝", mainColor: "text-purple-600", badgeColor: "bg-purple-100 text-purple-700", bgColor: "bg-purple-50 border-purple-200" },
-    downPaymentDate: { label: "중도금일", icon: "💰", mainColor: "text-pink-600",   badgeColor: "bg-pink-100 text-pink-700",     bgColor: "bg-pink-50 border-pink-200" },
-    balanceDate:     { label: "잔금일",   icon: "🔑", mainColor: "text-amber-600",  badgeColor: "bg-amber-100 text-amber-700",   bgColor: "bg-amber-50 border-amber-200" },
-  };
-  const m = kindMeta[kind];
-
-  const dd = dDay(date);
-  const ddLabel = dd === Infinity ? "—" : dd < 0 ? `${-dd}일전` : dd === 0 ? "오늘" : `D-${dd}`;
-
-  return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${m.bgColor}`}>
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-14 text-center rounded-xl py-2 bg-white/70">
-          <div className={`text-[10px] font-medium ${m.mainColor}`}>{m.label}</div>
-          <div className={`text-xs font-bold ${m.mainColor}`}>{ddLabel}</div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 mb-1">
-            <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${m.badgeColor}`}>{m.icon} {m.label}</span>
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{p.dealType}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">🏘️ 내 매물</span>
-          </div>
-          <div className="text-sm font-semibold text-gray-800 break-all">{p.address}</div>
-          {p.ownerPhone && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              <span className="text-gray-500 shrink-0">집주인 {p.ownerName || ""}</span>
-              <a onClick={e => e.stopPropagation()} href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.ownerPhone)}</a>
-            </div>
-          )}
-          {p.tenantPhone && (
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              <span className="text-gray-500 shrink-0">임차인 {p.tenantName || ""}</span>
-              <a onClick={e => e.stopPropagation()} href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(p.tenantPhone)}</a>
-            </div>
-          )}
-          <div className="mt-1 text-[11px] text-gray-500">{m.label} {date}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── 고객 후속연락 카드 ── */
-function FollowUpCard({ customer: c }: { customer: Customer }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const isOver = c.nextFollowUp < today;
-  const isToday2 = c.nextFollowUp === today;
-  const bgColor = isOver ? "bg-red-50 border-red-200" : isToday2 ? "bg-orange-50 border-orange-200" : "bg-blue-50 border-blue-200";
-
-  return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${bgColor}`}>
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-14 text-center rounded-xl py-2 bg-white/70">
-          <div className="text-[10px] text-blue-500 font-medium">고객</div>
-          <div className={`text-xs font-bold ${isOver ? "text-red-600" : isToday2 ? "text-orange-600" : "text-blue-600"}`}>
-            {isOver ? "지남" : isToday2 ? "오늘" : "예정"}
-          </div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 mb-1">
-            <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-blue-100 text-blue-700">👥 후속연락</span>
-            {c.vip && <span className="text-[11px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">⭐ VIP</span>}
-          </div>
-          <div className="text-sm font-semibold text-gray-800">{c.name}</div>
-          {c.preferredArea && <div className="text-xs text-gray-500 mt-0.5">희망: {c.preferredArea}</div>}
-          {c.phone && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-              <a onClick={e => e.stopPropagation()} href={`tel:${c.phone.replace(/\D/g,"")}`} className="text-blue-600 hover:underline">📞 {formatPhone(c.phone)}</a>
-              <a onClick={e => e.stopPropagation()} href={`sms:${c.phone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요 ${c.name}님, 미사금빛공인중개사입니다.\n안녕하신지요? 좋은 매물 있어 연락드립니다.`)}`}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 ml-auto">문자</a>
-            </div>
-          )}
-          {c.memo && <div className="mt-1 text-[11px] text-gray-500 bg-white/60 rounded px-2 py-1">💬 {c.memo}</div>}
-        </div>
-      </div>
+    <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${done ? "opacity-50" : ""}`}>
+      <span className="w-11 shrink-0 text-center text-[12px] font-bold tabular-nums text-gray-700 dark:text-gray-200">{lead || "—"}</span>
+      <span className="w-[3px] h-4 rounded-sm shrink-0" style={{ background: bar }} />
+      <span className="w-10 shrink-0 text-[11px] font-semibold" style={{ color: bar }}>{label}</span>
+      <span className="flex-1 min-w-0 truncate text-[13px] text-gray-800 dark:text-gray-100">{title}</span>
+      {done && <span className="shrink-0 text-[10px] text-green-600 font-medium">완료</span>}
+      <span className="material-symbols-outlined text-gray-300 dark:text-slate-600 text-[18px] shrink-0">chevron_right</span>
     </div>
   );
 }
