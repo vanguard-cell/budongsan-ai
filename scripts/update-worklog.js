@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: '2026-06-23',
   day: '화',
-  category: 'UX 개선',
-  work: '스케줄 목록 한 줄 압축(시안 A). 4줄짜리 카드 3종(ScheduleCard/PropertyDateCard/FollowUpCard)을 CompactRow 한 줄로 통합 — 시간/D-day·종류색 막대·짧은 종류·단지명(truncate)·화살표. 전화·문자·메모는 목록에서 제거하고 우측 상세 패널로 일원화(목록 밀도↑). 추가로 기간칩 오름차순+자동스크롤, 스케줄 통합카드 목록 높이제한 수정.',
+  category: '버그·디버그',
+  work: '코드 정리·안정성 패스. [실버그] 매물·고객·만기 표 헤더 Th가 렌더 중 정의된 컴포넌트라 매 렌더 remount → 열 검색창 타이핑 시 한 글자마다 포커스 빠지던 문제를, Th를 함수호출(renderTh)로 전환해 해결(3개 표, static-components 26→0). react/no-unescaped-entities 4건, 미사용 import·변수(Link·signOut) 제거, eslint에서 scripts/** 무시.',
   commit: '(이번 세션)',
-  note: '사용자: 누르면 우측 상세 뜨니 목록은 간단히. 시안 A(한줄) 채택.',
+  note: '남은 lint: unused-vars 20·set-state-in-effect 19·purity 5 등은 무해한 strict 경고(빌드 통과). 필요시 추가 정리 가능.',
 };
 
 (async () => {
