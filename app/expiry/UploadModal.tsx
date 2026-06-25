@@ -104,8 +104,6 @@ export default function UploadModal({ existing, onClose, onConfirm }: Props) {
 
       {step === "preview" && importResult && parsed && (
         <PreviewStep
-          parsed={parsed}
-          mapping={mapping}
           result={importResult}
           strategy={strategy}
           onStrategyChange={setStrategy}
@@ -270,11 +268,9 @@ function firstNonEmpty(rows: Record<string, unknown>[], header: string): string 
 
 /* ──────────────────────── Step 3: 미리보기 + 병합옵션 ──────────────────────── */
 function PreviewStep({
-  parsed, mapping, result, strategy, onStrategyChange,
+  result, strategy, onStrategyChange,
   onConfirm, onBack, busy, err, existingCount,
 }: {
-  parsed: ParsedSheet;
-  mapping: Record<string, ContractField>;
   result: ImportResult;
   strategy: MergeStrategy;
   onStrategyChange: (s: MergeStrategy) => void;

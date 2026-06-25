@@ -3,7 +3,7 @@
 /** 매물 등록/수정 모달 — page.tsx 분리 리팩토링으로 추출 */
 
 import { useState, useRef } from "react";
-import type { Property, PropertyType, DealType, Occupancy, ManageCycle } from "@/lib/properties-db";
+import type { Property, Occupancy } from "@/lib/properties-db";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, m2ToPyeong } from "./helpers";
 
 export default function PropertyModal({ property, onClose, onSave }: {

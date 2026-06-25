@@ -138,7 +138,6 @@ function cleanDate(v: unknown): string {
 }
 
 const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"];
-const DEAL_TYPES: DealType[] = ["매매", "전세", "월세"];
 
 function cleanPropertyType(v: unknown): PropertyType {
   const s = String(v ?? "").trim();

@@ -6,7 +6,6 @@ import { useState, useMemo } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Customer } from "@/app/customers/customer-types";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
-import { fmtNum } from "./helpers";
 
 export default function ContractProgressModal({ property, customers, onClose, onSave }: {
   property: Property;

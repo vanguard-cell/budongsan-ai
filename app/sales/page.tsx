@@ -26,7 +26,7 @@ import PeriodPicker, { type Period, periodLabel } from "@/app/components/PeriodP
 
 export default function SalesPage() {
   const router = useRouter();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loaded, setLoaded] = useState(false);

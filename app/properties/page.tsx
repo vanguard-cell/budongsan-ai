@@ -1,22 +1,20 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
   sampleProperties, savePropertiesBatch, logPropertyEvent,
-  type Property, type PropertyType, type DealType, type Occupancy,
+  type Property, type PropertyType, type DealType,
 } from "@/lib/properties-db";
-import { dDay, type Contract } from "@/app/expiry/contracts";
+import { type Contract } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import { moveToContract, subscribeContracts } from "@/lib/contracts-db";
 import { subscribeCustomers, upsertTenantAsCustomer } from "@/lib/customers-db";
 import type { Customer } from "@/app/customers/customer-types";
 import { computeSalesStats } from "@/lib/sales";
 import Link from "next/link";
-import ComplexPickerWidget from "@/app/ComplexPicker";
-import KoreanDatePicker from "@/app/KoreanDatePicker";
 import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
 import ExportModal from "../ExportModal";
 import { exportProperties } from "@/lib/export";
@@ -30,7 +28,7 @@ import PropertyPanel from "./PropertyPanel";
 
 export default function PropertiesPage() {
   const router = useRouter();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);

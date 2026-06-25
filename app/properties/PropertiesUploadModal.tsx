@@ -84,7 +84,7 @@ export default function PropertiesUploadModal({ existing, onClose, onConfirm }: 
           onNext={() => setStep("preview")} onBack={() => setStep("file")} />
       )}
       {step === "preview"  && parsed && importResult && (
-        <PreviewStep parsed={parsed} result={importResult} strategy={strategy}
+        <PreviewStep result={importResult} strategy={strategy}
           onStrategyChange={setStrategy} onConfirm={handleConfirm}
           onBack={() => setStep("mapping")} busy={busy} err={err}
           existingCount={existing.length} />
@@ -199,8 +199,7 @@ function firstNonEmpty(rows: Record<string, unknown>[], header: string): string 
   return "(빈 값)";
 }
 
-function PreviewStep({ parsed, result, strategy, onStrategyChange, onConfirm, onBack, busy, err, existingCount }: {
-  parsed: ParsedPropSheet;
+function PreviewStep({ result, strategy, onStrategyChange, onConfirm, onBack, busy, err, existingCount }: {
   result: PropImportResult;
   strategy: PropMergeStrategy;
   onStrategyChange: (s: PropMergeStrategy) => void;
