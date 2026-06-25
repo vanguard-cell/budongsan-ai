@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: '2026-06-23',
   day: '화',
-  category: '리팩토링',
-  work: '안전 청소 패스: 미사용 변수·import 20→0 제거(Link·signOut·useRef·dDay·ComplexPicker위젯·KoreanDatePicker·fmtNum 등), expiry/page의 죽은 ComplexPicker 함수(~130줄)+그것만 쓰던 REGION_DATA·BUILDING_TYPES 상수 삭제, 업로드 모달 PreviewStep 미사용 props 정리. 빌드 정상, 동작 무변. 남은 lint는 무해 strict(set-state-in-effect 19·purity 5 등).',
+  category: '기획·문서',
+  work: '다이어트(단순화)는 데이터로 결정하기로 — 지금 UI는 안 바꾸고 한 달 사용량 모으기. read-usage.js로 라이브 사용량 확인: 어머니(미사금빛TV)는 사실상 매물 등록+같은단지만 사용, 고객·인사이트·매출·실거래·스케줄 기능 거의 0. 한달치가 의미있도록 추적 커버리지 확장(뷰전환·필터·기간선택·단지검색 등 ~6종 추가, 총 ~26종). 메모리에 재검토(~7/23) 계획 기록.',
   commit: '(이번 세션)',
-  note: '코드정리·안정성 2차(청소). 1차에서 표 포커스버그 수정 완료.',
+  note: '사용자: 모든 기능 다 추적하고 한달 사용량 본 뒤 다이어트. 한동수=테스트계정 주의. read-usage.js로 확인.',
 };
 
 (async () => {
