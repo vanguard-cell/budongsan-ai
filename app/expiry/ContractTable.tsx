@@ -234,7 +234,8 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
   );
 
   const RIGHT_ALIGN: ColKey[] = ["start", "end", "sev", "region"];
-  const Th = ({ k, w, menu }: { k: ColKey; w: string; menu: React.ReactNode }) => {
+  // 렌더 함수(컴포넌트 아님) — <Th/>로 쓰면 매 렌더 remount돼 검색창 포커스가 빠짐
+  const renderTh = ({ k, w, menu }: { k: ColKey; w: string; menu: React.ReactNode }) => {
     if (!show(k)) return null;
     const alignRight = RIGHT_ALIGN.includes(k);
     return (
@@ -272,29 +273,29 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
         <table className="w-full min-w-[960px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
-              <Th k="address" w="w-[30%]" menu={<>
+              {renderTh({ k: "address", w: "w-[30%]", menu: <>
                 {searchInput("address")}
                 <MenuItem icon="schedule" label="최근 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
-              </>} />
-              <Th k="type" w="w-[6%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="price" w="w-[10%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="tenant" w="w-[9%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="landlord" w="w-[9%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="start" w="w-[9%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="end" w="w-[11%]" menu={<>
+              </> })}
+              {renderTh({ k: "type", w: "w-[6%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "price", w: "w-[10%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "tenant", w: "w-[9%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "landlord", w: "w-[9%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "start", w: "w-[9%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "end", w: "w-[11%]", menu: <>
                 <MenuItem icon="south" label="만기 빠른순" active={sortBy === "endAsc"} onClick={() => { onSortChange("endAsc"); setOpenMenu(null); }} />
                 <MenuItem icon="north" label="만기 늦은순" active={sortBy === "endDesc"} onClick={() => { onSortChange("endDesc"); setOpenMenu(null); }} />
-              </>} />
-              <Th k="sev" w="w-[8%]" menu={<>
+              </> })}
+              {renderTh({ k: "sev", w: "w-[8%]", menu: <>
                 {(["all", "danger", "warning", "caution", "safe"] as ContractFilter[]).map(f => {
                   const labels: Record<ContractFilter, string> = { all: "전체 보기", danger: "위험만", warning: "주의만", caution: "예고만", safe: "안전만" };
                   return <MenuItem key={f} icon={f === "all" ? "filter_list_off" : "filter_alt"} label={labels[f]} active={filter === f} onClick={() => { onFilterChange(f); setOpenMenu(null); }} />;
                 })}
-              </>} />
-              <Th k="region" w="w-[8%]" menu={<>
+              </> })}
+              {renderTh({ k: "region", w: "w-[8%]", menu: <>
                 {searchInput("region")}
                 <MenuItem icon="info" label="지역별 훑기용 — 정렬은 단지·동호 열에서" onClick={() => setOpenMenu(null)} />
-              </>} />
+              </> })}
             </tr>
           </thead>
           <tbody>

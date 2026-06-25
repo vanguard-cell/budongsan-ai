@@ -175,7 +175,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           </div>
           {form.shownProperties.length === 0 ? (
             <div className="text-[11px] text-gray-400 bg-gray-50 rounded-xl px-3 py-2 border border-dashed border-gray-200">
-              아직 보여드린 매물이 없습니다. "+ 추가"로 매칭 이력을 기록하세요.
+              아직 보여드린 매물이 없습니다. &quot;+ 추가&quot;로 매칭 이력을 기록하세요.
             </div>
           ) : (
             <div className="space-y-2">

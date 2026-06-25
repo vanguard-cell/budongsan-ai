@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
@@ -68,7 +67,7 @@ export default function CustomersPage() {
     }, 800);  // 데이터 로딩 대기
     return () => clearTimeout(t);
   }, []);
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -752,7 +751,7 @@ function CustomerRow({
                 );
               })}
               <div className="text-[10px] text-blue-600 text-center pt-1">
-                💡 매물 정보 수정은 "수정" 버튼에서, 내 매물장에서 자동완성 검색 가능
+                💡 매물 정보 수정은 &quot;수정&quot; 버튼에서, 내 매물장에서 자동완성 검색 가능
               </div>
             </div>
           )}

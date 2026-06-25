@@ -99,7 +99,7 @@ function fmtDate(date: string) {
 /* ── 메인 ── */
 export default function SchedulePage() {
   const router = useRouter();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [schedules,  setSchedules]  = useState<Schedule[]>([]);
   const [customers,  setCustomers]  = useState<Customer[]>([]);

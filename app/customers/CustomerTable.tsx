@@ -213,7 +213,8 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
   );
 
   const RIGHT_ALIGN: ColKey[] = ["followUp", "status"];
-  const Th = ({ k, w, menu }: { k: ColKey; w: string; menu: React.ReactNode }) => {
+  // 렌더 함수(컴포넌트 아님) — <Th/>로 쓰면 매 렌더 remount돼 검색창 포커스가 빠짐
+  const renderTh = ({ k, w, menu }: { k: ColKey; w: string; menu: React.ReactNode }) => {
     if (!show(k)) return null;
     const alignRight = RIGHT_ALIGN.includes(k);
     return (
@@ -252,18 +253,18 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
         <table className="w-full min-w-[820px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500">
-              <Th k="name" w="w-[16%]" menu={<>
+              {renderTh({ k: "name", w: "w-[16%]", menu: <>
                 {searchInput("name")}
                 <MenuItem icon="sort_by_alpha" label="이름순" active={sortBy === "name"} onClick={() => { onSortChange("name"); setOpenMenu(null); }} />
                 <MenuItem icon="schedule" label="최근 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
                 <MenuItem icon="star" label="VIP만 보기" active={filter === "vip"} onClick={() => { onFilterChange("vip"); setOpenMenu(null); }} />
-              </>} />
-              <Th k="phone" w="w-[13%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="side" w="w-[7%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="budget" w="w-[19%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="area" w="w-[21%]" menu={<MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} />} />
-              <Th k="followUp" w="w-[13%]" menu={<MenuItem icon="event" label="연락 임박순" active={sortBy === "followup"} onClick={() => { onSortChange("followup"); setOpenMenu(null); }} />} />
-              <Th k="status" w="w-[10%]" menu={<>
+              </> })}
+              {renderTh({ k: "phone", w: "w-[13%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "side", w: "w-[7%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "budget", w: "w-[19%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "area", w: "w-[21%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
+              {renderTh({ k: "followUp", w: "w-[13%]", menu: <MenuItem icon="event" label="연락 임박순" active={sortBy === "followup"} onClick={() => { onSortChange("followup"); setOpenMenu(null); }} /> })}
+              {renderTh({ k: "status", w: "w-[10%]", menu: <>
                 {(["all", "needFollowup", "matched", "lost", "closed"] as CustFilter[]).map(f => {
                   const labels: Record<CustFilter, string> = { all: "전체 보기", needFollowup: "후속 연락 필요", vip: "VIP만", matched: "매칭만", lost: "이탈만", closed: "거래 완료만" };
                   return (
@@ -271,7 +272,7 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
                       active={filter === f} onClick={() => { onFilterChange(f); setOpenMenu(null); }} />
                   );
                 })}
-              </>} />
+              </> })}
             </tr>
           </thead>
           <tbody>

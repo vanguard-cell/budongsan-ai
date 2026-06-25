@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Node 전용 운영 스크립트(앱 번들 아님) — CommonJS require 허용
+    "scripts/**",
   ]),
 ]);
 
