@@ -69,6 +69,7 @@ export default function PropertiesPage() {
   });
   const setViewStyle = (v: "card" | "table") => {
     setViewStyleState(v);
+    if (v === "table") recordFeatureUse(user?.uid, "prop_view_table");
     try { localStorage.setItem("dealdone_properties_view", v); } catch {}
   };
   // 우측 패널 — 표/카드에서 선택된 매물 (id로 보관해 실시간 갱신 반영)

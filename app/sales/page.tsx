@@ -14,7 +14,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
   subscribeProperties, savePropertiesBatch, deleteProperty, sampleSalesProperties,
   type Property,
@@ -157,7 +157,7 @@ export default function SalesPage() {
           <div className="space-y-5">
             {/* 기간 선택 — hero·거래종류·명세를 이 기간으로 */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm px-4 py-3">
-              {period && <PeriodPicker months={stats.allMonths} value={period} onChange={setPeriod} accent="#1D9E75" />}
+              {period && <PeriodPicker months={stats.allMonths} value={period} onChange={p => { setPeriod(p); recordFeatureUse(user?.uid, "sales_period"); }} accent="#1D9E75" />}
             </div>
 
             {/* ① 히어로 — 선택 기간 매출 강조 + 보조 지표 */}

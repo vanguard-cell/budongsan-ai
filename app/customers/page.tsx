@@ -85,6 +85,7 @@ export default function CustomersPage() {
   });
   const setViewStyle = (v: "card" | "table") => {
     setViewStyleState(v);
+    if (v === "table") recordFeatureUse(user?.uid, "cust_view_table");
     try { localStorage.setItem("dealdone_customers_view", v); } catch {}
   };
   const [boardOpen, setBoardOpen] = useState(true);              // 상단 파이프라인 보드 접기
@@ -425,11 +426,11 @@ export default function CustomersPage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
           <div className="flex flex-wrap items-center gap-2">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>전체 ({counts.all})</FilterChip>
-            <FilterChip active={filter === "needFollowup"} onClick={() => setFilter("needFollowup")}>🔔 후속 연락 ({counts.needFollowup})</FilterChip>
-            <FilterChip active={filter === "vip"} onClick={() => setFilter("vip")}>⭐ VIP ({counts.vip})</FilterChip>
-            <FilterChip active={filter === "matched"} onClick={() => setFilter("matched")}>매칭 ({counts.matched})</FilterChip>
-            <FilterChip active={filter === "lost"} onClick={() => setFilter("lost")}>이탈 ({counts.lost})</FilterChip>
-            <FilterChip active={filter === "closed"} onClick={() => setFilter("closed")}>완료 ({counts.closed})</FilterChip>
+            <FilterChip active={filter === "needFollowup"} onClick={() => { setFilter("needFollowup"); recordFeatureUse(user?.uid, "cust_filter"); }}>🔔 후속 연락 ({counts.needFollowup})</FilterChip>
+            <FilterChip active={filter === "vip"} onClick={() => { setFilter("vip"); recordFeatureUse(user?.uid, "cust_filter"); }}>⭐ VIP ({counts.vip})</FilterChip>
+            <FilterChip active={filter === "matched"} onClick={() => { setFilter("matched"); recordFeatureUse(user?.uid, "cust_filter"); }}>매칭 ({counts.matched})</FilterChip>
+            <FilterChip active={filter === "lost"} onClick={() => { setFilter("lost"); recordFeatureUse(user?.uid, "cust_filter"); }}>이탈 ({counts.lost})</FilterChip>
+            <FilterChip active={filter === "closed"} onClick={() => { setFilter("closed"); recordFeatureUse(user?.uid, "cust_filter"); }}>완료 ({counts.closed})</FilterChip>
           </div>
         </div>
 
@@ -437,7 +438,7 @@ export default function CustomersPage() {
         {loaded && customers.length > 0 && (
           <div className="mb-5">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2">
-              <button onClick={() => setBoardOpen(o => !o)}
+              <button onClick={() => setBoardOpen(o => { if (!o) recordFeatureUse(user?.uid, "cust_board_open"); return !o; })}
                 className="flex items-center gap-1.5 text-sm font-bold text-gray-800 dark:text-gray-100 hover:text-[var(--brand-blue)] transition-colors shrink-0">
                 <span className="material-symbols-outlined text-[18px] text-[var(--brand-blue)]">view_kanban</span>
                 진행 파이프라인 <span className="text-gray-400 font-medium">{boardCustomers.length}</span>

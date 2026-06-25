@@ -336,6 +336,8 @@ export default function AdminPage() {
                 sched_add: "스케줄 추가", sched_done: "스케줄 완료",
                 mp_bulk: "실거래 평형별조회", mp_manual: "실거래 직접입력",
                 ai_generate: "AI 문구생성", fb_new: "건의함 작성",
+                cust_view_table: "고객 표뷰", cust_board_open: "고객 보드열기", cust_filter: "고객 필터",
+                prop_view_table: "매물 표뷰", sales_period: "매출 기간선택", insights_period: "인사이트 기간선택",
               };
               const entries = Object.entries(panelUser.features || {})
                 .filter(([, n]) => n > 0)

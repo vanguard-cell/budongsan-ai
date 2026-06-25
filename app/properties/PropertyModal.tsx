@@ -4,6 +4,7 @@
 
 import { useState, useRef } from "react";
 import type { Property, Occupancy } from "@/lib/properties-db";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, m2ToPyeong } from "./helpers";
 
 export default function PropertyModal({ property, onClose, onSave }: {
@@ -11,6 +12,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
   onClose: () => void;
   onSave: (p: Property) => Promise<void>;
 }) {
+  const { user } = useAuth();
   const [form, setForm] = useState<Property>(property);
   const [saving, setSaving] = useState(false);
   const isNew = !property.address;
@@ -72,6 +74,7 @@ export default function PropertyModal({ property, onClose, onSave }: {
     setBaseAddress(base);
     updateFullAddress(base, form.dong, form.ho);
     setAddrSuggestions([]);
+    recordFeatureUse(user?.uid, "complex_pick");
   };
 
   const save = async () => {

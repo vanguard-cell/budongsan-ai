@@ -9,7 +9,7 @@
 import { useState, useEffect, useMemo, Fragment } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import { subscribeCustomers } from "@/lib/customers-db";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
@@ -130,7 +130,7 @@ export default function InsightsPage() {
 
           {/* 기간 선택 — 활동·성과·실패사유가 이 기간으로 */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm px-4 py-3">
-            {period && <PeriodPicker months={months} value={period} onChange={setPeriod} accent="#2383E2" />}
+            {period && <PeriodPicker months={months} value={period} onChange={p => { setPeriod(p); recordFeatureUse(user?.uid, "insights_period"); }} accent="#2383E2" />}
           </div>
 
           {/* ② 처리 현황 (현재) */}
