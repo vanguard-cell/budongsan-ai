@@ -20,10 +20,10 @@ const CATEGORY_FILL = {
 const ENTRY = {
   date: '2026-06-23',
   day: '화',
-  category: '버그·디버그',
-  work: '코드 정리·안정성 패스. [실버그] 매물·고객·만기 표 헤더 Th가 렌더 중 정의된 컴포넌트라 매 렌더 remount → 열 검색창 타이핑 시 한 글자마다 포커스 빠지던 문제를, Th를 함수호출(renderTh)로 전환해 해결(3개 표, static-components 26→0). react/no-unescaped-entities 4건, 미사용 import·변수(Link·signOut) 제거, eslint에서 scripts/** 무시.',
+  category: '리팩토링',
+  work: '안전 청소 패스: 미사용 변수·import 20→0 제거(Link·signOut·useRef·dDay·ComplexPicker위젯·KoreanDatePicker·fmtNum 등), expiry/page의 죽은 ComplexPicker 함수(~130줄)+그것만 쓰던 REGION_DATA·BUILDING_TYPES 상수 삭제, 업로드 모달 PreviewStep 미사용 props 정리. 빌드 정상, 동작 무변. 남은 lint는 무해 strict(set-state-in-effect 19·purity 5 등).',
   commit: '(이번 세션)',
-  note: '남은 lint: unused-vars 20·set-state-in-effect 19·purity 5 등은 무해한 strict 경고(빌드 통과). 필요시 추가 정리 가능.',
+  note: '코드정리·안정성 2차(청소). 1차에서 표 포커스버그 수정 완료.',
 };
 
 (async () => {
