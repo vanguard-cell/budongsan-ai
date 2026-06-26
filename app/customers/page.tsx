@@ -237,7 +237,7 @@ export default function CustomersPage() {
     if (!user) return;
     const isNew = !customers.some(x => x.id === c.id);
     await fsSaveCustomer(user.agencyId, c);
-    if (isNew) recordFeatureUse(user.uid, "cust_add");
+    recordFeatureUse(user.uid, isNew ? "cust_add" : "cust_edit");
   };
 
   const remove = async (id: string) => {
@@ -261,10 +261,13 @@ export default function CustomersPage() {
         text: r ? `포기 — ${r}` : "포기(이탈)",
         ...(r ? { reason: r } : {}),
       });
+      recordFeatureUse(user.uid, "cust_drop");
       return;
     }
     await fsSaveCustomer(user.agencyId, { ...c, status });
     await logCustomerEvent(user.agencyId, c.id, { by: by(), kind: "status", text: `상태 변경 → ${STATUS_LABEL[status]}` });
+    if (status === "closed") recordFeatureUse(user.uid, "cust_close");
+    else if (status === "matched") recordFeatureUse(user.uid, "cust_match");
   };
 
   // 보드 드래그 — 단계 이동 (단계 + 상태 동기화)
@@ -489,7 +492,7 @@ export default function CustomersPage() {
             type="text"
             placeholder="🔍 이름 · 연락처 · 지역 · 메모 검색"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => { if (!query && e.target.value) recordFeatureUse(user?.uid, "cust_search"); setQuery(e.target.value); }}
             className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -505,9 +508,9 @@ export default function CustomersPage() {
             selectedId={panelId || undefined}
             onRowClick={c => setPanelId(c.id)}
             sortBy={sortBy}
-            onSortChange={setSortBy}
+            onSortChange={s => { setSortBy(s); recordFeatureUse(user?.uid, "cust_sort"); }}
             filter={filter}
-            onFilterChange={setFilter}
+            onFilterChange={f => { setFilter(f); recordFeatureUse(user?.uid, "cust_filter"); }}
             colSearch={colSearch}
             onColSearch={onColSearch}
             onPatch={async (c, patch) => { await fsSaveCustomer(user.agencyId, { ...c, ...patch }); }}
@@ -574,7 +577,7 @@ export default function CustomersPage() {
           totalCount={customers.length}
           activeCount={customers.filter(c => c.status === "active" || c.status === "matched").length}
           onClose={() => setShowExport(false)}
-          onExport={(opt) => exportCustomers(customers, opt)}
+          onExport={(opt) => { recordFeatureUse(user?.uid, "cust_export"); return exportCustomers(customers, opt); }}
         />
       )}
 

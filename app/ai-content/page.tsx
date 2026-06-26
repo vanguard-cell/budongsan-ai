@@ -92,9 +92,10 @@ const EXAMPLE_FORM: FormData = {
 
 /* ───────── 공통 컴포넌트 ───────── */
 function CopyButton({ text }: { text: string }) {
+  const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   return (
-    <button onClick={async () => { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+    <button onClick={async () => { await navigator.clipboard.writeText(text); recordFeatureUse(user?.uid, "ai_copy"); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
       className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors shrink-0">
       {copied ? "✓ 복사됨" : "복사"}
     </button>
@@ -599,6 +600,7 @@ export default function Home() {
   const exportPDF = async () => {
     if (!result) { setError("먼저 매물 콘텐츠를 생성해주세요."); return; }
     if (!previewRef.current) return;
+    recordFeatureUse(user?.uid, "ai_pdf");
     setPdfExporting(true);
     try {
       // 미리보기 탭으로 전환

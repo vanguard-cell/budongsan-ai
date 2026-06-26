@@ -86,6 +86,7 @@ export default function ExpiryPage() {
   });
   const setViewStyle = (v: "card" | "table") => {
     setViewStyleState(v);
+    if (v === "table") recordFeatureUse(user?.uid, "expiry_view_table");
     try { localStorage.setItem("dealdone_contracts_view", v); } catch {}
   };
   const [panelId, setPanelId] = useState<string | null>(null);    // 우측 패널 (표/카드 공용)
@@ -482,9 +483,9 @@ export default function ExpiryPage() {
             selectedId={panelId || undefined}
             onRowClick={c => setPanelId(c.id)}
             sortBy={sortBy}
-            onSortChange={setSortBy}
+            onSortChange={s => { setSortBy(s); recordFeatureUse(user?.uid, "expiry_sort"); }}
             filter={filter}
-            onFilterChange={setFilter}
+            onFilterChange={f => { setFilter(f); recordFeatureUse(user?.uid, "expiry_filter"); }}
             colSearch={colSearch}
             onColSearch={onColSearch}
             onPatch={async (c, patch) => { if (user) await fsSaveContract(user.agencyId, { ...c, ...patch }); }}
@@ -501,7 +502,7 @@ export default function ExpiryPage() {
                 onClose={() => closeContract(c.id)}
                 onReopen={() => reopenContract(c.id)}
                 onDelete={() => deleteContract(c.id)}
-                onSms={target => setSmsTarget({ contract: c, target })}
+                onSms={target => { recordFeatureUse(user?.uid, "expiry_sms"); setSmsTarget({ contract: c, target }); }}
                 onJumpCustomer={c.linkedCustomerId && customers.some(cu => cu.id === c.linkedCustomerId)
                   ? () => router.push(`/customers?focus=${c.linkedCustomerId}`)
                   : undefined}
@@ -522,7 +523,7 @@ export default function ExpiryPage() {
         contract={panelId ? contracts.find(x => x.id === panelId) || null : null}
         onClose={() => setPanelId(null)}
         onEdit={c => setEditing({ ...c })}
-        onSms={(c, target) => setSmsTarget({ contract: c, target })}
+        onSms={(c, target) => { recordFeatureUse(user?.uid, "expiry_sms"); setSmsTarget({ contract: c, target }); }}
         onCloneSameComplex={c => { cloneSameComplex(c); setPanelId(null); }}
         onReopenAsProperty={c => jumpReopenAsProperty(c)}
         onCloseContract={c => closeContract(c.id)}
@@ -584,8 +585,8 @@ export default function ExpiryPage() {
           totalCount={contracts.length}
           activeCount={contracts.filter(c => c.status === "active").length}
           onClose={() => setShowExport(false)}
-          onExport={(opt) => exportContracts(contracts, opt)}
-          onPrintPDF={() => printExpiryBoardHTML(contracts)}
+          onExport={(opt) => { recordFeatureUse(user?.uid, "expiry_export"); return exportContracts(contracts, opt); }}
+          onPrintPDF={() => { recordFeatureUse(user?.uid, "expiry_print"); printExpiryBoardHTML(contracts); }}
         />
       )}
     </div>

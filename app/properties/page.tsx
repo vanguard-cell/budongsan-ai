@@ -752,7 +752,7 @@ export default function PropertiesPage() {
             type="text"
             placeholder="🔍 주소 · 집주인 이름 · 연락처 검색"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => { if (!query && e.target.value) recordFeatureUse(user?.uid, "prop_search"); setQuery(e.target.value); }}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
           />
 
@@ -951,13 +951,13 @@ export default function PropertiesPage() {
                   selectedId={panelId || undefined}
                   onRowClick={p => setPanelId(p.id)}
                   sortBy={sortBy}
-                  onSortChange={setSortBy}
+                  onSortChange={s => { setSortBy(s); recordFeatureUse(user?.uid, "prop_sort"); }}
                   filterType={filterType}
-                  onFilterTypeChange={setFilterType}
+                  onFilterTypeChange={t => { setFilterType(t); recordFeatureUse(user?.uid, "prop_filter"); }}
                   filterPropType={filterPropType}
-                  onFilterPropTypeChange={setFilterPropType}
+                  onFilterPropTypeChange={t => { setFilterPropType(t); recordFeatureUse(user?.uid, "prop_filter"); }}
                   priceRange={priceRange}
-                  onPriceRangeChange={setPriceRange}
+                  onPriceRangeChange={r => { setPriceRange(r); recordFeatureUse(user?.uid, "prop_filter"); }}
                   colSearch={colSearch}
                   onColSearch={onColSearch}
                   onPatch={async (p, patch) => { await saveProperty(user.agencyId, { ...p, ...patch }); }}
@@ -1092,7 +1092,7 @@ export default function PropertiesPage() {
           totalCount={properties.length}
           activeCount={properties.filter(p => p.status === "active").length}
           onClose={() => setShowExport(false)}
-          onExport={(opt) => exportProperties(properties, opt)}
+          onExport={(opt) => { recordFeatureUse(user?.uid, "prop_export"); return exportProperties(properties, opt); }}
         />
       )}
 

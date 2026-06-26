@@ -327,7 +327,7 @@ export default function SchedulePage() {
             <MonthCalendar
               flat
               items={calendarItems}
-              onSelectDate={setSelectedDate}
+              onSelectDate={d => { if (d) recordFeatureUse(user?.uid, "sched_date"); setSelectedDate(d); }}
               selectedDate={selectedDate}
             />
           </div>
@@ -365,7 +365,7 @@ export default function SchedulePage() {
           ] as const).map(tab => (
             <button
               key={tab.key}
-              onClick={() => setFilter(tab.key)}
+              onClick={() => { setFilter(tab.key); if (tab.key !== "all") recordFeatureUse(user?.uid, "sched_filter"); }}
               className={`rounded-2xl border py-2.5 text-center transition-colors font-medium ${
                 filter === tab.key
                   ? `${tab.activeColor} text-white border-transparent font-semibold`

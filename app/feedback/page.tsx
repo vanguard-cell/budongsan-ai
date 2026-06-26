@@ -123,6 +123,7 @@ export default function FeedbackPage() {
       text: t,
       image: image || undefined,
     });
+    recordFeatureUse(user.uid, "fb_reply");
   };
 
   const handleSetStatus = async (id: string, status: FeedbackStatus) => {

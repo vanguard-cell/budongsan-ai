@@ -338,6 +338,13 @@ export default function AdminPage() {
                 ai_generate: "AI 문구생성", fb_new: "건의함 작성",
                 cust_view_table: "고객 표뷰", cust_board_open: "고객 보드열기", cust_filter: "고객 필터",
                 prop_view_table: "매물 표뷰", sales_period: "매출 기간선택", insights_period: "인사이트 기간선택",
+                prop_search: "매물 검색", prop_filter: "매물 필터", prop_sort: "매물 정렬", prop_export: "매물 내보내기",
+                cust_edit: "고객 수정", cust_search: "고객 검색", cust_sort: "고객 정렬",
+                cust_drop: "고객 이탈처리", cust_close: "고객 거래완료", cust_match: "고객 매칭", cust_export: "고객 내보내기",
+                expiry_view_table: "만기 표뷰", expiry_filter: "만기 필터", expiry_sort: "만기 정렬",
+                expiry_print: "만기 인쇄", expiry_sms: "만기 문자", expiry_export: "만기 내보내기",
+                sched_filter: "스케줄 필터", sched_date: "스케줄 날짜클릭",
+                ai_copy: "AI 복사", ai_pdf: "AI PDF", fb_reply: "건의함 답글",
               };
               const entries = Object.entries(panelUser.features || {})
                 .filter(([, n]) => n > 0)
