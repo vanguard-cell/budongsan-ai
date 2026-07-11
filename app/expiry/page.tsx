@@ -1070,6 +1070,15 @@ function EditModal({
   return (
     <Modal onClose={onClose} title={isNew ? "계약 추가" : "계약 수정"}>
       <div className="space-y-3">
+        {/* 같은 단지 빠른 등록 안내 (신규 등록 시만) */}
+        {isNew && (
+          <div className="rounded-xl bg-teal-50 border border-teal-200 p-2.5 text-[11px] text-teal-700 leading-relaxed">
+            💡 <strong>같은 단지에 여러 호수</strong>가 있으신가요?<br />
+            먼저 한 건 등록 후, 그 만기 카드의 <strong>📋 같은 단지 추가</strong> 버튼을 누르면<br />
+            단지명·거래종류·임대인이 자동 복사되어 동/호수만 입력하면 됩니다.
+          </div>
+        )}
+
         <Field label="주소" required>
           <div className="relative">
             <input
