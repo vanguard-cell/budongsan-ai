@@ -148,6 +148,8 @@ export default function SchedulePage() {
     }
 
     // ② 내 매물의 계약 진행 날짜 (계약일·중도금일·잔금일)
+    // ⚠️ 계약일은 시간 포함("YYYY-MM-DDTHH:MM")일 수 있다 — 그대로 쓰면 달력 칸("YYYY-MM-DD")과
+    // 문자열이 안 맞아 계약일만 달력에 안 찍혔다 (#35 어머니 버그). 날짜·시간을 분리한다.
     for (const p of properties) {
       if (p.status !== "active") continue;
       const dates: { kind: PropertyDateKind; date: string; source: ItemSource }[] = [
@@ -158,7 +160,12 @@ export default function SchedulePage() {
       for (const { kind, date, source } of dates) {
         if (!date) continue;
         if (!showPast && !isFuture(date)) continue;
-        items.push({ key: `p-${p.id}-${kind}`, source, date, time: "", property: p, propertyKind: kind });
+        items.push({
+          key: `p-${p.id}-${kind}`, source,
+          date: date.slice(0, 10),
+          time: date.length > 10 ? date.slice(11, 16) : "",
+          property: p, propertyKind: kind,
+        });
       }
     }
 
@@ -183,7 +190,13 @@ export default function SchedulePage() {
       for (const { kind, date, source } of dates) {
         if (!date) continue;
         if (!showPast && !isFuture(date)) continue;
-        items.push({ key: `c-${ct.id}-${kind}`, source, date, time: "", property: dp, propertyKind: kind, contract: ct });
+        // 만기 계약의 계약일도 시간 포함일 수 있다 — ②와 같은 이유로 분리
+        items.push({
+          key: `c-${ct.id}-${kind}`, source,
+          date: date.slice(0, 10),
+          time: date.length > 10 ? date.slice(11, 16) : "",
+          property: dp, propertyKind: kind, contract: ct,
+        });
       }
     }
 
@@ -479,7 +492,7 @@ export default function SchedulePage() {
                     <span className="px-2 py-0.5 rounded-md text-[11px] font-bold text-white" style={{ backgroundColor: accent }}>
                       {it.propertyKind === "contractDate" ? "계약일" : it.propertyKind === "downPaymentDate" ? "중도금일" : "잔금일"}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{p.dealType} · {it.date}</span>
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{p.dealType} · {it.date}{it.time ? ` ${it.time}` : ""}</span>
                   </div>
                   <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{p.address}</p>
                 </div>
@@ -529,6 +542,7 @@ function CompactRow({ item }: { item: UnifiedItem }) {
     title = s.propertyAddress || "주소 미입력";
     done = s.status === "done";
   } else if (item.property && item.propertyKind) {
+    lead = item.time || "";   // 계약일에 시간을 넣었으면 목록에도 그 시간이 보인다
     label = item.propertyKind === "contractDate" ? "계약" : item.propertyKind === "downPaymentDate" ? "중도금" : "잔금";
     title = item.property.address;
   } else if (item.customer) {

@@ -143,7 +143,7 @@ export function propertyToContract(p: Property, linkedCustomerId?: string): Cont
     type,
     deposit: p.price,
     monthly: p.monthly,
-    startDate: p.contractDate || "",
+    startDate: (p.contractDate || "").slice(0, 10), // 계약일은 시간 포함일 수 있음 — 시작일은 날짜만 (#35 계열)
     endDate: p.leaseEndDate || "",
     tenantName: p.tenantName,
     tenantPhone: p.tenantPhone,
