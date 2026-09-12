@@ -5,7 +5,7 @@
  */
 const ExcelJS = require("exceljs");
 
-const FILE = "C:\\HDS\\01_PERSONAL\\Real Estate\\Budongsan_AI_Worklog.xlsx";
+const FILE = "C:\\HDS\\01_PERSONAL\\Budongsan_AI_Worklog.xlsx";
 
 // 카테고리 색 (연핑크 = 디자인)
 const CATEGORY_FILL = {
@@ -18,12 +18,13 @@ const CATEGORY_FILL = {
 };
 
 const ENTRY = {
-  date: '2026-06-23',
-  day: '화',
+  date: '2026-09-12',
+  day: '토',
   category: '신규 기능',
-  work: '사용량 추적 커버리지 ⭐ 전부 추가(기능 26→48종): 매물 검색·필터·정렬·내보내기, 고객 수정·검색·정렬·이탈·거래완료·매칭·내보내기, 만기 표뷰·필터·정렬·인쇄·문자·내보내기, 스케줄 필터·날짜클릭, AI 복사·PDF, 건의함 답글. 검색은 빈→비어있지않음 1회만(쓰기 폭증 방지). 한 달 누적 후 read-usage.js로 다이어트 결정.',
-  commit: '(이번 세션)',
-  note: '사용자: ⭐ 전부 추적(B). UI는 한 달 데이터 본 뒤. read-usage.js·유저관리 패널로 확인.',
+  work: '건의함 3건 처리 — #38 매물 옵션 칸 추가(자주 쓰는 옵션 8종 칩 + 직접 입력, 쉼표 구분. 카드 칩·상세 줄·엑셀 입출력 반영, AI 광고문구의 옵션 형식과 통일). #37 집주인 통신사 칸 추가(SKT·KT·LG U+·알뜰폰 칩, 다시 누르면 해제. 카드 배지·상세 줄·엑셀 열). #36 메모 엔터 안 되던 문제 — 한 줄 input이던 메모 칸을 여러 줄 textarea로 교체(매물·고객 상세의 활동 메모, 고객 타임라인 메모 수정, 고객 수정 모달), 엔터=줄바꿈·저장은 버튼(Ctrl+엔터도 가능), 저장된 메모·이력이 줄바꿈 그대로 보이도록 표시 수정.',
+  commit: 'dad5139',
+  note: '건의 #36·#37·#38 (미사금빛TV). 답글은 앱에서 직접(serviceAccountKey.json 없음). 만기 관리의 임대인 통신사는 미적용. 작업일지 저장 경로가 폴더 이동으로 깨져 있어 함께 수정 — 6/2 이후 기록이 빠져 있음.',
+  summary: '매물 옵션·집주인 통신사 칸 + 메모 줄바꿈(건의 3건)',
 };
 
 (async () => {
@@ -52,9 +53,9 @@ const ENTRY = {
       const cur = Number(found.getCell(3).value) || 0;
       found.getCell(3).value = cur + 1;
       const prev = String(found.getCell(4).value || "");
-      found.getCell(4).value = prev ? prev + " / 건의함 번호·자동읽기 + 단지검색(#34)" : "건의함 번호·자동읽기 + 단지검색(#34)";
+      found.getCell(4).value = prev ? prev + " / " + ENTRY.summary : ENTRY.summary;
     } else {
-      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, "건의함 번호·자동읽기 + 단지검색(#34)"]);
+      sum.insertRow(2, [ENTRY.date, ENTRY.day, 1, ENTRY.summary]);
     }
   }
 
