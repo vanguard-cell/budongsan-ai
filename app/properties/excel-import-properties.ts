@@ -11,9 +11,9 @@ export type PropField =
   | "address" | "propertyType" | "dealType"
   | "price" | "monthly" | "area"
   | "dong" | "ho" | "rooms" | "direction"
-  | "ownerName" | "ownerPhone"
+  | "ownerName" | "ownerPhone" | "ownerCarrier"
   | "tenantName" | "tenantPhone" | "leaseEndDate"
-  | "memo"
+  | "options" | "memo"
   | "_ignore";
 
 export const PROP_FIELD_LABELS: Record<Exclude<PropField, "_ignore">, string> = {
@@ -29,9 +29,11 @@ export const PROP_FIELD_LABELS: Record<Exclude<PropField, "_ignore">, string> = 
   direction:    "방향",
   ownerName:    "집주인 이름",
   ownerPhone:   "집주인 연락처",
+  ownerCarrier: "집주인 통신사",
   tenantName:   "임차인 이름",
   tenantPhone:  "임차인 연락처",
   leaseEndDate: "임대만기일",
+  options:      "옵션",
   memo:         "메모",
 };
 
@@ -48,11 +50,13 @@ const PROP_PATTERNS: Record<Exclude<PropField, "_ignore">, string[]> = {
   ho:           ["호수", "호실", "호"],
   rooms:        ["방수", "방", "rooms"],
   direction:    ["방향", "향", "direction"],
+  ownerCarrier: ["통신사", "이동통신", "carrier"],
   ownerName:    ["집주인", "소유자", "임대인", "owner"],
   ownerPhone:   ["집주인전화", "소유자전화", "임대인전화", "owner phone"],
   tenantName:   ["임차인", "세입자", "tenant"],
   tenantPhone:  ["임차인전화", "임차인연락처", "세입자전화"],
   leaseEndDate: ["임대만기", "전세만기", "월세만기", "만기일"],
+  options:      ["옵션", "풀옵션", "option"],
   memo:         ["메모", "비고", "특이사항", "note"],
 };
 
@@ -181,9 +185,11 @@ export function rowToProperty(
     direction:    String(get("direction") ?? "").trim(),
     ownerName:    String(get("ownerName") ?? "").trim(),
     ownerPhone:   cleanPhone(get("ownerPhone")),
+    ownerCarrier: String(get("ownerCarrier") ?? "").trim(),
     tenantName:   String(get("tenantName") ?? "").trim(),
     tenantPhone:  cleanPhone(get("tenantPhone")),
     leaseEndDate: cleanDate(get("leaseEndDate")),
+    options:      String(get("options") ?? "").trim(),
     memo:         String(get("memo") ?? "").trim(),
   };
   return { property, warnings };

@@ -1308,13 +1308,13 @@ function EditModal({
           </Field>
         </div>
 
-        <Field label="메모 (선택)">
+        <Field label="메모 (선택 · 엔터로 줄바꿈)">
           <textarea
             value={form.memo}
             onChange={e => setField("memo", e.target.value)}
             placeholder="기억해야 할 특이사항"
-            rows={2}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={3}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
           />
         </Field>
 

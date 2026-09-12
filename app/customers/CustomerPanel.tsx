@@ -22,7 +22,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   return (
     <tr>
       <td className="text-gray-400 dark:text-gray-500 py-1 pr-3 align-top whitespace-nowrap w-16">{label}</td>
-      <td className="text-gray-800 dark:text-gray-200 py-1 break-all">{children}</td>
+      <td className="text-gray-800 dark:text-gray-200 py-1 break-all whitespace-pre-wrap">{children}</td>
     </tr>
   );
 }
@@ -193,13 +193,14 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
           <QuickChip icon="directions_walk" label="집보기" onClick={() => quickLog({ kind: "visit", text: "집보기 동행" })} disabled={saving} />
           <QuickChip icon="cancel" label="포기" onClick={() => onChangeStatus(c, "lost")} disabled={saving} />
         </div>
-        <div className="flex items-center gap-1.5 mb-3">
-          <input
+        <div className="flex items-start gap-1.5 mb-3">
+          <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") addNote(); }}
-            placeholder="활동 메모 추가 (예: 가격 재협의 의사)"
-            className="flex-1 min-w-0 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-[12px] bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)]"
+            onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) addNote(); }}
+            rows={2}
+            placeholder="활동 메모 (예: 가격 재협의 의사) · 엔터 줄바꿈"
+            className="flex-1 min-w-0 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-[12px] leading-relaxed bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)] resize-y"
           />
           <button onClick={addNote} disabled={!note.trim() || saving}
             className="shrink-0 px-3 py-1.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold disabled:opacity-40 hover:bg-[var(--brand-blue-dark)]">기록</button>
@@ -220,17 +221,18 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
                     <span className="material-symbols-outlined" style={{ fontSize: 12, color: v.fg }}>{v.icon}</span>
                   </span>
                   {isEditing ? (
-                    <div className="flex items-center gap-1.5">
-                      <input autoFocus value={editText} onChange={ev => setEditText(ev.target.value)}
-                        onKeyDown={ev => { if (ev.key === "Enter") saveEdit(); if (ev.key === "Escape") setEditIdx(null); }}
-                        className="flex-1 min-w-0 border border-[var(--brand-blue)] rounded-lg px-2 py-1 text-[12px] bg-white dark:bg-slate-800 focus:outline-none" />
+                    <div className="flex items-start gap-1.5">
+                      <textarea autoFocus value={editText} onChange={ev => setEditText(ev.target.value)}
+                        onKeyDown={ev => { if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) saveEdit(); if (ev.key === "Escape") setEditIdx(null); }}
+                        rows={2}
+                        className="flex-1 min-w-0 border border-[var(--brand-blue)] rounded-lg px-2 py-1 text-[12px] leading-relaxed bg-white dark:bg-slate-800 focus:outline-none resize-y" />
                       <button onClick={saveEdit} className="shrink-0 text-[11px] px-2 py-1 rounded-md bg-[var(--brand-blue)] text-white font-bold">저장</button>
                       <button onClick={() => setEditIdx(null)} className="shrink-0 text-[11px] text-gray-400">취소</button>
                     </div>
                   ) : (
                     <div className="flex items-start gap-1">
                       <div className="flex-1 min-w-0">
-                        <div className="text-[12px] text-gray-800 dark:text-gray-200 leading-snug break-words">
+                        <div className="text-[12px] text-gray-800 dark:text-gray-200 leading-snug break-words whitespace-pre-wrap">
                           {e.text}
                           {e.kind === "followup" && <span className="ml-1 text-[10px] text-indigo-500">예정</span>}
                         </div>

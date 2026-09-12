@@ -14,7 +14,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   return (
     <tr>
       <td className="text-gray-400 dark:text-gray-500 py-1 pr-3 align-top whitespace-nowrap w-16">{label}</td>
-      <td className="text-gray-800 dark:text-gray-200 py-1 break-all">{children}</td>
+      <td className="text-gray-800 dark:text-gray-200 py-1 break-all whitespace-pre-wrap">{children}</td>
     </tr>
   );
 }

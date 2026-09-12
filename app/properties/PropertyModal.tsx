@@ -3,7 +3,7 @@
 /** 매물 등록/수정 모달 — page.tsx 분리 리팩토링으로 추출 */
 
 import { useState, useRef } from "react";
-import type { Property, Occupancy } from "@/lib/properties-db";
+import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, type Property, type Occupancy } from "@/lib/properties-db";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, m2ToPyeong } from "./helpers";
 
@@ -266,6 +266,21 @@ export default function PropertyModal({ property, onClose, onSave }: {
             </div>
           </div>
 
+          {/* 집주인 통신사 — 같은 걸 다시 누르면 해제 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              집주인 통신사 <span className="text-[10px] text-gray-400">(선택)</span>
+            </label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {CARRIERS.map(c => (
+                <button key={c} type="button" onClick={() => set("ownerCarrier", form.ownerCarrier === c ? "" : c)}
+                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${form.ownerCarrier === c ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* 임차인 (전세/월세 세입자) */}
           <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40">
             <div className="text-xs font-semibold text-orange-700 mb-2">🏠 현재 임차인 (전세·월세 세입자)</div>
@@ -322,12 +337,34 @@ export default function PropertyModal({ property, onClose, onSave }: {
             <p className="text-[10px] text-indigo-600 mt-2">📌 주인거주·공실로 지정하면 목록에서 [🏠 집주인/공실] 필터로 모아볼 수 있어요</p>
           </div>
 
+          {/* 집 옵션 — 칩을 누르면 아래 칸에 들어가고, 직접 타이핑해도 됨 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              옵션 <span className="text-[10px] text-gray-400">(쉼표로 구분)</span>
+            </label>
+            <input value={form.options} onChange={e => set("options", e.target.value)}
+              placeholder="예: 에어컨, 냉장고, 세탁기 / 풀옵션 / 옵션 없음"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {OPTION_PRESETS.map(o => {
+                const on = hasOption(form.options, o);
+                return (
+                  <button key={o} type="button" onClick={() => set("options", toggleOption(form.options, o))}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${on ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                    {on ? "✓ " : "+ "}{o}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1.5">💡 자주 쓰는 건 눌러서 넣고, 그 외(커튼·주차 2대 등)는 칸에 직접 쓰세요</p>
+          </div>
+
           {/* 메모 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">메모 <span className="text-[10px] text-gray-400">(엔터로 줄바꿈)</span></label>
             <textarea value={form.memo} onChange={e => set("memo", e.target.value)}
               placeholder="특이사항, 열쇠 위치, 입주 가능일 등"
-              rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
+              rows={3} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y" />
           </div>
 
           <div className="flex gap-2 pt-2">

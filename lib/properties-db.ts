@@ -42,6 +42,7 @@ export interface Property {
   direction: string;   // 방향
   ownerName: string;
   ownerPhone: string;
+  ownerCarrier: string;  // 집주인 통신사 (SKT·KT·LG U+·알뜰폰)
   tenantName: string;    // 임차인 이름
   tenantPhone: string;   // 임차인 연락처
   tenantDeposit: string; // 현재 임차인 보증금 (만원)
@@ -58,10 +59,28 @@ export interface Property {
   nextManageDate: string;      // 다음 관리(연락) 예정일 — 직접 지정 (YYYY-MM-DD)
   manageCycle: ManageCycle;    // 반복 주기 — 완료 시 다음 날짜 자동 계산
   manageTags: string[];        // 관리 태그 (매도의향/임대전환검토 등)
+  options: string;             // 집 옵션 — 쉼표 구분 (AI 광고문구의 옵션칸과 같은 형식)
   memo: string;
   status: PropertyStatus;
   createdAt: number;
   history?: PropertyEvent[];   // 활동 이력 (하이브리드 — 적용 시점부터 누적)
+}
+
+/** 집주인 통신사 프리셋 */
+export const CARRIERS = ["SKT", "KT", "LG U+", "알뜰폰"] as const;
+
+/** 집 옵션 빠른 선택 — 쉼표로 이어붙여 options에 저장 (직접 타이핑도 가능) */
+export const OPTION_PRESETS = ["에어컨", "냉장고", "세탁기", "건조기", "인덕션", "전자레인지", "식기세척기", "붙박이장"] as const;
+
+/** 옵션 칩 토글 — 이미 있으면 빼고, 없으면 뒤에 붙임 */
+export function toggleOption(options: string, token: string): string {
+  const list = options.split(",").map(s => s.trim()).filter(Boolean);
+  const i = list.indexOf(token);
+  if (i >= 0) list.splice(i, 1); else list.push(token);
+  return list.join(", ");
+}
+export function hasOption(options: string, token: string): boolean {
+  return options.split(",").map(s => s.trim()).includes(token);
 }
 
 /** 관리 태그 프리셋 */
@@ -81,10 +100,10 @@ export function emptyProperty(): Property {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
     address: "", propertyType: "아파트", dealType: "월세",
     price: "", monthly: "", area: "", unitType: "", dong: "", ho: "", floor: "", rooms: "",
-    direction: "", ownerName: "", ownerPhone: "",
+    direction: "", ownerName: "", ownerPhone: "", ownerCarrier: "",
     tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-    occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
+    occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "",
     memo: "",
     status: "active", createdAt: Date.now(),
   };
@@ -110,10 +129,10 @@ export function sampleProperties(): Property[] {
       propertyType: "아파트", dealType: "매매",
       price: "55000", monthly: "", area: "84", unitType: "84A", dong: "101", ho: "1902", floor: "",
       rooms: "3", direction: "남향",
-      ownerName: "김국환", ownerPhone: "010-5205-1111",
+      ownerName: "김국환", ownerPhone: "010-5205-1111", ownerCarrier: "SKT",
       tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "에어컨, 붙박이장",
       memo: "급매 · 협의 가능",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 14,
     },
@@ -123,11 +142,11 @@ export function sampleProperties(): Property[] {
       propertyType: "오피스텔", dealType: "월세",
       price: "1000", monthly: "70", area: "42", unitType: "", dong: "101", ho: "2717", floor: "",
       rooms: "1", direction: "동향",
-      ownerName: "최재현", ownerPhone: "010-2480-4444",
+      ownerName: "최재현", ownerPhone: "010-2480-4444", ownerCarrier: "KT",
       tenantName: "권다솜", tenantPhone: "010-9242-3333", tenantDeposit: "1000", tenantMonthly: "70",
       leaseEndDate: dateOffset(45),  // D-45 만기 임박
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "에어컨, 냉장고, 세탁기",
       memo: "임차인 재계약 의향 확인 필요",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 365,
     },
@@ -137,11 +156,11 @@ export function sampleProperties(): Property[] {
       propertyType: "오피스텔", dealType: "전세",
       price: "22770", monthly: "", area: "29", unitType: "", dong: "11-1", ho: "1023", floor: "",
       rooms: "1", direction: "남동향",
-      ownerName: "정우성", ownerPhone: "010-5033-2222",
+      ownerName: "정우성", ownerPhone: "010-5033-2222", ownerCarrier: "LG U+",
       tenantName: "조현민", tenantPhone: "010-7924-1111", tenantDeposit: "22770", tenantMonthly: "",
       leaseEndDate: dateOffset(85),  // D-85 예고
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "",
       memo: "묵시적 갱신 주의 — 협상 시작",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 300,
     },
@@ -151,10 +170,10 @@ export function sampleProperties(): Property[] {
       propertyType: "원룸/투룸", dealType: "월세",
       price: "500", monthly: "70", area: "23", unitType: "", dong: "", ho: "910", floor: "",
       rooms: "1", direction: "서향",
-      ownerName: "정수영", ownerPhone: "010-9109-6666",
+      ownerName: "정수영", ownerPhone: "010-9109-6666", ownerCarrier: "SKT",
       tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "에어컨, 냉장고, 세탁기, 인덕션",
       memo: "즉시 입주 가능",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 7,
     },
@@ -164,11 +183,11 @@ export function sampleProperties(): Property[] {
       propertyType: "상가", dealType: "월세",
       price: "10000", monthly: "150", area: "66", unitType: "", dong: "", ho: "613", floor: "",
       rooms: "", direction: "",
-      ownerName: "최령", ownerPhone: "010-5210-8888",
+      ownerName: "최령", ownerPhone: "010-5210-8888", ownerCarrier: "KT",
       tenantName: "민완규(카페)", tenantPhone: "010-5380-7777", tenantDeposit: "10000", tenantMonthly: "150",
       leaseEndDate: dateOffset(220),  // D-220 안전
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "",
       memo: "1층 코너 / 카페 운영중",
       status: "active", createdAt: now - 1000 * 60 * 60 * 24 * 200,
     },
@@ -178,10 +197,10 @@ export function sampleProperties(): Property[] {
       propertyType: "아파트", dealType: "전세",
       price: "45000", monthly: "", area: "84", unitType: "84B", dong: "201", ho: "1502", floor: "",
       rooms: "3", direction: "남향",
-      ownerName: "조서영", ownerPhone: "010-9205-0000",
+      ownerName: "조서영", ownerPhone: "010-9205-0000", ownerCarrier: "알뜰폰",
       tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
       contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
+      occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "",
       memo: "거래 완료 — 입주 완료",
       status: "closed", createdAt: now - 1000 * 60 * 60 * 24 * 90,
     },
@@ -264,6 +283,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     direction:    (d.direction    as string) || "",
     ownerName:    (d.ownerName    as string) || "",
     ownerPhone:   (d.ownerPhone   as string) || "",
+    ownerCarrier: (d.ownerCarrier as string) || "",
     tenantName:   (d.tenantName   as string) || "",
     tenantPhone:  (d.tenantPhone  as string) || "",
     tenantDeposit:(d.tenantDeposit as string) || "",
@@ -278,6 +298,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     nextManageDate:  (d.nextManageDate  as string) || "",
     manageCycle:     (d.manageCycle     as ManageCycle) || "",
     manageTags:      Array.isArray(d.manageTags) ? (d.manageTags as string[]) : [],
+    options:         (d.options        as string) || "",
     memo:         (d.memo         as string) || "",
     status:       (d.status       as PropertyStatus) || "active",
     history:      Array.isArray(d.history) ? (d.history as PropertyEvent[]) : [],
@@ -384,9 +405,10 @@ export function contractBackToProperty(c: {
     area: c.area || "", unitType: c.unitType || "", dong: c.dong || "", ho: c.ho || "", floor: "", rooms: c.rooms || "", direction: c.direction || "",
     ownerName: c.landlordName,
     ownerPhone: c.landlordPhone,
+    ownerCarrier: "",
     tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-    occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [],
+    occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "",
     memo: c.memo ? `${c.memo}\n[재모집] 만기관리에서 복귀` : "[재모집] 만기관리에서 복귀",
     status: "active", createdAt: Date.now(),
   };

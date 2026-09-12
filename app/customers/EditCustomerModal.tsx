@@ -192,13 +192,13 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           )}
         </div>
 
-        <Field label="메모">
+        <Field label="메모 (엔터로 줄바꿈)">
           <textarea
             value={form.memo}
             onChange={e => setField("memo", e.target.value)}
             placeholder="기억해야 할 특이사항 (예: 주말 임장 선호, 1층 NO)"
-            rows={2}
-            className={fieldCls + " resize-none"}
+            rows={3}
+            className={fieldCls + " resize-y"}
           />
         </Field>
 
@@ -301,11 +301,12 @@ function ShownPropertyRow({
           <option value="negative">👎 별로</option>
         </select>
       </div>
-      <input
+      <textarea
         value={s.note}
         onChange={e => onChange({ note: e.target.value })}
-        placeholder="메모 (선택)"
-        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="메모 (선택) — 엔터로 줄바꿈"
+        rows={2}
+        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
       />
     </div>
   );

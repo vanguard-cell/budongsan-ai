@@ -166,6 +166,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
               <Dot />{formatPhone(p.ownerPhone)}
             </a>
+            {p.ownerCarrier && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-slate-700">{p.ownerCarrier}</span>
+            )}
             <a
               href={`sms:${p.ownerPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.ownerName ? ` ${p.ownerName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 매물 관련하여 연락드립니다.`)}`}
               className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto"
@@ -238,11 +241,21 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           </div>
         )}
 
+        {/* 옵션 */}
+        {p.options && (
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-[11px] text-gray-400 dark:text-gray-500 mr-0.5">옵션</span>
+            {p.options.split(",").map(s => s.trim()).filter(Boolean).map((o, i) => (
+              <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">{o}</span>
+            ))}
+          </div>
+        )}
+
         {/* 메모 */}
         {p.memo && (
           <div className="text-[11px] text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded-xl px-3 py-2 border border-gray-100 dark:border-slate-700 flex items-start gap-1.5">
             <span className="material-symbols-outlined text-sm text-gray-400 dark:text-gray-500 shrink-0">sticky_note_2</span>
-            <span className="leading-relaxed">{p.memo}</span>
+            <span className="leading-relaxed whitespace-pre-wrap">{p.memo}</span>
           </div>
         )}
       </div>

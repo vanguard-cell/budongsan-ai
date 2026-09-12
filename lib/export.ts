@@ -211,9 +211,11 @@ function propertiesToRows(properties: Property[], maskPersonal: boolean) {
     "방향":          p.direction,
     "집주인":        maskPersonal ? maskName(p.ownerName) : p.ownerName,
     "집주인 전화":   maskPersonal ? maskPhone(p.ownerPhone) : p.ownerPhone,
+    "집주인 통신사": p.ownerCarrier,
     "임차인":        maskPersonal ? maskName(p.tenantName) : p.tenantName,
     "임차인 전화":   maskPersonal ? maskPhone(p.tenantPhone) : p.tenantPhone,
     "임대만기일":    p.leaseEndDate,
+    "옵션":          p.options,
     "상태":          p.status === "active" ? "진행중" : "거래완료",
     "메모":          p.memo,
     "등록일":        new Date(p.createdAt).toISOString().slice(0, 10),
@@ -248,9 +250,11 @@ export function exportProperties(properties: Property[], opt: ExportOptions): { 
       { wch: 8 },  // 방향
       { wch: 10 }, // 집주인
       { wch: 16 }, // 집주인 전화
+      { wch: 12 }, // 집주인 통신사
       { wch: 10 }, // 임차인
       { wch: 16 }, // 임차인 전화
       { wch: 12 }, // 임대만기일
+      { wch: 24 }, // 옵션
       { wch: 8 },  // 상태
       { wch: 24 }, // 메모
       { wch: 12 }, // 등록일

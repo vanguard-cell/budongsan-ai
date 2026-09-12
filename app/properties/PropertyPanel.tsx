@@ -35,7 +35,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   return (
     <tr>
       <td className="text-gray-400 dark:text-gray-500 py-1 pr-3 align-top whitespace-nowrap w-16">{label}</td>
-      <td className="text-gray-800 dark:text-gray-200 py-1 break-all">{children}</td>
+      <td className="text-gray-800 dark:text-gray-200 py-1 break-all whitespace-pre-wrap">{children}</td>
     </tr>
   );
 }
@@ -135,6 +135,8 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
             {(p.tenantDeposit || p.tenantMonthly) && (
               <Row label="현임차">{[p.tenantDeposit && `보증금 ${fmtNum(p.tenantDeposit)}만`, p.tenantMonthly && `월 ${fmtNum(p.tenantMonthly)}만`].filter(Boolean).join(" / ")}</Row>
             )}
+            {p.ownerCarrier && <Row label="통신사">{p.ownerCarrier}</Row>}
+            {p.options && <Row label="옵션">{p.options}</Row>}
             {p.memo && <Row label="메모">{p.memo}</Row>}
           </tbody>
         </table>
@@ -168,13 +170,14 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
       <div className="px-1 mt-4">
         <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-2">히스토리</p>
         {/* 메모 추가 */}
-        <div className="flex items-center gap-1.5 mb-3">
-          <input
+        <div className="flex items-start gap-1.5 mb-3">
+          <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") addNote(); }}
-            placeholder="활동 메모 추가 (예: 집주인 통화함)"
-            className="flex-1 min-w-0 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-[12px] bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)]"
+            onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) addNote(); }}
+            rows={2}
+            placeholder="활동 메모 (예: 집주인 통화함) · 엔터 줄바꿈"
+            className="flex-1 min-w-0 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5 text-[12px] leading-relaxed bg-gray-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)] resize-y"
           />
           <button onClick={addNote} disabled={!note.trim() || saving}
             className="shrink-0 px-3 py-1.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold disabled:opacity-40 hover:bg-[var(--brand-blue-dark)]">
@@ -189,7 +192,7 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
             {timeline.map((e, i) => (
               <div key={i} className="relative mb-3 last:mb-0">
                 <span className={`absolute -left-4 top-1 w-2 h-2 rounded-full ${EVENT_DOT[e.kind]}`} />
-                <div className="text-[12px] text-gray-800 dark:text-gray-200 leading-snug">{e.text}</div>
+                <div className="text-[12px] text-gray-800 dark:text-gray-200 leading-snug whitespace-pre-wrap break-words">{e.text}</div>
                 <div className="text-[10px] text-gray-400 dark:text-gray-500">{fmtEventTime(e.at)}{e.by ? ` · ${e.by}` : ""}</div>
               </div>
             ))}
