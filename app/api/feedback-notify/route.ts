@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { initializeApp, getApps } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 
 /**
  * 건의함 새 글/새 답글 알림 → Claude 루틴(건의함 자동 처리) 실행
@@ -18,12 +16,18 @@ const ROUTINE_BETA = process.env.FEEDBACK_ROUTINE_BETA || "experimental-cc-routi
 const COOLDOWN_MS = 60_000;
 const lastFired = new Map<string, number>();
 
-function adminAuth() {
-  // ID 토큰 검증은 공개 인증서만 쓰므로 서비스 계정 키 없이 projectId만으로 충분
-  if (getApps().length === 0) {
-    initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "budongsan-ai" });
-  }
-  return getAuth();
+/** Firebase ID 토큰 확인 — Auth REST(accounts:lookup)로 조회해 유효하면 uid 반환 */
+async function verifyUser(idToken: string): Promise<string | null> {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!apiKey) return null;
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  return data?.users?.[0]?.localId || null;
 }
 
 export async function POST(req: NextRequest) {
@@ -34,12 +38,8 @@ export async function POST(req: NextRequest) {
   const idToken = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!idToken) return NextResponse.json({ ok: false }, { status: 401 });
 
-  let uid: string;
-  try {
-    uid = (await adminAuth().verifyIdToken(idToken)).uid;
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 401 });
-  }
+  const uid = await verifyUser(idToken).catch(() => null);
+  if (!uid) return NextResponse.json({ ok: false }, { status: 401 });
 
   const now = Date.now();
   if (now - (lastFired.get(uid) || 0) < COOLDOWN_MS) {
