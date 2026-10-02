@@ -93,6 +93,7 @@ export default function ExpiryPage() {
   const [panelId, setPanelId] = useState<string | null>(null);    // 우측 패널 (표/카드 공용)
   const [sortBy, setSortBy] = useState<ContractSort>("endAsc");   // 표 헤더 정렬
   const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
+  const [complexFilter, setComplexFilter] = useState("");   // 단지(오피스텔)별 보기
   const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
   const [showUpload, setShowUpload] = useState(false);
   const [showExport, setShowExport] = useState(false);
@@ -154,6 +155,7 @@ export default function ExpiryPage() {
     return withDday
       .filter(({ c }) => (showClosed ? c.status !== "active" : c.status === "active"))
       .filter(({ s }) => (filter === "all" ? true : s === filter))
+      .filter(({ c }) => !complexFilter || (c.address || "").trim() === complexFilter)
       .filter(({ c }) => {
         if (!addrTerm && !regionTerm) return true;
         const addr = [c.address, c.dong, c.ho].filter(Boolean).join(" ").toLowerCase();
@@ -175,7 +177,19 @@ export default function ExpiryPage() {
         if (sortBy === "newest") return b.c.createdAt - a.c.createdAt;
         return a.d - b.d;   // endAsc (기본) — 만기 빠른순
       });
-  }, [contracts, filter, showClosed, query, sortBy, colSearch]);
+  }, [contracts, filter, showClosed, query, sortBy, colSearch, complexFilter]);
+
+  /* 단지(오피스텔)별 버튼 목록 */
+  const complexList = useMemo(() => {
+    const m = new Map<string, number>();
+    contracts
+      .filter(c => (showClosed ? c.status !== "active" : c.status === "active"))
+      .forEach(c => {
+        const k = (c.address || "").trim();
+        if (k) m.set(k, (m.get(k) || 0) + 1);
+      });
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
+  }, [contracts, showClosed]);
 
   /* ── 요약 카운트 ── */
   const counts = useMemo(() => {
@@ -461,6 +475,18 @@ export default function ExpiryPage() {
               종료·보관 보기
             </label>
           </div>
+          {complexList.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-2 -mx-1 px-1">
+              <FilterChip active={!complexFilter} onClick={() => setComplexFilter("")}>
+                🏢 모든 단지
+              </FilterChip>
+              {complexList.map(([name, n]) => (
+                <FilterChip key={name} active={complexFilter === name} onClick={() => setComplexFilter(complexFilter === name ? "" : name)}>
+                  <span className="whitespace-nowrap">{name} ({n})</span>
+                </FilterChip>
+              ))}
+            </div>
+          )}
           <input
             type="text"
             placeholder="🔍 주소 · 이름 · 연락처 검색"
