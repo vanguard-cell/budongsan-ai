@@ -343,7 +343,7 @@ export default function AdminPage() {
                 cust_drop: "고객 이탈처리", cust_close: "고객 거래완료", cust_match: "고객 매칭", cust_export: "고객 내보내기",
                 expiry_view_table: "만기 표뷰", expiry_filter: "만기 필터", expiry_sort: "만기 정렬",
                 expiry_print: "만기 인쇄", expiry_sms: "만기 문자", expiry_export: "만기 내보내기",
-                sched_filter: "스케줄 필터", sched_date: "스케줄 날짜클릭",
+                sched_filter: "스케줄 필터", sched_date: "스케줄 날짜클릭", sched_ics: "캘린더 내보내기",
                 ai_copy: "AI 복사", ai_pdf: "AI PDF", fb_reply: "건의함 답글",
               };
               const entries = Object.entries(panelUser.features || {})

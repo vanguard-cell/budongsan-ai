@@ -12,6 +12,7 @@ import {
   STATUS_LABELS,
 } from "./customer-types";
 import type { Property } from "@/lib/properties-db";
+import DatedMemo from "@/app/components/DatedMemo";
 
 interface Props {
   customer: Customer;
@@ -192,10 +193,10 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           )}
         </div>
 
-        <Field label="메모 (엔터로 줄바꿈)">
-          <textarea
+        <Field label="메모 (엔터 = 다음 줄 + 오늘 날짜 자동)">
+          <DatedMemo
             value={form.memo}
-            onChange={e => setField("memo", e.target.value)}
+            onChange={v => setField("memo", v)}
             placeholder="기억해야 할 특이사항 (예: 주말 임장 선호, 1층 NO)"
             rows={3}
             className={fieldCls + " resize-y"}

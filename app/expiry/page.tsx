@@ -16,6 +16,7 @@ import {
 import UploadModal, { type MergeStrategy } from "./UploadModal";
 import ContractTable, { type ContractSort } from "./ContractTable";
 import ContractPanel from "./ContractPanel";
+import DatedMemo from "@/app/components/DatedMemo";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
@@ -1308,10 +1309,10 @@ function EditModal({
           </Field>
         </div>
 
-        <Field label="메모 (선택 · 엔터로 줄바꿈)">
-          <textarea
+        <Field label="메모 (선택 · 엔터 = 다음 줄 + 오늘 날짜 자동)">
+          <DatedMemo
             value={form.memo}
-            onChange={e => setField("memo", e.target.value)}
+            onChange={v => setField("memo", v)}
             placeholder="기억해야 할 특이사항"
             rows={3}
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"

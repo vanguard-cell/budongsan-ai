@@ -10,8 +10,9 @@
  */
 
 import { useMemo, useState } from "react";
+import { holidayName } from "@/lib/holidays";
 
-export type CalendarSource = "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
+export type CalendarSource = "appointment" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
 
 export interface CalendarItem {
   date: string;                          // YYYY-MM-DD
@@ -32,12 +33,14 @@ export const SOURCE_COLORS: Record<CalendarSource, string> = {
   contractDate:    "bg-purple-500",
   downPaymentDate: "bg-pink-500",
   balanceDate:     "bg-amber-500",
+  renewal:         "bg-emerald-500",
 };
 export const SOURCE_LABELS: Record<CalendarSource, string> = {
   appointment:     "약속",
   contractDate:    "계약일",
   downPaymentDate: "중도금일",
   balanceDate:     "잔금일",
+  renewal:         "재계약",
 };
 /** 캘린더 셀 안에 표시할 짧은 라벨 — 1글자 (작은 셀에 들어가도록) */
 export const SOURCE_SHORT_LABELS: Record<CalendarSource, string> = {
@@ -45,6 +48,7 @@ export const SOURCE_SHORT_LABELS: Record<CalendarSource, string> = {
   contractDate:    "계",
   downPaymentDate: "중",
   balanceDate:     "잔",
+  renewal:         "재",
 };
 /** 글자까지 덮는 알약 형태 범례용 — 배경+텍스트+테두리 일체형 */
 export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
@@ -52,6 +56,7 @@ export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
   contractDate:    "bg-purple-100 text-purple-700 border-purple-200",
   downPaymentDate: "bg-pink-100   text-pink-700   border-pink-200",
   balanceDate:     "bg-amber-100  text-amber-700  border-amber-200",
+  renewal:         "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 /** 캘린더 셀 안 미니 알약용 — 테두리 없이 배경+텍스트만 (좁은 공간) */
 export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
@@ -59,6 +64,7 @@ export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
   contractDate:    "bg-purple-100 text-purple-700",
   downPaymentDate: "bg-pink-100   text-pink-700",
   balanceDate:     "bg-amber-100  text-amber-700",
+  renewal:         "bg-emerald-100 text-emerald-700",
 };
 
 function pad(n: number): string { return String(n).padStart(2, "0"); }
@@ -159,10 +165,11 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
           const isSelected = date === selectedDate;
           const info = dateMap[date];
           const weekday = idx % 7;
+          const holiday = holidayName(date);   // 추석·대체공휴일 등 — 일요일처럼 빨갛게 (#39)
 
           const baseColor = !inMonth
-            ? "text-gray-300"
-            : weekday === 0 ? "text-red-500"
+            ? (holiday ? "text-red-300" : "text-gray-300")
+            : weekday === 0 || holiday ? "text-red-500"
             : weekday === 6 ? "text-blue-500"
             : "text-gray-700";
 
@@ -177,9 +184,12 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
               key={`${date}-${idx}`}
               onClick={() => onSelectDate(isSelected ? null : date)}
               className={`relative min-h-[3.5rem] rounded-xl flex flex-col items-center justify-start pt-1.5 pb-1 transition-all ${cellCls}`}
-              title={info ? `${date} · 일정 ${info.total}건` : date}
+              title={[date, holiday, info && `일정 ${info.total}건`].filter(Boolean).join(" · ")}
             >
               <span className={`text-xs font-semibold ${isSelected ? "text-white" : baseColor}`}>{day}</span>
+              {holiday && inMonth && (
+                <span className={`text-[8px] leading-none mt-0.5 max-w-full px-0.5 truncate ${isSelected ? "text-white/90" : "text-red-400"}`}>{holiday}</span>
+              )}
               {info && (
                 <div className="flex flex-col gap-0.5 mt-1 items-stretch w-full px-1">
                   {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(src => {

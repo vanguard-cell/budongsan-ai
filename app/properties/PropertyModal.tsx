@@ -5,6 +5,7 @@
 import { useState, useRef } from "react";
 import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, type Property, type Occupancy } from "@/lib/properties-db";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
+import DatedMemo from "@/app/components/DatedMemo";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, m2ToPyeong } from "./helpers";
 
 export default function PropertyModal({ property, onClose, onSave }: {
@@ -361,8 +362,8 @@ export default function PropertyModal({ property, onClose, onSave }: {
 
           {/* 메모 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">메모 <span className="text-[10px] text-gray-400">(엔터로 줄바꿈)</span></label>
-            <textarea value={form.memo} onChange={e => set("memo", e.target.value)}
+            <label className="block text-sm font-medium text-gray-700 mb-1">메모 <span className="text-[10px] text-gray-400">(엔터 = 다음 줄 + 오늘 날짜 자동)</span></label>
+            <DatedMemo value={form.memo} onChange={v => set("memo", v)}
               placeholder="특이사항, 열쇠 위치, 입주 가능일 등"
               rows={3} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y" />
           </div>
@@ -379,4 +380,4 @@ export default function PropertyModal({ property, onClose, onSave }: {
   );
 }
 
-/* ── 계약 진행 모달 — 4개 날짜 + 임차인 정보 ── */
+/* ── 계약 진행 모달 — 4개 날짜 + 임차인 정보 ── */

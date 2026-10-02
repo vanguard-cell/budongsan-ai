@@ -12,6 +12,7 @@ const STYPE_COLORS: Record<string, string> = {
   "집보기": "bg-blue-100 text-blue-700",
   "계약":   "bg-purple-100 text-purple-700",
   "잔금":   "bg-orange-100 text-orange-700",
+  "재계약일": "bg-emerald-100 text-emerald-700",
   "기타":   "bg-gray-100 text-gray-600",
 };
 

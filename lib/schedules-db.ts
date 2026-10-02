@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-export type ScheduleType = "집보기" | "계약일" | "중도금일" | "잔금일" | "기타";
+export type ScheduleType = "집보기" | "계약일" | "중도금일" | "잔금일" | "재계약일" | "기타";
 export type ScheduleStatus = "scheduled" | "done" | "cancelled";
 
 export interface Schedule {

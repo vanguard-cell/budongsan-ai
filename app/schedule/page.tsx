@@ -15,11 +15,15 @@ import { dDay, type Contract } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 import SideDrawer from "@/app/components/SideDrawer";
+import { downloadIcs } from "@/lib/ics";
 
 /* ── 타입 ── */
-type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate";
+type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
 type ItemSource   = Exclude<SourceFilter, "all">;
-type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate";
+type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
+const KIND_LABEL: Record<PropertyDateKind, string> = {
+  contractDate: "계약일", downPaymentDate: "중도금일", balanceDate: "잔금일", renewal: "재계약",
+};
 
 interface UnifiedItem {
   key: string;
@@ -33,12 +37,13 @@ interface UnifiedItem {
   contract?: Contract;              // 만기로 이전된 계약(있으면 매물 대신 만기로 연결)
 }
 
-const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약일", "중도금일", "잔금일", "기타"];
+const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약일", "중도금일", "잔금일", "재계약일", "기타"];
 const TYPE_COLORS: Record<ScheduleType, string> = {
   "집보기":   "bg-blue-100 text-blue-700",
   "계약일":   "bg-purple-100 text-purple-700",
   "중도금일": "bg-pink-100 text-pink-700",
   "잔금일":   "bg-amber-100 text-amber-700",
+  "재계약일": "bg-emerald-100 text-emerald-700",
   "기타":     "bg-gray-100 text-gray-600",
 };
 
@@ -48,16 +53,18 @@ const SOURCE_BAR: Record<ItemSource, string> = {
   contractDate:    "#7F77DD",
   downPaymentDate: "#D4537E",
   balanceDate:     "#EF9F27",
+  renewal:         "#10B981",
 };
 const SCHEDULE_SHORT: Record<ScheduleType, string> = {
-  "집보기": "집보기", "계약일": "계약", "중도금일": "중도금", "잔금일": "잔금", "기타": "기타",
+  "집보기": "집보기", "계약일": "계약", "중도금일": "중도금", "잔금일": "잔금", "재계약일": "재계약", "기타": "기타",
 };
 
-/** schedule.scheduleType → 필터 분류 (계약/중도금/잔금은 별도, 집보기/기타는 약속) */
+/** schedule.scheduleType → 필터 분류 (계약/중도금/잔금/재계약은 별도, 집보기/기타는 약속) */
 function scheduleTypeToSource(t: ScheduleType): ItemSource {
   if (t === "계약일")   return "contractDate";
   if (t === "중도금일") return "downPaymentDate";
   if (t === "잔금일")   return "balanceDate";
+  if (t === "재계약일") return "renewal";
   return "appointment"; // 집보기·기타
 }
 
@@ -182,6 +189,19 @@ export default function SchedulePage() {
     for (const ct of contracts) {
       if (ct.status !== "active") continue;
       const dp = contractToDisplayProp(ct);
+      // 재계약(연장)으로 생긴 계약 — 계약일·잔금일이 둘 다 재계약일이라 "재계약" 한 건으로 표시 (#39)
+      if (ct.renewedFromId) {
+        const date = ct.contractDate || ct.startDate;
+        if (date && (showPast || isFuture(date))) {
+          items.push({
+            key: `c-${ct.id}-renewal`, source: "renewal",
+            date: date.slice(0, 10),
+            time: date.length > 10 ? date.slice(11, 16) : "",
+            property: dp, propertyKind: "renewal", contract: ct,
+          });
+        }
+        continue;
+      }
       const dates: { kind: PropertyDateKind; date?: string; source: ItemSource }[] = [
         { kind: "contractDate",    date: ct.contractDate,    source: "contractDate" },
         { kind: "downPaymentDate", date: ct.downPaymentDate, source: "downPaymentDate" },
@@ -240,7 +260,26 @@ export default function SchedulePage() {
     contractDate:    baseItems.filter(i => i.source === "contractDate").length,
     downPaymentDate: baseItems.filter(i => i.source === "downPaymentDate").length,
     balanceDate:     baseItems.filter(i => i.source === "balanceDate").length,
+    renewal:         baseItems.filter(i => i.source === "renewal").length,
   }), [baseItems]);
+
+  /* 네이버·구글 캘린더용 .ics — 오늘 이후 일정 전체 (탭·날짜 선택과 무관) */
+  const exportIcs = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const events = baseItems
+      .filter(i => i.date >= today && i.schedule?.status !== "done")
+      .map(i => {
+        const { label, title } = itemText(i);
+        return {
+          uid: i.key, date: i.date, time: i.time || undefined,
+          title: `[${label}] ${title}`,
+          description: i.schedule?.memo || undefined,
+        };
+      });
+    if (events.length === 0) { alert("내보낼 앞으로의 일정이 없습니다."); return; }
+    downloadIcs(events, `딜던_스케줄_${today}.ics`);
+    recordFeatureUse(user?.uid, "sched_ics");
+  };
 
   const upsert = async (s: Schedule) => {
     if (!user) return;
@@ -285,7 +324,7 @@ export default function SchedulePage() {
               스케줄
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
-              약속·계약일·중도금일·잔금일 한눈에 (만기일은 만기관리)
+              약속·계약일·중도금일·잔금일·재계약 한눈에 (만기일은 만기관리)
             </p>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -312,6 +351,12 @@ export default function SchedulePage() {
               className="text-xs px-3.5 py-2 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-semibold hover:bg-amber-100 transition-colors"
             >
               + 잔금일
+            </button>
+            <button
+              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "재계약일" })}
+              className="text-xs px-3.5 py-2 rounded-xl border-2 border-emerald-400 bg-emerald-50 text-emerald-700 font-semibold hover:bg-emerald-100 transition-colors"
+            >
+              + 재계약
             </button>
             <button
               onClick={loadSamples}
@@ -367,14 +412,15 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* 필터 탭 — 5개 */}
-        <div className="grid grid-cols-5 gap-1.5 mb-4">
+        {/* 필터 탭 — 6개 */}
+        <div className="grid grid-cols-6 gap-1.5 mb-4">
           {([
             { key: "all",             icon: "📋", label: "전체",     activeColor: "bg-blue-600",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
             { key: "appointment",     icon: "👥", label: "약속",     activeColor: "bg-blue-500",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
             { key: "contractDate",    icon: "📝", label: "계약일",   activeColor: "bg-purple-600",  inactiveColor: "bg-purple-50 border-purple-200 text-purple-700" },
             { key: "downPaymentDate", icon: "💰", label: "중도금", activeColor: "bg-pink-600",    inactiveColor: "bg-pink-50 border-pink-200 text-pink-700" },
             { key: "balanceDate",     icon: "🔑", label: "잔금",   activeColor: "bg-amber-500",   inactiveColor: "bg-amber-50 border-amber-200 text-amber-700" },
+            { key: "renewal",         icon: "🔁", label: "재계약", activeColor: "bg-emerald-600", inactiveColor: "bg-emerald-50 border-emerald-200 text-emerald-700" },
           ] as const).map(tab => (
             <button
               key={tab.key}
@@ -392,8 +438,16 @@ export default function SchedulePage() {
           ))}
         </div>
 
-        {/* 지난 일정 토글 */}
-        <div className="flex items-center justify-end mb-3">
+        {/* 캘린더 내보내기 + 지난 일정 토글 */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <button
+            onClick={exportIcs}
+            title="네이버·구글·아이폰 캘린더에서 '가져오기'로 넣을 수 있는 파일(.ics)을 받습니다"
+            className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600"
+          >
+            <span className="material-symbols-outlined text-[14px]">ios_share</span>
+            캘린더로 내보내기
+          </button>
           <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
             <input type="checkbox" checked={showPast} onChange={e => setShowPast(e.target.checked)} className="accent-blue-600" />
             지난 일정 포함
@@ -444,9 +498,7 @@ export default function SchedulePage() {
       {panelItem && (() => {
         const it = panelItem;
         const s = it.schedule, p = it.property, c = it.customer;
-        const accent = it.source === "appointment" ? "#2383E2"
-          : it.source === "contractDate" ? "#7F77DD"
-          : it.source === "downPaymentDate" ? "#D4537E" : "#EF9F27";
+        const accent = SOURCE_BAR[it.source];
         const phoneChip = (label: string, name: string | undefined, phone: string | undefined, kind: "owner" | "tenant" | "visitor") => {
           if (!phone) return null;
           const cls = kind === "owner" ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
@@ -490,7 +542,7 @@ export default function SchedulePage() {
                 <div>
                   <div className="flex flex-wrap gap-1.5 mb-1.5">
                     <span className="px-2 py-0.5 rounded-md text-[11px] font-bold text-white" style={{ backgroundColor: accent }}>
-                      {it.propertyKind === "contractDate" ? "계약일" : it.propertyKind === "downPaymentDate" ? "중도금일" : "잔금일"}
+                      {KIND_LABEL[it.propertyKind]}
                     </span>
                     <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{p.dealType} · {it.date}{it.time ? ` ${it.time}` : ""}</span>
                   </div>
@@ -533,21 +585,29 @@ export default function SchedulePage() {
 }
 
 /* ── 목록 한 줄 (시안 A): 시간/D-day · 종류색 막대 · 단지명 · › ── */
-function CompactRow({ item }: { item: UnifiedItem }) {
-  let lead = "", label = "", title = "", done = false;
+/** 목록·캘린더 내보내기 공용 — 종류 라벨 + 제목 */
+function itemText(item: UnifiedItem): { label: string; title: string } {
   if (item.schedule) {
     const s = item.schedule;
-    lead = s.time || "";
-    label = SCHEDULE_SHORT[s.scheduleType] || s.scheduleType;
-    title = s.propertyAddress || "주소 미입력";
-    done = s.status === "done";
+    return { label: SCHEDULE_SHORT[s.scheduleType] || s.scheduleType, title: s.propertyAddress || "주소 미입력" };
+  }
+  if (item.property && item.propertyKind) {
+    return { label: KIND_LABEL[item.propertyKind].replace(/일$/, ""), title: item.property.address };
+  }
+  if (item.customer) {
+    return { label: "후속", title: item.customer.name + (item.customer.preferredArea ? ` · ${item.customer.preferredArea}` : "") };
+  }
+  return { label: "", title: "" };
+}
+
+function CompactRow({ item }: { item: UnifiedItem }) {
+  const { label, title } = itemText(item);
+  let lead = "", done = false;
+  if (item.schedule) {
+    lead = item.schedule.time || "";
+    done = item.schedule.status === "done";
   } else if (item.property && item.propertyKind) {
     lead = item.time || "";   // 계약일에 시간을 넣었으면 목록에도 그 시간이 보인다
-    label = item.propertyKind === "contractDate" ? "계약" : item.propertyKind === "downPaymentDate" ? "중도금" : "잔금";
-    title = item.property.address;
-  } else if (item.customer) {
-    label = "후속";
-    title = item.customer.name + (item.customer.preferredArea ? ` · ${item.customer.preferredArea}` : "");
   }
   if (!lead) {
     const dd = dDay(item.date);
@@ -623,7 +683,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
           {/* 종류 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">일정 종류</label>
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
               {SCHEDULE_TYPES.map(t => (
                 <button key={t} type="button" onClick={() => set("scheduleType", t)}
                   className={`py-2 rounded-xl text-[11px] font-medium border transition-colors ${form.scheduleType === t ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"}`}>{t}</button>
