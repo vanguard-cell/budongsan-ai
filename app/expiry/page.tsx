@@ -67,6 +67,9 @@ function fmtNum(s: string): string {
   return isNaN(n) ? s : n.toLocaleString();
 }
 
+/** 매물 종류가 비어 있는 계약의 버튼 이름 */
+const UNTYPED = "미지정";
+
 export default function ExpiryPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -93,7 +96,7 @@ export default function ExpiryPage() {
   const [panelId, setPanelId] = useState<string | null>(null);    // 우측 패널 (표/카드 공용)
   const [sortBy, setSortBy] = useState<ContractSort>("endAsc");   // 표 헤더 정렬
   const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
-  const [complexFilter, setComplexFilter] = useState("");   // 단지(오피스텔)별 보기
+  const [typeFilter, setTypeFilter] = useState("");   // 매물 종류(아파트·오피스텔 등)별 보기
   const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
   const [showUpload, setShowUpload] = useState(false);
   const [showExport, setShowExport] = useState(false);
@@ -155,7 +158,7 @@ export default function ExpiryPage() {
     return withDday
       .filter(({ c }) => (showClosed ? c.status !== "active" : c.status === "active"))
       .filter(({ s }) => (filter === "all" ? true : s === filter))
-      .filter(({ c }) => !complexFilter || (c.address || "").trim() === complexFilter)
+      .filter(({ c }) => !typeFilter || (c.propertyType || UNTYPED) === typeFilter)
       .filter(({ c }) => {
         if (!addrTerm && !regionTerm) return true;
         const addr = [c.address, c.dong, c.ho].filter(Boolean).join(" ").toLowerCase();
@@ -177,18 +180,22 @@ export default function ExpiryPage() {
         if (sortBy === "newest") return b.c.createdAt - a.c.createdAt;
         return a.d - b.d;   // endAsc (기본) — 만기 빠른순
       });
-  }, [contracts, filter, showClosed, query, sortBy, colSearch, complexFilter]);
+  }, [contracts, filter, showClosed, query, sortBy, colSearch, typeFilter]);
 
-  /* 단지(오피스텔)별 버튼 목록 */
-  const complexList = useMemo(() => {
+  /* 매물 종류별 버튼 목록 — 등록 화면 순서대로, 종류 없는 계약은 '미지정' */
+  const typeList = useMemo(() => {
     const m = new Map<string, number>();
     contracts
       .filter(c => (showClosed ? c.status !== "active" : c.status === "active"))
       .forEach(c => {
-        const k = (c.address || "").trim();
-        if (k) m.set(k, (m.get(k) || 0) + 1);
+        const k = c.propertyType || UNTYPED;
+        m.set(k, (m.get(k) || 0) + 1);
       });
-    return Array.from(m.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
+    const order: string[] = [...CONTRACT_PROPERTY_TYPES, UNTYPED];
+    return Array.from(m.entries()).sort((a, b) => {
+      const ia = order.indexOf(a[0]), ib = order.indexOf(b[0]);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
   }, [contracts, showClosed]);
 
   /* ── 요약 카운트 ── */
@@ -475,14 +482,15 @@ export default function ExpiryPage() {
               종료·보관 보기
             </label>
           </div>
-          {complexList.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-2 -mx-1 px-1">
-              <FilterChip active={!complexFilter} onClick={() => setComplexFilter("")}>
-                🏢 모든 단지
+          {typeList.length > 1 && (
+            <div className="flex flex-wrap items-center gap-1.5 mb-3">
+              <span className="text-[11px] text-gray-400 mr-0.5">종류</span>
+              <FilterChip active={!typeFilter} onClick={() => setTypeFilter("")}>
+                전체
               </FilterChip>
-              {complexList.map(([name, n]) => (
-                <FilterChip key={name} active={complexFilter === name} onClick={() => setComplexFilter(complexFilter === name ? "" : name)}>
-                  <span className="whitespace-nowrap">{name} ({n})</span>
+              {typeList.map(([name, n]) => (
+                <FilterChip key={name} active={typeFilter === name} onClick={() => setTypeFilter(typeFilter === name ? "" : name)}>
+                  {name} ({n})
                 </FilterChip>
               ))}
             </div>
@@ -646,7 +654,7 @@ function FilterChip({
   onClick: () => void;
   severity?: Severity;
 }) {
-  const base = "text-xs px-3 py-1.5 rounded-full border transition-colors";
+  const base = "text-xs px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap shrink-0";
   if (active) {
     const cls = severity ? severityClasses(severity) : null;
     return (
