@@ -23,7 +23,7 @@ import {
   Timestamp,
   type Unsubscribe,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { auth, db } from "./firebase";
 
 export const ADMIN_EMAIL = "vpfldh87@gmail.com";
 
@@ -117,6 +117,19 @@ export function subscribeFeedback(
   );
 }
 
+/** 자동 처리 루틴 깨우기 — 실패해도 건의 등록에는 영향 없음 (기다리지 않음) */
+function notifyRoutine(kind: "new" | "reply") {
+  const user = auth.currentUser;
+  if (!user) return;
+  user.getIdToken()
+    .then(token => fetch("/api/feedback-notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ kind }),
+    }))
+    .catch(e => console.warn("[feedback] 자동 처리 알림 실패:", e));
+}
+
 /** 새 건의 등록 — 첫 메시지를 thread에 담음 */
 export async function addFeedback(
   uid: string,
@@ -138,6 +151,7 @@ export async function addFeedback(
     lastReplyBy: "user",
     submittedBy: { uid, email, name },
   });
+  notifyRoutine("new");
 }
 
 /** 스레드에 메시지 추가 (문의자·관리자 양쪽 대화)
@@ -180,6 +194,7 @@ export async function addMessage(
   }
 
   await updateDoc(ref, patch);
+  if (msg.sender === "user") notifyRoutine("reply");
 }
 
 /** 상태 업데이트 (status / userConfirmed) */
