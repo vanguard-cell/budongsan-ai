@@ -3,14 +3,13 @@
  * 다이어트(뭘 숨기고 뺄지) 근거 데이터.
  *   node scripts/read-usage.js
  */
-const { initializeApp, cert } = require("firebase-admin/app");
+const { initializeApp } = require("firebase-admin/app");
+const { loadCredential } = require("./admin-credential");
 const { getFirestore } = require("firebase-admin/firestore");
 const path = require("path");
 const fs = require("fs");
 
-const KEY = process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(__dirname, "..", "serviceAccountKey.json");
-if (!fs.existsSync(KEY)) { console.error("❌ serviceAccountKey.json 없음"); process.exit(1); }
-initializeApp({ credential: cert(require(KEY)), projectId: "budongsan-ai" });
+initializeApp({ credential: loadCredential(), projectId: "budongsan-ai" });
 const db = getFirestore();
 
 const PAGE_LABEL = { dashboard: "홈", properties: "매물", expiry: "만기", customers: "고객", schedule: "스케줄", sales: "매출", insights: "인사이트", "market-price": "실거래", team: "직원", feedback: "건의함", admin: "유저관리", more: "더보기", "ai-content": "AI문구" };

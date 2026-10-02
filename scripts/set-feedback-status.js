@@ -7,20 +7,19 @@
  * done이 아닌 상태로 바꾸면 userConfirmed는 false로 리셋.
  * (정책: 완료는 어머니가 직접 '확인/완료' 눌렀을 때만 — 관리자가 임의 완료 금지)
  */
-const { initializeApp, cert } = require("firebase-admin/app");
+const { initializeApp } = require("firebase-admin/app");
+const { loadCredential } = require("./admin-credential");
 const { getFirestore } = require("firebase-admin/firestore");
 const path = require("path");
 const fs = require("fs");
 
-const KEY_PATH = process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(__dirname, "..", "serviceAccountKey.json");
-if (!fs.existsSync(KEY_PATH)) { console.error("❌ serviceAccountKey.json 없음"); process.exit(1); }
 
 const args = process.argv.slice(2);
 const targetNo = Number(args.find(a => /^\d+$/.test(a)));
 const status = args.find(a => ["pending", "in_progress", "done"].includes(a));
 if (!targetNo || !status) { console.error("사용: node scripts/set-feedback-status.js <번호> <pending|in_progress|done>"); process.exit(1); }
 
-initializeApp({ credential: cert(require(KEY_PATH)), projectId: "budongsan-ai" });
+initializeApp({ credential: loadCredential(), projectId: "budongsan-ai" });
 const dbf = getFirestore();
 
 (async () => {

@@ -10,13 +10,12 @@
  *       상태가 문의(pending)면 진행중(in_progress)으로 자동 전환.
  *   --done 플래그를 주면 답변과 함께 완료(done)로 변경.
  */
-const { initializeApp, cert } = require("firebase-admin/app");
+const { initializeApp } = require("firebase-admin/app");
+const { loadCredential } = require("./admin-credential");
 const { getFirestore } = require("firebase-admin/firestore");
 const path = require("path");
 const fs = require("fs");
 
-const KEY_PATH = process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(__dirname, "..", "serviceAccountKey.json");
-if (!fs.existsSync(KEY_PATH)) { console.error("❌ serviceAccountKey.json 없음"); process.exit(1); }
 
 const args = process.argv.slice(2);
 const targetNo = Number(args.find(a => /^\d+$/.test(a)));
@@ -27,7 +26,7 @@ if (!fs.existsSync(msgFile)) { console.error(`❌ 메시지 파일 없음: ${msg
 const text = fs.readFileSync(msgFile, "utf8").trim();
 if (!text) { console.error("❌ 메시지가 비어있음"); process.exit(1); }
 
-initializeApp({ credential: cert(require(KEY_PATH)), projectId: "budongsan-ai" });
+initializeApp({ credential: loadCredential(), projectId: "budongsan-ai" });
 const dbf = getFirestore();
 
 (async () => {

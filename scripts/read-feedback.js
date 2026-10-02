@@ -4,30 +4,21 @@
  * 사용:
  *   1) Firebase 콘솔 → 프로젝트 설정 → 서비스 계정 → "새 비공개 키 생성"
  *   2) 받은 JSON을 프로젝트 루트에 serviceAccountKey.json 으로 저장 (이미 .gitignore 처리됨)
+ *      (클라우드 세션은 환경 변수 FIREBASE_SERVICE_ACCOUNT 에 JSON 내용 전체)
  *   3) node scripts/read-feedback.js            # 전체
  *      node scripts/read-feedback.js --open     # 미완료(문의/진행중)만
  *      node scripts/read-feedback.js 5          # #5만 전체 대화
  *
  * 번호 규칙: 등록순(오래된 게 #1). 앱 화면의 #N과 동일.
  */
-const { initializeApp, cert } = require("firebase-admin/app");
+const { initializeApp } = require("firebase-admin/app");
+const { loadCredential } = require("./admin-credential");
 const { getFirestore } = require("firebase-admin/firestore");
 const path = require("path");
 const fs = require("fs");
 
-const KEY_PATH =
-  process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-  path.join(__dirname, "..", "serviceAccountKey.json");
-
-if (!fs.existsSync(KEY_PATH)) {
-  console.error(`\n❌ 서비스 계정 키가 없습니다: ${KEY_PATH}`);
-  console.error("   Firebase 콘솔 → 프로젝트 설정 → 서비스 계정 → '새 비공개 키 생성'");
-  console.error("   받은 JSON을 프로젝트 루트에 serviceAccountKey.json 으로 저장하세요.\n");
-  process.exit(1);
-}
-
 initializeApp({
-  credential: cert(require(KEY_PATH)),
+  credential: loadCredential(),
   projectId: "budongsan-ai",
 });
 const dbf = getFirestore();
