@@ -17,7 +17,7 @@ const APPLY = process.argv.includes("--apply");
 const NEW_NAME = "망월동 힐스테이트그랑파사쥬(12-1)";
 
 function convert(addr) {
-  if (typeof addr !== "string" || !/망월동\s*1100/.test(addr)) return null;
+  if (typeof addr !== "string" || !/망월동\s*1100(?:번지)?(?![\d-])/.test(addr)) return null;
   if (addr.includes("힐스테이트그랑파사쥬(12-1)")) return null; // 이미 통일됨
   const m = addr.match(/(\d+)\s*호\s*$/);
   return m ? `${NEW_NAME} ${m[1]}호` : undefined; // undefined = 호수 못 찾음
