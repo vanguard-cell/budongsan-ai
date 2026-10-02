@@ -10,8 +10,6 @@
 const { initializeApp } = require("firebase-admin/app");
 const { loadCredential } = require("./admin-credential");
 const { getFirestore } = require("firebase-admin/firestore");
-const path = require("path");
-const fs = require("fs");
 
 
 const args = process.argv.slice(2);
