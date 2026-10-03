@@ -37,9 +37,10 @@ interface UnifiedItem {
   contract?: Contract;              // 만기로 이전된 계약(있으면 매물 대신 만기로 연결)
 }
 
-const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "계약일", "중도금일", "잔금일", "재계약일", "기타"];
+const SCHEDULE_TYPES: ScheduleType[] = ["집보기", "방문", "계약일", "중도금일", "잔금일", "재계약일", "기타"];
 const TYPE_COLORS: Record<ScheduleType, string> = {
   "집보기":   "bg-blue-100 text-blue-700",
+  "방문":     "bg-sky-100 text-sky-700",
   "계약일":   "bg-purple-100 text-purple-700",
   "중도금일": "bg-pink-100 text-pink-700",
   "잔금일":   "bg-amber-100 text-amber-700",
@@ -56,7 +57,7 @@ const SOURCE_BAR: Record<ItemSource, string> = {
   renewal:         "#10B981",
 };
 const SCHEDULE_SHORT: Record<ScheduleType, string> = {
-  "집보기": "집보기", "계약일": "계약", "중도금일": "중도금", "잔금일": "잔금", "재계약일": "재계약", "기타": "기타",
+  "집보기": "집보기", "방문": "방문", "계약일": "계약", "중도금일": "중도금", "잔금일": "잔금", "재계약일": "재계약", "기타": "기타",
 };
 
 /** schedule.scheduleType → 필터 분류 (계약/중도금/잔금/재계약은 별도, 집보기/기타는 약속) */
@@ -333,6 +334,12 @@ export default function SchedulePage() {
               className="text-xs px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors shadow-sm"
             >
               + 약속
+            </button>
+            <button
+              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "방문" })}
+              className="text-xs px-3.5 py-2 rounded-xl border-2 border-sky-400 bg-sky-50 text-sky-700 font-semibold hover:bg-sky-100 transition-colors whitespace-nowrap"
+            >
+              + 방문
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "계약일" })}
