@@ -18,7 +18,7 @@ import SideDrawer from "@/app/components/SideDrawer";
 import { downloadIcs } from "@/lib/ics";
 
 /* ── 타입 ── */
-type SourceFilter = "all" | "appointment" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
+type SourceFilter = "all" | "appointment" | "visit" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
 type ItemSource   = Exclude<SourceFilter, "all">;
 type PropertyDateKind = "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
 const KIND_LABEL: Record<PropertyDateKind, string> = {
@@ -51,6 +51,7 @@ const TYPE_COLORS: Record<ScheduleType, string> = {
 /** 목록 한 줄 — 종류색 막대 + 짧은 라벨 (시안 A) */
 const SOURCE_BAR: Record<ItemSource, string> = {
   appointment:     "#2383E2",
+  visit:           "#0EA5E9",
   contractDate:    "#7F77DD",
   downPaymentDate: "#D4537E",
   balanceDate:     "#EF9F27",
@@ -66,6 +67,7 @@ function scheduleTypeToSource(t: ScheduleType): ItemSource {
   if (t === "중도금일") return "downPaymentDate";
   if (t === "잔금일")   return "balanceDate";
   if (t === "재계약일") return "renewal";
+  if (t === "방문")     return "visit";
   return "appointment"; // 집보기·기타
 }
 
@@ -258,6 +260,7 @@ export default function SchedulePage() {
   const counts = useMemo(() => ({
     all:             baseItems.length,
     appointment:     baseItems.filter(i => i.source === "appointment").length,
+    visit:           baseItems.filter(i => i.source === "visit").length,
     contractDate:    baseItems.filter(i => i.source === "contractDate").length,
     downPaymentDate: baseItems.filter(i => i.source === "downPaymentDate").length,
     balanceDate:     baseItems.filter(i => i.source === "balanceDate").length,
@@ -419,11 +422,12 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {/* 필터 탭 — 6개 */}
-        <div className="grid grid-cols-6 gap-1.5 mb-4">
+        {/* 필터 탭 — 7개 */}
+        <div className="grid grid-cols-7 gap-1.5 mb-4">
           {([
             { key: "all",             icon: "📋", label: "전체",     activeColor: "bg-blue-600",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
             { key: "appointment",     icon: "👥", label: "약속",     activeColor: "bg-blue-500",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
+            { key: "visit",           icon: "🚪", label: "방문",     activeColor: "bg-sky-500",     inactiveColor: "bg-sky-50 border-sky-200 text-sky-700" },
             { key: "contractDate",    icon: "📝", label: "계약일",   activeColor: "bg-purple-600",  inactiveColor: "bg-purple-50 border-purple-200 text-purple-700" },
             { key: "downPaymentDate", icon: "💰", label: "중도금", activeColor: "bg-pink-600",    inactiveColor: "bg-pink-50 border-pink-200 text-pink-700" },
             { key: "balanceDate",     icon: "🔑", label: "잔금",   activeColor: "bg-amber-500",   inactiveColor: "bg-amber-50 border-amber-200 text-amber-700" },
