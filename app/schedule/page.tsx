@@ -67,8 +67,8 @@ function scheduleTypeToSource(t: ScheduleType): ItemSource {
   if (t === "중도금일") return "downPaymentDate";
   if (t === "잔금일")   return "balanceDate";
   if (t === "재계약일") return "renewal";
-  if (t === "방문")     return "visit";
-  return "appointment"; // 집보기·기타
+  if (t === "방문" || t === "집보기") return "visit"; // 예전 '집보기'도 방문으로 표시 (저장된 데이터는 그대로)
+  return "appointment"; // 기타
 }
 
 /** 만기 계약을 스케줄 표시용 Property 형태로 변환 (계약일·중도금·잔금 날짜 + 연락처) */

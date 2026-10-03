@@ -224,7 +224,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
       {/* 범례 + 액션 — 알약 형태로 색상 구분감 강화 */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 pt-3 border-t border-gray-100">
         <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-          {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(s => (
+          {(Object.keys(SOURCE_COLORS) as CalendarSource[]).filter(s => s !== "appointment").map(s => (
             <div key={s} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium ${SOURCE_PILL_CLASSES[s]}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${SOURCE_COLORS[s]}`}></span>
               {SOURCE_LABELS[s]}
