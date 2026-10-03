@@ -51,6 +51,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Schedule {
   let rawType = (d.scheduleType as string) || "집보기";
   if (rawType === "계약") rawType = "계약일";
   if (rawType === "잔금") rawType = "잔금일";
+  if (rawType === "집보기") rawType = "방문"; // 집보기 → 방문 통합 (저장된 데이터는 그대로, 표시만 방문)
   return {
     id, createdAt,
     date:            (d.date            as string) || "",
