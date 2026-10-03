@@ -144,20 +144,20 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
     <div className={flat ? "" : "bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4"}>
       {/* 월 헤더 */}
       <div className="flex items-center justify-between mb-3">
-        <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">‹</button>
+        <button onClick={prevMonth} className="w-11 h-11 text-3xl flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">‹</button>
         <div className="flex flex-col items-center">
-          <button onClick={goToday} className="text-base font-bold text-gray-900 hover:text-blue-600 transition-colors">
+          <button onClick={goToday} className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
             {cursor.y}년 {cursor.m + 1}월
           </button>
-          <div className="text-[10px] text-gray-500">이번 달 일정 {monthCount}건</div>
+          <div className="text-sm text-gray-500">이번 달 일정 {monthCount}건</div>
         </div>
-        <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">›</button>
+        <button onClick={nextMonth} className="w-11 h-11 text-3xl flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">›</button>
       </div>
 
       {/* 요일 헤더 */}
       <div className="grid grid-cols-7 gap-0.5 mb-1">
         {WEEKDAYS.map((w, i) => (
-          <div key={w} className={`text-center text-[10px] font-semibold py-1 ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-gray-500"}`}>
+          <div key={w} className={`text-center text-base font-semibold py-1.5 ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-gray-500"}`}>
             {w}
           </div>
         ))}
@@ -188,12 +188,12 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
             <button
               key={`${date}-${idx}`}
               onClick={() => onSelectDate(isSelected ? null : date)}
-              className={`relative min-h-[3.5rem] rounded-xl flex flex-col items-center justify-start pt-1.5 pb-1 transition-all ${cellCls}`}
+              className={`relative min-h-[5.5rem] rounded-xl flex flex-col items-center justify-start pt-1.5 pb-1 transition-all ${cellCls}`}
               title={[date, holiday, info && `일정 ${info.total}건`].filter(Boolean).join(" · ")}
             >
-              <span className={`text-xs font-semibold ${isSelected ? "text-white" : baseColor}`}>{day}</span>
+              <span className={`text-xl font-bold ${isSelected ? "text-white" : baseColor}`}>{day}</span>
               {holiday && inMonth && (
-                <span className={`text-[8px] leading-none mt-0.5 max-w-full px-0.5 truncate ${isSelected ? "text-white/90" : "text-red-400"}`}>{holiday}</span>
+                <span className={`text-[10px] leading-none mt-0.5 max-w-full px-0.5 truncate ${isSelected ? "text-white/90" : "text-red-400"}`}>{holiday}</span>
               )}
               {info && (
                 <div className="flex flex-col gap-0.5 mt-1 items-stretch w-full px-1">
@@ -203,7 +203,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
                     return (
                       <span
                         key={src}
-                        className={`text-[9px] leading-tight font-semibold px-1 py-0.5 rounded text-center truncate ${
+                        className={`text-[11px] leading-tight font-semibold px-0.5 py-1 rounded text-center truncate whitespace-nowrap ${
                           isSelected
                             ? "bg-white/30 text-white"
                             : SOURCE_CELL_CLASSES[src]
@@ -223,9 +223,9 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
 
       {/* 범례 + 액션 — 알약 형태로 색상 구분감 강화 */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 pt-3 border-t border-gray-100">
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           {(Object.keys(SOURCE_COLORS) as CalendarSource[]).filter(s => s !== "appointment").map(s => (
-            <div key={s} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium ${SOURCE_PILL_CLASSES[s]}`}>
+            <div key={s} className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border font-medium whitespace-nowrap ${SOURCE_PILL_CLASSES[s]}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${SOURCE_COLORS[s]}`}></span>
               {SOURCE_LABELS[s]}
             </div>
@@ -233,11 +233,11 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
         </div>
         <div className="flex-1" />
         {selectedDate && (
-          <button onClick={() => onSelectDate(null)} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600">
+          <button onClick={() => onSelectDate(null)} className="text-sm px-3.5 py-1.5 whitespace-nowrap rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600">
             전체 보기
           </button>
         )}
-        <button onClick={goToday} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100">
+        <button onClick={goToday} className="text-sm px-3.5 py-1.5 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 text-blue-700 font-medium hover:bg-blue-100">
           오늘
         </button>
       </div>
