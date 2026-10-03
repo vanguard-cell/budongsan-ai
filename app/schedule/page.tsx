@@ -128,7 +128,7 @@ export default function SchedulePage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (new URLSearchParams(window.location.search).get("new") === "1") {
-      setEditing(emptySchedule());
+      setEditing({ ...emptySchedule(), scheduleType: "기타" });
     }
   }, []);
 
@@ -330,7 +330,7 @@ export default function SchedulePage() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             <button
-              onClick={() => setEditing(emptySchedule())}
+              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })}
               className="text-xs px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors shadow-sm"
             >
               + 약속
@@ -469,7 +469,7 @@ export default function SchedulePage() {
             <div className="text-5xl mb-3">📅</div>
             <div className="text-base font-semibold text-gray-900 mb-1">일정이 없습니다</div>
             <div className="text-xs text-gray-500 mb-4">약속을 추가하거나 만기·고객 탭을 확인해보세요</div>
-            <button onClick={() => setEditing(emptySchedule())} className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold">
+            <button onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })} className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold">
               + 약속 추가
             </button>
           </div>
@@ -691,7 +691,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">일정 종류</label>
             <div className="grid grid-cols-3 gap-1.5">
-              {SCHEDULE_TYPES.map(t => (
+              {SCHEDULE_TYPES.filter(t => t !== "집보기" || schedule.scheduleType === "집보기").map(t => (
                 <button key={t} type="button" onClick={() => set("scheduleType", t)}
                   className={`py-2 rounded-xl text-[11px] font-medium border transition-colors ${form.scheduleType === t ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"}`}>{t}</button>
               ))}
