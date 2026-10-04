@@ -22,8 +22,8 @@ const SIDEBAR_TABS = [
   // { href: "/customers",  icon: "group",           label: "고객 관리" },  // 숨김 (건의 #57)
   { href: "/schedule",     icon: "calendar_month",  label: "스케줄" },
   { href: "/sales",        icon: "payments",        label: "매출 관리" },
-  { href: "/insights",     icon: "insights",        label: "인사이트" },
-  { href: "/market-price", icon: "trending_up",     label: "실거래 최고가" },
+  // { href: "/insights",     icon: "insights",        label: "인사이트" },  // 숨김 (건의 #59)
+  // { href: "/market-price", icon: "trending_up",     label: "실거래 최고가" },  // 숨김 (건의 #59)
   { href: "/team",         icon: "groups",          label: "직원 관리" },
   { href: "/feedback",     icon: "feedback",        label: "건의함" },
 ];
