@@ -169,13 +169,11 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             <div className="mt-2 flex flex-wrap gap-1.5 items-center">
               {p.contractDate && (
                 <span className="text-[11px] font-bold px-2.5 py-1 whitespace-nowrap rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-800 flex items-center gap-0.5">
-                  <span className="material-symbols-outlined text-xs">edit_document</span>
                   계약일 {formatDateKo(p.contractDate)}
                 </span>
               )}
               {p.downPaymentDate && (
                 <span className="text-[11px] font-bold px-2.5 py-1 whitespace-nowrap rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/60 flex items-center gap-0.5">
-                  <span className="material-symbols-outlined text-xs">payments</span>
                   중도금 {formatDateKo(p.downPaymentDate)}
                 </span>
               )}
@@ -185,7 +183,6 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                     ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800/60"
                     : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60"
                 }`}>
-                  <span className="material-symbols-outlined text-xs">savings</span>
                   잔금일 {formatDateKo(p.balanceDate)}
                 </span>
               )}
