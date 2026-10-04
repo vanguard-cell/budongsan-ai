@@ -741,7 +741,7 @@ function ContractRow({
             </div>
           )}
           <div className="text-xs text-gray-600 mt-1">
-            만기 <span className="font-medium text-gray-800">{c.endDate || "—"}</span>
+            만기 <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{c.endDate || "—"}</span>
             <span className="mx-1.5 text-gray-300">·</span>
             보증금 <span className="font-medium text-gray-800">{c.deposit ? `${fmtNum(c.deposit)}만` : "—"}</span>
             {c.type === "월세" && (
