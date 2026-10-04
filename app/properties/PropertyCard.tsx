@@ -113,6 +113,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               {addressStr(p) || "—"}
             </span>
             <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
+            {p.direction && <span className="flex-shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
             {(p.tenantDeposit || p.tenantMonthly) && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400 tabular-nums">
                 현 임차인 <span className="font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
@@ -120,11 +121,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             )}
           </div>
 
-          {(p.unitType || p.rooms || p.direction || (p.occupancy && p.occupancy !== "tenant")) && (
+          {(p.unitType || p.rooms || (p.occupancy && p.occupancy !== "tenant")) && (
             <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex flex-wrap gap-x-2">
               {p.unitType && <span className="font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span>}
               {p.rooms && <span>방{p.rooms}개</span>}
-              {p.direction && <span>{p.direction}</span>}
               {p.occupancy && p.occupancy !== "tenant" && <span>{OCC_LABEL[p.occupancy]}</span>}
             </div>
           )}
