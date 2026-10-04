@@ -148,7 +148,7 @@ export default function ComplexPicker({ onSelect, externalBuildingType }: Props)
       </div>
 
       {/* 시/도 → 시/군/구 → 읍/면/동 */}
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-4 gap-1.5">
         <select
           value={sido}
           onChange={e => { setSido(e.target.value); setSigungu(""); setDong(""); setResults([]); }}

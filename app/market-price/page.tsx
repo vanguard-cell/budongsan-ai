@@ -419,7 +419,7 @@ function MarketPriceModal({ item, onClose, onSave }: {
               국토부 실거래 자동 조회 — 최근 6개월 매매·전세·월세 최고가를 자동으로 채워드려요
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              {["아파트", "오피스텔", "빌라/다세대"].map(t => (
+              {["아파트", "오피스텔"].map(t => (
                 <button
                   key={t}
                   type="button"
