@@ -375,8 +375,7 @@ export async function deleteProperty(agencyId: string, id: string): Promise<void
  * 만기 후 갱신 안 함 → 다시 매물로 광고 시작
  * - dealType은 type에서 매핑 (전세/월세/매매)
  * - 가격은 보증금/월세 유지
- * - 임차인 정보는 비움 (새로 모집)
- * - 만기일은 다음 계약 시 입력
+ * - 현재 임차인 정보(이름·연락처·보증금/월세·만기일)는 그대로 가져옴
  */
 export function contractBackToProperty(c: {
   address: string;
@@ -395,6 +394,9 @@ export function contractBackToProperty(c: {
   direction?: string;
   rooms?: string;
   options?: string;
+  tenantName?: string;
+  tenantPhone?: string;
+  endDate?: string;
 }): Property {
   return {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
@@ -407,7 +409,7 @@ export function contractBackToProperty(c: {
     ownerName: c.landlordName,
     ownerPhone: c.landlordPhone,
     ownerCarrier: "",
-    tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
+    tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "", tenantDeposit: c.deposit || "", tenantMonthly: c.monthly || "", leaseEndDate: c.endDate || "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
     occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: c.options || "",
     memo: c.memo ? `${c.memo}\n[재모집] 만기관리에서 복귀` : "[재모집] 만기관리에서 복귀",
