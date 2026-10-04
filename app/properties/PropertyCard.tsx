@@ -113,13 +113,19 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               {addressStr(p) || "—"}
             </span>
             <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
-            {p.direction && <span className="flex-shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
+          </div>
+
+          {/* 3째줄: 방향 + 현 임차인 보증금/월세 */}
+          {(p.direction || p.tenantDeposit || p.tenantMonthly) && (
+            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+            {p.direction && <span className="whitespace-nowrap text-[11px] font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
             {(p.tenantDeposit || p.tenantMonthly) && (
-              <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400 tabular-nums">
+              <span className="whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400 tabular-nums">
                 현 임차인 <span className="font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
               </span>
             )}
-          </div>
+            </div>
+          )}
 
           {(p.unitType || p.rooms || (p.occupancy && p.occupancy !== "tenant")) && (
             <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex flex-wrap gap-x-2">
