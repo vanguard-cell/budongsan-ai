@@ -41,7 +41,8 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
   const typedName = baseAddress.trim();
   const alreadyMine = myComplexes.some(c => c.propertyType === form.propertyType && c.name === typedName);
   const saveMine = async () => {
-    if (!user?.agencyId || !typedName) return;
+    if (!typedName) return;
+    if (!user?.agencyId) { alert("사무실 정보를 불러오는 중이에요. 잠시 후 다시 눌러주세요."); return; }
     try { await addMyComplex(user.agencyId, { name: typedName, propertyType: form.propertyType }); }
     catch { alert("단지 저장 중 오류가 났어요. 다시 해주세요."); }
   };
@@ -63,7 +64,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
       .map(c => ({ base: c.base, count: c.count, mine: false, ref: null as MyComplex | null }));
     return [...mine, ...auto]
       .filter(c => !q || c.base.replace(/\s+/g, "").toLowerCase().includes(q))
-      .filter(c => c.base !== typedName)
+      .filter(c => c.mine || c.base !== typedName)
       .slice(0, 40);
   })();
 
@@ -209,7 +210,10 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                 📌 ‘{typedName}’ 내 단지 목록에 저장
               </button>
             )}
-            {showSaved && savedMatches.length > 0 && (
+            {(typedName && alreadyMine) && (
+              <p className="mt-2 text-xs font-medium text-teal-700">✅ ‘{typedName}’ 내 단지 목록에 저장되어 있어요</p>
+            )}
+            {(showSaved || savedMatches.some(c => c.mine)) && savedMatches.length > 0 && (
               <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50/60 p-2">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] font-semibold text-teal-700">📌 내 단지 목록 (눌러서 선택)</span>
