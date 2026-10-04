@@ -284,9 +284,10 @@ export default function PropertiesPage() {
     const isRegion = (w: string) =>
       /^(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)$/.test(w) ||
       /^[가-힣]+(특별시|광역시|특별자치시|특별자치도|도|시|군|구|읍|면|동|리|로|길|대로)$/.test(w) ||
+      /^[가-힣]+\d+번?길$/.test(w) ||
       /^(산)?\d+(-\d+)?(번지|번길)?$/.test(w);
     while (t.length > 1 && isRegion(t[0])) t.shift();
-    return t.join(" ") || c;
+    return t.join(" ").replace(/\s*제?\d+층.*$/, "") || c;
   };
   const baseAddr = (p: Property) => (p.address || "").replace(/\s*\d+동.*$/, "").replace(/\s*\d+호.*$/, "").trim();
   // 같은 단지(주소 표기만 다른 경우 포함)를 하나로 묶기 위한 이름
