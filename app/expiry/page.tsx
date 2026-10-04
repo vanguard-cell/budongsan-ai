@@ -21,7 +21,7 @@ import NotifyBell from "../NotifyBell";
 import { subscribeMyComplexes, addMyComplex, removeMyComplex, type MyComplex } from "@/lib/properties-db";
 import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
-import { saveProperty, contractBackToProperty } from "@/lib/properties-db";
+import { saveProperty, contractBackToProperty, OPTION_PRESETS, toggleOption, hasOption } from "@/lib/properties-db";
 import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
@@ -307,7 +307,7 @@ export default function ExpiryPage() {
         address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
         landlordName: c.landlordName, landlordPhone: c.landlordPhone, memo: c.memo,
         dong: c.dong, ho: c.ho, propertyType: c.propertyType,
-        area: c.area, unitType: c.unitType, direction: c.direction, rooms: c.rooms,
+        area: c.area, unitType: c.unitType, direction: c.direction, rooms: c.rooms, options: c.options,
       });
       // 1. 새 매물 저장
       await saveProperty(user.agencyId, prop);
@@ -739,6 +739,9 @@ function ContractRow({
               {c.rooms && <span>방{c.rooms}개</span>}
               {c.direction && <span>{c.direction}</span>}
             </div>
+          )}
+          {c.options && (
+            <div className="text-[11px] text-gray-600 mt-0.5 break-words">🏠 옵션: {c.options}</div>
           )}
           <div className="text-xs text-gray-600 mt-1">
             만기 <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{c.endDate || "—"}</span>
@@ -1412,6 +1415,26 @@ function EditModal({
             />
           </Field>
         </div>
+
+        <Field label="옵션 (선택)">
+          <input
+            value={form.options || ""}
+            onChange={e => setField("options", e.target.value)}
+            placeholder="예: 에어컨, 냉장고, 세탁기 / 풀옵션"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {OPTION_PRESETS.map(o => {
+              const on = hasOption(form.options || "", o);
+              return (
+                <button key={o} type="button" onClick={() => setField("options", toggleOption(form.options || "", o))}
+                  className={`whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${on ? "bg-blue-600 text-white border-blue-600" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                  {on ? "✓ " : "+ "}{o}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
 
         <Field label="메모 (선택 · 엔터 = 다음 줄 + 오늘 날짜 자동)">
           <DatedMemo

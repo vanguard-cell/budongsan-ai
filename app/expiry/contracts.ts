@@ -26,6 +26,7 @@ export interface Contract {
   unitType?: string;        // 평면도 타입 (예: 84A, C-3타입)
   direction?: string;       // 방향
   rooms?: string;           // 방수
+  options?: string;         // 집 옵션 — 쉼표 구분 (내 매물의 옵션과 같은 형식)
   // 매물에서 이전된 경우 보존되는 계약 진행 정보
   contractDate?: string;    // 계약일
   downPaymentDate?: string; // 중도금일

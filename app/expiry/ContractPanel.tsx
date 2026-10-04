@@ -86,6 +86,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onC
         <table className="w-full text-[12px]">
           <tbody>
             {(c.propertyType || c.area) && <Row label="유형">{[c.propertyType, c.area && `${c.area}㎡`, c.unitType && `(${c.unitType})`, c.rooms && `방${c.rooms}`, c.direction].filter(Boolean).join(" · ")}</Row>}
+            {c.options && <Row label="옵션">{c.options}</Row>}
             {c.startDate && <Row label="시작일">{c.startDate}</Row>}
             {c.endDate && <Row label="만기일">{c.endDate}</Row>}
             {c.memo && <Row label="메모">{c.memo}</Row>}

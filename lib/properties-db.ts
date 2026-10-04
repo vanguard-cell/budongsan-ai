@@ -394,6 +394,7 @@ export function contractBackToProperty(c: {
   unitType?: string;
   direction?: string;
   rooms?: string;
+  options?: string;
 }): Property {
   return {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
@@ -408,7 +409,7 @@ export function contractBackToProperty(c: {
     ownerCarrier: "",
     tenantName: "", tenantPhone: "", tenantDeposit: "", tenantMonthly: "", leaseEndDate: "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
-    occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: "",
+    occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: c.options || "",
     memo: c.memo ? `${c.memo}\n[재모집] 만기관리에서 복귀` : "[재모집] 만기관리에서 복귀",
     status: "active", createdAt: Date.now(),
   };
