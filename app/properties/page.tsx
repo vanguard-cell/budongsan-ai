@@ -757,14 +757,14 @@ export default function PropertiesPage() {
             ))}
           </div>
           {/* 매물유형 칩 */}
-          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+          <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto mb-2">
             <span className="text-[11px] text-gray-500 shrink-0 w-8">유형</span>
-            {(["all", ...PROPERTY_TYPES] as const).map(t => {
+            {(["all", ...PROPERTY_TYPES.filter(t => !["빌라/다세대", "원룸/투룸", "토지", "기타"].includes(t))] as const).map(t => {
               const cnt = propTypeCounts[t] ?? 0;
               const label = t === "all" ? "전체" : t === "빌라/다세대" ? "빌라" : t === "원룸/투룸" ? "원룸" : t;
               return (
                 <button key={t} onClick={() => { setFilterPropType(t); setFilterType("all"); }}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors whitespace-nowrap shrink-0 ${
                     filterPropType === t
                       ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
                       : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
