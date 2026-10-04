@@ -725,7 +725,7 @@ function ContractRow({
             {c.propertyType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-medium">{c.propertyType}</span>}
             <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{c.type}</span>
             {c.area && (
-              <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600">{(() => { const p = Math.round(parseFloat(c.area!) / 3.3058 * 10) / 10; return p ? `${p}평 · 전용 ${c.area}㎡` : `전용 ${c.area}㎡`; })()}</span>
+              <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600">{(() => { const p = m2ToPyeong(c.area!); return p ? `${p}평 · 전용 ${c.area}㎡` : `전용 ${c.area}㎡`; })()}</span>
             )}
             {isClosed && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">종료</span>
@@ -753,19 +753,19 @@ function ContractRow({
           </div>
 
           {/* 연락처 */}
-          <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            <ContactLine
-              label="임차인"
-              name={c.tenantName}
-              phone={c.tenantPhone}
-              onSms={() => onSms("tenant")}
-              disabled={isClosed}
-            />
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
             <ContactLine
               label="임대인"
               name={c.landlordName}
               phone={c.landlordPhone}
               onSms={() => onSms("landlord")}
+              disabled={isClosed}
+            />
+            <ContactLine
+              label="임차인"
+              name={c.tenantName}
+              phone={c.tenantPhone}
+              onSms={() => onSms("tenant")}
               disabled={isClosed}
             />
           </div>
@@ -855,9 +855,9 @@ function ContactLine({
 }) {
   const hasPhone = !!phone.replace(/\D/g, "");
   return (
-    <div className="flex items-center gap-1.5 text-xs">
-      <span className="text-gray-500 w-10 flex-shrink-0">{label}</span>
-      <span className="text-gray-800 truncate">{name || "—"}</span>
+    <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+      <span className="text-gray-500 flex-shrink-0">{label}</span>
+      <span className="text-gray-800 truncate max-w-[6rem]">{name || "—"}</span>
       {hasPhone && (
         <>
           <a
@@ -870,7 +870,7 @@ function ContactLine({
           <button
             onClick={onSms}
             disabled={disabled || !hasPhone}
-            className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed ml-auto"
+            className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             문자
           </button>
