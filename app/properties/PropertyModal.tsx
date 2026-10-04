@@ -8,8 +8,9 @@ import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import DatedMemo from "@/app/components/DatedMemo";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, m2ToPyeong } from "./helpers";
 
-export default function PropertyModal({ property, onClose, onSave }: {
+export default function PropertyModal({ property, savedComplexes = [], onClose, onSave }: {
   property: Property;
+  savedComplexes?: { base: string; propertyType: string; count: number }[];
   onClose: () => void;
   onSave: (p: Property) => Promise<void>;
 }) {
@@ -29,6 +30,17 @@ export default function PropertyModal({ property, onClose, onSave }: {
     }
     return property.address;
   });
+
+  const [showSaved, setShowSaved] = useState(false);
+  // 내가 이미 등록한 단지 — 선택한 유형만, 입력한 글자가 있으면 그 글자가 들어간 것만
+  const savedMatches = (() => {
+    const q = baseAddress.trim().replace(/\s+/g, "").toLowerCase();
+    return savedComplexes
+      .filter(c => c.propertyType === form.propertyType)
+      .filter(c => !q || c.base.replace(/\s+/g, "").toLowerCase().includes(q))
+      .filter(c => c.base !== baseAddress.trim())
+      .slice(0, 30);
+  })();
 
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
 
@@ -136,7 +148,8 @@ export default function PropertyModal({ property, onClose, onSave }: {
               <span className="text-[11px] text-gray-400 font-normal ml-1">· {form.propertyType} 단지만 표시</span>
             </label>
             <div className="relative">
-              <input value={baseAddress} onChange={e => handleAddressChange(e.target.value)}
+              <input value={baseAddress} onChange={e => { handleAddressChange(e.target.value); setShowSaved(true); }}
+                onFocus={() => setShowSaved(true)}
                 placeholder={`단지명 검색 (예: 미사강변골든센트로)`}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" autoComplete="off" />
               {addrLoading && <div className="absolute right-3 top-2.5 text-xs text-gray-400">검색 중…</div>}
@@ -163,6 +176,25 @@ export default function PropertyModal({ property, onClose, onSave }: {
               💡 목록에서 고르거나, <b className="text-gray-500">단지·건물명을 직접 입력</b>해도 그대로 저장돼요.
               (상가·신축처럼 검색에 안 잡히는 건 직접 타이핑하세요)
             </p>
+
+            {/* 내가 이미 등록한 단지 — 눌러서 같은 이름으로 등록 */}
+            {showSaved && savedMatches.length > 0 && (
+              <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50/60 p-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold text-teal-700">📌 내가 등록한 단지 (눌러서 선택)</span>
+                  <button type="button" onClick={() => setShowSaved(false)} className="text-[11px] text-gray-400">닫기</button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                  {savedMatches.map(c => (
+                    <button key={c.base} type="button"
+                      onClick={() => { setBaseAddress(c.base); updateFullAddress(c.base, form.dong, form.ho); setAddrSuggestions([]); setShowSaved(false); }}
+                      className="max-w-full truncate whitespace-nowrap px-2.5 py-1.5 rounded-lg bg-white border border-teal-200 text-xs text-gray-800 hover:bg-teal-100">
+                      {c.base} <span className="text-gray-400">{c.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 동 / 호수 — 입력하면 주소에 자동 반영 */}
             <div className="grid grid-cols-2 gap-2 mt-2">

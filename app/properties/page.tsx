@@ -291,6 +291,18 @@ export default function PropertiesPage() {
   const baseAddr = (p: Property) => (p.address || "").replace(/\s*\d+동.*$/, "").replace(/\s*\d+호.*$/, "").trim();
   // 같은 단지(주소 표기만 다른 경우 포함)를 하나로 묶기 위한 이름
   const complexKey = (p: Property) => complexShortName(baseAddr(p));
+  // 이미 등록해 둔 단지 목록 (같은 이름으로 통일해서 등록하기 위함) — 많이 쓴 순
+  const savedComplexes = (() => {
+    const m = new Map<string, { base: string; propertyType: string; count: number }>();
+    for (const p of properties) {
+      const base = baseAddr(p);
+      if (!base) continue;
+      const k = `${p.propertyType || ""}|${base}`;
+      const cur = m.get(k);
+      if (cur) cur.count++; else m.set(k, { base, propertyType: p.propertyType || "", count: 1 });
+    }
+    return [...m.values()].sort((a, b) => b.count - a.count);
+  })();
   const numOf = (s: string) => parseInt((s || "").replace(/\D/g, ""), 10) || 0;
 
   // 탭별 매물 분류 (계약진행중 / 그 외)
@@ -1049,6 +1061,7 @@ export default function PropertiesPage() {
       {editing && (
         <PropertyModal
           property={editing}
+          savedComplexes={savedComplexes}
           onClose={() => setEditing(null)}
           onSave={async p => { const ok = await upsert(p); if (ok) setEditing(null); }}
         />
