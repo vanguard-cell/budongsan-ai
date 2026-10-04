@@ -727,13 +727,13 @@ function ContractRow({
             {c.area && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600">{(() => { const p = Math.round(parseFloat(c.area!) / 3.3058 * 10) / 10; return p ? `${p}평` : `${c.area}㎡`; })()}</span>
             )}
-            <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-gray-900" title={c.address}>
-              {[c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" ")}
-            </span>
             {isClosed && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">종료</span>
             )}
           </div>
+          <div className="mt-0.5 min-w-0 truncate text-[12px] font-semibold text-gray-900" title={c.address}>
+              {[c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" ")}
+            </div>
           {(c.rooms || c.direction) && (
             <div className="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2">
               {c.rooms && <span>방{c.rooms}개</span>}
