@@ -46,7 +46,27 @@ export default function SalesPage() {
     return () => { u1(); u2(); };
   }, [user]);
 
-  const stats = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
+  // 명세에서 뺀 항목 (이 기기에 저장 — 매물/계약 정보는 그대로 둠)
+  const hiddenKey = user ? `sales-hidden-${user.agencyId}` : "";
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (!hiddenKey) return;
+    try { setHiddenIds(JSON.parse(localStorage.getItem(hiddenKey) || "[]")); } catch { /* ignore */ }
+  }, [hiddenKey]);
+  const hideItem = (id: string, address: string) => {
+    if (!confirm(`"${address}" 을(를) 매출 명세에서 뺄까요?\n(매물·계약 정보는 그대로 남아요)`)) return;
+    const next = [...hiddenIds, id];
+    setHiddenIds(next);
+    try { localStorage.setItem(hiddenKey, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+
+  const stats = useMemo(
+    () => computeSalesStats(
+      properties.filter(p => !hiddenIds.includes(p.id)),
+      contracts.filter(c => !hiddenIds.includes(c.id)),
+    ),
+    [properties, contracts, hiddenIds],
+  );
 
   // 선택 기간 기본값 — 데이터 있는 최신 월 (없으면 이번 달)
   useEffect(() => {
@@ -247,6 +267,13 @@ export default function SalesPage() {
                         <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{p.address}</span>
                         <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate}</span>
                         <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0 tabular-nums">{fmtNum(p.commission)}만</span>
+                        <button
+                          onClick={() => hideItem(p.id, p.address)}
+                          aria-label="명세에서 삭제"
+                          className="shrink-0 text-gray-400 hover:text-red-500 whitespace-nowrap"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
                       </div>
                     ))}
                   </div>
