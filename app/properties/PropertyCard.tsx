@@ -89,6 +89,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               <div className="text-[10px] font-medium leading-tight">{severityLabel(sev!)}</div>
               <div className="text-sm font-bold leading-tight">{dDayLabel(leaseDD)}</div>
             </div>
+            {p.leaseEndDate && (
+              <div className="mt-1 text-center whitespace-nowrap text-[10px] font-semibold text-blue-800 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 px-1 py-0.5 rounded">{p.leaseEndDate}</div>
+            )}
           </div>
         )}
 
@@ -115,30 +118,18 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
           </div>
 
-          {/* 3째줄: 방향 + 현 임차인 보증금/월세 */}
-          {(p.direction || p.tenantDeposit || p.tenantMonthly) && (
-            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
-            {p.direction && <span className="whitespace-nowrap text-[11px] font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
-            {(p.tenantDeposit || p.tenantMonthly) && (
-              <span className="whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400 tabular-nums">
-                현 임차인 <span className="font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
-              </span>
-            )}
-            </div>
-          )}
-
-          {(p.unitType || p.rooms || (p.occupancy && p.occupancy !== "tenant")) && (
-            <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex flex-wrap gap-x-2">
-              {p.unitType && <span className="font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span>}
-              {p.rooms && <span>방{p.rooms}개</span>}
-              {p.occupancy && p.occupancy !== "tenant" && <span>{OCC_LABEL[p.occupancy]}</span>}
-            </div>
-          )}
-
-          {/* 3째줄: 만기 */}
-          {p.leaseEndDate && (
-            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              만기 <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 px-1.5 py-0.5 rounded">{p.leaseEndDate}</span>
+          {/* 3째줄: 방향 · 타입 · 방 개수 · 입주상태 · 현 임차인 보증금/월세 — 한 줄에 */}
+          {(p.direction || p.unitType || p.rooms || (p.occupancy && p.occupancy !== "tenant") || p.tenantDeposit || p.tenantMonthly) && (
+            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px]">
+              {p.direction && <span className="whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
+              {p.unitType && <span className="whitespace-nowrap font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span>}
+              {p.rooms && <span className="whitespace-nowrap text-gray-600 dark:text-gray-400">방{p.rooms}개</span>}
+              {p.occupancy && p.occupancy !== "tenant" && <span className="whitespace-nowrap text-gray-600 dark:text-gray-400">{OCC_LABEL[p.occupancy]}</span>}
+              {(p.tenantDeposit || p.tenantMonthly) && (
+                <span className="whitespace-nowrap text-gray-600 dark:text-gray-400 tabular-nums">
+                  현 임차인 <span className="font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
+                </span>
+              )}
             </div>
           )}
 
