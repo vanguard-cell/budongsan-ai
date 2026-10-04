@@ -725,7 +725,7 @@ function ContractRow({
             {c.propertyType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-medium">{c.propertyType}</span>}
             <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{c.type}</span>
             {c.area && (
-              <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600">{(() => { const p = m2ToPyeong(c.area!); return p ? `${p}평 · 전용 ${c.area}㎡` : `전용 ${c.area}㎡`; })()}</span>
+              <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600">{(() => { const p = m2ToPyeong(c.area!); return p ? `전용 ${c.area}㎡ · ${p}평` : `전용 ${c.area}㎡`; })()}</span>
             )}
             {isClosed && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">종료</span>
