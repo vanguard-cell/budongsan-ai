@@ -395,6 +395,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           </div>
 
           {/* 입주 상태 — 주인거주·공실 분류 (집주인/공실 필터 기준) */}
+          {form.dealType === "매매" && (
           <div className="border border-indigo-200 rounded-2xl p-3 bg-indigo-50/40">
             <label className="block text-xs font-semibold text-indigo-700 mb-2">🏘️ 입주 상태</label>
             <div className="grid grid-cols-4 gap-1.5">
@@ -412,6 +413,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
             <p className="text-[10px] text-indigo-600 mt-2">📌 주인거주·공실로 지정하면 목록에서 [🏠 집주인/공실] 필터로 모아볼 수 있어요</p>
           </div>
+          )}
 
           {/* 집 옵션 — 칩을 누르면 아래 칸에 들어가고, 직접 타이핑해도 됨 */}
           <div>
