@@ -92,6 +92,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             {p.leaseEndDate && (
               <div className="mt-1 text-center whitespace-nowrap text-[10px] font-semibold text-blue-800 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 px-1 py-0.5 rounded">{p.leaseEndDate}</div>
             )}
+            <div className="mt-1 text-center whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</div>
           </div>
         )}
 
@@ -110,12 +111,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}>⭐</button>
           </div>
 
-          {/* 2째줄: 주소(단지·동호) 옆에 금액 — 주소가 길면 주소 끝만 ...으로 */}
+          {/* 2째줄: 주소(단지·동호) (만기 칸이 없으면 옆에 금액) — 주소가 길면 주소 끝만 ...으로 */}
           <div className="mt-0.5 flex items-baseline gap-x-2 min-w-0">
             <span className="min-w-0 truncate text-[12px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
               {addressStr(p) || "—"}
             </span>
-            <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
+            {!(sevCls && leaseDD !== null) && <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>}
           </div>
 
           {/* 3째줄: 방향 · 타입 · 방 개수 · 입주상태 · 임차인 보증금/월세 — 한 줄에 */}
