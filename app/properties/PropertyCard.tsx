@@ -113,6 +113,11 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               {addressStr(p) || "—"}
             </span>
             <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
+            {(p.tenantDeposit || p.tenantMonthly) && (
+              <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400 tabular-nums">
+                현 임차인 <span className="font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
+              </span>
+            )}
           </div>
 
           {(p.unitType || p.rooms || p.direction || (p.occupancy && p.occupancy !== "tenant")) && (
