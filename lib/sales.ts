@@ -23,6 +23,7 @@ function contractToSalesProperty(c: Contract): Property {
     price: c.deposit || "",
     monthly: c.monthly || "",
     commission: c.commission || "",
+    salesHidden: c.salesHidden,
     balanceDate: c.balanceDate || "",
     status: c.status === "closed" ? "closed" : "active",
   };
@@ -74,6 +75,7 @@ export function computeSalesStats(properties: Property[], contracts: Contract[] 
   }
 
   for (const p of dedup.values()) {
+    if (p.salesHidden) continue;   // 명세에서 삭제한 건 (중복 제거 뒤에 걸러서 옛 기록이 다시 살아나지 않게)
     const amt = commOf(p);
 
     const month = p.balanceDate.slice(0, 7);

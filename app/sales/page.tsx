@@ -16,10 +16,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
-  subscribeProperties, savePropertiesBatch, deleteProperty, sampleSalesProperties,
+  subscribeProperties, savePropertiesBatch, deleteProperty, sampleSalesProperties, saveProperty,
   type Property,
 } from "@/lib/properties-db";
-import { subscribeContracts } from "@/lib/contracts-db";
+import { subscribeContracts, saveContract } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
 import { computeSalesStats, slicePeriodStats, fmtNum, formatManToKorean } from "@/lib/sales";
 import PeriodPicker, { type Period, periodLabel } from "@/app/components/PeriodPicker";
@@ -73,6 +73,16 @@ export default function SalesPage() {
     if (!user || sampleProps.length === 0) return;
     if (!confirm(`예시 매출 ${sampleProps.length}건(거래완료 예시 매물)을 삭제합니다.\n실제 매물은 영향받지 않습니다. 진행할까요?`)) return;
     for (const p of sampleProps) await deleteProperty(user.agencyId, p.id);
+  };
+
+  // 명세에서 한 건 빼기 — 매출 목록에서만 숨기고 매물/계약 정보는 그대로 둠
+  const hideFromSales = async (id: string, label: string) => {
+    if (!user) return;
+    if (!confirm(`"${label}" 건을 매출 명세에서 뺄까요?\n(매물·계약 정보는 그대로 남아요)`)) return;
+    const prop = properties.find(x => x.id === id);
+    if (prop) { await saveProperty(user.agencyId, { ...prop, salesHidden: true }); return; }
+    const con = contracts.find(x => x.id === id);
+    if (con) await saveContract(user.agencyId, { ...con, salesHidden: true });
   };
 
   // 최근 12개월 막대 그래프 데이터
@@ -247,6 +257,14 @@ export default function SalesPage() {
                         <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{p.address}</span>
                         <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate}</span>
                         <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0 tabular-nums">{fmtNum(p.commission)}만</span>
+                        <button
+                          onClick={() => hideFromSales(p.id, p.address)}
+                          title="매출 명세에서 빼기"
+                          aria-label="매출 명세에서 빼기"
+                          className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
                       </div>
                     ))}
                   </div>

@@ -59,6 +59,7 @@ function fromDoc(id: string, data: Record<string, unknown>): Contract {
     downPaymentDate:  (data.downPaymentDate  as string) || undefined,
     balanceDate:      (data.balanceDate      as string) || undefined,
     commission:       (data.commission       as string) || undefined,
+    salesHidden:      data.salesHidden === true ? true : undefined,
     linkedCustomerId: (data.linkedCustomerId as string) || undefined,
     fromPropertyId:   (data.fromPropertyId   as string) || undefined,
     renewedFromId:    (data.renewedFromId    as string) || undefined,
