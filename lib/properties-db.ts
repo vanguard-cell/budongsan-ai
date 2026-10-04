@@ -14,7 +14,7 @@ export type PropertyType = "아파트" | "오피스텔" | "빌라/다세대" | "
 export type DealType = "매매" | "전세" | "월세";
 export type PropertyStatus = "active" | "closed";
 /** 입주 상태 — "" 미설정 / tenant 임대중 / owner 주인거주 / vacant 공실 */
-export type Occupancy = "" | "tenant" | "owner" | "vacant";
+export type Occupancy = "" | "tenant" | "jeonse" | "wolse" | "owner" | "vacant";
 /** 정기 관리 주기 — "" 없음 / 3m·6m·12m */
 export type ManageCycle = "" | "3m" | "6m" | "12m";
 

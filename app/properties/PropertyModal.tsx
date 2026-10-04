@@ -397,14 +397,15 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           {/* 입주 상태 — 주인거주·공실 분류 (집주인/공실 필터 기준) */}
           <div className="border border-indigo-200 rounded-2xl p-3 bg-indigo-50/40">
             <label className="block text-xs font-semibold text-indigo-700 mb-2">🏘️ 입주 상태</label>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {([
-                { v: "", label: "미설정" },
+                { v: "jeonse", label: "전세" },
+                { v: "wolse", label: "월세" },
                 { v: "owner", label: "주인거주" },
                 { v: "vacant", label: "공실" },
               ] as const).map(o => (
-                <button key={o.v} type="button" onClick={() => set("occupancy", o.v as Occupancy)}
-                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${form.occupancy === o.v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
+                <button key={o.v} type="button" onClick={() => set("occupancy", (form.occupancy === o.v ? "" : o.v) as Occupancy)}
+                  className={`py-2 rounded-xl text-xs font-medium whitespace-nowrap border transition-colors ${form.occupancy === o.v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
                   {o.label}
                 </button>
               ))}
