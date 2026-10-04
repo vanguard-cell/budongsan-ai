@@ -164,7 +164,7 @@ export default function SalesPage() {
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
               <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
                 <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{periodTitle} 매출 <span className="text-gray-400">· {slice?.count ?? 0}건</span></div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{periodTitle} 매출</div>
                   <div className="flex items-baseline gap-2 mt-1.5 flex-wrap">
                     <span className="text-4xl font-bold text-gray-900 dark:text-gray-100 tabular-nums">{fmtNum(sliceTotal)}</span>
                     <span className="text-base text-gray-500 dark:text-gray-400">만원</span>
@@ -179,7 +179,7 @@ export default function SalesPage() {
                 <div className="grid grid-cols-3 gap-5 sm:gap-8 shrink-0">
                   <MiniStat label="올해 누적" value={stats.thisYear} />
                   <MiniStat label="예정 매출" value={stats.pending} accent="orange" />
-                  <MiniStat label="전체 누적" value={stats.grand} sub={`총 ${stats.count}건`} />
+                  <MiniStat label="전체 누적" value={stats.grand} />
                 </div>
               </div>
             </div>
@@ -237,7 +237,7 @@ export default function SalesPage() {
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 sm:p-6">
                 <div className="flex items-baseline justify-between mb-3">
                   <div className="text-base font-bold text-gray-800 dark:text-gray-100">명세 · {periodTitle}</div>
-                  <div className="text-xs text-gray-400">{slice?.count ?? 0}건 · {fmtNum(sliceTotal)}만</div>
+                  <div className="text-xs text-gray-400">{fmtNum(sliceTotal)}만</div>
                 </div>
                 {slice && slice.items.length > 0 ? (
                   <div className="divide-y divide-gray-100 dark:divide-slate-800 max-h-[360px] overflow-y-auto">
