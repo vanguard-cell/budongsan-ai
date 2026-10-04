@@ -269,7 +269,7 @@ export default function DashboardPage() {
         ) : null}
 
         {/* ─── 2) 상단 4카드 (순서 고정) ─── */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <section className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
           <SummaryCard
             tint="amber"
             badgeColor={C.orange}
@@ -301,17 +301,6 @@ export default function DashboardPage() {
             emptyText="30일 내 만기 없음"
             badge={urgentExpiring.length > 0 ? `D-7 ${urgentExpiring.length}` : undefined}
             onClick={() => setDrawer("expiry")}
-          />
-          <SummaryCard
-            tint="blue"
-            badgeColor={C.red}
-            icon="group"
-            label="고객 관리"
-            count={followUpNeeded.length}
-            preview={previewCustomer}
-            emptyText="연락할 고객 없음"
-            badge={overdueFollowUp.length > 0 ? `지남 ${overdueFollowUp.length}` : undefined}
-            onClick={() => setDrawer("customer")}
           />
         </section>
 
@@ -382,7 +371,6 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-3">
               <QuickAction icon="add_home"        label="매물 등록" href="/properties?new=1" />
               <QuickAction icon="post_add"        label="계약 추가" href="/expiry?new=1" />
-              <QuickAction icon="person_add"      label="고객 추가" href="/customers?new=1" />
               <QuickAction icon="calendar_add_on" label="약속 추가" href="/schedule?new=1" />
             </div>
           </div>
