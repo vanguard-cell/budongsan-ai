@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Schedule } from "@/lib/schedules-db";
 import { dDay } from "@/app/expiry/contracts";
-import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, splitAddress } from "./helpers";
+import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr } from "./helpers";
 
 const STYPE_COLORS: Record<string, string> = {
   "집보기": "bg-blue-100 text-blue-700",
@@ -98,6 +98,11 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               {priceStr === "—" ? "—" : priceStr}
             </span>
           </span>
+          {p.area && (
+            <span className="inline-flex items-center whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">
+              <Dot />{`전용 ${p.area}㎡`}{m2ToPyeong(p.area) ? ` · ${m2ToPyeong(p.area)}평` : ""}
+            </span>
+          )}
           {/* 상태 배지 — 거래완료/계약진행 등 */}
           {isClosed && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400 font-medium">거래완료</span>
@@ -116,22 +121,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
         </div>
       </div>
 
-      {/* ─── 2째줄: 단지·동호 위주 (주소는 보조) ─── */}
-      {(() => {
-        const { region, complex } = splitAddress(addressStr(p));
-        return (
-          <div className="mb-2">
-            {/* 단지·동호 — 큰 글씨 강조 */}
-            <div className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 break-all leading-snug">
-              {complex || p.address || "—"}
-            </div>
-            {/* 소재지(주소) — 작고 흐리게 보조 */}
-            {region && (
-              <div className="text-[11px] text-gray-400 dark:text-gray-500 break-all mt-0.5">{region}</div>
-            )}
-          </div>
-        );
-      })()}
+      {/* ─── 2째줄: 주소(단지·동호) 한 줄 — 길면 끝을 ...으로 ─── */}
+      <div className="mb-2 min-w-0 truncate text-[13px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
+        {addressStr(p) || "—"}
+      </div>
 
       {/* ─── 3째줄: 임대차 정보 (만기 • 면적 • 타입 • 방향 • 입주상태) ─── */}
       {/* 구분점 — 진하고 명확, 앞 글자에 붙음 (Dot 음수마진) */}
@@ -145,10 +138,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             }`}>
               임대만기 {leaseDD < 0 ? `${-leaseDD}일지남` : leaseDD === 0 ? "오늘" : `D-${leaseDD}`}
             </span>
-            <span className="text-gray-500 dark:text-gray-400">{p.leaseEndDate}</span>
+            <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 px-1.5 py-0.5 rounded">{p.leaseEndDate}</span>
           </>
         )}
-        {p.area && <span className="inline-flex items-center"><Dot />{p.area}㎡{m2ToPyeong(p.area) ? ` (${m2ToPyeong(p.area)}평)` : ""}</span>}
         {p.unitType && <span className="inline-flex items-center"><Dot /><span className="font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span></span>}
         {p.rooms && <span className="inline-flex items-center"><Dot />방{p.rooms}개</span>}
         {p.direction && <span className="inline-flex items-center"><Dot />{p.direction}</span>}
@@ -160,10 +152,11 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
       {/* ── 4째줄: 집주인·임차인 (아이콘 제거, 점 구분) ── */}
       <div className="mt-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         {/* 집주인 — 이름 • 전화번호 (점 구분, 아이콘 없음) */}
         {p.ownerPhone && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-            <span className="text-gray-600 dark:text-gray-400 shrink-0">집주인 <b className="text-gray-900 dark:text-gray-100">{p.ownerName || ""}</b></span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs whitespace-nowrap">
+            <span className="text-gray-600 dark:text-gray-400 shrink-0">임대인 <b className="text-gray-900 dark:text-gray-100">{p.ownerName || ""}</b></span>
             <a href={`tel:${p.ownerPhone.replace(/\D/g,"")}`} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
               <Dot />{formatPhone(p.ownerPhone)}
             </a>
@@ -172,7 +165,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             )}
             <a
               href={`sms:${p.ownerPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.ownerName ? ` ${p.ownerName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 매물 관련하여 연락드립니다.`)}`}
-              className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto"
+              className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40"
             >
               💬 문자
             </a>
@@ -181,7 +174,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
         {/* 임차인 — 이름 • 전화번호 (점 구분, 아이콘 없음) */}
         {(p.tenantName || p.tenantPhone || p.tenantDeposit || p.tenantMonthly) && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs whitespace-nowrap">
             <span className="text-orange-600 dark:text-orange-400 shrink-0">임차인 <b className="text-orange-900 dark:text-orange-200">{p.tenantName || ""}</b></span>
             {p.tenantPhone && (
               <a href={`tel:${p.tenantPhone.replace(/\D/g,"")}`} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
@@ -200,13 +193,15 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             {p.tenantPhone && (
               <a
                 href={`sms:${p.tenantPhone.replace(/\D/g,"")}?body=${encodeURIComponent(`안녕하세요${p.tenantName ? ` ${p.tenantName}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} 임대차 만기 관련하여 연락드립니다.`)}`}
-                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 ml-auto"
+                className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40"
               >
                 💬 문자
               </a>
             )}
           </div>
         )}
+
+        </div>
 
         {/* 계약 진행 날짜 */}
         {(p.contractDate || p.downPaymentDate || p.balanceDate) && !isClosed && (
@@ -342,4 +337,4 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   );
 }
 
-/* ── 매물 등록/수정 모달 ── */
+/* ── 매물 등록/수정 모달 ── */
