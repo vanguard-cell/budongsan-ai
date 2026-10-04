@@ -16,10 +16,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
-  subscribeProperties, savePropertiesBatch, deleteProperty, sampleSalesProperties,
+  subscribeProperties, savePropertiesBatch, deleteProperty, saveProperty, sampleSalesProperties,
   type Property,
 } from "@/lib/properties-db";
-import { subscribeContracts } from "@/lib/contracts-db";
+import { subscribeContracts, saveContract } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
 import { computeSalesStats, slicePeriodStats, fmtNum, formatManToKorean } from "@/lib/sales";
 import PeriodPicker, { type Period, periodLabel } from "@/app/components/PeriodPicker";
@@ -47,6 +47,27 @@ export default function SalesPage() {
   }, [user]);
 
   const stats = useMemo(() => computeSalesStats(properties, contracts), [properties, contracts]);
+
+  // 명세 한 줄 삭제 — 매물·계약은 그대로 두고 '수수료(매출)'만 비움.
+  // 같은 단지·거래종류의 다른 기록이 대신 올라오지 않게 같은 것 모두 비움.
+  const removeSale = async (target: Property) => {
+    if (!user) return;
+    if (!confirm(`'${target.address}' 매출 기록을 명세에서 지울까요?\n(매물·계약 정보는 그대로 있고, 수수료 금액만 지워져요)`)) return;
+    const norm = (a: string) =>
+      (a || "").replace(/제\s*\d+\s*층|제|블럭|블록/g, "").replace(/[\s()\-]/g, "").toLowerCase();
+    const same = (a: { address: string; dealType?: string; type?: string }, dt?: string) =>
+      norm(a.address) === norm(target.address) && (dt || "") === (target.dealType || "");
+    try {
+      for (const p of properties) {
+        if (p.commission && same(p, p.dealType)) await saveProperty(user.agencyId, { ...p, commission: "" });
+      }
+      for (const c of contracts) {
+        if (c.commission && same(c, c.type)) await saveContract(user.agencyId, { ...c, commission: undefined });
+      }
+    } catch {
+      alert("지우지 못했어요. 잠시 후 다시 눌러주세요.");
+    }
+  };
 
   // 선택 기간 기본값 — 데이터 있는 최신 월 (없으면 이번 달)
   useEffect(() => {
@@ -247,6 +268,11 @@ export default function SalesPage() {
                         <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{p.address}</span>
                         <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate}</span>
                         <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0 tabular-nums">{fmtNum(p.commission)}만</span>
+                        <button
+                          type="button"
+                          onClick={() => removeSale(p)}
+                          className="shrink-0 whitespace-nowrap text-[11px] px-2 py-1 rounded border border-red-200 dark:border-red-900 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                        >삭제</button>
                       </div>
                     ))}
                   </div>
