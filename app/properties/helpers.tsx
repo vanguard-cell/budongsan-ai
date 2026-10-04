@@ -6,7 +6,7 @@
 import type { PropertyType, DealType, Property } from "@/lib/properties-db";
 
 
-export const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"];
+export const PROPERTY_TYPES: PropertyType[] = ["아파트", "오피스텔", "상가", "사무실"];
 export const DEAL_TYPES: DealType[] = ["매매", "전세", "월세"];
 /** 거래종류별 배지 색 — 금액(파랑)과 구분 */
 export const DEAL_BADGE: Record<string, string> = {

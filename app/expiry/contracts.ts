@@ -283,7 +283,7 @@ export function emptyContract(): Contract {
 }
 
 /** 매물 유형 목록 — 내 매물 등록과 동일 */
-export const CONTRACT_PROPERTY_TYPES = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지", "기타"] as const;
+export const CONTRACT_PROPERTY_TYPES = ["아파트", "오피스텔", "상가", "사무실"] as const;
 /** 방향 목록 — 내 매물 등록과 동일 */
 export const CONTRACT_DIRECTIONS = ["동향", "서향", "남향", "북향", "남동향", "남서향", "북동향", "북서향"] as const;
 
