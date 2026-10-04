@@ -279,7 +279,14 @@ export default function PropertiesPage() {
   // 매물 대표 금액 (만원 int) — 매매/전세=price, 월세=보증금
   const priceNum = (p: Property) => parseInt((p.price || "0").replace(/\D/g, ""), 10) || 0;
   // 단지명(주소에서 동/호 제거) · 숫자 추출 — 동·호순 정렬·계층 탐색용
+  const complexShortName = (c: string) => {
+    const t = c.split(/\s+/);
+    while (t.length > 1 && (/^[가-힣]+(특별시|광역시|특별자치시|특별자치도|도|시|군|구|읍|면|동|리)$/.test(t[0]) || /^\d+(-\d+)?(번지)?$/.test(t[0]))) t.shift();
+    return t.join(" ") || c;
+  };
   const baseAddr = (p: Property) => (p.address || "").replace(/\s*\d+동.*$/, "").replace(/\s*\d+호.*$/, "").trim();
+  // 같은 단지(주소 표기만 다른 경우 포함)를 하나로 묶기 위한 이름
+  const complexKey = (p: Property) => complexShortName(baseAddr(p));
   const numOf = (s: string) => parseInt((s || "").replace(/\D/g, ""), 10) || 0;
 
   // 탭별 매물 분류 (계약진행중 / 그 외)
@@ -326,7 +333,7 @@ export default function PropertiesPage() {
         return true;
       })
       // 단지→동→호 조회
-      .filter(p => !selectedComplex || baseAddr(p) === selectedComplex)
+      .filter(p => !selectedComplex || complexKey(p) === selectedComplex)
       .filter(p => !selectedDong || p.dong === selectedDong)
       .filter(p => !selectedHo.trim() || (p.ho || "").includes(selectedHo.trim()));
 
@@ -381,18 +388,13 @@ export default function PropertiesPage() {
   }, [properties]);
 
   // 단지 이름만 보이게 지역·번지 앞부분 생략 (비면 원래 주소 그대로)
-  const complexShortName = (c: string) => {
-    const t = c.split(/\s+/);
-    while (t.length > 1 && (/^[가-힣]+(특별시|광역시|특별자치시|특별자치도|도|시|군|구|읍|면|동|리)$/.test(t[0]) || /^\d+(-\d+)?(번지)?$/.test(t[0]))) t.shift();
-    return t.join(" ") || c;
-  };
 
   // 단지→동 계층 탐색용 목록 (현재 탭의 active 매물 기준)
   const complexList = useMemo(() => {
     const base = properties.filter(p => p.status === "active").filter(matchView);
     const map = new Map<string, number>();
     for (const p of base) {
-      const c = baseAddr(p);
+      const c = complexKey(p);
       if (c) map.set(c, (map.get(c) || 0) + 1);
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "ko"));
@@ -401,7 +403,7 @@ export default function PropertiesPage() {
   // 선택 단지의 동 목록
   const dongList = useMemo(() => {
     if (!selectedComplex) return [];
-    const base = properties.filter(p => p.status === "active").filter(matchView).filter(p => baseAddr(p) === selectedComplex);
+    const base = properties.filter(p => p.status === "active").filter(matchView).filter(p => complexKey(p) === selectedComplex);
     const map = new Map<string, number>();
     for (const p of base) {
       if (p.dong) map.set(p.dong, (map.get(p.dong) || 0) + 1);
@@ -781,7 +783,7 @@ export default function PropertiesPage() {
                   className="col-span-2 border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
                   <option value="">단지 전체</option>
                   {complexList.map(([c, n]) => (
-                    <option key={c} value={c}>{complexShortName(c)} ({n})</option>
+                    <option key={c} value={c}>{c} ({n})</option>
                   ))}
                 </select>
                 {/* 동 드롭다운 */}
