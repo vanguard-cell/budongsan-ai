@@ -118,7 +118,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
           </div>
 
-          {/* 3째줄: 방향 · 타입 · 방 개수 · 입주상태 · 현 임차인 보증금/월세 — 한 줄에 */}
+          {/* 3째줄: 방향 · 타입 · 방 개수 · 입주상태 · 임차인 보증금/월세 — 한 줄에 */}
           {(p.direction || p.unitType || p.rooms || (p.occupancy && p.occupancy !== "tenant") || p.tenantDeposit || p.tenantMonthly) && (
             <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px]">
               {p.direction && <span className="whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
@@ -127,7 +127,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               {p.occupancy && p.occupancy !== "tenant" && <span className="whitespace-nowrap text-gray-600 dark:text-gray-400">{OCC_LABEL[p.occupancy]}</span>}
               {(p.tenantDeposit || p.tenantMonthly) && (
                 <span className="whitespace-nowrap text-gray-600 dark:text-gray-400 tabular-nums">
-                  현 임차인 <span className="font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
+                  <span className="font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
                 </span>
               )}
             </div>
