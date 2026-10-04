@@ -380,6 +380,13 @@ export default function PropertiesPage() {
     };
   }, [properties]);
 
+  // 단지 이름만 보이게 지역·번지 앞부분 생략 (비면 원래 주소 그대로)
+  const complexShortName = (c: string) => {
+    const t = c.split(/\s+/);
+    while (t.length > 1 && (/^[가-힣]+(특별시|광역시|특별자치시|특별자치도|도|시|군|구|읍|면|동|리)$/.test(t[0]) || /^\d+(-\d+)?(번지)?$/.test(t[0]))) t.shift();
+    return t.join(" ") || c;
+  };
+
   // 단지→동 계층 탐색용 목록 (현재 탭의 active 매물 기준)
   const complexList = useMemo(() => {
     const base = properties.filter(p => p.status === "active").filter(matchView);
@@ -774,7 +781,7 @@ export default function PropertiesPage() {
                   className="col-span-2 border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
                   <option value="">단지 전체</option>
                   {complexList.map(([c, n]) => (
-                    <option key={c} value={c}>{c.replace(/^.*[시구동]\s/, "")} ({n})</option>
+                    <option key={c} value={c}>{complexShortName(c)} ({n})</option>
                   ))}
                 </select>
                 {/* 동 드롭다운 */}
