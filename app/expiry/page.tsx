@@ -18,6 +18,7 @@ import ContractTable, { type ContractSort } from "./ContractTable";
 import ContractPanel from "./ContractPanel";
 import DatedMemo from "@/app/components/DatedMemo";
 import NotifyBell from "../NotifyBell";
+import { subscribeMyComplexes, addMyComplex, removeMyComplex, type MyComplex } from "@/lib/properties-db";
 import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
 import { saveProperty, contractBackToProperty } from "@/lib/properties-db";
@@ -1048,6 +1049,38 @@ function EditModal({
     });
   };
 
+  const { user: modalUser } = useAuth();
+  const [showSaved, setShowSaved] = useState(true);
+  // 내 단지 목록 (매물 등록과 같은 목록 — 유형별로 따로 저장)
+  const [myComplexes, setMyComplexes] = useState<MyComplex[]>([]);
+  useEffect(() => {
+    if (!modalUser?.agencyId) return;
+    return subscribeMyComplexes(modalUser.agencyId, setMyComplexes);
+  }, [modalUser?.agencyId]);
+  const typedName = form.address.trim();
+  const curType = form.propertyType || "";
+  const alreadyMine = myComplexes.some(c => c.propertyType === curType && c.name === typedName);
+  const saveMine = async () => {
+    if (!typedName) return;
+    if (!modalUser?.agencyId) { alert("사무실 정보를 불러오는 중이에요. 잠시 후 다시 눌러주세요."); return; }
+    try { await addMyComplex(modalUser.agencyId, { name: typedName, propertyType: curType }); }
+    catch { alert("단지 저장 중 오류가 났어요. 다시 해주세요."); }
+  };
+  const removeMine = async (c: MyComplex) => {
+    if (!modalUser?.agencyId) return;
+    if (!confirm(`'${c.name}'을(를) 내 단지 목록에서 뺄까요?\n(등록된 계약은 그대로예요)`)) return;
+    try { await removeMyComplex(modalUser.agencyId, c); }
+    catch { alert("삭제 중 오류가 났어요. 다시 해주세요."); }
+  };
+  const savedMatches = (() => {
+    const q = typedName.replace(/\s+/g, "").toLowerCase();
+    return myComplexes
+      .filter(c => c.propertyType === curType)
+      .filter(c => !q || c.name.replace(/\s+/g, "").toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name, "ko"))
+      .slice(0, 60);
+  })();
+
   const [saving, setSaving] = useState(false);
 
   // 주소 자동완성
@@ -1062,7 +1095,8 @@ function EditModal({
     addrTimerRef.current = setTimeout(async () => {
       setAddrLoading(true);
       try {
-        const res = await fetch(`/api/complex-search?q=${encodeURIComponent(val)}`);
+        const typeQ = form.propertyType ? `&type=${encodeURIComponent(form.propertyType)}` : "";
+        const res = await fetch(`/api/complex-search?q=${encodeURIComponent(val)}${typeQ}`);
         const data = await res.json();
         setAddrSuggestions(data.slice(0, 6));
       } catch { setAddrSuggestions([]); }
@@ -1114,6 +1148,26 @@ function EditModal({
           </div>
         )}
 
+        {/* 매물 유형 — 내 매물 등록과 동일 */}
+        <Field label="매물 유형">
+          <div className="grid grid-cols-4 gap-1.5">
+            {CONTRACT_PROPERTY_TYPES.map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setField("propertyType", t)}
+                className={`py-2 rounded-xl text-[11px] font-medium border transition-colors ${
+                  form.propertyType === t
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </Field>
+
         <Field label="주소" required>
           <div className="relative">
             <input
@@ -1143,6 +1197,40 @@ function EditModal({
             )}
           </div>
           <p className="text-[11px] text-gray-400 mt-1">단지명 직접 입력 또는 아래에서 지역+유형으로 검색</p>
+
+          {/* 내 단지 목록 — 유형별로 저장해 두고 눌러서 선택 */}
+          {typedName && !alreadyMine && (
+            <button type="button" onClick={saveMine}
+              className="mt-2 whitespace-nowrap px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 max-w-full truncate">
+              📌 ‘{typedName}’ 내 단지 목록에 저장
+            </button>
+          )}
+          {typedName && alreadyMine && (
+            <p className="mt-2 text-xs font-medium text-teal-700">✅ ‘{typedName}’ 내 단지 목록에 저장되어 있어요</p>
+          )}
+          {savedMatches.length > 0 && (
+            <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50/60 p-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold text-teal-700">📌 내 {curType || "단지"} 목록 (눌러서 선택)</span>
+                <button type="button" onClick={() => setShowSaved(v => !v)} className="text-[11px] text-gray-400 whitespace-nowrap">{showSaved ? "접기" : "펼치기"}</button>
+              </div>
+              {showSaved && (
+                <div className="flex flex-col gap-1 max-h-56 overflow-y-auto">
+                  {savedMatches.map(c => (
+                    <span key={c.name} className="flex w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
+                      <button type="button"
+                        onClick={() => { setField("address", c.name); setAddrSuggestions([]); setShowSaved(false); }}
+                        className="min-w-0 flex-1 truncate whitespace-nowrap text-left px-2.5 py-1.5 hover:bg-teal-100 rounded-lg">
+                        {c.name}
+                      </button>
+                      <button type="button" onClick={() => removeMine(c)} aria-label="목록에서 빼기"
+                        className="px-2 py-1.5 text-gray-400 hover:text-red-500 whitespace-nowrap">✕</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </Field>
 
         {/* 동/호수 — 별도 필드로 분리 (매물 관리와 동일) */}
@@ -1170,27 +1258,7 @@ function EditModal({
         </div>
 
         {/* 지역+유형 단지 검색 */}
-        <ComplexPickerWidget onSelect={item => setField("address", `${item.address} ${item.name}`.trim())} />
-
-        {/* 매물 유형 — 내 매물 등록과 동일 */}
-        <Field label="매물 유형">
-          <div className="grid grid-cols-4 gap-1.5">
-            {CONTRACT_PROPERTY_TYPES.map(t => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setField("propertyType", t)}
-                className={`py-2 rounded-xl text-[11px] font-medium border transition-colors ${
-                  form.propertyType === t
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </Field>
+        <ComplexPickerWidget externalBuildingType={form.propertyType} onSelect={item => setField("address", `${item.address} ${item.name}`.trim())} />
 
         <Field label="계약 종류">
           <div className="grid grid-cols-2 gap-1.5">
