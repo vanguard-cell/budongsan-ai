@@ -4,7 +4,7 @@
  */
 
 import {
-  collection, doc, setDoc, deleteDoc, getDocs, updateDoc, arrayUnion,
+  collection, doc, setDoc, deleteDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
   query, orderBy, onSnapshot, serverTimestamp, Timestamp,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -412,4 +412,23 @@ export function contractBackToProperty(c: {
     memo: c.memo ? `${c.memo}\n[재모집] 만기관리에서 복귀` : "[재모집] 만기관리에서 복귀",
     status: "active", createdAt: Date.now(),
   };
+}
+
+/* ── 내 단지 목록 (미리 저장해 두고 매물 등록 때 골라 쓰기) ──
+ * 경로: /agencies/{agencyId} 문서의 myComplexes 필드 (없으면 빈 목록) */
+export interface MyComplex { name: string; propertyType: string }
+
+export function subscribeMyComplexes(agencyId: string, cb: (list: MyComplex[]) => void): Unsubscribe {
+  return onSnapshot(doc(db, "agencies", agencyId), snap => {
+    const raw = snap.exists() ? snap.data().myComplexes : null;
+    cb(Array.isArray(raw) ? raw.filter((c: MyComplex) => c && typeof c.name === "string") : []);
+  }, () => cb([]));
+}
+
+export async function addMyComplex(agencyId: string, c: MyComplex): Promise<void> {
+  await updateDoc(doc(db, "agencies", agencyId), { myComplexes: arrayUnion({ name: c.name, propertyType: c.propertyType }) });
+}
+
+export async function removeMyComplex(agencyId: string, c: MyComplex): Promise<void> {
+  await updateDoc(doc(db, "agencies", agencyId), { myComplexes: arrayRemove({ name: c.name, propertyType: c.propertyType }) });
 }

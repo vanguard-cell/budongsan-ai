@@ -2,8 +2,8 @@
 
 /** 매물 등록/수정 모달 — page.tsx 분리 리팩토링으로 추출 */
 
-import { useState, useRef } from "react";
-import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, type Property, type Occupancy } from "@/lib/properties-db";
+import { useState, useRef, useEffect } from "react";
+import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import DatedMemo from "@/app/components/DatedMemo";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, m2ToPyeong } from "./helpers";
@@ -32,14 +32,39 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
   });
 
   const [showSaved, setShowSaved] = useState(false);
-  // 내가 이미 등록한 단지 — 선택한 유형만, 입력한 글자가 있으면 그 글자가 들어간 것만
+  // 내 단지 목록 (미리 저장해 둔 것)
+  const [myComplexes, setMyComplexes] = useState<MyComplex[]>([]);
+  useEffect(() => {
+    if (!user?.agencyId) return;
+    return subscribeMyComplexes(user.agencyId, setMyComplexes);
+  }, [user?.agencyId]);
+  const typedName = baseAddress.trim();
+  const alreadyMine = myComplexes.some(c => c.propertyType === form.propertyType && c.name === typedName);
+  const saveMine = async () => {
+    if (!user?.agencyId || !typedName) return;
+    try { await addMyComplex(user.agencyId, { name: typedName, propertyType: form.propertyType }); }
+    catch { alert("단지 저장 중 오류가 났어요. 다시 해주세요."); }
+  };
+  const removeMine = async (c: MyComplex) => {
+    if (!user?.agencyId) return;
+    if (!confirm(`'${c.name}'을(를) 내 단지 목록에서 뺄까요?\n(등록된 매물은 그대로예요)`)) return;
+    try { await removeMyComplex(user.agencyId, c); }
+    catch { alert("삭제 중 오류가 났어요. 다시 해주세요."); }
+  };
+  // 목록 = 직접 저장한 단지 먼저 + 이미 올린 매물에서 모은 단지 (같은 유형만, 입력한 글자가 들어간 것만)
   const savedMatches = (() => {
-    const q = baseAddress.trim().replace(/\s+/g, "").toLowerCase();
-    return savedComplexes
+    const q = typedName.replace(/\s+/g, "").toLowerCase();
+    const mine = myComplexes
       .filter(c => c.propertyType === form.propertyType)
+      .map(c => ({ base: c.name, count: 0, mine: true, ref: c }));
+    const mineNames = new Set(mine.map(c => c.base));
+    const auto = savedComplexes
+      .filter(c => c.propertyType === form.propertyType && !mineNames.has(c.base))
+      .map(c => ({ base: c.base, count: c.count, mine: false, ref: null as MyComplex | null }));
+    return [...mine, ...auto]
       .filter(c => !q || c.base.replace(/\s+/g, "").toLowerCase().includes(q))
-      .filter(c => c.base !== baseAddress.trim())
-      .slice(0, 30);
+      .filter(c => c.base !== typedName)
+      .slice(0, 40);
   })();
 
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
@@ -177,20 +202,32 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               (상가·신축처럼 검색에 안 잡히는 건 직접 타이핑하세요)
             </p>
 
-            {/* 내가 이미 등록한 단지 — 눌러서 같은 이름으로 등록 */}
+            {/* 내 단지 목록 — 눌러서 같은 이름으로 등록 / 현재 입력한 이름을 목록에 저장 */}
+            {(typedName && !alreadyMine) && (
+              <button type="button" onClick={saveMine}
+                className="mt-2 whitespace-nowrap px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 max-w-full truncate">
+                📌 ‘{typedName}’ 내 단지 목록에 저장
+              </button>
+            )}
             {showSaved && savedMatches.length > 0 && (
               <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50/60 p-2">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold text-teal-700">📌 내가 등록한 단지 (눌러서 선택)</span>
-                  <button type="button" onClick={() => setShowSaved(false)} className="text-[11px] text-gray-400">닫기</button>
+                  <span className="text-[11px] font-semibold text-teal-700">📌 내 단지 목록 (눌러서 선택)</span>
+                  <button type="button" onClick={() => setShowSaved(false)} className="text-[11px] text-gray-400 whitespace-nowrap">닫기</button>
                 </div>
                 <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
                   {savedMatches.map(c => (
-                    <button key={c.base} type="button"
-                      onClick={() => { setBaseAddress(c.base); updateFullAddress(c.base, form.dong, form.ho); setAddrSuggestions([]); setShowSaved(false); }}
-                      className="max-w-full truncate whitespace-nowrap px-2.5 py-1.5 rounded-lg bg-white border border-teal-200 text-xs text-gray-800 hover:bg-teal-100">
-                      {c.base} <span className="text-gray-400">{c.count}</span>
-                    </button>
+                    <span key={c.base} className="inline-flex max-w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
+                      <button type="button"
+                        onClick={() => { setBaseAddress(c.base); updateFullAddress(c.base, form.dong, form.ho); setAddrSuggestions([]); setShowSaved(false); }}
+                        className="min-w-0 truncate whitespace-nowrap px-2.5 py-1.5 hover:bg-teal-100 rounded-lg">
+                        {c.base}{!c.mine && <span className="text-gray-400"> {c.count}</span>}
+                      </button>
+                      {c.mine && c.ref && (
+                        <button type="button" onClick={() => removeMine(c.ref!)} aria-label="목록에서 빼기"
+                          className="px-2 py-1.5 text-gray-400 hover:text-red-500 whitespace-nowrap">✕</button>
+                      )}
+                    </span>
                   ))}
                 </div>
               </div>
