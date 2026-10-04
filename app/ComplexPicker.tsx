@@ -15,7 +15,7 @@ export interface ComplexResult {
   y?: string;
 }
 
-const BUILDING_TYPES = ["아파트", "오피스텔", "빌라", "원룸/투룸", "상가", "사무실"];
+const BUILDING_TYPES = ["아파트", "오피스텔", "상가", "사무실"];
 
 const REGION_DATA: Record<string, Record<string, string[]>> = {
   "경기도": {
@@ -178,13 +178,13 @@ export default function ComplexPicker({ onSelect, externalBuildingType }: Props)
 
       {/* 건물 유형 — 외부에서 받았으면 UI 완전 숨김 (자동 사용) */}
       {!hideTypeUI && (
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-4 gap-1.5">
           {BUILDING_TYPES.map(t => (
             <button
               key={t}
               type="button"
               onClick={() => { setBuildingType(t); setResults([]); }}
-              className={`py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+              className={`py-1.5 rounded-xl text-xs font-medium whitespace-nowrap border transition-colors ${
                 buildingType === t
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white text-gray-600 border-gray-200 hover:border-blue-400"

@@ -46,7 +46,7 @@ interface Template {
 const AGENCY_KEY = "budongsan_agency";
 const HISTORY_KEY = "budongsan_history";
 const TEMPLATES_KEY = "budongsan_templates";
-const PROPERTY_TYPES = ["아파트", "오피스텔", "빌라/다세대", "원룸/투룸", "상가", "사무실", "토지"];
+const PROPERTY_TYPES = ["아파트", "오피스텔", "상가", "사무실"];
 const DEAL_TYPES = ["매매", "전세", "월세", "단기임대"];
 const DIRECTIONS = ["남향", "동향", "서향", "북향", "남동향", "남서향", "북동향", "북서향"];
 const HEATINGS = ["지역난방/열병합", "개별난방/도시가스", "중앙난방", "개별난방/기름", "전기난방"];
