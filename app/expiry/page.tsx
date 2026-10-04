@@ -734,14 +734,12 @@ function ContractRow({
           <div className="mt-0.5 min-w-0 truncate text-[12px] font-semibold text-gray-900" title={c.address}>
               {[c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" ")}
             </div>
-          {(c.rooms || c.direction) && (
-            <div className="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2">
-              {c.rooms && <span>방{c.rooms}개</span>}
-              {c.direction && <span>{c.direction}</span>}
+          {(c.rooms || c.direction || c.options) && (
+            <div className="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2 min-w-0">
+              {c.rooms && <span className="whitespace-nowrap">방{c.rooms}개</span>}
+              {c.direction && <span className="whitespace-nowrap">{c.direction}</span>}
+              {c.options && <span className="text-gray-600 break-words min-w-0">🏠 옵션: {c.options}</span>}
             </div>
-          )}
-          {c.options && (
-            <div className="text-[11px] text-gray-600 mt-0.5 break-words">🏠 옵션: {c.options}</div>
           )}
           <div className="text-xs text-gray-600 mt-1">
             만기 <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{c.endDate || "—"}</span>
