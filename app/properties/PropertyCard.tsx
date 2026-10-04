@@ -107,9 +107,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}>⭐</button>
           </div>
 
-          {/* 2째줄: 주소(단지·동호) 한 줄 */}
-          <div className="mt-0.5 min-w-0 truncate text-[12px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
-            {addressStr(p) || "—"}
+          {/* 2째줄: 주소(단지·동호) 옆에 금액 — 주소가 길면 주소 끝만 ...으로 */}
+          <div className="mt-0.5 flex items-baseline gap-x-2 min-w-0">
+            <span className="min-w-0 truncate text-[12px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
+              {addressStr(p) || "—"}
+            </span>
+            <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
           </div>
 
           {(p.unitType || p.rooms || p.direction || (p.occupancy && p.occupancy !== "tenant")) && (
@@ -121,26 +124,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </div>
           )}
 
-          {/* 3째줄: 만기 · 금액 */}
-          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-            {p.leaseEndDate && (
-              <>
-                만기 <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 px-1.5 py-0.5 rounded">{p.leaseEndDate}</span>
-                <span className="mx-1.5 text-gray-300 dark:text-gray-600">·</span>
-              </>
-            )}
-            {p.dealType === "월세" ? (
-              <>
-                보증금 <span className="font-medium text-gray-800 dark:text-gray-200">{p.price ? `${fmtNum(p.price)}만` : "—"}</span>
-                <span className="mx-1.5 text-gray-300 dark:text-gray-600">·</span>
-                월세 <span className="font-medium text-gray-800 dark:text-gray-200">{p.monthly ? `${fmtNum(p.monthly)}만` : "—"}</span>
-              </>
-            ) : (
-              <>
-                {p.dealType === "전세" ? "전세금" : "매매가"} <span className="font-medium text-gray-800 dark:text-gray-200">{priceStr}</span>
-              </>
-            )}
-          </div>
+          {/* 3째줄: 만기 */}
+          {p.leaseEndDate && (
+            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              만기 <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 px-1.5 py-0.5 rounded">{p.leaseEndDate}</span>
+            </div>
+          )}
 
           {/* 연락처 — 임대인 → 임차인 */}
           {(p.ownerPhone || p.ownerName || hasTenant) && (
