@@ -65,7 +65,8 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
     return [...mine, ...auto]
       .filter(c => !q || c.base.replace(/\s+/g, "").toLowerCase().includes(q))
       .filter(c => c.mine || c.base !== typedName)
-      .slice(0, 40);
+      .sort((a, b) => a.base.localeCompare(b.base, "ko"))
+      .slice(0, 60);
   })();
 
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
@@ -219,12 +220,12 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                   <span className="text-[11px] font-semibold text-teal-700">📌 내 단지 목록 (눌러서 선택)</span>
                   <button type="button" onClick={() => setShowSaved(false)} className="text-[11px] text-gray-400 whitespace-nowrap">닫기</button>
                 </div>
-                <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                <div className="flex flex-col gap-1 max-h-56 overflow-y-auto">
                   {savedMatches.map(c => (
-                    <span key={c.base} className="inline-flex max-w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
+                    <span key={c.base} className="flex w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
                       <button type="button"
                         onClick={() => { setBaseAddress(c.base); updateFullAddress(c.base, form.dong, form.ho); setAddrSuggestions([]); setShowSaved(false); }}
-                        className="min-w-0 truncate whitespace-nowrap px-2.5 py-1.5 hover:bg-teal-100 rounded-lg">
+                        className="min-w-0 flex-1 truncate whitespace-nowrap text-left px-2.5 py-1.5 hover:bg-teal-100 rounded-lg">
                         {c.base}{!c.mine && <span className="text-gray-400"> {c.count}</span>}
                       </button>
                       {c.mine && c.ref && (
