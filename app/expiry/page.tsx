@@ -690,7 +690,6 @@ function ContractRow({
   onReopen,
   onDelete,
   onSms,
-  onJumpCustomer,
   onReopenAsProperty,
   onCloneSameComplex,
 }: {
@@ -795,15 +794,6 @@ function ContractRow({
             className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 font-semibold hover:bg-teal-100 transition-colors"
           >
             📋 같은 단지 추가
-          </button>
-        )}
-        {onJumpCustomer && (
-          <button
-            onClick={onJumpCustomer}
-            title="연결된 고객 보기 (고객관리로 이동)"
-            className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
-          >
-            👥 고객 보기
           </button>
         )}
         {onReopenAsProperty && !isClosed && (
