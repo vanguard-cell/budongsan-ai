@@ -86,6 +86,8 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
     const q = search.trim();
     if (!q) return;
     router.push(`/properties?q=${encodeURIComponent(q)}`);
+    // 이미 매물 화면이면 주소만 바뀌고 검색칸은 그대로라서, 알림을 따로 보냄
+    window.dispatchEvent(new CustomEvent("global-search", { detail: q }));
   };
 
   const isActive = (href: string) => {

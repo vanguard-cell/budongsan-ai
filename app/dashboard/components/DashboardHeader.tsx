@@ -20,6 +20,8 @@ export default function DashboardHeader() {
     if (!q) return;
     // 매물 페이지로 이동하며 검색어 전달 (주소·집주인·임차인·전화 통합 검색)
     router.push(`/properties?q=${encodeURIComponent(q)}`);
+    // 이미 매물 화면이면 주소만 바뀌고 검색칸은 그대로라서, 알림을 따로 보냄
+    window.dispatchEvent(new CustomEvent("global-search", { detail: q }));
   };
 
   useEffect(() => {

@@ -43,6 +43,11 @@ export default function PropertiesPage() {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("q") || "";
   });
+  useEffect(() => {
+    const onSearch = (e: Event) => setQuery(String((e as CustomEvent).detail ?? ""));
+    window.addEventListener("global-search", onSearch);
+    return () => window.removeEventListener("global-search", onSearch);
+  }, []);
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
   const [filterPropType, setFilterPropType] = useState<"all" | PropertyType>("all"); // 대분류: 매물 유형
   const [showClosed, setShowClosed] = useState(false);
