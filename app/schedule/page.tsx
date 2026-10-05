@@ -638,6 +638,14 @@ function CompactRow({ item }: { item: UnifiedItem }) {
   );
 }
 
+/* 매물 주소 + 동·호 (이미 주소에 들어 있으면 중복 안 붙임) */
+function propertyFullLabel(p: Property) {
+  const parts: string[] = [];
+  if (p.dong && !p.address.includes(p.dong)) parts.push(/동$/.test(p.dong) ? p.dong : `${p.dong}동`);
+  if (p.ho && !p.address.includes(p.ho)) parts.push(/호$/.test(p.ho) ? p.ho : `${p.ho}호`);
+  return parts.length ? `${p.address} ${parts.join(" ")}` : p.address;
+}
+
 /* ── 약속 등록/수정 모달 ── */
 function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   schedule: Schedule; properties: Property[]; customers: Customer[];
@@ -660,7 +668,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
     const base = properties.filter(p => p.status === "active" && (!propTypeFilter || p.propertyType === propTypeFilter) && (!propDealFilter || p.dealType === propDealFilter));
     if (!propQuery.trim()) return base.slice(0, propTypeFilter || propDealFilter ? 30 : 8);
     const q = propQuery.toLowerCase();
-    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 30);
+    return base.filter(p => propertyFullLabel(p).toLowerCase().includes(q)).slice(0, 30);
   }, [propQuery, propTypeFilter, propDealFilter, properties]);
 
   const propTypeOptions = useMemo(() => {
@@ -675,14 +683,14 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
       setAddingExtra(false); setPropQuery(""); setShowPropList(false);
       return;
     }
-    set("propertyAddress", p.address); set("propertyId", p.id);
-    setPropQuery(p.address); setShowPropList(false);
+    set("propertyAddress", propertyFullLabel(p)); set("propertyId", p.id);
+    setPropQuery(propertyFullLabel(p)); setShowPropList(false);
   };
   const save = async () => {
     if (!form.propertyAddress.trim()) { alert("매물 주소를 입력해주세요"); return; }
     if (!form.date) { alert("날짜를 선택해주세요"); return; }
     setSaving(true);
-    const extras = extraProps.map(p => ({ ...form, id: emptySchedule().id, propertyAddress: p.address, propertyId: p.id, createdAt: Date.now() }));
+    const extras = extraProps.map(p => ({ ...form, id: emptySchedule().id, propertyAddress: propertyFullLabel(p), propertyId: p.id, createdAt: Date.now() }));
     try { await onSave([{ ...form }, ...extras]); }
     catch { alert("저장 중 오류가 발생했습니다."); }
     finally { setSaving(false); }
@@ -763,7 +771,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
                         className="w-full text-left px-3 py-2.5 hover:bg-emerald-50 border-b last:border-0 border-gray-100 transition-colors">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0 whitespace-nowrap">{p.propertyType} · {p.dealType}</span>
-                          <span className="text-sm font-medium text-gray-800 truncate">{p.address}</span>
+                          <span className="text-sm font-medium text-gray-800 break-all">{propertyFullLabel(p)}</span>
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">{p.price ? `${p.price}만` : ""}{p.ownerName ? ` · ${p.ownerName}` : ""}</div>
                       </button>
@@ -780,7 +788,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
                 {extraProps.map(p => (
                   <div key={p.id} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-sm">
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0 whitespace-nowrap">{p.propertyType} · {p.dealType}</span>
-                    <span className="flex-1 min-w-0 truncate text-gray-800">{p.address}</span>
+                    <span className="flex-1 min-w-0 break-all text-gray-800">{propertyFullLabel(p)}</span>
                     <button type="button" onClick={() => setExtraProps(xs => xs.filter(x => x.id !== p.id))}
                       className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:bg-white hover:text-red-500">✕</button>
                   </div>
