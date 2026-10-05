@@ -646,17 +646,24 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   const [saving, setSaving] = useState(false);
   const [propQuery, setPropQuery] = useState("");
   const [showPropList, setShowPropList] = useState(false);
+  const [propTypeFilter, setPropTypeFilter] = useState("");
   const [custQuery, setCustQuery] = useState("");
   const [showCustList, setShowCustList] = useState(false);
 
   const set = <K extends keyof Schedule>(k: K, v: Schedule[K]) => setForm(p => ({ ...p, [k]: v }));
 
   const filteredProps = useMemo(() => {
-    const base = properties.filter(p => p.status === "active");
-    if (!propQuery.trim()) return base.slice(0, 8);
+    const base = properties.filter(p => p.status === "active" && (!propTypeFilter || p.propertyType === propTypeFilter));
+    if (!propQuery.trim()) return base.slice(0, propTypeFilter ? 30 : 8);
     const q = propQuery.toLowerCase();
-    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 8);
-  }, [propQuery, properties]);
+    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 30);
+  }, [propQuery, propTypeFilter, properties]);
+
+  const propTypeOptions = useMemo(() => {
+    const seen = new Set<string>();
+    properties.forEach(p => { if (p.status === "active" && p.propertyType) seen.add(p.propertyType); });
+    return Array.from(seen);
+  }, [properties]);
 
   const filteredCusts = useMemo(() => {
     if (!custQuery.trim()) return customers.slice(0, 8);
@@ -722,6 +729,17 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
               매물 연결 <span className="text-red-400">*</span>
               {form.propertyId && <span className="ml-2 text-[11px] text-emerald-600 font-normal">🏘️ 연결됨</span>}
             </label>
+            {properties.length > 0 && propTypeOptions.length > 1 && (
+              <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-0.5 px-0.5">
+                {["", ...propTypeOptions].map(t => (
+                  <button key={t || "all"} type="button"
+                    onClick={() => { setPropTypeFilter(t); setShowPropList(true); }}
+                    className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors ${propTypeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+                    {t || "전체"}
+                  </button>
+                ))}
+              </div>
+            )}
             {properties.length > 0 && (
               <div className="relative mb-2">
                 <input value={propQuery} onChange={e => { setPropQuery(e.target.value); setShowPropList(true); }}
@@ -734,10 +752,10 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
                       <button key={p.id} type="button" onMouseDown={e => { e.preventDefault(); selectProperty(p); }}
                         className="w-full text-left px-3 py-2.5 hover:bg-emerald-50 border-b last:border-0 border-gray-100 transition-colors">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0">{p.dealType}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0 whitespace-nowrap">{p.propertyType} · {p.dealType}</span>
                           <span className="text-sm font-medium text-gray-800 truncate">{p.address}</span>
                         </div>
-                        <div className="text-xs text-gray-500 mt-0.5">{p.propertyType}{p.price ? ` · ${p.price}만` : ""}{p.ownerName ? ` · ${p.ownerName}` : ""}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{p.price ? `${p.price}만` : ""}{p.ownerName ? ` · ${p.ownerName}` : ""}</div>
                       </button>
                     ))}
                   </div>
