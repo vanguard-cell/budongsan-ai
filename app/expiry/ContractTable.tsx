@@ -330,7 +330,7 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
                   )}
                   {show("tenant") && (
                     <td className="px-2 py-2.5 text-gray-700 dark:text-gray-300 truncate max-w-0" onDoubleClick={e => startEdit(c, "tenant", e)}>
-                      {c.tenantName || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                      {c.tenantName ? (c.type === "매매" ? `${c.tenantName} (매수)` : c.tenantName) : <span className="text-gray-300 dark:text-gray-600">—</span>}
                       {isEditing(c, "tenant") && popover(c, false, <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(c)} placeholder="임차인 이름" className={inputCls} />)}
                     </td>
                   )}
