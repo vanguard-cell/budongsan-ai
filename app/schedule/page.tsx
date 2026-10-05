@@ -539,6 +539,9 @@ export default function SchedulePage() {
                     {s.status === "done" && <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-green-100 text-green-700">완료</span>}
                   </div>
                   <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{s.propertyAddress || "주소 미입력"}</p>
+                  {s.extraProperties?.map((x, i) => (
+                    <p key={i} className="text-[13px] text-gray-700 dark:text-gray-300 break-all">+ {x.address}</p>
+                  ))}
                 </div>
                 <div className="flex flex-wrap gap-1.5">{phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}</div>
                 {s.memo && <p className="text-[12px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-lg px-2.5 py-2">💬 {s.memo}</p>}
@@ -649,6 +652,8 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   const [showPropList, setShowPropList] = useState(false);
   const [propTypeFilter, setPropTypeFilter] = useState("");
   const [propDealFilter, setPropDealFilter] = useState("");
+  const [addingExtra, setAddingExtra] = useState(false);
+  const extras = form.extraProperties || [];
 
   const set = <K extends keyof Schedule>(k: K, v: Schedule[K]) => setForm(p => ({ ...p, [k]: v }));
 
@@ -666,6 +671,14 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   }, [properties]);
 
   const selectProperty = (p: Property) => {
+    if (addingExtra) {
+      const info = [`${p.propertyType} · ${p.dealType}`, p.price ? `${p.price}만` : "", p.ownerName || ""].filter(Boolean).join(" · ");
+      if (!extras.some(x => x.id === p.id) && p.id !== form.propertyId) {
+        set("extraProperties", [...extras, { id: p.id, address: p.address, info }]);
+      }
+      setAddingExtra(false); setPropQuery(""); setShowPropList(false);
+      return;
+    }
     set("propertyAddress", p.address); set("propertyId", p.id);
     setPropQuery(p.address); setShowPropList(false);
   };
@@ -744,7 +757,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
               <div className="relative mb-2">
                 <input value={propQuery} onChange={e => { setPropQuery(e.target.value); setShowPropList(true); }}
                   onFocus={() => setShowPropList(true)}
-                  placeholder="🔍 내 매물에서 검색"
+                  placeholder={addingExtra ? "🔍 추가할 매물 검색" : "🔍 내 매물에서 검색"}
                   className="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400" autoComplete="off" />
                 {showPropList && filteredProps.length > 0 && (
                   <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
@@ -765,6 +778,22 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
             <input value={form.propertyAddress} onChange={e => { set("propertyAddress", e.target.value); set("propertyId", undefined); }}
               placeholder="직접 입력: 힐스테이트 미사역 101동 1902호"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            {extras.map((x, i) => (
+              <div key={(x.id || x.address) + i} className="mt-2 flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-800 break-all">{i + 2}. {x.address}</p>
+                  {x.info && <p className="text-xs text-gray-500">{x.info}</p>}
+                </div>
+                <button type="button" onClick={() => set("extraProperties", extras.filter((_, j) => j !== i))}
+                  className="shrink-0 whitespace-nowrap text-xs text-red-500 px-1">삭제</button>
+              </div>
+            ))}
+            {properties.length > 0 && form.propertyAddress.trim() && extras.length < 4 && (
+              <button type="button" onClick={() => { setAddingExtra(v => !v); setPropQuery(""); setShowPropList(true); }}
+                className={`mt-2 w-full whitespace-nowrap py-2 rounded-xl text-sm font-medium border ${addingExtra ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-emerald-700 border-emerald-300"}`}>
+                {addingExtra ? "위 칸에서 추가할 매물을 골라주세요 (취소)" : "➕ 매물 추가"}
+              </button>
+            )}
           </div>
 
           {/* 방문자 */}
