@@ -222,16 +222,8 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
         })}
       </div>
 
-      {/* 범례 + 액션 — 알약 형태로 색상 구분감 강화 */}
+      {/* 액션 (색 설명 범례는 숨김 — 건의 #67) */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 pt-3 border-t border-gray-100">
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          {(Object.keys(SOURCE_COLORS) as CalendarSource[]).filter(s => s !== "appointment").map(s => (
-            <div key={s} className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border font-medium whitespace-nowrap ${SOURCE_PILL_CLASSES[s]}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${SOURCE_COLORS[s]}`}></span>
-              {SOURCE_LABELS[s]}
-            </div>
-          ))}
-        </div>
         <div className="flex-1" />
         {selectedDate && (
           <button onClick={() => onSelectDate(null)} className="text-sm px-3.5 py-1.5 whitespace-nowrap rounded-full border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200">
