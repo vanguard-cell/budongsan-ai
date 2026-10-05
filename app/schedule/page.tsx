@@ -730,6 +730,20 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
             </div>
           </div>
 
+          {/* 방문자 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              방문자
+              {form.customerId && <span className="ml-2 text-[11px] text-blue-600 font-normal">👥 고객연결</span>}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <input value={form.visitorName} onChange={e => { set("visitorName", e.target.value); set("customerId", undefined); }}
+                placeholder="이름" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="tel" value={form.visitorPhone} onChange={e => { set("visitorPhone", e.target.value); set("customerId", undefined); }}
+                placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+
           {/* 매물 연결 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -801,27 +815,13 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
               ) : (
                 <button type="button" onClick={() => { if (!form.propertyAddress.trim()) { alert("먼저 위에서 첫 번째 매물을 골라주세요"); return; } setAddingExtra(true); setPropQuery(""); setShowPropList(true); }}
                   className="mt-2 w-full py-2 rounded-xl border border-dashed border-emerald-300 text-emerald-700 text-sm whitespace-nowrap hover:bg-emerald-50">
-                  ＋ 매물 추가
+                  ＋ 매물 추가 (몇 개든 가능)
                 </button>
               )
             )}
             {extraProps.length > 0 && (
               <p className="mt-1 text-[11px] text-gray-500">매물 {extraProps.length + 1}개 — 같은 날짜·시간·방문자로 일정이 매물마다 하나씩 저장돼요</p>
             )}
-          </div>
-
-          {/* 방문자 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              방문자
-              {form.customerId && <span className="ml-2 text-[11px] text-blue-600 font-normal">👥 고객연결</span>}
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <input value={form.visitorName} onChange={e => { set("visitorName", e.target.value); set("customerId", undefined); }}
-                placeholder="이름" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input type="tel" value={form.visitorPhone} onChange={e => { set("visitorPhone", e.target.value); set("customerId", undefined); }}
-                placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
           </div>
 
           {/* 메모 */}
