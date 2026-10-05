@@ -66,12 +66,12 @@ export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
 };
 /** 캘린더 셀 안 미니 알약용 — 테두리 없이 배경+텍스트만 (좁은 공간) */
 export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
-  appointment: "bg-sky-100 text-sky-900",
-  visit: "bg-sky-100 text-sky-900",
-  contractDate: "bg-sky-100 text-sky-900",
-  downPaymentDate: "bg-sky-100 text-sky-900",
-  balanceDate: "bg-sky-100 text-sky-900",
-  renewal: "bg-sky-100 text-sky-900",
+  appointment: "bg-sky-100 text-sky-900 border-sky-700",
+  visit: "bg-sky-100 text-sky-900 border-sky-700",
+  contractDate: "bg-sky-100 text-sky-900 border-sky-700",
+  downPaymentDate: "bg-sky-100 text-sky-900 border-sky-700",
+  balanceDate: "bg-sky-100 text-sky-900 border-sky-700",
+  renewal: "bg-sky-100 text-sky-900 border-sky-700",
 };
 
 function pad(n: number): string { return String(n).padStart(2, "0"); }
@@ -206,8 +206,8 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
                     return (
                       <span
                         key={src}
-                        className={`text-[11px] leading-tight font-medium px-0.5 py-0.5 rounded text-center truncate whitespace-nowrap ${
-                          isSelected ? "bg-white/30 text-white" : SOURCE_CELL_CLASSES[src]
+                        className={`text-[11px] leading-tight font-medium px-0.5 py-0.5 rounded border text-center truncate whitespace-nowrap ${
+                          isSelected ? "bg-white/30 text-white border-white/80" : SOURCE_CELL_CLASSES[src]
                         }`}
                         title={`${SOURCE_LABELS[src]} ${cnt}건`}
                       >
