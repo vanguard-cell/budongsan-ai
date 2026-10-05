@@ -32,8 +32,9 @@ const SEV_TINT: Record<Severity, string> = {
 const SEV_LABEL: Record<Severity, string> = { danger: "위험", warning: "주의", caution: "예고", safe: "안전" };
 
 function num(s: string) { if (!s) return s; const n = parseInt(s.replace(/[^\d]/g, ""), 10); return isNaN(n) ? s : n.toLocaleString(); }
+function hasMonthly(c: Contract): boolean { return c.type === "월세" || (c.type === "매매" && !!c.monthly); }
 function priceStr(c: Contract): string {
-  if (c.type === "월세") return `${num(c.deposit)}/${num(c.monthly)}`;
+  if (hasMonthly(c)) return `${num(c.deposit)}/${num(c.monthly)}`;
   return num(c.deposit) || "—";
 }
 function addressStr(c: Contract): string {
@@ -146,7 +147,7 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
     const onlyNum = (s: string) => s.replace(/[^\d]/g, "");
     switch (edit.field) {
       case "price":
-        return c.type === "월세"
+        return hasMonthly(c)
           ? { patch: { deposit: onlyNum(draftA), monthly: onlyNum(draftB) }, label: "보증금/월세" }
           : { patch: { deposit: onlyNum(draftA) }, label: "금액" };
       case "tenant": return { patch: { tenantName: draftA.trim() }, label: "임차인" };
@@ -321,10 +322,10 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
                   {show("price") && (
                     <td className="px-2 py-2.5 tabular-nums text-gray-900 dark:text-gray-100 whitespace-nowrap" onDoubleClick={e => startEdit(c, "price", e)}>
                       {priceStr(c)}
-                      {isEditing(c, "price") && popover(c, c.type === "월세",
+                      {isEditing(c, "price") && popover(c, hasMonthly(c),
                         <div className="flex items-center gap-1">
-                          <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(c)} placeholder={c.type === "월세" ? "보증금" : "금액"} className={inputCls} />
-                          {c.type === "월세" && (<><span className="text-gray-400">/</span><input value={draftB} onChange={e => setDraftB(e.target.value)} onKeyDown={keyHandler(c)} placeholder="월세" className={inputCls} /></>)}
+                          <input autoFocus value={draftA} onChange={e => setDraftA(e.target.value)} onKeyDown={keyHandler(c)} placeholder={hasMonthly(c) ? "보증금" : "금액"} className={inputCls} />
+                          {hasMonthly(c) && (<><span className="text-gray-400">/</span><input value={draftB} onChange={e => setDraftB(e.target.value)} onKeyDown={keyHandler(c)} placeholder="월세" className={inputCls} /></>)}
                         </div>)}
                     </td>
                   )}

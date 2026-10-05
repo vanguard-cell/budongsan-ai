@@ -68,7 +68,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onC
   const sev = dd !== null ? severityOf(dd) : "safe";
   const accent = sev === "danger" ? "#E24B4A" : sev === "warning" ? "#EF9F27" : sev === "caution" ? "#1D9E75" : "#888780";
   const address = [c.address, c.dong && `${c.dong}동`, c.ho && `${c.ho}호`].filter(Boolean).join(" ");
-  const price = c.type === "월세" ? `${num(c.deposit)}/${num(c.monthly)}만` : `${num(c.deposit)}만`;
+  const price = c.type === "월세" || (c.type === "매매" && c.monthly) ? `${num(c.deposit)}/${num(c.monthly)}만` : `${num(c.deposit)}만`;
 
   return (
     <SideDrawer open onClose={onClose} title="계약 상세" icon="event_busy" accent={accent}>
