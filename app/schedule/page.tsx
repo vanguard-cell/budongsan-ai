@@ -335,37 +335,37 @@ export default function SchedulePage() {
           <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })}
-              className="text-xs px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors shadow-sm"
+              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 약속
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "방문" })}
-              className="text-xs px-3.5 py-2 rounded-xl border-2 border-sky-400 bg-sky-50 text-sky-700 font-semibold hover:bg-sky-100 transition-colors whitespace-nowrap"
+              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 방문
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "계약일" })}
-              className="text-xs px-3.5 py-2 rounded-xl border-2 border-purple-400 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors"
+              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 계약일
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "중도금일" })}
-              className="text-xs px-3.5 py-2 rounded-xl border-2 border-pink-400 bg-pink-50 text-pink-700 font-semibold hover:bg-pink-100 transition-colors"
+              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 중도금일
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "잔금일" })}
-              className="text-xs px-3.5 py-2 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-semibold hover:bg-amber-100 transition-colors"
+              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 잔금일
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "재계약일" })}
-              className="text-xs px-3.5 py-2 rounded-xl border-2 border-emerald-400 bg-emerald-50 text-emerald-700 font-semibold hover:bg-emerald-100 transition-colors"
+              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 재계약
             </button>
