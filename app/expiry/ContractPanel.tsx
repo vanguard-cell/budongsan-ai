@@ -97,12 +97,12 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onC
       {(c.landlordPhone || c.tenantPhone) && (
         <div className="px-1 flex flex-wrap gap-1.5 mt-1">
           <Chip role="임대인" name={c.landlordName} phone={c.landlordPhone} kind="owner" onSms={() => onSms(c, "landlord")} />
-          <Chip role={c.type === "매매" ? "매수인" : "임차인"} name={c.tenantName} phone={c.tenantPhone} kind="tenant" onSms={() => onSms(c, "tenant")} />
+          <Chip role="임차인" name={c.tenantName} phone={c.tenantPhone} kind="tenant" onSms={() => onSms(c, "tenant")} />
         </div>
       )}
       {(c.landlordPhone || c.tenantPhone) && (
         <p className="px-1 text-[10px] text-gray-400 dark:text-gray-500">
-          {[c.landlordPhone && `임대인 ${formatPhone(c.landlordPhone)}`, c.tenantPhone && `${c.type === "매매" ? "매수인" : "임차인"} ${formatPhone(c.tenantPhone)}`].filter(Boolean).join(" · ")}
+          {[c.landlordPhone && `임대인 ${formatPhone(c.landlordPhone)}`, c.tenantPhone && `임차인 ${formatPhone(c.tenantPhone)}`].filter(Boolean).join(" · ")}
         </p>
       )}
 

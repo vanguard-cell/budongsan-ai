@@ -763,7 +763,7 @@ function ContractRow({
               disabled={isClosed}
             />
             <ContactLine
-              label={c.type === "매매" ? "매수인" : "임차인"}
+              label="임차인"
               name={c.tenantName}
               phone={c.tenantPhone}
               onSms={() => onSms("tenant")}
@@ -933,7 +933,7 @@ function RenewModal({ contract, onClose, onSave }: {
             <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
               <span className="material-symbols-outlined text-emerald-600">autorenew</span> 재계약(연장)
             </h3>
-            <p className="text-[11px] text-gray-500 mt-0.5 truncate max-w-[280px]">{where} · {contract.tenantName || (contract.type === "매매" ? "매수인" : "임차인")}</p>
+            <p className="text-[11px] text-gray-500 mt-0.5 truncate max-w-[280px]">{where} · {contract.tenantName || "임차인"}</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
             <span className="material-symbols-outlined">close</span>
@@ -1386,7 +1386,7 @@ function EditModal({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label={`${form.type === "매매" ? "매수인" : "임차인"} 이름`}>
+          <Field label="임차인 이름">
             <input
               value={form.tenantName}
               onChange={e => setField("tenantName", e.target.value)}
@@ -1394,7 +1394,7 @@ function EditModal({
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>
-          <Field label={`${form.type === "매매" ? "매수인" : "임차인"} 연락처`}>
+          <Field label="임차인 연락처">
             <input
               type="tel"
               value={form.tenantPhone}
@@ -1477,7 +1477,7 @@ function SmsModal({
 
   const phone = target === "tenant" ? contract.tenantPhone : contract.landlordPhone;
   const name = target === "tenant" ? contract.tenantName : contract.landlordName;
-  const targetLabel = target === "tenant" ? (contract.type === "매매" ? "매수인" : "임차인") : "임대인";
+  const targetLabel = target === "tenant" ? "임차인" : "임대인";
 
   const copy = async () => {
     await navigator.clipboard.writeText(text);
