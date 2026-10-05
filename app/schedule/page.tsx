@@ -417,7 +417,7 @@ export default function SchedulePage() {
             <span className="text-sm text-blue-800 font-medium">
               📅 {new Date(selectedDate + "T00:00:00").toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "long" })} 일정
             </span>
-            <button onClick={() => setSelectedDate(null)} className="text-xs px-2.5 py-1 rounded-full bg-white border border-blue-200 text-blue-700 hover:bg-blue-100">
+            <button onClick={() => setSelectedDate(null)} className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap">
               전체 보기
             </button>
           </div>
@@ -455,9 +455,9 @@ export default function SchedulePage() {
           <button
             onClick={exportIcs}
             title="네이버·구글·아이폰 캘린더에서 '가져오기'로 넣을 수 있는 파일(.ics)을 받습니다"
-            className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600"
+            className="flex items-center gap-1 text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
           >
-            <span className="material-symbols-outlined text-[14px]">ios_share</span>
+            <span className="material-symbols-outlined text-[16px]">ios_share</span>
             캘린더로 내보내기
           </button>
           <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
