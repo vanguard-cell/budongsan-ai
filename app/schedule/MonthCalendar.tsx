@@ -206,7 +206,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
                     return (
                       <span
                         key={src}
-                        className={`text-[10px] leading-tight font-semibold px-0.5 py-0.5 rounded text-center truncate whitespace-nowrap ${
+                        className={`text-[11px] leading-tight font-medium px-0.5 py-0.5 rounded text-center truncate whitespace-nowrap ${
                           isSelected ? "bg-white/30 text-white" : SOURCE_CELL_CLASSES[src]
                         }`}
                         title={`${SOURCE_LABELS[src]} ${cnt}건`}
