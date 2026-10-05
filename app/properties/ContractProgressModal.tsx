@@ -30,7 +30,10 @@ export default function ContractProgressModal({ property, customers, onClose, on
   }, [custQuery, customers]);
 
   const selectCustomer = (c: Customer) => {
-    setForm(prev => ({ ...prev, tenantName: c.name, tenantPhone: c.phone, linkedTenantId: c.id }));
+    // 매매: 매수인 = 새 집주인(매도인 칸) / 전월세: 임차인 칸 — 매매 시 기존 임차인은 그대로 유지
+    setForm(prev => prev.dealType === "매매"
+      ? { ...prev, ownerName: c.name, ownerPhone: c.phone }
+      : { ...prev, tenantName: c.name, tenantPhone: c.phone, linkedTenantId: c.id });
     setCustQuery(c.name);
     setShowCustList(false);
   };
@@ -132,7 +135,10 @@ export default function ContractProgressModal({ property, customers, onClose, on
 
           {/* 계약 상대방 정보 — 매매=매수인 / 전월세=임차인, 고객관리 검색 연동 */}
           {(() => {
-            const partyLabel = form.dealType === "매매" ? "매수인" : "임차인";
+            const isSale = form.dealType === "매매";
+            const partyLabel = isSale ? "매수인" : "임차인";
+            const nameKey = isSale ? "ownerName" : "tenantName";
+            const phoneKey = isSale ? "ownerPhone" : "tenantPhone";
             return (
             <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-2">
               <div className="text-xs font-semibold text-orange-700">🤝 {partyLabel} (고객관리에서 불러오기)</div>
@@ -148,7 +154,7 @@ export default function ContractProgressModal({ property, customers, onClose, on
                     autoComplete="off"
                     className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
-                  {form.linkedTenantId && (
+                  {!isSale && form.linkedTenantId && (
                     <span className="absolute right-3 top-2 text-[10px] text-blue-600 font-medium">👥 연결됨</span>
                   )}
                   {showCustList && filteredCustomers.length > 0 && (
@@ -175,21 +181,21 @@ export default function ContractProgressModal({ property, customers, onClose, on
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">{partyLabel} 이름</label>
-                  <input value={form.tenantName}
-                    onChange={e => { set("tenantName", e.target.value); set("linkedTenantId", ""); setCustQuery(e.target.value); }}
+                  <input value={form[nameKey]}
+                    onChange={e => { set(nameKey, e.target.value); if (!isSale) set("linkedTenantId", ""); setCustQuery(e.target.value); }}
                     placeholder="홍길동"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">연락처</label>
-                  <input type="tel" value={form.tenantPhone}
-                    onChange={e => { set("tenantPhone", e.target.value); set("linkedTenantId", ""); }}
+                  <input type="tel" value={form[phoneKey]}
+                    onChange={e => { set(phoneKey, e.target.value); if (!isSale) set("linkedTenantId", ""); }}
                     placeholder="010-0000-0000"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
               </div>
-              {/* 보증금/월세 */}
-              <div className="grid grid-cols-2 gap-2 mt-2">
+              {/* 보증금/월세 — 전월세만 (매매는 기존 임차인 정보 유지) */}
+              {!isSale && <div className="grid grid-cols-2 gap-2 mt-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">보증금 (만원)</label>
                   <input type="text" inputMode="numeric" value={form.tenantDeposit}
@@ -202,7 +208,8 @@ export default function ContractProgressModal({ property, customers, onClose, on
                     onChange={e => set("tenantMonthly", e.target.value.replace(/\D/g, ""))}
                     placeholder="70 (전세는 0)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
-              </div>
+              </div>}
+              {isSale && <p className="text-[10px] text-orange-600">💡 매수인은 새 집주인(매도인 칸)으로 바뀌고, 기존 임차인 정보는 그대로 유지됩니다</p>}
               <p className="text-[10px] text-orange-600 mt-1">💡 고객관리에 등록된 고객을 검색하거나 직접 입력하세요</p>
             </div>
             );
