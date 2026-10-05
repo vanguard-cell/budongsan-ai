@@ -1084,7 +1084,8 @@ export default function PropertiesPage() {
             await logPropertyEvent(user.agencyId, updated.id, {
               by: user.displayName || user.email || "나",
               kind: "progress",
-              text: "계약 진행 정보 입력",
+              text: (!updated.contractDate && !updated.downPaymentDate && !updated.balanceDate && progressing.contractDate)
+                ? "계약 취소 (내 매물로 복귀)" : "계약 진행 정보 입력",
             });
             recordFeatureUse(user.uid, "prop_contract");
             setProgressing(null);
