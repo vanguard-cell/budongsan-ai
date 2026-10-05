@@ -13,6 +13,12 @@ import { db } from "./firebase";
 export type ScheduleType = "집보기" | "방문" | "계약일" | "중도금일" | "잔금일" | "재계약일" | "기타";
 export type ScheduleStatus = "scheduled" | "done" | "cancelled";
 
+export interface ExtraProperty {
+  id?: string;        // 연결된 매물 ID (직접 입력이면 없음)
+  address: string;
+  info?: string;      // 추가 당시 매물장 요약 (유형·거래·금액·소유자)
+}
+
 export interface Schedule {
   id: string;
   date: string;         // YYYY-MM-DD
@@ -21,6 +27,7 @@ export interface Schedule {
   visitorPhone: string;
   propertyAddress: string;
   propertyId?: string;   // 연결된 매물 ID
+  extraProperties?: ExtraProperty[];   // 같은 방문에 함께 보는 추가 매물 (없으면 1건짜리 일정)
   customerId?: string;   // 연결된 고객 ID
   scheduleType: ScheduleType;
   memo: string;
@@ -61,6 +68,13 @@ function fromDoc(id: string, d: Record<string, unknown>): Schedule {
     propertyAddress: (d.propertyAddress as string) || "",
     propertyId:      (d.propertyId      as string) || undefined,
     customerId:      (d.customerId      as string) || undefined,
+    extraProperties: Array.isArray(d.extraProperties) && d.extraProperties.length
+      ? (d.extraProperties as Record<string, unknown>[]).map(x => ({
+          id: (x.id as string) || undefined,
+          address: (x.address as string) || "",
+          info: (x.info as string) || undefined,
+        })).filter(x => x.address)
+      : undefined,
     scheduleType:    rawType as ScheduleType,
     memo:            (d.memo            as string) || "",
     status:          (d.status          as ScheduleStatus) || "scheduled",
