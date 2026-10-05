@@ -227,11 +227,16 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           {showHistory && (
             <div className="mt-2 space-y-1.5">
               {sortedSchedules.map(s => (
-                <div key={s.id} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs ${s.status === "done" ? "bg-gray-50 dark:bg-slate-800/40 text-gray-400" : "bg-blue-50 dark:bg-blue-950/30 text-gray-700 dark:text-gray-200"}`}>
+                <div key={s.id} className={`flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl px-3 py-2 text-xs ${s.status === "done" ? "bg-gray-50 dark:bg-slate-800/40 text-gray-400" : "bg-blue-50 dark:bg-blue-950/30 text-gray-700 dark:text-gray-200"}`}>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${STYPE_COLORS[s.scheduleType]}`}>{s.scheduleType}</span>
                   <span className="font-medium">{new Date(s.date + "T00:00:00").toLocaleDateString("ko-KR", { month: "short", day: "numeric", weekday: "short" })}</span>
                   <span>{s.time}</span>
                   {s.visitorName && <span className="text-gray-500 dark:text-gray-400">· {s.visitorName}</span>}
+                  {s.visitorPhone && (
+                    <a href={`tel:${s.visitorPhone.replace(/\D/g, "")}`} className="inline-flex items-center gap-0.5 whitespace-nowrap font-semibold text-blue-700 dark:text-blue-300">
+                      <span className="material-symbols-outlined text-[13px]">call</span>{formatPhone(s.visitorPhone)}
+                    </a>
+                  )}
                   {s.status === "done" && <span className="ml-auto text-[10px] text-green-600 dark:text-green-400">완료</span>}
                 </div>
               ))}
