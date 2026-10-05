@@ -589,7 +589,7 @@ export default function SchedulePage() {
           properties={properties}
           customers={customers}
           onClose={() => setEditing(null)}
-          onSave={async s => { await upsert(s); setEditing(null); }}
+          onSave={async list => { for (const s of list) await upsert(s); setEditing(null); }}
         />
       )}
     </div>
@@ -641,10 +641,14 @@ function CompactRow({ item }: { item: UnifiedItem }) {
 /* ── 약속 등록/수정 모달 ── */
 function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   schedule: Schedule; properties: Property[]; customers: Customer[];
-  onClose: () => void; onSave: (s: Schedule) => Promise<void>;
+  onClose: () => void; onSave: (list: Schedule[]) => Promise<void>;
 }) {
   const [form, setForm] = useState<Schedule>(schedule);
   const [saving, setSaving] = useState(false);
+  // 같은 방문에 매물 여러 개 (건의 #64) — 저장 구조는 그대로, 매물마다 일정을 하나씩 만든다. 새 일정에서만.
+  const isNew = !schedule.propertyAddress;
+  const [extraProps, setExtraProps] = useState<Property[]>([]);
+  const [addingExtra, setAddingExtra] = useState(false);
   const [propQuery, setPropQuery] = useState("");
   const [showPropList, setShowPropList] = useState(false);
   const [propTypeFilter, setPropTypeFilter] = useState("");
@@ -666,6 +670,11 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   }, [properties]);
 
   const selectProperty = (p: Property) => {
+    if (addingExtra) {
+      if (p.id !== form.propertyId && !extraProps.some(x => x.id === p.id)) setExtraProps(xs => [...xs, p]);
+      setAddingExtra(false); setPropQuery(""); setShowPropList(false);
+      return;
+    }
     set("propertyAddress", p.address); set("propertyId", p.id);
     setPropQuery(p.address); setShowPropList(false);
   };
@@ -673,7 +682,8 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
     if (!form.propertyAddress.trim()) { alert("매물 주소를 입력해주세요"); return; }
     if (!form.date) { alert("날짜를 선택해주세요"); return; }
     setSaving(true);
-    try { await onSave({ ...form }); }
+    const extras = extraProps.map(p => ({ ...form, id: emptySchedule().id, propertyAddress: p.address, propertyId: p.id, createdAt: Date.now() }));
+    try { await onSave([{ ...form }, ...extras]); }
     catch { alert("저장 중 오류가 발생했습니다."); }
     finally { setSaving(false); }
   };
@@ -765,6 +775,31 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
             <input value={form.propertyAddress} onChange={e => { set("propertyAddress", e.target.value); set("propertyId", undefined); }}
               placeholder="직접 입력: 힐스테이트 미사역 101동 1902호"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            {isNew && extraProps.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {extraProps.map(p => (
+                  <div key={p.id} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-sm">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0 whitespace-nowrap">{p.propertyType} · {p.dealType}</span>
+                    <span className="flex-1 min-w-0 truncate text-gray-800">{p.address}</span>
+                    <button type="button" onClick={() => setExtraProps(xs => xs.filter(x => x.id !== p.id))}
+                      className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:bg-white hover:text-red-500">✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {isNew && form.propertyId && properties.length > 0 && (
+              addingExtra ? (
+                <p className="mt-2 text-xs text-emerald-700">위 검색칸에서 추가할 매물을 골라주세요 <button type="button" onClick={() => setAddingExtra(false)} className="ml-1 underline text-gray-500">취소</button></p>
+              ) : (
+                <button type="button" onClick={() => { setAddingExtra(true); setPropQuery(""); setShowPropList(true); }}
+                  className="mt-2 w-full py-2 rounded-xl border border-dashed border-emerald-300 text-emerald-700 text-sm whitespace-nowrap hover:bg-emerald-50">
+                  ＋ 매물 추가
+                </button>
+              )
+            )}
+            {extraProps.length > 0 && (
+              <p className="mt-1 text-[11px] text-gray-500">매물 {extraProps.length + 1}개 — 같은 날짜·시간·방문자로 일정이 매물마다 하나씩 저장돼요</p>
+            )}
           </div>
 
           {/* 방문자 */}
