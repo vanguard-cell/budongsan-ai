@@ -647,8 +647,6 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   const [propQuery, setPropQuery] = useState("");
   const [showPropList, setShowPropList] = useState(false);
   const [propTypeFilter, setPropTypeFilter] = useState("");
-  const [custQuery, setCustQuery] = useState("");
-  const [showCustList, setShowCustList] = useState(false);
 
   const set = <K extends keyof Schedule>(k: K, v: Schedule[K]) => setForm(p => ({ ...p, [k]: v }));
 
@@ -665,21 +663,10 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
     return Array.from(seen);
   }, [properties]);
 
-  const filteredCusts = useMemo(() => {
-    if (!custQuery.trim()) return customers.slice(0, 8);
-    const q = custQuery.toLowerCase();
-    return customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).slice(0, 8);
-  }, [custQuery, customers]);
-
   const selectProperty = (p: Property) => {
     set("propertyAddress", p.address); set("propertyId", p.id);
     setPropQuery(p.address); setShowPropList(false);
   };
-  const selectCustomer = (c: Customer) => {
-    set("visitorName", c.name); set("visitorPhone", c.phone); set("customerId", c.id);
-    setCustQuery(c.name); setShowCustList(false);
-  };
-
   const save = async () => {
     if (!form.propertyAddress.trim()) { alert("매물 주소를 입력해주세요"); return; }
     if (!form.date) { alert("날짜를 선택해주세요"); return; }
@@ -773,29 +760,6 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
               방문자
               {form.customerId && <span className="ml-2 text-[11px] text-blue-600 font-normal">👥 고객연결</span>}
             </label>
-            {customers.length > 0 && (
-              <div className="relative mb-2">
-                <input value={custQuery} onChange={e => { setCustQuery(e.target.value); setShowCustList(true); }}
-                  onFocus={() => setShowCustList(true)}
-                  placeholder="🔍 기존 고객에서 검색"
-                  className="w-full border border-blue-200 rounded-xl px-3 py-2.5 text-sm bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400" autoComplete="off" />
-                {showCustList && filteredCusts.length > 0 && (
-                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-                    {filteredCusts.map(c => (
-                      <button key={c.id} type="button" onMouseDown={e => { e.preventDefault(); selectCustomer(c); }}
-                        className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-800">{c.name}</span>
-                          <span className="text-xs text-gray-500">{formatPhone(c.phone)}</span>
-                          {c.vip && <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700">VIP</span>}
-                        </div>
-                        {c.preferredArea && <div className="text-xs text-gray-400 mt-0.5">희망: {c.preferredArea}</div>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
             <div className="grid grid-cols-2 gap-2">
               <input value={form.visitorName} onChange={e => { set("visitorName", e.target.value); set("customerId", undefined); }}
                 placeholder="이름" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
