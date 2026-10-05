@@ -2,41 +2,20 @@
 
 /** 계약 진행 모달 — page.tsx 분리 리팩토링으로 추출 */
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Customer } from "@/app/customers/customer-types";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 
-export default function ContractProgressModal({ property, customers, onClose, onSave }: {
+export default function ContractProgressModal({ property, onClose, onSave }: {
   property: Property;
-  customers: Customer[];
+  customers?: Customer[];
   onClose: () => void;
   onSave: (p: Property) => Promise<void>;
 }) {
   const [form, setForm] = useState<Property>(property);
   const [saving, setSaving] = useState(false);
-  const [custQuery, setCustQuery] = useState("");
-  const [showCustList, setShowCustList] = useState(false);
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
-
-  // 고객 검색 (이름 또는 전화번호)
-  const filteredCustomers = useMemo(() => {
-    if (!custQuery.trim()) return customers.slice(0, 8);
-    const q = custQuery.toLowerCase().replace(/\D/g, "") || custQuery.toLowerCase();
-    return customers.filter(c =>
-      c.name.toLowerCase().includes(custQuery.toLowerCase()) ||
-      c.phone.replace(/\D/g, "").includes(q)
-    ).slice(0, 8);
-  }, [custQuery, customers]);
-
-  const selectCustomer = (c: Customer) => {
-    // 매매: 매수인 = 새 집주인(매도인 칸) / 전월세: 임차인 칸 — 매매 시 기존 임차인은 그대로 유지
-    setForm(prev => prev.dealType === "매매"
-      ? { ...prev, ownerName: c.name, ownerPhone: c.phone }
-      : { ...prev, tenantName: c.name, tenantPhone: c.phone, linkedTenantId: c.id });
-    setCustQuery(c.name);
-    setShowCustList(false);
-  };
 
   const today = new Date().toISOString().slice(0, 10);
   const balanceOverdueLocal = !!form.balanceDate && form.balanceDate <= today;
@@ -141,48 +120,14 @@ export default function ContractProgressModal({ property, customers, onClose, on
             const phoneKey = isSale ? "ownerPhone" : "tenantPhone";
             return (
             <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-2">
-              <div className="text-xs font-semibold text-orange-700">🤝 {partyLabel} (고객관리에서 불러오기)</div>
-
-              {/* 고객 검색 드롭다운 */}
-              {customers.length > 0 && (
-                <div className="relative">
-                  <input
-                    value={custQuery}
-                    onChange={e => { setCustQuery(e.target.value); setShowCustList(true); }}
-                    onFocus={() => setShowCustList(true)}
-                    placeholder="🔍 고객 이름 또는 전화번호 검색"
-                    autoComplete="off"
-                    className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  />
-                  {!isSale && form.linkedTenantId && (
-                    <span className="absolute right-3 top-2 text-[10px] text-blue-600 font-medium">👥 연결됨</span>
-                  )}
-                  {showCustList && filteredCustomers.length > 0 && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-40 overflow-y-auto">
-                      {filteredCustomers.map(c => (
-                        <button key={c.id} type="button"
-                          onMouseDown={e => { e.preventDefault(); selectCustomer(c); }}
-                          className="w-full text-left px-3 py-2.5 hover:bg-orange-50 border-b last:border-0 border-gray-100 transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-800">{c.name}</span>
-                            <span className="text-xs text-gray-500">{c.phone}</span>
-                            {c.vip && <span className="text-[10px] px-1 py-0.5 rounded bg-yellow-100 text-yellow-700">VIP</span>}
-                          </div>
-                          {c.preferredArea && <div className="text-xs text-gray-400 mt-0.5">희망: {c.preferredArea}</div>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="text-xs font-semibold text-orange-700">🤝 {partyLabel}</div>
 
               {/* 직접 입력 */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">{partyLabel} 이름</label>
                   <input value={form[nameKey]}
-                    onChange={e => { set(nameKey, e.target.value); if (!isSale) set("linkedTenantId", ""); setCustQuery(e.target.value); }}
+                    onChange={e => { set(nameKey, e.target.value); if (!isSale) set("linkedTenantId", "") }}
                     placeholder="홍길동"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
@@ -210,7 +155,6 @@ export default function ContractProgressModal({ property, customers, onClose, on
                 </div>
               </div>}
               {isSale && <p className="text-[10px] text-orange-600">💡 매수인은 새 집주인(매도인 칸)으로 바뀌고, 기존 임차인 정보는 그대로 유지됩니다</p>}
-              <p className="text-[10px] text-orange-600 mt-1">💡 고객관리에 등록된 고객을 검색하거나 직접 입력하세요</p>
             </div>
             );
           })()}
