@@ -426,26 +426,26 @@ export default function SchedulePage() {
         {/* 필터 탭 — 7개 */}
         <div className="grid grid-cols-7 gap-1.5 mb-4">
           {([
-            { key: "all",             icon: "📋", label: "전체",     activeColor: "bg-blue-600",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
-            { key: "appointment",     icon: "👥", label: "약속",     activeColor: "bg-blue-500",    inactiveColor: "bg-blue-50 border-blue-200 text-blue-700" },
-            { key: "visit",           icon: "🚪", label: "방문",     activeColor: "bg-sky-500",     inactiveColor: "bg-sky-50 border-sky-200 text-sky-700" },
-            { key: "contractDate",    icon: "📝", label: "계약일",   activeColor: "bg-purple-600",  inactiveColor: "bg-purple-50 border-purple-200 text-purple-700" },
-            { key: "downPaymentDate", icon: "💰", label: "중도금", activeColor: "bg-pink-600",    inactiveColor: "bg-pink-50 border-pink-200 text-pink-700" },
-            { key: "balanceDate",     icon: "🔑", label: "잔금",   activeColor: "bg-amber-500",   inactiveColor: "bg-amber-50 border-amber-200 text-amber-700" },
-            { key: "renewal",         icon: "🔁", label: "재계약", activeColor: "bg-emerald-600", inactiveColor: "bg-emerald-50 border-emerald-200 text-emerald-700" },
+            { key: "all",             icon: "📋", label: "전체",     activeColor: "bg-sky-500", inactiveColor: "bg-sky-100 border-sky-300 text-sky-900" },
+            { key: "appointment",     icon: "👥", label: "약속",     activeColor: "bg-sky-500", inactiveColor: "bg-sky-100 border-sky-300 text-sky-900" },
+            { key: "visit",           icon: "🚪", label: "방문",     activeColor: "bg-sky-500", inactiveColor: "bg-sky-100 border-sky-300 text-sky-900" },
+            { key: "contractDate",    icon: "📝", label: "계약일",   activeColor: "bg-sky-500", inactiveColor: "bg-sky-100 border-sky-300 text-sky-900" },
+            { key: "downPaymentDate", icon: "💰", label: "중도금", activeColor: "bg-sky-500", inactiveColor: "bg-sky-100 border-sky-300 text-sky-900" },
+            { key: "balanceDate",     icon: "🔑", label: "잔금",   activeColor: "bg-sky-500", inactiveColor: "bg-sky-100 border-sky-300 text-sky-900" },
+            { key: "renewal",         icon: "🔁", label: "재계약", activeColor: "bg-sky-500", inactiveColor: "bg-sky-100 border-sky-300 text-sky-900" },
           ] as const).map(tab => (
             <button
               key={tab.key}
               onClick={() => { setFilter(tab.key); if (tab.key !== "all") recordFeatureUse(user?.uid, "sched_filter"); }}
-              className={`rounded-2xl border py-2.5 text-center transition-colors font-medium ${
+              className={`rounded-2xl border py-2.5 text-center transition-colors font-normal ${
                 filter === tab.key
-                  ? `${tab.activeColor} text-white border-transparent font-semibold`
+                  ? `${tab.activeColor} text-white border-transparent font-normal`
                   : `${tab.inactiveColor} hover:opacity-80`
               }`}
             >
               <div className="text-base leading-none">{tab.icon}</div>
-              <div className="text-[10px] mt-1">{tab.label}</div>
-              <div className="text-[10px] font-bold">{counts[tab.key]}</div>
+              <div className="text-xs mt-1 whitespace-nowrap">{tab.label}</div>
+              <div className="text-xs font-normal">{counts[tab.key]}</div>
             </button>
           ))}
         </div>
