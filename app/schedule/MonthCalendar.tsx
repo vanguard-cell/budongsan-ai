@@ -74,7 +74,6 @@ export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
   renewal:         "bg-emerald-100 text-emerald-700",
 };
 
-const MAX_PER_CELL = 3;
 function pad(n: number): string { return String(n).padStart(2, "0"); }
 function todayStr(): string {
   const d = new Date();
@@ -201,20 +200,21 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
               )}
               {info && (
                 <div className="flex flex-col gap-px mt-0.5 items-stretch w-full px-0.5">
-                  {info.list.slice(0, MAX_PER_CELL).map((it, n) => (
-                    <span
-                      key={n}
-                      className={`text-[9px] leading-tight font-semibold px-0.5 py-0.5 rounded text-left truncate whitespace-nowrap ${
-                        isSelected ? "bg-white/30 text-white" : SOURCE_CELL_CLASSES[it.source]
-                      }`}
-                      title={`${SOURCE_LABELS[it.source]}${it.time ? ` ${it.time}` : ""}${it.title ? ` · ${it.title}` : ""}`}
-                    >
-                      {it.time ? `${it.time} ` : `${SOURCE_SHORT_LABELS[it.source]} `}{it.title || SOURCE_LABELS[it.source]}
-                    </span>
-                  ))}
-                  {info.total > MAX_PER_CELL && (
-                    <span className={`text-[9px] leading-tight text-center ${isSelected ? "text-white/90" : "text-gray-500"}`}>+{info.total - MAX_PER_CELL}건</span>
-                  )}
+                  {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(src => {
+                    const cnt = info.list.filter(it => it.source === src).length;
+                    if (cnt === 0) return null;
+                    return (
+                      <span
+                        key={src}
+                        className={`text-[10px] leading-tight font-semibold px-0.5 py-0.5 rounded text-center truncate whitespace-nowrap ${
+                          isSelected ? "bg-white/30 text-white" : SOURCE_CELL_CLASSES[src]
+                        }`}
+                        title={`${SOURCE_LABELS[src]} ${cnt}건`}
+                      >
+                        {SOURCE_LABELS[src]}{cnt > 1 ? ` ${cnt}` : ""}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
             </button>
