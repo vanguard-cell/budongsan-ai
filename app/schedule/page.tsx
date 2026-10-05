@@ -492,9 +492,23 @@ export default function SchedulePage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  {items.map(item => (
-                    <div key={item.key} onClick={() => setPanelItem(item)}>
-                      <CompactRow item={item} />
+                  {groupByVisitor(items).map(g => g.items.length > 1 ? (
+                    <div key={g.key} className="rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/40 dark:bg-emerald-950/20 p-1.5 space-y-1.5">
+                      <div className="flex items-center gap-1.5 px-1.5 pt-0.5 text-[12px] font-bold text-emerald-700 dark:text-emerald-400">
+                        <span className="material-symbols-outlined text-[14px]">person</span>
+                        <span className="whitespace-nowrap">{g.name || "방문자"}</span>
+                        {g.phone && <span className="whitespace-nowrap font-semibold">{formatPhone(g.phone)}</span>}
+                        <span className="ml-auto whitespace-nowrap text-[11px] font-semibold">매물 {g.items.length}건</span>
+                      </div>
+                      {g.items.map(item => (
+                        <div key={item.key} onClick={() => setPanelItem(item)}>
+                          <CompactRow item={item} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div key={g.items[0].key} onClick={() => setPanelItem(g.items[0])}>
+                      <CompactRow item={g.items[0]} />
                     </div>
                   ))}
                 </div>
@@ -594,6 +608,23 @@ export default function SchedulePage() {
       )}
     </div>
   );
+}
+
+/** 같은 날 같은 방문자(이름+전화번호)의 일정을 한 묶음으로 — 그날 어디를 봤는지 한눈에 */
+function groupByVisitor(items: UnifiedItem[]) {
+  const groups: { key: string; name: string; phone: string; items: UnifiedItem[] }[] = [];
+  const byKey = new Map<string, (typeof groups)[number]>();
+  for (const item of items) {
+    const s = item.schedule;
+    const name = s?.visitorName?.trim() || "";
+    const phone = (s?.visitorPhone || "").replace(/\D/g, "");
+    if (!s || (!name && !phone)) { groups.push({ key: item.key, name: "", phone: "", items: [item] }); continue; }
+    const k = `${name}|${phone}`;
+    const g = byKey.get(k);
+    if (g) g.items.push(item);
+    else { const ng = { key: `v:${k}`, name, phone: s.visitorPhone || "", items: [item] }; byKey.set(k, ng); groups.push(ng); }
+  }
+  return groups;
 }
 
 /* ── 목록 한 줄 (시안 A): 시간/D-day · 종류색 막대 · 단지명 · › ── */
