@@ -16,6 +16,7 @@ import type { Customer } from "@/app/customers/customer-types";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 import SideDrawer from "@/app/components/SideDrawer";
 import { downloadIcs } from "@/lib/ics";
+import { PROPERTY_TYPES } from "@/app/properties/helpers";
 
 /* ── 타입 ── */
 type SourceFilter = "all" | "appointment" | "visit" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
@@ -658,7 +659,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   }, [propQuery, propTypeFilter, properties]);
 
   const propTypeOptions = useMemo(() => {
-    const seen = new Set<string>();
+    const seen = new Set<string>(PROPERTY_TYPES);
     properties.forEach(p => { if (p.status === "active" && p.propertyType) seen.add(p.propertyType); });
     return Array.from(seen);
   }, [properties]);
@@ -716,7 +717,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
               매물 연결 <span className="text-red-400">*</span>
               {form.propertyId && <span className="ml-2 text-[11px] text-emerald-600 font-normal">🏘️ 연결됨</span>}
             </label>
-            {properties.length > 0 && propTypeOptions.length > 1 && (
+            {properties.length > 0 && (
               <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-0.5 px-0.5">
                 {["", ...propTypeOptions].map(t => (
                   <button key={t || "all"} type="button"
