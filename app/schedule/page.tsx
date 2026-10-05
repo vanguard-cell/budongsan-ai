@@ -517,9 +517,9 @@ export default function SchedulePage() {
             : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100";
           const tag = name ? `${label} ${name}` : label;
           return (
-            <span className="inline-flex items-center rounded-full overflow-hidden border border-gray-200 dark:border-slate-600">
+            <span className="inline-flex max-w-full items-center rounded-full overflow-hidden border border-gray-200 dark:border-slate-600">
               <a href={`tel:${phone.replace(/\D/g, "")}`} className={`inline-flex items-center gap-1 pl-2 pr-1.5 py-1 text-[11px] font-bold transition-colors ${cls}`}>
-                <span className="material-symbols-outlined text-[13px]">call</span>{tag}
+                <span className="material-symbols-outlined text-[13px]">call</span><span className="whitespace-nowrap">{tag}</span><span className="whitespace-nowrap font-semibold">{formatPhone(phone)}</span>
               </a>
               <a href={`sms:${phone.replace(/\D/g, "")}`} className={`inline-flex items-center px-1.5 py-1 border-l border-gray-200 dark:border-slate-600 transition-colors ${cls}`}>
                 <span className="material-symbols-outlined text-[13px]">sms</span>
@@ -539,7 +539,7 @@ export default function SchedulePage() {
                   </div>
                   <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{s.propertyAddress || "주소 미입력"}</p>
                 </div>
-                {phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}
+                <div className="flex flex-wrap gap-1.5">{phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}</div>
                 {s.memo && <p className="text-[12px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-lg px-2.5 py-2">💬 {s.memo}</p>}
                 <div className="grid grid-cols-2 gap-1.5 pt-1">
                   <button onClick={() => { setEditing({ ...s }); setPanelItem(null); }} className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">edit</span>수정</button>
