@@ -648,15 +648,16 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   const [propQuery, setPropQuery] = useState("");
   const [showPropList, setShowPropList] = useState(false);
   const [propTypeFilter, setPropTypeFilter] = useState("");
+  const [propDealFilter, setPropDealFilter] = useState("");
 
   const set = <K extends keyof Schedule>(k: K, v: Schedule[K]) => setForm(p => ({ ...p, [k]: v }));
 
   const filteredProps = useMemo(() => {
-    const base = properties.filter(p => p.status === "active" && (!propTypeFilter || p.propertyType === propTypeFilter));
-    if (!propQuery.trim()) return base.slice(0, propTypeFilter ? 30 : 8);
+    const base = properties.filter(p => p.status === "active" && (!propTypeFilter || p.propertyType === propTypeFilter) && (!propDealFilter || p.dealType === propDealFilter));
+    if (!propQuery.trim()) return base.slice(0, propTypeFilter || propDealFilter ? 30 : 8);
     const q = propQuery.toLowerCase();
     return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 30);
-  }, [propQuery, propTypeFilter, properties]);
+  }, [propQuery, propTypeFilter, propDealFilter, properties]);
 
   const propTypeOptions = useMemo(() => {
     const seen = new Set<string>(PROPERTY_TYPES);
@@ -723,6 +724,17 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
                   <button key={t || "all"} type="button"
                     onClick={() => { setPropTypeFilter(t); setShowPropList(true); }}
                     className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors ${propTypeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+                    {t || "전체"}
+                  </button>
+                ))}
+              </div>
+            )}
+            {properties.length > 0 && (
+              <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-0.5 px-0.5">
+                {["", "매매", "전세", "월세"].map(t => (
+                  <button key={t || "all"} type="button"
+                    onClick={() => { setPropDealFilter(t); setShowPropList(true); }}
+                    className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors ${propDealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
                     {t || "전체"}
                   </button>
                 ))}
