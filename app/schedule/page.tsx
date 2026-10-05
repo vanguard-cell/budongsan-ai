@@ -626,11 +626,11 @@ function CompactRow({ item }: { item: UnifiedItem }) {
   }
   const bar = SOURCE_BAR[item.source];
   return (
-    <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${done ? "opacity-50" : ""}`}>
+    <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${done ? "opacity-50" : ""}`}>
       <span className="w-11 shrink-0 text-center text-[12px] font-bold tabular-nums text-gray-700 dark:text-gray-200">{lead || "—"}</span>
       <span className="w-[3px] h-4 rounded-sm shrink-0" style={{ background: bar }} />
       <span className="w-10 shrink-0 text-[11px] font-semibold" style={{ color: bar }}>{label}</span>
-      <span className="flex-1 min-w-0 truncate text-[13px] text-gray-800 dark:text-gray-100">{title}</span>
+      <span className="flex-1 min-w-0 line-clamp-2 break-words text-[13px] leading-snug text-gray-800 dark:text-gray-100">{title}</span>
       {done && <span className="shrink-0 text-[10px] text-green-600 font-medium">완료</span>}
       <span className="material-symbols-outlined text-gray-300 dark:text-slate-600 text-[18px] shrink-0">chevron_right</span>
     </div>
