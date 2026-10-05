@@ -795,11 +795,11 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
                 ))}
               </div>
             )}
-            {isNew && form.propertyId && properties.length > 0 && (
+            {isNew && properties.length > 0 && (
               addingExtra ? (
                 <p className="mt-2 text-xs text-emerald-700">위 검색칸에서 추가할 매물을 골라주세요 <button type="button" onClick={() => setAddingExtra(false)} className="ml-1 underline text-gray-500">취소</button></p>
               ) : (
-                <button type="button" onClick={() => { setAddingExtra(true); setPropQuery(""); setShowPropList(true); }}
+                <button type="button" onClick={() => { if (!form.propertyAddress.trim()) { alert("먼저 위에서 첫 번째 매물을 골라주세요"); return; } setAddingExtra(true); setPropQuery(""); setShowPropList(true); }}
                   className="mt-2 w-full py-2 rounded-xl border border-dashed border-emerald-300 text-emerald-700 text-sm whitespace-nowrap hover:bg-emerald-50">
                   ＋ 매물 추가
                 </button>
