@@ -143,8 +143,10 @@ export function propertyToContract(p: Property, linkedCustomerId?: string): Cont
     dong: p.dong || undefined,
     ho: p.ho || undefined,
     type,
-    deposit: p.price,
-    monthly: p.monthly,
+    // 매매: 만기 관리에는 기존 임차인의 보증금/월세를 표시 (임차인 정보가 없으면 예전처럼 매물 금액)
+    deposit: type === "매매" && (p.tenantDeposit || p.tenantMonthly) ? p.tenantDeposit : p.price,
+    monthly: type === "매매" && (p.tenantDeposit || p.tenantMonthly) ? p.tenantMonthly : p.monthly,
+    salePrice: type === "매매" ? p.price || undefined : undefined,
     startDate: (p.contractDate || "").slice(0, 10), // 계약일은 시간 포함일 수 있음 — 시작일은 날짜만 (#35 계열)
     endDate: p.leaseEndDate || "",
     tenantName: p.tenantName,

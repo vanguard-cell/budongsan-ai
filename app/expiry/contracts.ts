@@ -14,6 +14,7 @@ export interface Contract {
   type: ContractType;
   deposit: string;        // 보증금 (만원, 문자열로 보관해서 빈값 허용)
   monthly: string;        // 월세 (만원)
+  salePrice?: string;     // 매매가 (만원) — 매매 건에서 보증금/월세는 기존 임차인 기준
   startDate: string;      // YYYY-MM-DD
   endDate: string;        // YYYY-MM-DD 만기일
   tenantName: string;
