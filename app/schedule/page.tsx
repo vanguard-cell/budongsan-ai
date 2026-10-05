@@ -240,7 +240,7 @@ export default function SchedulePage() {
 
   /* 캘린더 점 — baseItems와 동일 집합(필터·선택 무시), 달력은 dot+카운트 표시 */
   const calendarItems = useMemo<CalendarItem[]>(
-    () => baseItems.map(i => ({ date: i.date, source: i.source })),
+    () => baseItems.map(i => ({ date: i.date, source: i.source, time: i.time || undefined, title: itemText(i).title || undefined })),
     [baseItems],
   );
 
@@ -391,7 +391,7 @@ export default function SchedulePage() {
 
         <div className="rounded-2xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900 shadow-sm flex flex-col lg:flex-row">
           {/* ── 좌측: 월별 캘린더 (통합 카드 좌측, 넓은 화면에선 고정) ── */}
-          <div className="w-full lg:w-[420px] lg:shrink-0 p-3 sm:p-4 lg:border-r border-gray-100 dark:border-slate-800 self-start">
+          <div className="w-full lg:w-[340px] lg:shrink-0 p-3 sm:p-4 lg:border-r border-gray-100 dark:border-slate-800 self-start">
             <MonthCalendar
               flat
               items={calendarItems}

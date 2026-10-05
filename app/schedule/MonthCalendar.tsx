@@ -17,6 +17,8 @@ export type CalendarSource = "appointment" | "visit" | "contractDate" | "downPay
 export interface CalendarItem {
   date: string;                          // YYYY-MM-DD
   source: CalendarSource;
+  time?: string;                         // HH:MM (없을 수 있음)
+  title?: string;                        // 단지명/주소 (없을 수 있음)
 }
 
 interface Props {
@@ -72,6 +74,7 @@ export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
   renewal:         "bg-emerald-100 text-emerald-700",
 };
 
+const MAX_PER_CELL = 3;
 function pad(n: number): string { return String(n).padStart(2, "0"); }
 function todayStr(): string {
   const d = new Date();
@@ -118,12 +121,13 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
 
   // 날짜별 소스 카운트
   const dateMap = useMemo(() => {
-    const map: Record<string, Partial<Record<CalendarSource, number>> & { total: number }> = {};
+    const map: Record<string, { total: number; list: CalendarItem[] }> = {};
     for (const item of items) {
-      if (!map[item.date]) map[item.date] = { total: 0 };
-      map[item.date][item.source] = (map[item.date][item.source] || 0) + 1;
+      if (!map[item.date]) map[item.date] = { total: 0, list: [] };
+      map[item.date].list.push(item);
       map[item.date].total++;
     }
+    for (const k of Object.keys(map)) map[k].list.sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
     return map;
   }, [items]);
 
@@ -144,20 +148,20 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
     <div className={flat ? "" : "bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4"}>
       {/* 월 헤더 */}
       <div className="flex items-center justify-between mb-3">
-        <button onClick={prevMonth} className="w-11 h-11 text-3xl flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">‹</button>
+        <button onClick={prevMonth} className="w-9 h-9 text-2xl flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">‹</button>
         <div className="flex flex-col items-center">
-          <button onClick={goToday} className="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+          <button onClick={goToday} className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
             {cursor.y}년 {cursor.m + 1}월
           </button>
-          <div className="text-sm text-gray-500">이번 달 일정 {monthCount}건</div>
+          <div className="text-xs text-gray-500">이번 달 일정 {monthCount}건</div>
         </div>
-        <button onClick={nextMonth} className="w-11 h-11 text-3xl flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">›</button>
+        <button onClick={nextMonth} className="w-9 h-9 text-2xl flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600">›</button>
       </div>
 
       {/* 요일 헤더 */}
       <div className="grid grid-cols-7 gap-0.5 mb-1">
         {WEEKDAYS.map((w, i) => (
-          <div key={w} className={`text-center text-base font-semibold py-1.5 ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-gray-500"}`}>
+          <div key={w} className={`text-center text-sm font-semibold py-1 ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-gray-500"}`}>
             {w}
           </div>
         ))}
@@ -188,32 +192,29 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, flat 
             <button
               key={`${date}-${idx}`}
               onClick={() => onSelectDate(isSelected ? null : date)}
-              className={`relative min-h-[5.5rem] rounded-xl flex flex-col items-center justify-start pt-1.5 pb-1 transition-all ${cellCls}`}
+              className={`relative min-h-[4.4rem] rounded-xl flex flex-col items-center justify-start pt-1 pb-0.5 transition-all ${cellCls}`}
               title={[date, holiday, info && `일정 ${info.total}건`].filter(Boolean).join(" · ")}
             >
-              <span className={`text-xl font-bold ${isSelected ? "text-white" : baseColor}`}>{day}</span>
+              <span className={`text-base font-bold ${isSelected ? "text-white" : baseColor}`}>{day}</span>
               {holiday && inMonth && (
-                <span className={`text-[10px] leading-none mt-0.5 max-w-full px-0.5 truncate ${isSelected ? "text-white/90" : "text-red-400"}`}>{holiday}</span>
+                <span className={`text-[8px] leading-none mt-0.5 max-w-full px-0.5 truncate ${isSelected ? "text-white/90" : "text-red-400"}`}>{holiday}</span>
               )}
               {info && (
-                <div className="flex flex-col gap-0.5 mt-1 items-stretch w-full px-1">
-                  {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(src => {
-                    const cnt = info[src] || 0;
-                    if (cnt === 0) return null;
-                    return (
-                      <span
-                        key={src}
-                        className={`text-[11px] leading-tight font-semibold px-0.5 py-1 rounded text-center truncate whitespace-nowrap ${
-                          isSelected
-                            ? "bg-white/30 text-white"
-                            : SOURCE_CELL_CLASSES[src]
-                        }`}
-                        title={`${SOURCE_LABELS[src]} ${cnt}건`}
-                      >
-                        {SOURCE_LABELS[src]}{cnt > 1 ? ` ${cnt}` : ""}
-                      </span>
-                    );
-                  })}
+                <div className="flex flex-col gap-px mt-0.5 items-stretch w-full px-0.5">
+                  {info.list.slice(0, MAX_PER_CELL).map((it, n) => (
+                    <span
+                      key={n}
+                      className={`text-[9px] leading-tight font-semibold px-0.5 py-0.5 rounded text-left truncate whitespace-nowrap ${
+                        isSelected ? "bg-white/30 text-white" : SOURCE_CELL_CLASSES[it.source]
+                      }`}
+                      title={`${SOURCE_LABELS[it.source]}${it.time ? ` ${it.time}` : ""}${it.title ? ` · ${it.title}` : ""}`}
+                    >
+                      {it.time ? `${it.time} ` : `${SOURCE_SHORT_LABELS[it.source]} `}{it.title || SOURCE_LABELS[it.source]}
+                    </span>
+                  ))}
+                  {info.total > MAX_PER_CELL && (
+                    <span className={`text-[9px] leading-tight text-center ${isSelected ? "text-white/90" : "text-gray-500"}`}>+{info.total - MAX_PER_CELL}건</span>
+                  )}
                 </div>
               )}
             </button>
