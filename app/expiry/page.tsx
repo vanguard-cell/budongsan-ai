@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import ComplexPickerWidget from "@/app/ComplexPicker";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
@@ -1078,31 +1077,7 @@ function EditModal({
 
   const [saving, setSaving] = useState(false);
 
-  // 주소 자동완성
-  const [addrSuggestions, setAddrSuggestions] = useState<{ name: string; address: string }[]>([]);
-  const [addrLoading, setAddrLoading] = useState(false);
-  const addrTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleAddressChange = (val: string) => {
-    setField("address", val);
-    if (addrTimerRef.current) clearTimeout(addrTimerRef.current);
-    if (val.trim().length < 2) { setAddrSuggestions([]); return; }
-    addrTimerRef.current = setTimeout(async () => {
-      setAddrLoading(true);
-      try {
-        const typeQ = form.propertyType ? `&type=${encodeURIComponent(form.propertyType)}` : "";
-        const res = await fetch(`/api/complex-search?q=${encodeURIComponent(val)}${typeQ}`);
-        const data = await res.json();
-        setAddrSuggestions(data.slice(0, 6));
-      } catch { setAddrSuggestions([]); }
-      finally { setAddrLoading(false); }
-    }, 350);
-  };
-
-  const selectAddress = (item: { name: string; address: string }) => {
-    setField("address", `${item.address} ${item.name}`.trim());
-    setAddrSuggestions([]);
-  };
+  const handleAddressChange = (val: string) => setField("address", val);
 
   const save = async () => {
     if (!form.address.trim()) {
@@ -1168,30 +1143,12 @@ function EditModal({
             <input
               value={form.address}
               onChange={e => handleAddressChange(e.target.value)}
-              placeholder="단지명 또는 주소 검색 (예: 힐스테이트 미사역)"
+              placeholder="단지명 입력 (예: 힐스테이트 미사역)"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoComplete="off"
             />
-            {addrLoading && (
-              <div className="absolute right-3 top-2.5 text-xs text-gray-400">검색 중…</div>
-            )}
-            {addrSuggestions.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                {addrSuggestions.map((item, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => selectAddress(item)}
-                    className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 transition-colors"
-                  >
-                    <div className="text-sm font-medium text-gray-800">{item.name}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{item.address}</div>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
-          <p className="text-[11px] text-gray-400 mt-1">단지명 직접 입력 또는 아래에서 지역+유형으로 검색</p>
+          <p className="text-[11px] text-gray-400 mt-1">단지명을 직접 입력하하거나 아래 내 단지 목록에서 골라주세요</p>
 
           {/* 내 단지 목록 — 유형별로 저장해 두고 눌러서 선택 */}
           {alreadyMine ? (
@@ -1213,7 +1170,7 @@ function EditModal({
                   {savedMatches.map(c => (
                     <span key={`${c.propertyType}|${c.name}`} className="flex w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
                       <button type="button"
-                        onClick={() => { setForm(p => ({ ...p, address: c.name, propertyType: (c.propertyType || p.propertyType) as Contract["propertyType"] })); setAddrSuggestions([]); }}
+                        onClick={() => { setForm(p => ({ ...p, address: c.name, propertyType: (c.propertyType || p.propertyType) as Contract["propertyType"] })); }}
                         className="min-w-0 flex-1 truncate whitespace-nowrap text-left px-2.5 py-1.5 hover:bg-teal-100 rounded-lg">
                         {!curType && c.propertyType && <span className="text-gray-400 mr-1">[{c.propertyType}]</span>}{c.name}
                       </button>
@@ -1250,9 +1207,6 @@ function EditModal({
             />
           </Field>
         </div>
-
-        {/* 지역+유형 단지 검색 */}
-        <ComplexPickerWidget externalBuildingType={form.propertyType} onSelect={item => setField("address", `${item.address} ${item.name}`.trim())} />
 
         <Field label="계약 종류">
           <div className="grid grid-cols-2 gap-1.5">
