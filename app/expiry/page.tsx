@@ -663,7 +663,7 @@ function FilterChip({
       <button
         onClick={onClick}
         className={`${base} font-semibold ${
-          cls ? cls.badge : "bg-blue-600 text-white border-blue-600"
+          cls ? cls.btn : "bg-blue-600 text-white border-blue-600"
         }`}
       >
         {children}

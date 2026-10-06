@@ -24,8 +24,8 @@ const TYPE_TINT: Record<ContractType, string> = {
 };
 
 const SEV_TINT: Record<Severity, string> = {
-  danger:  "bg-red-600 text-white border border-red-700",
-  warning: "bg-yellow-300 text-yellow-900 border border-yellow-400",
+  danger:  "bg-[var(--tint-red-bg)] text-[var(--tint-red-tx)] border border-[var(--tint-red-bd)]",
+  warning: "bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)] border border-[var(--tint-amber-bd)]",
   caution: "bg-[var(--tint-green-bg)] text-[var(--tint-green-tx)] border border-[var(--tint-green-bd)]",
   safe:    "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400",
 };
