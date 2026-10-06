@@ -471,7 +471,7 @@ export default function ExpiryPage() {
               🟠 주의 ({counts.warning})
             </FilterChip>
             <FilterChip active={filter === "caution"} onClick={() => setFilter("caution")} severity="caution">
-              🟡 예고 ({counts.caution})
+              🟢 예고 ({counts.caution})
             </FilterChip>
             <div className="flex-1" />
             <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer select-none">

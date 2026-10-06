@@ -113,8 +113,8 @@ export function severityClasses(s: Severity): {
       };
     case "caution":
       return {
-        badge: "bg-yellow-100 text-yellow-700 border-yellow-200",
-        btn:   "bg-green-100 text-green-700 border-green-300",
+        badge: "bg-green-500 text-white border-green-600",
+        btn:   "bg-green-500 text-white border-green-600",
         row:   "bg-yellow-50/40 border-yellow-200",
         dot:   "bg-yellow-500",
       };
