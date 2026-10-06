@@ -98,21 +98,21 @@ export function severityClasses(s: Severity): {
   switch (s) {
     case "danger":
       return {
-        badge: "bg-red-100 text-red-700 border-red-200",
+        badge: "bg-red-600 text-white border-red-700",
         row:   "bg-red-50/50 border-red-200",
-        dot:   "bg-red-500",
+        dot:   "bg-red-600",
       };
     case "warning":
       return {
-        badge: "bg-orange-100 text-orange-700 border-orange-200",
-        row:   "bg-orange-50/50 border-orange-200",
-        dot:   "bg-orange-500",
+        badge: "bg-yellow-300 text-yellow-900 border-yellow-400",
+        row:   "bg-yellow-50/60 border-yellow-300",
+        dot:   "bg-yellow-400",
       };
     case "caution":
       return {
-        badge: "bg-yellow-100 text-yellow-700 border-yellow-200",
-        row:   "bg-yellow-50/40 border-yellow-200",
-        dot:   "bg-yellow-500",
+        badge: "bg-green-100 text-green-700 border-green-300",
+        row:   "bg-green-50/40 border-green-200",
+        dot:   "bg-green-500",
       };
     case "safe":
       return {
