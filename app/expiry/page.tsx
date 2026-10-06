@@ -185,6 +185,7 @@ export default function ExpiryPage() {
   /* 매물 종류별 버튼 목록 — 등록 화면 순서대로, 종류 없는 계약은 '미지정' */
   const typeList = useMemo(() => {
     const m = new Map<string, number>();
+    CONTRACT_PROPERTY_TYPES.forEach(t => m.set(t, 0));   // 계약이 없는 종류도 버튼은 항상 보이게
     contracts
       .filter(c => (showClosed ? c.status !== "active" : c.status === "active"))
       .forEach(c => {
@@ -192,7 +193,7 @@ export default function ExpiryPage() {
         m.set(k, (m.get(k) || 0) + 1);
       });
     const order: string[] = [...CONTRACT_PROPERTY_TYPES, UNTYPED];
-    return Array.from(m.entries()).sort((a, b) => {
+    return Array.from(m.entries()).filter(([k, n]) => n > 0 || k !== UNTYPED).sort((a, b) => {
       const ia = order.indexOf(a[0]), ib = order.indexOf(b[0]);
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
     });
@@ -483,7 +484,7 @@ export default function ExpiryPage() {
               종료·보관 보기
             </label>
           </div>
-          {typeList.length > 1 && (
+          {typeList.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mb-3">
               <span className="text-[11px] text-gray-400 mr-0.5">종류</span>
               <FilterChip active={!typeFilter} onClick={() => setTypeFilter("")}>
