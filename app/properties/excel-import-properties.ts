@@ -181,7 +181,7 @@ export function rowToProperty(
     area:         cleanNum(get("area")),
     dong:         String(get("dong") ?? "").replace(/[^\d]/g, ""),
     ho:           String(get("ho") ?? "").replace(/[^\d]/g, ""),
-    rooms:        cleanNum(get("rooms")),
+    rooms:        String(get("rooms") ?? "").replace(/[^\d.]/g, ""),
     direction:    String(get("direction") ?? "").trim(),
     ownerName:    String(get("ownerName") ?? "").trim(),
     ownerPhone:   cleanPhone(get("ownerPhone")),

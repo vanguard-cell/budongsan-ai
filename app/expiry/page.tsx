@@ -1294,10 +1294,10 @@ function EditModal({
           <Field label="방수">
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               value={form.rooms || ""}
-              onChange={e => setField("rooms", e.target.value.replace(/\D/g, ""))}
-              placeholder="3"
+              onChange={e => setField("rooms", e.target.value.replace(/[^\d.]/g, "").replace(/^(\d*\.?\d*).*$/, "$1"))}
+              placeholder="3 (1.5룸은 1.5)"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>

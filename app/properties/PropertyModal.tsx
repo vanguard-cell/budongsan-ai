@@ -279,9 +279,9 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">방수</label>
-              <input type="text" inputMode="numeric" value={form.rooms}
-                onChange={e => set("rooms", e.target.value.replace(/\D/g, ""))}
-                placeholder="3"
+              <input type="text" inputMode="decimal" value={form.rooms}
+                onChange={e => set("rooms", e.target.value.replace(/[^\d.]/g, "").replace(/^(\d*\.?\d*).*$/, "$1"))}
+                placeholder="3 (1.5룸은 1.5)"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
           </div>
