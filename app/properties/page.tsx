@@ -433,6 +433,20 @@ export default function PropertiesPage() {
     return [...map.entries()].sort((a, b) => numOf(a[0]) - numOf(b[0]));
   }, [properties, viewMode, selectedComplex]);
 
+  // 거래 칩 개수 — 현재 탭 + 선택한 유형 기준 (유형 개수 = 매매+전세+월세)
+  const dealCounts = useMemo(() => {
+    const base = (showClosed
+      ? properties.filter(p => p.status === "closed")
+      : properties.filter(p => p.status === "active").filter(matchView)
+    ).filter(p => filterPropType === "all" || p.propertyType === filterPropType);
+    return {
+      all: base.length,
+      매매: base.filter(p => p.dealType === "매매").length,
+      전세: base.filter(p => p.dealType === "전세").length,
+      월세: base.filter(p => p.dealType === "월세").length,
+    } as Record<string, number>;
+  }, [properties, showClosed, viewMode, filterPropType]);
+
   // 매물 유형별 개수 (대분류 칩) — 현재 탭 기준
   const propTypeCounts = useMemo(() => {
     const base = showClosed
@@ -775,7 +789,7 @@ export default function PropertiesPage() {
                     ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
                     : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
                 }`}>
-                {t === "all" ? "전체" : t} <span className={filterType === t ? "opacity-90" : "text-gray-400"}>{counts[t === "all" ? "all" : t]}</span>
+                {t === "all" ? "전체" : t} <span className={filterType === t ? "opacity-90" : "text-gray-400"}>{dealCounts[t]}</span>
               </button>
             ))}
           </div>
