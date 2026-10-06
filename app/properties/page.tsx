@@ -747,20 +747,6 @@ export default function PropertiesPage() {
 
         {/* 검색 + 필터 (한 박스로 통합 — 거래종류·유형 칩 + 검색 + 단지조회 + 가격대 + 정렬) */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 mb-4">
-          {/* 거래종류 칩 */}
-          <div className="flex items-center gap-1.5 flex-wrap mb-2">
-            <span className="text-[11px] text-gray-500 shrink-0 w-8">거래</span>
-            {(["all", "매매", "전세", "월세"] as const).map(t => (
-              <button key={t} onClick={() => setFilterType(t)}
-                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                  filterType === t
-                    ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
-                }`}>
-                {t === "all" ? "전체" : t} <span className={filterType === t ? "opacity-90" : "text-gray-400"}>{counts[t === "all" ? "all" : t]}</span>
-              </button>
-            ))}
-          </div>
           {/* 매물유형 칩 */}
           <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto mb-2">
             <span className="text-[11px] text-gray-500 shrink-0 w-8">유형</span>
@@ -778,6 +764,20 @@ export default function PropertiesPage() {
                 </button>
               );
             })}
+          </div>
+          {/* 거래종류 칩 */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            <span className="text-[11px] text-gray-500 shrink-0 w-8">거래</span>
+            {(["all", "매매", "전세", "월세"] as const).map(t => (
+              <button key={t} onClick={() => setFilterType(t)}
+                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                  filterType === t
+                    ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"
+                }`}>
+                {t === "all" ? "전체" : t} <span className={filterType === t ? "opacity-90" : "text-gray-400"}>{counts[t === "all" ? "all" : t]}</span>
+              </button>
+            ))}
           </div>
           <input
             type="text"
