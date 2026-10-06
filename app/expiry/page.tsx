@@ -1056,6 +1056,7 @@ function EditModal({
   const alreadyMine = myComplexes.some(c => c.propertyType === curType && c.name === typedName);
   const saveMine = async () => {
     if (!typedName) return;
+    if (!curType) { alert("위에서 매물 유형(아파트·오피스텔 등)을 먼저 눌러 선택해 주세요."); return; }
     if (!modalUser?.agencyId) { alert("사무실 정보를 불러오는 중이에요. 잠시 후 다시 눌러주세요."); return; }
     try { await addMyComplex(modalUser.agencyId, { name: typedName, propertyType: curType }); }
     catch { alert("단지 저장 중 오류가 났어요. 다시 해주세요."); }
@@ -1069,7 +1070,7 @@ function EditModal({
   const savedMatches = (() => {
     const q = typedName.replace(/\s+/g, "").toLowerCase();
     return myComplexes
-      .filter(c => c.propertyType === curType)
+      .filter(c => !curType || c.propertyType === curType)
       .filter(c => !q || c.name.replace(/\s+/g, "").toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, "ko"))
       .slice(0, 60);
@@ -1213,9 +1214,9 @@ function EditModal({
                   {savedMatches.map(c => (
                     <span key={c.name} className="flex w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
                       <button type="button"
-                        onClick={() => { setField("address", c.name); setAddrSuggestions([]); setShowSaved(false); }}
+                        onClick={() => { setForm(p => ({ ...p, address: c.name, propertyType: (c.propertyType || p.propertyType) as Contract["propertyType"] })); setAddrSuggestions([]); setShowSaved(false); }}
                         className="min-w-0 flex-1 truncate whitespace-nowrap text-left px-2.5 py-1.5 hover:bg-teal-100 rounded-lg">
-                        {c.name}
+                        {!curType && c.propertyType && <span className="text-gray-400 mr-1">[{c.propertyType}]</span>}{c.name}
                       </button>
                       <button type="button" onClick={() => removeMine(c)} aria-label="목록에서 빼기"
                         className="px-2 py-1.5 text-gray-400 hover:text-red-500 whitespace-nowrap">✕</button>
