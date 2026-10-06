@@ -1058,7 +1058,7 @@ function EditModal({
     if (!typedName) return;
     if (!curType) { alert("위에서 매물 유형(아파트·오피스텔 등)을 먼저 눌러 선택해 주세요."); return; }
     if (!modalUser?.agencyId) { alert("사무실 정보를 불러오는 중이에요. 잠시 후 다시 눌러주세요."); return; }
-    try { await addMyComplex(modalUser.agencyId, { name: typedName, propertyType: curType }); }
+    try { await addMyComplex(modalUser.agencyId, { name: typedName, propertyType: curType }); setShowSaved(true); }
     catch { alert("단지 저장 중 오류가 났어요. 다시 해주세요."); }
   };
   const removeMine = async (c: MyComplex) => {
@@ -1071,7 +1071,7 @@ function EditModal({
     const q = typedName.replace(/\s+/g, "").toLowerCase();
     return myComplexes
       .filter(c => !curType || c.propertyType === curType)
-      .filter(c => !q || c.name.replace(/\s+/g, "").toLowerCase().includes(q))
+      .filter(c => !q || alreadyMine || c.name.replace(/\s+/g, "").toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, "ko"))
       .slice(0, 60);
   })();
@@ -1194,14 +1194,13 @@ function EditModal({
           <p className="text-[11px] text-gray-400 mt-1">단지명 직접 입력 또는 아래에서 지역+유형으로 검색</p>
 
           {/* 내 단지 목록 — 유형별로 저장해 두고 눌러서 선택 */}
-          {typedName && !alreadyMine && (
-            <button type="button" onClick={saveMine}
-              className="mt-2 whitespace-nowrap px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 max-w-full truncate">
-              📌 ‘{typedName}’ 내 단지 목록에 저장
-            </button>
-          )}
-          {typedName && alreadyMine && (
+          {alreadyMine ? (
             <p className="mt-2 text-xs font-medium text-teal-700">✅ ‘{typedName}’ 내 단지 목록에 저장되어 있어요</p>
+          ) : (
+            <button type="button" onClick={typedName ? saveMine : () => alert("위 주소 칸에 단지 이름을 먼저 적어 주세요.")}
+              className="mt-2 whitespace-nowrap px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 max-w-full truncate">
+              📌 {typedName ? `‘${typedName}’ ` : ""}내 단지 목록에 저장
+            </button>
           )}
           {savedMatches.length > 0 && (
             <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50/60 p-2">
@@ -1212,9 +1211,9 @@ function EditModal({
               {showSaved && (
                 <div className="flex flex-col gap-1 max-h-56 overflow-y-auto">
                   {savedMatches.map(c => (
-                    <span key={c.name} className="flex w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
+                    <span key={`${c.propertyType}|${c.name}`} className="flex w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
                       <button type="button"
-                        onClick={() => { setForm(p => ({ ...p, address: c.name, propertyType: (c.propertyType || p.propertyType) as Contract["propertyType"] })); setAddrSuggestions([]); setShowSaved(false); }}
+                        onClick={() => { setForm(p => ({ ...p, address: c.name, propertyType: (c.propertyType || p.propertyType) as Contract["propertyType"] })); setAddrSuggestions([]); }}
                         className="min-w-0 flex-1 truncate whitespace-nowrap text-left px-2.5 py-1.5 hover:bg-teal-100 rounded-lg">
                         {!curType && c.propertyType && <span className="text-gray-400 mr-1">[{c.propertyType}]</span>}{c.name}
                       </button>
