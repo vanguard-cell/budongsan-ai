@@ -23,6 +23,9 @@ export type ContractField =
   | "tenantPhone"
   | "landlordName"
   | "landlordPhone"
+  | "area"
+  | "direction"
+  | "rooms"
   | "memo"
   | "_ignore";
 
@@ -37,6 +40,9 @@ export const FIELD_LABELS: Record<Exclude<ContractField, "_ignore">, string> = {
   tenantPhone: "임차인 연락처",
   landlordName: "임대인 이름",
   landlordPhone: "임대인 연락처",
+  area: "전용면적",
+  direction: "방향",
+  rooms: "방수",
   memo: "메모",
 };
 
@@ -54,6 +60,9 @@ const COLUMN_PATTERNS: Record<Exclude<ContractField, "_ignore">, string[]> = {
   tenantPhone:   ["임차인전화", "임차인연락처", "임차인번호", "수임차인전", "임차인 전", "세입자전화"],
   landlordName:  ["매도임대인", "임대인성명", "임대인이름", "임대인", "집주인", "매도자", "매도/임대인"],
   landlordPhone: ["임대인전화", "임대인연락처", "임대인번호", "임대인 전", "집주인전화"],
+  area:          ["전용면적", "면적", "전용", "area"],
+  direction:     ["방향", "향", "direction"],
+  rooms:         ["방수", "rooms"],
   memo:          ["메모", "비고", "특이사항", "note", "memo"],
 };
 
@@ -129,6 +138,18 @@ function cleanAmount(v: unknown): string {
   if (v === null || v === undefined || v === "") return "";
   if (typeof v === "number") return String(Math.round(v));
   return String(v).replace(/[^\d]/g, "");
+}
+
+function cleanArea(v: unknown): string {
+  if (v === null || v === undefined || v === "") return "";
+  const m = String(v).replace(/,/g, "").match(/\d+(\.\d+)?/);
+  return m ? m[0] : "";
+}
+
+function cleanRooms(v: unknown): string {
+  if (v === null || v === undefined || v === "") return "";
+  const m = String(v).match(/\d+(\.\d+)?/);
+  return m ? m[0] : "";
 }
 
 function cleanDate(v: unknown): string {
@@ -210,6 +231,9 @@ export function rowToContract(
     tenantPhone: cleanPhone(get("tenantPhone")),
     landlordName: String(get("landlordName") ?? "").trim(),
     landlordPhone: cleanPhone(get("landlordPhone")),
+    area: cleanArea(get("area")) || undefined,
+    direction: String(get("direction") ?? "").trim() || undefined,
+    rooms: cleanRooms(get("rooms")) || undefined,
     memo: String(get("memo") ?? "").trim(),
     status: "active",
     createdAt: Date.now(),
