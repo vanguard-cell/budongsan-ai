@@ -355,16 +355,19 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           </div>
 
           {/* 입주 상태 — 주인거주·공실 분류 (집주인/공실 필터 기준) */}
-          {form.dealType === "매매" && (
           <div className="border border-indigo-200 rounded-2xl p-3 bg-indigo-50/40">
             <label className="block text-xs font-semibold text-indigo-700 mb-2">🏘️ 입주 상태</label>
-            <div className="grid grid-cols-4 gap-1.5">
-              {([
+            <div className={`grid gap-1.5 ${form.dealType === "매매" ? "grid-cols-4" : "grid-cols-3"}`}>
+              {(form.dealType === "매매" ? [
                 { v: "jeonse", label: "전세" },
                 { v: "wolse", label: "월세" },
                 { v: "owner", label: "주인거주" },
                 { v: "vacant", label: "공실" },
-              ] as const).map(o => (
+              ] : [
+                { v: "tenant", label: "임차인" },
+                { v: "owner", label: "집주인" },
+                { v: "vacant", label: "공실" },
+              ] as { v: Occupancy; label: string }[]).map(o => (
                 <button key={o.v} type="button" onClick={() => set("occupancy", (form.occupancy === o.v ? "" : o.v) as Occupancy)}
                   className={`py-2 rounded-xl text-xs font-medium whitespace-nowrap border transition-colors ${form.occupancy === o.v ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"}`}>
                   {o.label}
@@ -373,7 +376,6 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
             <p className="text-[10px] text-indigo-600 mt-2">📌 주인거주·공실로 지정하면 목록에서 [🏠 집주인/공실] 필터로 모아볼 수 있어요</p>
           </div>
-          )}
 
           {/* 집 옵션 — 칩을 누르면 아래 칸에 들어가고, 직접 타이핑해도 됨 */}
           <div>
