@@ -96,6 +96,9 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
 
   const save = async () => {
     if (!form.address.trim()) { alert("주소를 입력해주세요"); return; }
+    if (isNew && !myComplexes.some(c => c.name === typedName)) {
+      if (!confirm(`⚠️ '${typedName}'은(는) 내 단지 목록에 저장된 단지가 아니에요.\n\n그래도 등록할까요?`)) return;
+    }
     setSaving(true);
     try { await onSave({ ...form }); }
     catch { alert("저장 중 오류가 발생했습니다. 다시 시도해주세요."); }

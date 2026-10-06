@@ -1088,6 +1088,9 @@ function EditModal({
       alert("만기일을 입력해주세요");
       return;
     }
+    if (isNew && !myComplexes.some(c => c.name === typedName)) {
+      if (!confirm(`⚠️ '${typedName}'은(는) 내 단지 목록에 저장된 단지가 아니에요.\n\n그래도 등록할까요?`)) return;
+    }
     // 동/호가 주소에 안 들어있으면 자동 합산 — "단지명 101동 1902호" 형태로 저장
     let mergedAddress = form.address.trim();
     const dongStr = form.dong ? `${form.dong}동` : "";
