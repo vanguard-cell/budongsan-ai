@@ -709,7 +709,7 @@ function ContractRow({
   const isClosed = c.status === "closed";
 
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : cls.row}`}>
+    <div className={`rounded-2xl border p-3 sm:p-4 ${isClosed ? "bg-gray-50/60 border-gray-200 opacity-70" : `bg-white ${cls.row.replace(/bg-\S+/, "")}`}`}>
       <div className="flex items-start gap-3">
         {/* D-day 배지 */}
         <div className="flex-shrink-0">
