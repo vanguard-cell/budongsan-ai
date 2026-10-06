@@ -106,7 +106,7 @@ export function severityClasses(s: Severity): {
       };
     case "warning":
       return {
-        badge: "bg-orange-100 text-orange-700 border-orange-200",
+        badge: "bg-yellow-400 text-yellow-950 border-yellow-500",
         btn:   "bg-yellow-400 text-yellow-950 border-yellow-500",
         row:   "bg-orange-50/50 border-orange-200",
         dot:   "bg-orange-500",
