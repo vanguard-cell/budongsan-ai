@@ -7,6 +7,7 @@ import type { Property } from "@/lib/properties-db";
 import type { Schedule } from "@/lib/schedules-db";
 import { dDay, severityOf, severityClasses, severityLabel, dDayLabel } from "@/app/expiry/contracts";
 import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr } from "./helpers";
+import MemoText from "@/app/components/MemoText";
 
 const STYPE_COLORS: Record<string, string> = {
   "집보기": "bg-blue-100 text-blue-700",
@@ -207,7 +208,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           {/* 메모 */}
           {p.memo && (
             <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded px-2 py-1 border border-gray-100 dark:border-slate-700 whitespace-pre-wrap">
-              💬 {p.memo}
+              <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={p.memo} /></span></span>
             </div>
           )}
         </div>

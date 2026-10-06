@@ -24,6 +24,7 @@ import { saveProperty, contractBackToProperty, OPTION_PRESETS, toggleOption, has
 import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
+import MemoText from "@/app/components/MemoText";
 import {
   Contract,
   ContractType,
@@ -773,7 +774,7 @@ function ContractRow({
 
           {c.memo && (
             <div className="mt-2 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-1 border border-gray-100">
-              💬 {c.memo}
+              <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={c.memo} /></span></span>
             </div>
           )}
         </div>

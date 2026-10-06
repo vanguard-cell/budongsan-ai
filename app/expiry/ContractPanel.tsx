@@ -7,6 +7,7 @@
 
 import { type Contract, type ContactTarget, dDay, dDayLabel, severityOf, formatPhone } from "./contracts";
 import SideDrawer from "@/app/components/SideDrawer";
+import MemoText from "@/app/components/MemoText";
 
 function num(s: string) { if (!s) return s; const n = parseInt(s.replace(/[^\d]/g, ""), 10); return isNaN(n) ? s : n.toLocaleString(); }
 
@@ -89,7 +90,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onC
             {c.options && <Row label="옵션">{c.options}</Row>}
             {c.startDate && <Row label="시작일">{c.startDate}</Row>}
             {c.endDate && <Row label="만기일">{c.endDate}</Row>}
-            {c.memo && <Row label="메모">{c.memo}</Row>}
+            {c.memo && <Row label="메모"><MemoText memo={c.memo} /></Row>}
           </tbody>
         </table>
       </div>

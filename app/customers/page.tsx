@@ -46,6 +46,7 @@ import { subscribeContracts } from "@/lib/contracts-db";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { exportCustomers } from "@/lib/export";
 import type { Contract } from "../expiry/contracts";
+import MemoText from "@/app/components/MemoText";
 
 type FilterKey = "all" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
 
@@ -777,7 +778,7 @@ function CustomerRow({
 
           {c.memo && (
             <div className="mt-2 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-1 border border-gray-100">
-              💬 {c.memo}
+              <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={c.memo} /></span></span>
             </div>
           )}
         </div>

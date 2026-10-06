@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, effectiveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
 import SideDrawer from "@/app/components/SideDrawer";
+import MemoText from "@/app/components/MemoText";
 
 const STATUS_ACCENT: Record<CustomerStatus, string> = {
   active: "#2383E2", matched: "#EF9F27", closed: "#1D9E75", lost: "#888780",
@@ -147,7 +148,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
             {c.preferredArea && <Row label="희망지역">{c.preferredArea}</Row>}
             {c.moveInDate && <Row label="입주가능">{c.moveInDate}</Row>}
             {c.shownProperties.length > 0 && <Row label="보여준 매물">{c.shownProperties.length}건</Row>}
-            {c.memo && <Row label="메모">{c.memo}</Row>}
+            {c.memo && <Row label="메모"><MemoText memo={c.memo} /></Row>}
           </tbody>
         </table>
       </div>
