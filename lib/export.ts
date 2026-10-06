@@ -50,7 +50,6 @@ function maskPhone(phone: string): string {
 /* ───────── 계약 → 엑셀 row 변환 ───────── */
 function contractsToRows(contracts: Contract[], maskPersonal: boolean) {
   return contracts.map(c => {
-    const d = dDay(c.endDate);
     return {
       "주소":          c.address,
       "계약종류":      c.type,
@@ -58,15 +57,11 @@ function contractsToRows(contracts: Contract[], maskPersonal: boolean) {
       "월세(만원)":     c.monthly,
       "계약일":        c.startDate,
       "만기일":        c.endDate,
-      "D-day":         dDayLabel(d),
-      "긴급도":        severityLabel(severityOf(d)),
-      "상태":          c.status === "active" ? "진행중" : "종료",
       "임차인":        maskPersonal ? maskName(c.tenantName) : c.tenantName,
       "임차인 전화":   maskPersonal ? maskPhone(c.tenantPhone) : c.tenantPhone,
       "임대인":        maskPersonal ? maskName(c.landlordName) : c.landlordName,
       "임대인 전화":   maskPersonal ? maskPhone(c.landlordPhone) : c.landlordPhone,
       "메모":          c.memo,
-      "등록일":        new Date(c.createdAt).toISOString().slice(0, 10),
     };
   });
 }
@@ -143,15 +138,11 @@ export function exportContracts(contracts: Contract[], opt: ExportOptions): { co
       { wch: 10 }, // 월세
       { wch: 12 }, // 계약일
       { wch: 12 }, // 만기일
-      { wch: 12 }, // D-day
-      { wch: 10 }, // 긴급도
-      { wch: 8 },  // 상태
       { wch: 10 }, // 임차인
       { wch: 16 }, // 임차인 전화
       { wch: 10 }, // 임대인
       { wch: 16 }, // 임대인 전화
       { wch: 24 }, // 메모
-      { wch: 12 }, // 등록일
     ];
     XLSX.utils.book_append_sheet(wb, ws, "만기관리");
     XLSX.writeFile(wb, filename);
