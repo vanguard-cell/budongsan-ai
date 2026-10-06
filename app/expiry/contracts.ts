@@ -99,7 +99,7 @@ export function severityClasses(s: Severity): {
   switch (s) {
     case "danger":
       return {
-        badge: "bg-red-500 text-white border-red-600",
+        badge: "bg-red-400 text-white border-red-500",
         btn:   "bg-red-400 text-white border-red-500",
         row:   "bg-red-50/50 border-red-200",
         dot:   "bg-red-500",
