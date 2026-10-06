@@ -51,6 +51,19 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
     }
   };
 
+  const hasContract = !!(property.contractDate || property.downPaymentDate || property.balanceDate || property.commission);
+  const cancelContract = async () => {
+    if (!confirm("계약을 취소할까요?\n\n계약일·중도금일·잔금일·중개수수료가 모두 지워지고, 이 매물은 '내 매물'로 되돌아갑니다.")) return;
+    setSaving(true);
+    try {
+      await onSave({ ...property, contractDate: "", downPaymentDate: "", balanceDate: "", commission: "" });
+    } catch {
+      alert("계약 취소 중 오류가 발생했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
       <div className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[calc(100dvh-5rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -164,6 +177,12 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
               <div className="text-xs font-bold text-red-700 mb-1">🔔 잔금일이 이미 지났습니다</div>
               <div className="text-[11px] text-red-600">저장 후 카드의 &quot;거래완료 → 만기&quot; 버튼을 누르면 만기 관리로 이동됩니다.</div>
             </div>
+          )}
+
+          {hasContract && (
+            <button onClick={cancelContract} disabled={saving} className="w-full py-2.5 rounded-xl border border-red-300 text-red-600 text-sm font-semibold whitespace-nowrap hover:bg-red-50 disabled:opacity-60">
+              계약 취소 (내 매물로 되돌리기)
+            </button>
           )}
 
           <div className="flex gap-2 pt-2">
