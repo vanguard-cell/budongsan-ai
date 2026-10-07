@@ -57,7 +57,7 @@ export default function PropertiesPage() {
   // 입주상태 필터: "" 전체 / owner 집주인 / vacant 공실
   const [occFilter, setOccFilter] = useState<"" | "owner" | "vacant">("");
   // 정렬: 등록순 / 금액 / 만기일 / 잔금일 / 동·호순
-  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho" | "area_asc" | "area_desc">("newest");
   // 단지→동→호 조회 (선방 스타일): 단지(베이스주소) / 동 / 호
   const [selectedComplex, setSelectedComplex] = useState<string>("");
   const [selectedDong, setSelectedDong] = useState<string>("");
@@ -375,6 +375,18 @@ export default function PropertiesPage() {
     : sortBy === "price_desc" ? [...result].sort((a, b) => priceNum(b) - priceNum(a))
     : sortBy === "lease_end"  ? [...result].sort((a, b) => dateKey(a.leaseEndDate).localeCompare(dateKey(b.leaseEndDate)))
     : sortBy === "balance"    ? [...result].sort((a, b) => dateKey(a.balanceDate).localeCompare(dateKey(b.balanceDate)))
+    : sortBy === "area_asc" || sortBy === "area_desc" ? (() => {
+        // 전용면적 정렬 — 면적 미입력은 항상 맨 뒤
+        const areaNum = (x: Property) => { const n = parseFloat(String(x.area || "").replace(/[^0-9.]/g, "")); return isFinite(n) && n > 0 ? n : NaN; };
+        const dir = sortBy === "area_asc" ? 1 : -1;
+        return [...result].sort((a, b) => {
+          const x = areaNum(a), y = areaNum(b);
+          if (isNaN(x) && isNaN(y)) return 0;
+          if (isNaN(x)) return 1;
+          if (isNaN(y)) return -1;
+          return (x - y) * dir;
+        });
+      })()
     : sortBy === "dongho"     ? [...result].sort((a, b) => {
         // 단지명 → 동(숫자) → 호(숫자) 오름차순
         const baseA = baseAddr(a), baseB = baseAddr(b);
@@ -907,6 +919,8 @@ export default function PropertiesPage() {
               { key: "lease_end",  label: "⏰ 만기일순" },
               { key: "balance",    label: "💵 잔금일순" },
               { key: "dongho",     label: "🏢 동·호순" },
+              { key: "area_asc",   label: "📐 면적 작은순" },
+              { key: "area_desc",  label: "📐 면적 큰순" },
             ] as const).map(s => (
               <button key={s.key} onClick={() => setSortBy(s.key)}
                 className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${

@@ -18,7 +18,7 @@ import { dDay } from "@/app/expiry/contracts";
 import { fmtNum, PROPERTY_TYPES, DEAL_TYPES, addressStr, splitAddress } from "./helpers";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 
-type SortKey = "newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho";
+type SortKey = "newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho" | "area_asc" | "area_desc";
 type PriceRange = "all" | "u1" | "1to2" | "2to3" | "3to5" | "o5";
 type ColKey = "region" | "address" | "deal" | "price" | "ptype" | "owner" | "tenant" | "leaseEnd" | "balance" | "stage";
 type EditField = "price" | "owner" | "tenant" | "leaseEnd" | "balance" | "deal" | "ptype";
