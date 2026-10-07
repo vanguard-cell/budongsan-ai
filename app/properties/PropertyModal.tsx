@@ -2,6 +2,7 @@
 
 /** 매물 등록/수정 모달 — page.tsx 분리 리팩토링으로 추출 */
 
+import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { useState, useRef, useEffect } from "react";
 import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
@@ -348,8 +349,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">전세·월세 만기일</label>
-              <input type="date" value={form.leaseEndDate} onChange={e => set("leaseEndDate", e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              <KoreanDatePicker value={form.leaseEndDate} onChange={v => set("leaseEndDate", v)} accent="orange" />
             </div>
             <p className="text-[10px] text-orange-600 mt-2">📌 만기일 입력 시 스케줄에서 자동으로 만기 알림 표시</p>
           </div>
