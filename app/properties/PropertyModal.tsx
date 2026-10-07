@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
 import DatedMemo from "@/app/components/DatedMemo";
-import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, m2ToPyeong } from "./helpers";
+import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong } from "./helpers";
 
 export default function PropertyModal({ property, savedComplexes = [], onClose, onSave }: {
   property: Property;
@@ -297,7 +297,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">집주인 연락처</label>
-              <input type="tel" value={form.ownerPhone} onChange={e => set("ownerPhone", e.target.value)}
+              <input type="tel" value={formatPhone(form.ownerPhone || "")} onChange={e => set("ownerPhone", formatPhoneInput(e.target.value))}
                 placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
           </div>
@@ -328,7 +328,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">임차인 연락처</label>
-                <input type="tel" value={form.tenantPhone} onChange={e => set("tenantPhone", e.target.value)}
+                <input type="tel" value={formatPhone(form.tenantPhone || "")} onChange={e => set("tenantPhone", formatPhoneInput(e.target.value))}
                   placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
               </div>
             </div>

@@ -23,6 +23,15 @@ export function formatPhone(raw: string): string {
   return raw;
 }
 
+/** 전화번호 입력 중 자동 하이픈 — "01074422777" → "010-7442-2777" */
+export function formatPhoneInput(raw: string): string {
+  const d = raw.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 7) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  if (d.length <= 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+}
+
 /** 천단위 콤마 — "29600" → "29,600" */
 export function fmtNum(s: string): string {
   if (!s) return "";
