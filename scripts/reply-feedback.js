@@ -28,17 +28,12 @@ if (!text) { console.error("❌ 메시지가 비어있음"); process.exit(1); }
 
 initializeApp({ credential: loadCredential(), projectId: "budongsan-ai" });
 const dbf = getFirestore();
+const { toMs, findByNo } = require("./feedback-lib");
 
 (async () => {
-  const snap = await dbf.collection("feedback").get();
-  const items = snap.docs.map(d => {
-    const x = d.data();
-    const createdAt = x.createdAt?.toMillis ? x.createdAt.toMillis() : (x.createdAt || 0);
-    return { ref: d.ref, data: x, createdAt };
-  });
-  items.sort((a, b) => a.createdAt - b.createdAt).forEach((it, i) => (it.no = i + 1));
-  const target = items.find(it => it.no === targetNo);
-  if (!target) { console.error(`❌ #${targetNo} 없음 (전체 ${items.length}건)`); process.exit(1); }
+  const found = await findByNo(dbf, targetNo);
+  if (!found) { console.error(`❌ #${targetNo} 없음`); process.exit(1); }
+  const target = { ref: found.doc.ref, data: found.doc.data(), createdAt: toMs(found.doc.data().createdAt) };
 
   const x = target.data;
   // 기존 thread 확보 (레거시 text/reply 복원)
