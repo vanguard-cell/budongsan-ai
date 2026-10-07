@@ -9,7 +9,7 @@ import { type Property, type PropertyType, type DealType, emptyProperty } from "
 
 export type PropField =
   | "address" | "propertyType" | "dealType"
-  | "price" | "monthly" | "area"
+  | "price" | "monthly" | "area" | "pyeong" | "unitType"
   | "dong" | "ho" | "rooms" | "direction"
   | "ownerName" | "ownerPhone" | "ownerCarrier"
   | "tenantName" | "tenantPhone" | "leaseEndDate"
@@ -22,7 +22,9 @@ export const PROP_FIELD_LABELS: Record<Exclude<PropField, "_ignore">, string> = 
   dealType:     "거래종류",
   price:        "매매가/보증금",
   monthly:      "월세",
-  area:         "전용면적",
+  area:         "전용면적(㎡)",
+  pyeong:       "평형(평)",
+  unitType:     "평면도 타입",
   dong:         "동",
   ho:           "호수",
   rooms:        "방수",
@@ -41,11 +43,13 @@ export const PROP_REQUIRED: PropField[] = ["address"];
 
 const PROP_PATTERNS: Record<Exclude<PropField, "_ignore">, string[]> = {
   address:      ["주소", "소재지", "단지", "건물명", "address"],
-  propertyType: ["매물유형", "유형", "종류", "type"],
+  propertyType: ["매물유형", "매물타입", "유형", "종류", "type"],
   dealType:     ["거래종류", "거래", "deal"],
   price:        ["매매가", "보증금", "가격", "price"],
   monthly:      ["월세", "월차임", "monthly"],
   area:         ["전용", "면적", "area"],
+  pyeong:       ["평형", "평수", "평"],
+  unitType:     ["평면도", "타입", "unittype"],
   dong:         ["동번호", "동수", "동"],
   ho:           ["호수", "호실", "호"],
   rooms:        ["방수", "방", "rooms"],
@@ -120,6 +124,11 @@ function cleanNum(v: unknown): string {
   if (typeof v === "number") return String(Math.round(v));
   return String(v).replace(/[^\d]/g, "");
 }
+/** 평형(평) → 전용면적(㎡) 환산 — 전용면적 칸이 비었을 때만 사용 */
+function pyeongToArea(v: unknown): string {
+  const n = parseFloat(String(v ?? "").replace(/[^\d.]/g, ""));
+  return isFinite(n) && n > 0 ? String(Math.round(n * 3.3058)) : "";
+}
 function cleanDate(v: unknown): string {
   if (v === null || v === undefined || v === "") return "";
   if (v instanceof Date) {
@@ -178,7 +187,8 @@ export function rowToProperty(
     dealType:     cleanDealType(get("dealType")),
     price:        cleanNum(get("price")),
     monthly:      cleanNum(get("monthly")),
-    area:         cleanNum(get("area")),
+    area:         cleanNum(get("area")) || pyeongToArea(get("pyeong")),
+    unitType:     String(get("unitType") ?? "").trim(),
     dong:         String(get("dong") ?? "").replace(/[^\d]/g, ""),
     ho:           String(get("ho") ?? "").replace(/[^\d]/g, ""),
     rooms:        String(get("rooms") ?? "").replace(/[^\d.]/g, ""),
