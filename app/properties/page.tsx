@@ -1022,6 +1022,7 @@ export default function PropertiesPage() {
                       onReopen={() => saveProperty(user.agencyId, { ...p, status: "active" })}
                       onProgress={() => setProgressing({ ...p })}
                       onCloneSameComplex={() => cloneSameComplex(p)}
+                      onSaveMemo={memo => saveProperty(user.agencyId, { ...p, memo })}
                     />
                   ))}
                 </div>

@@ -8,6 +8,7 @@ import type { Schedule } from "@/lib/schedules-db";
 import { dDay, severityOf, severityClasses, severityLabel, dDayLabel } from "@/app/expiry/contracts";
 import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr } from "./helpers";
 import MemoText from "@/app/components/MemoText";
+import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
 
 const STYPE_COLORS: Record<string, string> = {
   "집보기": "bg-blue-100 text-blue-700",
@@ -18,7 +19,7 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex }: {
+export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo }: {
   property: Property;
   schedules: Schedule[];
   isPinned: boolean;
@@ -29,7 +30,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   onReopen: () => void;
   onProgress: () => void;
   onCloneSameComplex: () => void;
+  onSaveMemo?: (memo: string) => void;
 }) {
+  const [memoEditing, setMemoEditing] = useState(false);
+  const [memoDraft, setMemoDraft] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
   const priceStr = p.dealType === "월세"
@@ -205,11 +209,38 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </div>
           )}
 
-          {/* 메모 */}
-          {p.memo && (
-            <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded px-2 py-1 border border-gray-100 dark:border-slate-700 whitespace-pre-wrap">
-              <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={p.memo} /></span></span>
+          {/* 메모 — 카드에서 바로 추가 (건의 #76) */}
+          {memoEditing ? (
+            <div className="mt-2" onClick={e => e.stopPropagation()}>
+              <DatedMemo
+                value={memoDraft}
+                onChange={setMemoDraft}
+                rows={3}
+                placeholder="상담 내용을 적어주세요"
+                className="w-full border border-amber-300 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+              <div className="flex justify-end gap-1.5 mt-1">
+                <button type="button" onClick={() => setMemoEditing(false)}
+                  className="whitespace-nowrap text-xs px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">취소</button>
+                <button type="button" onClick={() => { onSaveMemo?.(memoDraft.trim()); setMemoEditing(false); }}
+                  className="whitespace-nowrap text-xs px-3 py-1.5 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600">저장</button>
+              </div>
             </div>
+          ) : (
+            <>
+              {p.memo && (
+                <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded px-2 py-1 border border-gray-100 dark:border-slate-700 whitespace-pre-wrap">
+                  <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={p.memo} /></span></span>
+                </div>
+              )}
+              {onSaveMemo && (
+                <button type="button"
+                  onClick={e => { e.stopPropagation(); setMemoDraft((p.memo ? p.memo + "\n" : "") + memoStamp()); setMemoEditing(true); }}
+                  className="mt-2 whitespace-nowrap text-xs px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-semibold hover:bg-amber-100">
+                  💬 메모 {p.memo ? "추가" : "쓰기"}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
