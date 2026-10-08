@@ -82,6 +82,18 @@ export async function GET(req: NextRequest) {
       return true;
     });
 
+    // 유형 필터로 결과가 0이면 — 건물 전체로 폴백(빈 화면 방지)
+    if (docs.length === 0 && matcher) {
+      const seen2 = new Set<string>();
+      docs = allDocs.filter(d => {
+        if (!isBuilding(d.category_name || "")) return false;
+        const key = `${d.place_name}|${d.road_address_name || d.address_name}`;
+        if (seen2.has(key)) return false;
+        seen2.add(key);
+        return true;
+      });
+    }
+
     const results = docs.map(d => ({
       name: cleanName(d.place_name),
       address: d.road_address_name || d.address_name,
