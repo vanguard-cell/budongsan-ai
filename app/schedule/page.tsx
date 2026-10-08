@@ -556,7 +556,10 @@ export default function SchedulePage() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">{phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}</div>
                 {(() => {
-                  const linked = s.propertyId ? properties.find(x => x.id === s.propertyId) : undefined;
+                  const norm = (v: string) => v.replace(/\s+/g, "");
+                  const sAddr = norm(s.propertyAddress || "");
+                  const linked = (s.propertyId ? properties.find(x => x.id === s.propertyId) : undefined)
+                    || (sAddr ? properties.find(x => norm(propertyFullLabel(x)) === sAddr) || properties.find(x => x.address && norm(x.address) === sAddr) : undefined);
                   if (!linked) return null;
                   return (
                     <button onClick={() => router.push(`/properties?q=${encodeURIComponent(linked.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-emerald-600 text-white text-[12px] font-bold whitespace-nowrap hover:bg-emerald-700"><span className="material-symbols-outlined text-[15px]">domain</span>내 매물 보기</button>
