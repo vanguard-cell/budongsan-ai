@@ -212,7 +212,7 @@ export default function ExpiryPage() {
       .filter(c => (showClosed ? c.status !== "active" : c.status === "active"))
       .filter(c => !typeFilter || typeOf(c) === typeFilter)
       .forEach(c => { const k = complexBase(c); if (k) m.set(k, (m.get(k) || 0) + 1); });
-    return Array.from(m.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
+    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0], "ko"));
   }, [contracts, showClosed, typeFilter]);
   const dongList = useMemo(() => {
     if (!selComplex) return [];
