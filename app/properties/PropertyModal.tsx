@@ -2,6 +2,7 @@
 
 /** 매물 등록/수정 모달 — page.tsx 분리 리팩토링으로 추출 */
 
+import { stripUnit } from "@/lib/address";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { useState, useRef, useEffect } from "react";
 import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
@@ -23,8 +24,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
   const [baseAddress, setBaseAddress] = useState(() => {
     // 기존 수정시: address에서 동/호수 제거한 기본 주소
     if (property.dong || property.ho) {
-      return property.address
-        .replace(/ ?\d+(?:-\d+)?동/, "").replace(/ ?\d+(?:-\d+)?호/, "").trim();
+      return stripUnit(property.address, property.dong, property.ho);
     }
     return property.address;
   });

@@ -1,5 +1,6 @@
 "use client";
 
+import { stripUnit } from "@/lib/address";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -69,12 +70,8 @@ function fmtNum(s: string): string {
 }
 
 /** 주소에서 동·호·층을 뺀 단지 이름 */
-function complexBase(c: { address?: string }): string {
-  return (c.address || "")
-    .replace(/\s*\d+(?:-\d+)?동.*$/, "")
-    .replace(/\s*\d+(?:-\d+)?호.*$/, "")
-    .replace(/\s*제?\d+층.*$/, "")
-    .trim();
+function complexBase(c: { address?: string; dong?: string; ho?: string }): string {
+  return stripUnit(c.address || "", c.dong, c.ho);
 }
 
 /** 매물 종류가 비어 있는 계약의 버튼 이름 */
@@ -319,12 +316,7 @@ export default function ExpiryPage() {
    * - 임차인·동·호·가격·날짜는 비움 (호별로 다름)
    */
   const cloneSameComplex = (c: Contract) => {
-    const baseAddress = (c.address || "")
-      .replace(/ ?\d+(?:-\d+)?동/g, "")
-      .replace(/ ?\d+(?:-\d+)?호/g, "")
-      .replace(/ ?제\d+층/g, "")
-      .replace(/ ?제[\d-]+호/g, "")
-      .trim();
+    const baseAddress = stripUnit(c.address || "", c.dong, c.ho);
     setEditing({
       ...emptyContract(),
       address: baseAddress,

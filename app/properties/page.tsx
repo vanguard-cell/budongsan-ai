@@ -1,5 +1,6 @@
 "use client";
 
+import { stripUnit } from "@/lib/address";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -169,12 +170,7 @@ export default function PropertiesPage() {
    */
   const cloneSameComplex = (p: Property) => {
     recordFeatureUse(user?.uid, "prop_same");
-    const baseAddress = p.address
-      .replace(/ ?\d+(?:-\d+)?동/g, "")
-      .replace(/ ?\d+(?:-\d+)?호/g, "")
-      .replace(/ ?제\d+층/g, "")
-      .replace(/ ?제[\d-]+호/g, "")
-      .trim();
+    const baseAddress = stripUnit(p.address, p.dong, p.ho);
     setEditing({
       ...emptyProperty(),
       // 단지 공통 — 매물끼리 같은 정보 유지
@@ -305,7 +301,7 @@ export default function PropertiesPage() {
     while (t.length > 1 && isRegion(t[0])) t.shift();
     return t.join(" ").replace(/\s*제?\d+층.*$/, "") || c;
   };
-  const baseAddr = (p: Property) => (p.address || "").replace(/\s*\d+(?:-\d+)?동.*$/, "").replace(/\s*\d+(?:-\d+)?호.*$/, "").trim();
+  const baseAddr = (p: Property) => stripUnit(p.address || "", p.dong, p.ho);
   // 같은 단지(주소 표기만 다른 경우 포함)를 하나로 묶기 위한 이름
   const complexKey = (p: Property) => complexShortName(baseAddr(p));
   // 이미 등록해 둔 단지 목록 (같은 이름으로 통일해서 등록하기 위함) — 많이 쓴 순
