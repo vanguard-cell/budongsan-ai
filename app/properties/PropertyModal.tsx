@@ -24,7 +24,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
     // 기존 수정시: address에서 동/호수 제거한 기본 주소
     if (property.dong || property.ho) {
       return property.address
-        .replace(/ ?\d+동/, "").replace(/ ?\d+호/, "").trim();
+        .replace(/ ?\d+(?:-\d+)?동/, "").replace(/ ?\d+(?:-\d+)?호/, "").trim();
     }
     return property.address;
   });

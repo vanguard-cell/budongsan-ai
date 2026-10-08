@@ -278,8 +278,8 @@ export default function ExpiryPage() {
    */
   const cloneSameComplex = (c: Contract) => {
     const baseAddress = (c.address || "")
-      .replace(/ ?\d+동/g, "")
-      .replace(/ ?\d+호/g, "")
+      .replace(/ ?\d+(?:-\d+)?동/g, "")
+      .replace(/ ?\d+(?:-\d+)?호/g, "")
       .replace(/ ?제\d+층/g, "")
       .replace(/ ?제[\d-]+호/g, "")
       .trim();
