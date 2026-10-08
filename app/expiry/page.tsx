@@ -119,6 +119,12 @@ export default function ExpiryPage() {
   const [showExport, setShowExport] = useState(false);
   const [showSmsSettings, setShowSmsSettings] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  // 내 단지 목록 — 내 매물로 넘길 때 등록된 단지인지 확인용
+  const [mainComplexes, setMainComplexes] = useState<MyComplex[]>([]);
+  useEffect(() => {
+    if (!user?.agencyId) return;
+    return subscribeMyComplexes(user.agencyId, setMainComplexes);
+  }, [user?.agencyId]);
 
   // 알림용 고객 데이터 (가벼운 구독)
   useEffect(() => {
@@ -334,6 +340,11 @@ export default function ExpiryPage() {
    */
   const jumpReopenAsProperty = async (c: Contract) => {
     if (!user) return;
+    const baseName = complexBase(c);
+    if (!mainComplexes.some(m => m.name === baseName)) {
+      alert(`⚠️ '${baseName}'은(는) 내 단지 목록에 등록된 단지가 아니에요.\n\n내 매물 화면에서 이 단지를 먼저 등록한 뒤 다시 눌러주세요.`);
+      return;
+    }
     if (!confirm(
       `${c.address}\n\n매물 관리로 되돌릴까요? (재모집)\n→ 새 매물로 광고 시작\n→ 이 만기 카드는 '종료'로 보존됩니다\n→ 매물 관리 페이지로 이동합니다`,
     )) return;
