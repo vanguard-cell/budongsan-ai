@@ -106,7 +106,7 @@ export default function ComplexPicker({ onSelect, externalBuildingType }: Props)
     try {
       const q = `${location} ${effectiveBT}`;
       // pages=3으로 최대 45건 조회 (자동완성은 기본 1페이지)
-      const res = await fetch(`/api/complex-search?q=${encodeURIComponent(q)}&pages=3`);
+      const res = await fetch(`/api/complex-search?q=${encodeURIComponent(q)}&pages=3&type=${encodeURIComponent(effectiveBT === "빌라" ? "빌라/다세대" : effectiveBT)}`);
       const data: ComplexResult[] = await res.json();
       setResults(data);
     } catch {

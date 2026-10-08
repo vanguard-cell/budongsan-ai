@@ -215,7 +215,7 @@ export default function Home() {
     const timer = setTimeout(async () => {
       setComplexSearching(true);
       try {
-        const res = await fetch(`/api/complex-search?q=${encodeURIComponent(complexQuery)}`);
+        const res = await fetch(`/api/complex-search?q=${encodeURIComponent(complexQuery)}&type=${encodeURIComponent(form.propertyType)}`);
         const data = await res.json();
         setComplexResults(data);
         setShowDropdown(data.length > 0);
@@ -224,7 +224,7 @@ export default function Home() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [complexQuery, selectedComplex]);
+  }, [complexQuery, selectedComplex, form.propertyType]);
 
   // 건물 선택
   const selectComplex = async (item: ComplexResult) => {
