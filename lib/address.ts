@@ -10,8 +10,8 @@ export function stripUnit(address: string, dong?: string, ho?: string): string {
   if (d) s = s.replace(` ${d}동`, "").replace(`${d}동`, "");
   if (h) s = s.replace(` ${h}호`, "").replace(`${h}호`, "");
   return s
-    .replace(/\s*\d+(?:-\d+)?동.*$/, "")
-    .replace(/\s*제?\d+(?:-\d+)?호.*$/, "")
+    .replace(/\s*\d+(?:[-.,·~]\d+)*동.*$/, "")
+    .replace(/\s*제?\d+(?:[-.,·~]\d+)*호.*$/, "")
     .replace(/\s*제?\d+층.*$/, "")
     .trim();
 }
