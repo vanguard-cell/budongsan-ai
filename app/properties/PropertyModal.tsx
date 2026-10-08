@@ -203,13 +203,13 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             <div className="grid grid-cols-2 gap-2 mt-2">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">동 번호</label>
-                <input type="text" inputMode="numeric" value={form.dong} onChange={e => handleDongChange(e.target.value)}
+                <input type="text" value={form.dong} onChange={e => handleDongChange(e.target.value)}
                   placeholder="101" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">호수</label>
-                <input type="text" inputMode="numeric" value={form.ho} onChange={e => handleHoChange(e.target.value)}
-                  placeholder="1902" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                <input type="text" value={form.ho} onChange={e => handleHoChange(e.target.value)}
+                  placeholder="1902 (지하는 지하1 처럼)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
             </div>
             {form.address && (

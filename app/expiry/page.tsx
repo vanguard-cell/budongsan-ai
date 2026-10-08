@@ -1274,7 +1274,6 @@ function EditModal({
           <Field label="동 번호">
             <input
               type="text"
-              inputMode="numeric"
               value={form.dong || ""}
               onChange={e => setField("dong", e.target.value)}
               placeholder="101"
@@ -1284,7 +1283,6 @@ function EditModal({
           <Field label="호수">
             <input
               type="text"
-              inputMode="numeric"
               value={form.ho || ""}
               onChange={e => setField("ho", e.target.value)}
               placeholder="1902"

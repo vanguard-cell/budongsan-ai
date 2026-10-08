@@ -871,7 +871,7 @@ export default function PropertiesPage() {
                   ))}
                 </select>
                 {/* 호 입력 */}
-                <input type="text" inputMode="numeric" value={selectedHo}
+                <input type="text" value={selectedHo}
                   onChange={e => setSelectedHo(e.target.value)}
                   placeholder="호수"
                   className="border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
