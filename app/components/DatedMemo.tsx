@@ -4,7 +4,7 @@
  * 날짜 자동 메모 칸 (건의 #36)
  *
  * 상담 내용을 일자별로 쌓아 쓰는 메모 — 수정 모달의 메모 칸에 사용.
- * - 빈 칸을 누르면 오늘 날짜("26.10.02 ")가 자동으로 들어감
+ * - 빈 칸을 누르면 오늘 날짜("26.10.02 ▶ ")가 자동으로 들어감
  * - 엔터 = 다음 줄로 넘어가면서 오늘 날짜가 붙음
  * - Shift+엔터 = 날짜 없이 줄바꿈 (같은 날 내용 이어 쓰기)
  * - 날짜만 쓰고 내용 없이 나가면 그 빈 날짜 줄은 지워짐
@@ -13,9 +13,9 @@
 import { useRef } from "react";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
-/** 오늘 날짜 머리말 — "26.10.02 " */
+/** 오늘 날짜 머리말 — "26.10.02 ▶ " (▶ 뒤부터 내가 쓰는 내용, 숫자와 안 헷갈리게) */
 export function memoStamp(d = new Date()): string {
-  return `${String(d.getFullYear()).slice(2)}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} `;
+  return `${String(d.getFullYear()).slice(2)}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ▶ `;
 }
 
 interface Props {
@@ -58,7 +58,7 @@ export default function DatedMemo({ value, onChange, placeholder, rows = 3, clas
   const onBlur = () => {
     const cleaned = value
       .split("\n")
-      .filter(line => !/^\d{2}\.\d{2}\.\d{2}\s*$/.test(line))
+      .filter(line => !/^\d{2}\.\d{2}\.\d{2}(\s*▶)?\s*$/.test(line))
       .join("\n");
     if (cleaned !== value) onChange(cleaned);
   };
