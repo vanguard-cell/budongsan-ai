@@ -80,6 +80,12 @@ function complexBase(c: { address?: string }): string {
 /** 매물 종류가 비어 있는 계약의 버튼 이름 */
 const UNTYPED = "미지정";
 
+/** 계약의 종류 — 주소에 (상가)(오피스텔)(아파트)처럼 괄호가 있으면 그 말을 우선, 없으면 저장된 종류 */
+function typeOf(c: { address?: string; propertyType?: string }): string {
+  const m = (c.address || "").match(/\((상가|오피스텔|아파트)\)/);
+  return m ? m[1] : (c.propertyType || UNTYPED);
+}
+
 export default function ExpiryPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -172,7 +178,7 @@ export default function ExpiryPage() {
     return withDday
       .filter(({ c }) => (showClosed ? c.status !== "active" : c.status === "active"))
       .filter(({ s }) => (filter === "all" ? true : s === filter))
-      .filter(({ c }) => !typeFilter || (c.propertyType || UNTYPED) === typeFilter)
+      .filter(({ c }) => !typeFilter || typeOf(c) === typeFilter)
       .filter(({ c }) => !selComplex || complexBase(c) === selComplex)
       .filter(({ c }) => !selDong || (c.dong || "") === selDong)
       .filter(({ c }) => !selHo.trim() || (c.ho || "").includes(selHo.trim()))
@@ -204,7 +210,7 @@ export default function ExpiryPage() {
     const m = new Map<string, number>();
     contracts
       .filter(c => (showClosed ? c.status !== "active" : c.status === "active"))
-      .filter(c => !typeFilter || (c.propertyType || UNTYPED) === typeFilter)
+      .filter(c => !typeFilter || typeOf(c) === typeFilter)
       .forEach(c => { const k = complexBase(c); if (k) m.set(k, (m.get(k) || 0) + 1); });
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
   }, [contracts, showClosed, typeFilter]);
@@ -226,7 +232,7 @@ export default function ExpiryPage() {
     contracts
       .filter(c => (showClosed ? c.status !== "active" : c.status === "active"))
       .forEach(c => {
-        const k = c.propertyType || UNTYPED;
+        const k = typeOf(c);
         m.set(k, (m.get(k) || 0) + 1);
       });
     const order: string[] = [...CONTRACT_PROPERTY_TYPES, UNTYPED];
