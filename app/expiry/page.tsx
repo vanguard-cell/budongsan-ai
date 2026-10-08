@@ -1007,8 +1007,8 @@ function EditModal({
   const [form, setForm] = useState<Contract>(() => {
     // 동/호가 별도 필드에 없고 주소에만 있는 레거시 데이터 — 진입 시 자동 추출
     if (!contract.dong && !contract.ho && contract.address) {
-      const dongMatch = contract.address.match(/(\d+)동/);
-      const hoMatch   = contract.address.match(/(\d+)호/);
+      const dongMatch = contract.address.match(/(\d+(?:-\d+)?)동/);
+      const hoMatch   = contract.address.match(/(\d+(?:-\d+)?)호/);
       return {
         ...contract,
         dong: dongMatch?.[1] || "",
