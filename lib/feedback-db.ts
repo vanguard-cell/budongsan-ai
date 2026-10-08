@@ -21,6 +21,7 @@ import {
   onSnapshot,
   serverTimestamp,
   Timestamp,
+  runTransaction,
   type Unsubscribe,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -117,16 +118,32 @@ export function subscribeFeedback(
   );
 }
 
-/** 자동 처리 루틴 깨우기 — 실패해도 건의 등록에는 영향 없음 (기다리지 않음) */
-function notifyRoutine(kind: "new" | "reply") {
+/** 같은 글에 대해 루틴을 다시 깨우지 않는 간격 — 그 사이 달린 답글은 진행 중인 루틴이 마지막에 다시 읽어 함께 처리 */
+const ROUTINE_WINDOW_MS = 5 * 60_000;
+
+/** 자동 처리 루틴 깨우기 — 실패해도 건의 등록에는 영향 없음 (기다리지 않음)
+ *  글 문서의 routineFiredAt 으로 5분 안에 이미 깨웠으면 건너뜀 (서버 인스턴스와 무관하게 중복 실행 방지) */
+function notifyRoutine(kind: "new" | "reply", feedbackId: string) {
   const user = auth.currentUser;
   if (!user) return;
-  user.getIdToken()
-    .then(token => fetch("/api/feedback-notify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ kind }),
-    }))
+  const ref = doc(db, "feedback", feedbackId);
+  runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    const last = (snap.data()?.routineFiredAt as number) || 0;
+    const now = Date.now();
+    if (now - last < ROUTINE_WINDOW_MS) return false;
+    tx.update(ref, { routineFiredAt: now });
+    return true;
+  })
+    .then(async fire => {
+      if (!fire) return;
+      const token = await user.getIdToken();
+      await fetch("/api/feedback-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ kind }),
+      });
+    })
     .catch(e => console.warn("[feedback] 자동 처리 알림 실패:", e));
 }
 
@@ -142,7 +159,7 @@ export async function addFeedback(
     sender: "user", senderName: name, text, createdAt: Date.now(),
     ...(image ? { image } : {}),
   };
-  await addDoc(feedbackCol(), {
+  const created = await addDoc(feedbackCol(), {
     text,                       // 레거시 호환 (목록 미리보기용)
     status: "pending",
     createdAt: serverTimestamp(),
@@ -151,7 +168,7 @@ export async function addFeedback(
     lastReplyBy: "user",
     submittedBy: { uid, email, name },
   });
-  notifyRoutine("new");
+  notifyRoutine("new", created.id);
 }
 
 /** 스레드에 메시지 추가 (문의자·관리자 양쪽 대화)
@@ -194,7 +211,7 @@ export async function addMessage(
   }
 
   await updateDoc(ref, patch);
-  if (msg.sender === "user") notifyRoutine("reply");
+  if (msg.sender === "user") notifyRoutine("reply", id);
 }
 
 /** 상태 업데이트 (status / userConfirmed) */
