@@ -43,6 +43,11 @@ export default function PropertiesPage() {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("q") || "";
   });
+  // 일정에서 "내 매물 보기"로 들어오면 ?pid= 로 그 호실 하나만 보여줌
+  const [onlyPid, setOnlyPid] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("pid") || "";
+  });
   useEffect(() => {
     const onSearch = (e: Event) => setQuery(String((e as CustomEvent).detail ?? ""));
     window.addEventListener("global-search", onSearch);
@@ -317,6 +322,7 @@ export default function PropertiesPage() {
     viewMode === "contracted" ? isContracted(p) : !isContracted(p);
 
   const filtered = useMemo(() => {
+    if (onlyPid) return properties.filter(p => p.id === onlyPid);
     const baseList = showClosed
       ? properties.filter(p => p.status === "closed")
       : properties.filter(p => p.status === "active").filter(matchView);
@@ -401,7 +407,7 @@ export default function PropertiesPage() {
       const bp = pinnedIds.has(b.id) ? 0 : 1;
       return ap - bp;
     });
-  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, roomFilter, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo, colSearch]);
+  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, roomFilter, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo, colSearch, onlyPid]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -813,6 +819,12 @@ export default function PropertiesPage() {
               </button>
             ))}
           </div>
+          {onlyPid && (
+            <div className="flex items-center justify-between gap-2 mb-2 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 text-[12px] font-semibold">
+              <span className="whitespace-nowrap">일정의 해당 호실만 보는 중</span>
+              <button onClick={() => setOnlyPid("")} className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[12px] font-bold">전체 매물 보기</button>
+            </div>
+          )}
           <input
             type="text"
             placeholder="🔍 주소 · 집주인 이름 · 연락처 검색"

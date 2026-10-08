@@ -562,7 +562,7 @@ export default function SchedulePage() {
                     || (sAddr ? properties.find(x => norm(propertyFullLabel(x)) === sAddr) || properties.find(x => x.address && norm(x.address) === sAddr) : undefined);
                   if (!linked) return null;
                   return (
-                    <button onClick={() => router.push(`/properties?q=${encodeURIComponent(linked.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-emerald-600 text-white text-[12px] font-bold whitespace-nowrap hover:bg-emerald-700"><span className="material-symbols-outlined text-[15px]">domain</span>내 매물 보기</button>
+                    <button onClick={() => router.push(`/properties?pid=${encodeURIComponent(linked.id)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-emerald-600 text-white text-[12px] font-bold whitespace-nowrap hover:bg-emerald-700"><span className="material-symbols-outlined text-[15px]">domain</span>내 매물 보기</button>
                   );
                 })()}
                 {s.memo && <p className="text-[12px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-lg px-2.5 py-2">💬 {s.memo}</p>}
