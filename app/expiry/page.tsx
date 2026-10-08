@@ -1331,8 +1331,12 @@ function EditModal({
           <Field label="전용면적 (㎡)">
             <input
               type="text"
-              inputMode="decimal"
+              inputMode={form.propertyType === "오피스텔" ? "text" : "decimal"}
               value={form.area || ""}
+              onBlur={() => {
+                // 오피스텔: 숫자 4자리만 쓰면 2자리 뒤에 소수점 자동 (2345 → 23.45)
+                if (form.propertyType === "오피스텔" && /^\d{4}$/.test(form.area || "")) setField("area", `${form.area!.slice(0, 2)}.${form.area!.slice(2)}`);
+              }}
               onChange={e => setField("area", e.target.value.replace(/[^\d.]/g, ""))}
               placeholder="84"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"

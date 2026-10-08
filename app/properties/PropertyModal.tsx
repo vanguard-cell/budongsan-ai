@@ -242,8 +242,12 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               <label className="block text-sm font-medium text-gray-700 mb-1">전용면적 (㎡)</label>
               <input
                 type="text"
-                inputMode="decimal"
+                inputMode={form.propertyType === "오피스텔" ? "text" : "decimal"}
                 value={form.area}
+                onBlur={() => {
+                  // 오피스텔: 숫자 4자리만 쓰면 2자리 뒤에 소수점 자동 (2345 → 23.45)
+                  if (form.propertyType === "오피스텔" && /^\d{4}$/.test(form.area)) set("area", `${form.area.slice(0, 2)}.${form.area.slice(2)}`);
+                }}
                 onChange={e => {
                   // 숫자·소수점만 허용 — "44c-3" 같은 오입력 방지
                   const cleaned = e.target.value.replace(/[^\d.]/g, "");
