@@ -766,7 +766,16 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">시간</label>
-              <input type="time" value={form.time} onChange={e => set("time", e.target.value)}
+              <input type="text" inputMode="numeric" maxLength={5} placeholder="예: 14:30" value={form.time}
+                onChange={e => {
+                  const d = e.target.value.replace(/\D/g, "").slice(0, 4);
+                  set("time", d.length > 2 ? `${d.slice(0, 2)}:${d.slice(2)}` : d);
+                }}
+                onBlur={() => {
+                  const m = /^(\d{1,2}):?(\d{2})$/.exec(form.time);
+                  if (m && +m[1] < 24 && +m[2] < 60) set("time", `${m[1].padStart(2, "0")}:${m[2]}`);
+                  else if (form.time) set("time", "");
+                }}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
