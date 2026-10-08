@@ -68,6 +68,15 @@ function fmtNum(s: string): string {
   return isNaN(n) ? s : n.toLocaleString();
 }
 
+/** 주소에서 동·호·층을 뺀 단지 이름 */
+function complexBase(c: { address?: string }): string {
+  return (c.address || "")
+    .replace(/\s*\d+(?:-\d+)?동.*$/, "")
+    .replace(/\s*\d+(?:-\d+)?호.*$/, "")
+    .replace(/\s*제?\d+층.*$/, "")
+    .trim();
+}
+
 /** 매물 종류가 비어 있는 계약의 버튼 이름 */
 const UNTYPED = "미지정";
 
@@ -97,6 +106,10 @@ export default function ExpiryPage() {
   const [panelId, setPanelId] = useState<string | null>(null);    // 우측 패널 (표/카드 공용)
   const [sortBy, setSortBy] = useState<ContractSort>("endAsc");   // 표 헤더 정렬
   const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
+  const [selComplex, setSelComplex] = useState("");   // 단지·동·호로 찾기
+  const [selDong, setSelDong] = useState("");
+  const [selHo, setSelHo] = useState("");
+  const [showComplexSearch, setShowComplexSearch] = useState(false);
   const [typeFilter, setTypeFilter] = useState("");   // 매물 종류(아파트·오피스텔 등)별 보기
   const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
   const [showUpload, setShowUpload] = useState(false);
@@ -160,6 +173,9 @@ export default function ExpiryPage() {
       .filter(({ c }) => (showClosed ? c.status !== "active" : c.status === "active"))
       .filter(({ s }) => (filter === "all" ? true : s === filter))
       .filter(({ c }) => !typeFilter || (c.propertyType || UNTYPED) === typeFilter)
+      .filter(({ c }) => !selComplex || complexBase(c) === selComplex)
+      .filter(({ c }) => !selDong || (c.dong || "") === selDong)
+      .filter(({ c }) => !selHo.trim() || (c.ho || "").includes(selHo.trim()))
       .filter(({ c }) => {
         if (!addrTerm && !regionTerm) return true;
         const addr = [c.address, c.dong, c.ho].filter(Boolean).join(" ").toLowerCase();
@@ -181,7 +197,27 @@ export default function ExpiryPage() {
         if (sortBy === "newest") return b.c.createdAt - a.c.createdAt;
         return a.d - b.d;   // endAsc (기본) — 만기 빠른순
       });
-  }, [contracts, filter, showClosed, query, sortBy, colSearch, typeFilter]);
+  }, [contracts, filter, showClosed, query, sortBy, colSearch, typeFilter, selComplex, selDong, selHo]);
+
+  /* 단지·동·호로 찾기 — 선택한 종류의 단지 목록 */
+  const complexList = useMemo(() => {
+    const m = new Map<string, number>();
+    contracts
+      .filter(c => (showClosed ? c.status !== "active" : c.status === "active"))
+      .filter(c => !typeFilter || (c.propertyType || UNTYPED) === typeFilter)
+      .forEach(c => { const k = complexBase(c); if (k) m.set(k, (m.get(k) || 0) + 1); });
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
+  }, [contracts, showClosed, typeFilter]);
+  const dongList = useMemo(() => {
+    if (!selComplex) return [];
+    const m = new Map<string, number>();
+    contracts
+      .filter(c => (showClosed ? c.status !== "active" : c.status === "active"))
+      .filter(c => complexBase(c) === selComplex && c.dong)
+      .forEach(c => m.set(c.dong!, (m.get(c.dong!) || 0) + 1));
+    const num = (s: string) => parseInt(s.replace(/\D/g, ""), 10) || 0;
+    return Array.from(m.entries()).sort((a, b) => num(a[0]) - num(b[0]));
+  }, [contracts, showClosed, selComplex]);
 
   /* 매물 종류별 버튼 목록 — 등록 화면 순서대로, 종류 없는 계약은 '미지정' */
   const typeList = useMemo(() => {
@@ -488,14 +524,52 @@ export default function ExpiryPage() {
           {typeList.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mb-3">
               <span className="text-[11px] text-gray-400 mr-0.5">종류</span>
-              <FilterChip active={!typeFilter} onClick={() => setTypeFilter("")}>
+              <FilterChip active={!typeFilter} onClick={() => { setTypeFilter(""); setSelComplex(""); setSelDong(""); setSelHo(""); }}>
                 전체
               </FilterChip>
               {typeList.map(([name, n]) => (
-                <FilterChip key={name} active={typeFilter === name} onClick={() => setTypeFilter(typeFilter === name ? "" : name)}>
+                <FilterChip key={name} active={typeFilter === name} onClick={() => { setTypeFilter(typeFilter === name ? "" : name); setSelComplex(""); setSelDong(""); setSelHo(""); }}>
                   {name} ({n})
                 </FilterChip>
               ))}
+            </div>
+          )}
+          {complexList.length > 0 && (
+            <div className="mb-2">
+              <button onClick={() => setShowComplexSearch(v => !v)}
+                className="flex items-center gap-1 text-[12px] font-semibold text-blue-600 hover:underline whitespace-nowrap">
+                <span className="material-symbols-outlined text-[16px] leading-none">{showComplexSearch ? "expand_less" : "manage_search"}</span>
+                단지·동·호로 찾기
+                {(selComplex || selDong || selHo) && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-blue-600" />}
+              </button>
+              {showComplexSearch && (
+                <div className="border border-blue-100 rounded-xl bg-blue-50/40 p-2.5 mt-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <select value={selComplex}
+                      onChange={e => { setSelComplex(e.target.value); setSelDong(""); setSelHo(""); }}
+                      className="col-span-2 min-w-0 border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-400">
+                      <option value="">{typeFilter ? `${typeFilter} 단지 전체` : "단지 전체"}</option>
+                      {complexList.map(([name, n]) => (
+                        <option key={name} value={name}>{name} ({n})</option>
+                      ))}
+                    </select>
+                    <select value={selDong} disabled={!selComplex}
+                      onChange={e => setSelDong(e.target.value)}
+                      className="min-w-0 border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100 disabled:text-gray-400">
+                      <option value="">동 전체</option>
+                      {dongList.map(([d, n]) => (
+                        <option key={d} value={d}>{d}동 ({n})</option>
+                      ))}
+                    </select>
+                    <input type="text" value={selHo} onChange={e => setSelHo(e.target.value)} placeholder="호수"
+                      className="min-w-0 border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  </div>
+                  {(selComplex || selDong || selHo) && (
+                    <button onClick={() => { setSelComplex(""); setSelDong(""); setSelHo(""); }}
+                      className="mt-1.5 text-[11px] text-gray-500 hover:text-red-600 whitespace-nowrap">✕ 조회 초기화</button>
+                  )}
+                </div>
+              )}
             </div>
           )}
           <input
