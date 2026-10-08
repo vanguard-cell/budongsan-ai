@@ -49,6 +49,11 @@ export default function PropertiesPage() {
     return new URLSearchParams(window.location.search).get("pid") || "";
   });
   useEffect(() => {
+    // 화면이 열릴 때 주소창의 ?pid= 를 한 번 더 확인 (서버 화면과 어긋나도 그 호실만 보이게)
+    const pid = new URLSearchParams(window.location.search).get("pid") || "";
+    if (pid) setOnlyPid(pid);
+  }, []);
+  useEffect(() => {
     const onSearch = (e: Event) => setQuery(String((e as CustomEvent).detail ?? ""));
     window.addEventListener("global-search", onSearch);
     return () => window.removeEventListener("global-search", onSearch);
@@ -822,7 +827,7 @@ export default function PropertiesPage() {
           {onlyPid && (
             <div className="flex items-center justify-between gap-2 mb-2 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 text-[12px] font-semibold">
               <span className="whitespace-nowrap">일정의 해당 호실만 보는 중</span>
-              <button onClick={() => setOnlyPid("")} className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[12px] font-bold">전체 매물 보기</button>
+              <button onClick={() => { setOnlyPid(""); window.history.replaceState(null, "", "/properties"); }} className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[12px] font-bold">전체 매물 보기</button>
             </div>
           )}
           <input
