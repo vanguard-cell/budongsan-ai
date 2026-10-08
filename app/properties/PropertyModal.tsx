@@ -348,7 +348,15 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">전세·월세 만기일</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-gray-700">전세·월세 만기일</label>
+                {form.leaseEndDate && (
+                  <button type="button" onClick={() => set("leaseEndDate", "")}
+                    className="whitespace-nowrap text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1 hover:bg-red-100">
+                    🗑 만기일 지우기
+                  </button>
+                )}
+              </div>
               <KoreanDatePicker value={form.leaseEndDate} onChange={v => set("leaseEndDate", v)} accent="orange" />
             </div>
             <p className="text-[10px] text-orange-600 mt-2">📌 만기일 입력 시 스케줄에서 자동으로 만기 알림 표시</p>
