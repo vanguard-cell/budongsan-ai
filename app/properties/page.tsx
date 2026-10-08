@@ -444,14 +444,15 @@ export default function PropertiesPage() {
 
   // 단지→동 계층 탐색용 목록 (현재 탭의 active 매물 기준)
   const complexList = useMemo(() => {
-    const base = properties.filter(p => p.status === "active").filter(matchView);
+    const base = properties.filter(p => p.status === "active").filter(matchView)
+      .filter(p => filterPropType === "all" || p.propertyType === filterPropType);
     const map = new Map<string, number>();
     for (const p of base) {
       const c = complexKey(p);
       if (c) map.set(c, (map.get(c) || 0) + 1);
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "ko"));
-  }, [properties, viewMode]);
+  }, [properties, viewMode, filterPropType]);
 
   // 선택 단지의 동 목록
   const dongList = useMemo(() => {
@@ -799,7 +800,7 @@ export default function PropertiesPage() {
               const cnt = propTypeCounts[t] ?? 0;
               const label = t === "all" ? "전체" : t === "빌라/다세대" ? "빌라" : t === "원룸/투룸" ? "원룸" : t;
               return (
-                <button key={t} onClick={() => { setFilterPropType(t); setFilterType("all"); }}
+                <button key={t} onClick={() => { setFilterPropType(t); setFilterType("all"); setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
                   className={`text-xs px-3 py-1 rounded-full border transition-colors whitespace-nowrap shrink-0 ${
                     filterPropType === t
                       ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
