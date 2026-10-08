@@ -555,6 +555,13 @@ export default function SchedulePage() {
                   <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{s.propertyAddress || "주소 미입력"}</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">{phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}</div>
+                {(() => {
+                  const linked = s.propertyId ? properties.find(x => x.id === s.propertyId) : undefined;
+                  if (!linked) return null;
+                  return (
+                    <button onClick={() => router.push(`/properties?q=${encodeURIComponent(linked.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-emerald-600 text-white text-[12px] font-bold whitespace-nowrap hover:bg-emerald-700"><span className="material-symbols-outlined text-[15px]">domain</span>내 매물 보기</button>
+                  );
+                })()}
                 {s.memo && <p className="text-[12px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-lg px-2.5 py-2">💬 {s.memo}</p>}
                 <div className="grid grid-cols-2 gap-1.5 pt-1">
                   <button onClick={() => { setEditing({ ...s }); setPanelItem(null); }} className="flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">edit</span>수정</button>
