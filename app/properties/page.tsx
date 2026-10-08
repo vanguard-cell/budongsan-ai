@@ -457,13 +457,14 @@ export default function PropertiesPage() {
   // 선택 단지의 동 목록
   const dongList = useMemo(() => {
     if (!selectedComplex) return [];
-    const base = properties.filter(p => p.status === "active").filter(matchView).filter(p => complexKey(p) === selectedComplex);
+    const base = properties.filter(p => p.status === "active").filter(matchView).filter(p => complexKey(p) === selectedComplex)
+      .filter(p => filterPropType === "all" || p.propertyType === filterPropType);
     const map = new Map<string, number>();
     for (const p of base) {
       if (p.dong) map.set(p.dong, (map.get(p.dong) || 0) + 1);
     }
     return [...map.entries()].sort((a, b) => numOf(a[0]) - numOf(b[0]));
-  }, [properties, viewMode, selectedComplex]);
+  }, [properties, viewMode, selectedComplex, filterPropType]);
 
   // 거래 칩 개수 — 현재 탭 + 선택한 유형 기준 (유형 개수 = 매매+전세+월세)
   const dealCounts = useMemo(() => {
