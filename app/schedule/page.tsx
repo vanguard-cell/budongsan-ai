@@ -484,7 +484,7 @@ export default function SchedulePage() {
               <div key={date}>
                 {/* 날짜 헤더 */}
                 <div className={`flex items-center gap-2 mb-2 ${isToday(date) ? "text-blue-700" : "text-gray-500"}`}>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isToday(date) ? "bg-blue-100" : "bg-gray-100"}`}>
+                  <span className={`text-sm font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap ${isToday(date) ? "bg-sky-200 text-sky-800" : "bg-sky-100 text-sky-700"}`}>
                     {isToday(date) ? "오늘" : fmtDate(date)}
                   </span>
                   <div className="flex-1 h-px bg-gray-200" />
