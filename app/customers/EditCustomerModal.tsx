@@ -87,7 +87,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
   };
 
   return (
-    <Modal onClose={onClose} title={isNew ? "고객 추가" : "고객 수정"}>
+    <Modal onClose={onClose} title={isNew ? "매수자 추가" : "매수자 수정"}>
       <div className="space-y-3">
         {isNew && (
           <button

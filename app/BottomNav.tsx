@@ -19,7 +19,7 @@ const SIDEBAR_TABS = [
   { href: "/dashboard",  icon: "home",            label: "홈" },
   { href: "/properties", icon: "domain",          label: "내 매물 관리" },
   { href: "/expiry",     icon: "event_busy",      label: "만기 관리" },
-  // { href: "/customers",  icon: "group",           label: "고객 관리" },  // 숨김 (건의 #57)
+  { href: "/customers",  icon: "group",           label: "매수자 등록" },
   { href: "/schedule",     icon: "calendar_month",  label: "스케줄" },
   { href: "/sales",        icon: "payments",        label: "매출 관리" },
   // { href: "/insights",     icon: "insights",        label: "인사이트" },  // 숨김 (건의 #59)

@@ -340,10 +340,10 @@ export default function CustomersPage() {
           <div>
             <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
               <span className="material-symbols-outlined text-blue-600 dark:text-blue-400" style={{ fontSize: "2rem" }}>group</span>
-              고객 관리
+              매수자 등록
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
-              예산·관심지역·매물 매칭 이력 + 후속 연락 자동 알림
+              이름·연락처·원하는 단지·예산·입주 가능일 입력 + 상담 메모
             </p>
           </div>
 
@@ -413,7 +413,7 @@ export default function CustomersPage() {
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">person_add</span>
-              고객 추가
+              매수자 추가
             </button>
           </div>
         </section>
@@ -837,7 +837,7 @@ function EmptyState({ isFirstUse, onAdd }: { isFirstUse: boolean; onAdd: () => v
           onClick={onAdd}
           className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors"
         >
-          + 첫 고객 추가
+          + 첫 매수자 추가
         </button>
       )}
     </div>

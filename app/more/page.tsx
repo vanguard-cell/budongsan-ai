@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { ADMIN_EMAIL } from "@/lib/admin-db";
 
 const ITEMS = [
+  { href: "/customers", icon: "👥", label: "매수자 등록",   desc: "매수자 이름·연락처·원하는 단지·예산·입주일·상담메모" },
   { href: "/schedule", icon: "📅", label: "스케줄",        desc: "약속·계약일·중도금·잔금 통합 캘린더" },
   { href: "/sales",    icon: "💰", label: "매출 관리",     desc: "잔금일 기준 월별 수수료 매출 집계·그래프" },
   // { href: "/insights", icon: "📈", label: "인사이트",      desc: "처리현황·파이프라인 전환율·실패사유·활동" },  // 숨김 (건의 #59)
