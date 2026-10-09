@@ -58,20 +58,19 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
     }));
   };
 
+  const digits = (v: string) => (v || "").replace(/\D/g, "");
+  const phoneDigits = digits(form.phone);
+  const isDuplicate = !!phoneDigits && !!form.name.trim() &&
+    existing.some(c => c.id !== form.id && (c.name || "").trim() === form.name.trim() && digits(c.phone) === phoneDigits);
+
   const save = async () => {
     if (!form.name.trim()) {
       alert("이름을 입력해주세요");
       return;
     }
-    const digits = (v: string) => (v || "").replace(/\D/g, "");
-    const phone = digits(form.phone);
-    if (phone) {
-      const name = form.name.trim();
-      const dup = existing.some(c => c.id !== form.id && c.name.trim() === name && digits(c.phone) === phone);
-      if (dup) {
-        alert("이미 등록된 고객이에요.\n같은 이름, 같은 전화번호의 고객이 있어요.");
-        return;
-      }
+    if (isDuplicate) {
+      alert("이미 등록된 고객이에요.\n같은 이름, 같은 전화번호의 고객이 있어요.");
+      return;
     }
     setSaving(true);
     try {
@@ -105,6 +104,11 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
             />
           </Field>
         </div>
+        {isDuplicate && (
+          <div className="rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm font-semibold px-3 py-2">
+            ⚠️ 이미 등록된 고객이에요 (같은 이름, 같은 전화번호)
+          </div>
+        )}
 
         <Field label="구분 (여러 개 선택 가능)">
           <div className="flex flex-col gap-1.5">
