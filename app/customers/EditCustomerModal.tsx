@@ -3,11 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Customer,
-  CustomerSide,
   DealKind,
   CustomerStatus,
   ShownProperty,
-  SIDE_LABELS,
   DEAL_KIND_LABELS,
   STATUS_LABELS,
 } from "./customer-types";
@@ -96,22 +94,41 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="구분">
-            <select value={form.side} onChange={e => setField("side", e.target.value as CustomerSide)} className={fieldCls}>
-              {(Object.keys(SIDE_LABELS) as CustomerSide[]).map(s => (
-                <option key={s} value={s}>{SIDE_LABELS[s]}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="목적">
-            <select value={form.dealKind} onChange={e => setField("dealKind", e.target.value as DealKind)} className={fieldCls}>
-              {(Object.keys(DEAL_KIND_LABELS) as DealKind[]).map(s => (
-                <option key={s} value={s}>{DEAL_KIND_LABELS[s]}</option>
-              ))}
-            </select>
-          </Field>
-        </div>
+        <Field label="구분 (여러 개 선택 가능)">
+          <div className="flex flex-wrap gap-1.5">
+            {[["", "wantedTypes", PROPERTY_TYPES], ["", "wantedDeals", DEAL_TYPES]].map(([, k, list], gi) => {
+              const key = k as "wantedTypes" | "wantedDeals";
+              const cur = form[key] ?? [];
+              const on = cur.length === 0;
+              const color = gi === 0 ? "bg-blue-600 border-blue-600" : "bg-rose-500 border-rose-500";
+              return (
+                <div key={key} className="flex flex-wrap gap-1.5 w-full">
+                  <button type="button" onClick={() => setField(key, [])}
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${on ? color + " text-white" : "bg-white text-gray-600 border-gray-200"}`}>
+                    전체
+                  </button>
+                  {(list as string[]).map(t => {
+                    const sel = cur.includes(t);
+                    return (
+                      <button key={t} type="button" onClick={() => toggleIn(key, t)}
+                        className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? color + " text-white" : "bg-white text-gray-600 border-gray-200"}`}>
+                        {t}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </Field>
+
+        <Field label="목적">
+          <select value={form.dealKind} onChange={e => setField("dealKind", e.target.value as DealKind)} className={fieldCls}>
+            {(Object.keys(DEAL_KIND_LABELS) as DealKind[]).map(s => (
+              <option key={s} value={s}>{DEAL_KIND_LABELS[s]}</option>
+            ))}
+          </select>
+        </Field>
 
         {/* VIP 토글 */}
         <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
@@ -132,29 +149,6 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
             placeholder="예: 5억 이하 / 보증금 1억·월세 100"
             className={fieldCls}
           />
-        </Field>
-
-        <Field label="찾는 매물 유형 (여러 개 선택 가능)">
-          <div className="flex flex-wrap gap-1.5">
-            {PROPERTY_TYPES.map(t => {
-              const on = (form.wantedTypes ?? []).includes(t);
-              return (
-                <button key={t} type="button" onClick={() => toggleIn("wantedTypes", t)}
-                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${on ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-400"}`}>
-                  {t}
-                </button>
-              );
-            })}
-            {DEAL_TYPES.map(t => {
-              const on = (form.wantedDeals ?? []).includes(t);
-              return (
-                <button key={t} type="button" onClick={() => toggleIn("wantedDeals", t)}
-                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${on ? "bg-rose-500 text-white border-rose-500" : "bg-white text-gray-600 border-gray-200 hover:border-rose-400"}`}>
-                  {t}
-                </button>
-              );
-            })}
-          </div>
         </Field>
 
         <Field label="관심 지역·단지">
