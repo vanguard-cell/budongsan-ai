@@ -11,6 +11,7 @@ import {
   logCustomerEvent,
   setCustomerHistory,
 } from "@/lib/customers-db";
+import { saveSchedule, type Schedule } from "@/lib/schedules-db";
 import {
   Customer,
   type CustomerEvent,
@@ -239,6 +240,24 @@ export default function CustomersPage() {
     const isNew = !customers.some(x => x.id === c.id);
     await fsSaveCustomer(user.agencyId, c);
     recordFeatureUse(user.uid, isNew ? "cust_add" : "cust_edit");
+    // 상태가 '방문'이고 방문 날짜가 있으면 스케줄 방문 일정에도 반영 (고객당 1건, 다시 저장하면 갱신)
+    if (c.status === "matched" && c.visitDate) {
+      const resultLabel = c.visitResult === "positive" ? "좋아함" : c.visitResult === "negative" ? "별로" : c.visitResult === "neutral" ? "보통" : "";
+      const sch: Schedule = {
+        id: `cust-visit-${c.id}`,
+        date: c.visitDate,
+        time: c.visitTime || "10:00",
+        visitorName: c.name,
+        visitorPhone: c.phone || "",
+        propertyAddress: c.visitAddress || "",
+        customerId: c.id,
+        scheduleType: "방문",
+        memo: resultLabel ? `방문 결과: ${resultLabel}` : "",
+        status: resultLabel ? "done" : "scheduled",
+        createdAt: Date.now(),
+      };
+      try { await saveSchedule(user.agencyId, sch); } catch (e) { console.error("[customers] 방문 일정 저장 실패", e); }
+    }
   };
 
   const remove = async (id: string) => {

@@ -54,6 +54,10 @@ function fromDoc(id: string, data: Record<string, unknown>): Customer {
     wantedTypes:    Array.isArray(data.wantedTypes) ? (data.wantedTypes as string[]) : [],
     wantedDeals:    Array.isArray(data.wantedDeals) ? (data.wantedDeals as string[]) : [],
     stage:          (data.stage as Customer["stage"]) || undefined,
+    visitDate:      (data.visitDate as string) || "",
+    visitTime:      (data.visitTime as string) || "",
+    visitAddress:   (data.visitAddress as string) || "",
+    visitResult:    (data.visitResult as Customer["visitResult"]) || "",
   };
 }
 

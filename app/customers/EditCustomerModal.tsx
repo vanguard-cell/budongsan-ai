@@ -199,6 +199,36 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           </select>
         </Field>
 
+        {form.status === "matched" && (
+          <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-3 space-y-2">
+            <div className="text-sm font-medium text-sky-800">🚪 방문 일정</div>
+            <div className="grid grid-cols-2 gap-2">
+              <KoreanDatePicker value={form.visitDate ?? ""} onChange={v => setField("visitDate", v)} accent="blue" />
+              <input type="time" value={form.visitTime ?? ""} onChange={e => setField("visitTime", e.target.value)} className={fieldCls} />
+            </div>
+            <input value={form.visitAddress ?? ""} onChange={e => setField("visitAddress", e.target.value)}
+              placeholder="방문할 매물 주소 (선택)" className={fieldCls} list="visit-address-list" />
+            <datalist id="visit-address-list">
+              {properties.filter(p => p.status === "active").slice(0, 100).map(p => <option key={p.id} value={p.address} />)}
+            </datalist>
+            <div>
+              <div className="text-xs text-gray-600 mb-1">방문 결과</div>
+              <div className="flex gap-1.5">
+                {([["positive", "👍 좋아함"], ["neutral", "😐 보통"], ["negative", "👎 별로"]] as const).map(([k, label]) => {
+                  const sel = form.visitResult === k;
+                  return (
+                    <button key={k} type="button" onClick={() => setField("visitResult", sel ? "" : k)}
+                      className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-sky-400 border-sky-400 text-white" : "bg-white text-sky-700 border-sky-200"}`}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-500">저장하면 스케줄의 방문 일정에도 같이 들어가요</p>
+          </div>
+        )}
+
         {/* 매물 매칭 이력 */}
         <div>
           <div className="flex items-center justify-between mb-2">

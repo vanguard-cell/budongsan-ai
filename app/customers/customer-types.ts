@@ -41,6 +41,10 @@ export interface Customer {
   wantedTypes?: string[];      // 찾는 매물 유형 (아파트·오피스텔 등)
   wantedDeals?: string[];      // 찾는 거래 종류 (매매·전세·월세)
   stage?: CustomerStage;       // 보드에서 수동 지정한 단계 (없으면 자동 추론)
+  visitDate?: string;          // 방문 날짜 (YYYY-MM-DD) — 상태가 '방문'일 때
+  visitTime?: string;          // 방문 시간 (HH:MM)
+  visitAddress?: string;       // 방문할 매물 주소
+  visitResult?: ShownProperty["reaction"];   // 방문 결과 (좋아함/보통/별로)
 }
 
 export const uid = () =>
