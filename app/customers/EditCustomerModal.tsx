@@ -95,23 +95,17 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
         </div>
 
         <Field label="구분 (여러 개 선택 가능)">
-          <div className="flex flex-wrap gap-1.5">
-            {[["", "wantedTypes", PROPERTY_TYPES], ["", "wantedDeals", DEAL_TYPES]].map(([, k, list], gi) => {
+          <div className="flex flex-col gap-1.5">
+            {[["wantedTypes", PROPERTY_TYPES], ["wantedDeals", DEAL_TYPES]].map(([k, list]) => {
               const key = k as "wantedTypes" | "wantedDeals";
               const cur = form[key] ?? [];
-              const on = cur.length === 0;
-              const color = gi === 0 ? "bg-blue-600 border-blue-600" : "bg-rose-500 border-rose-500";
               return (
                 <div key={key} className="flex flex-wrap gap-1.5 w-full">
-                  <button type="button" onClick={() => setField(key, [])}
-                    className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${on ? color + " text-white" : "bg-white text-gray-600 border-gray-200"}`}>
-                    전체
-                  </button>
                   {(list as string[]).map(t => {
                     const sel = cur.includes(t);
                     return (
                       <button key={t} type="button" onClick={() => toggleIn(key, t)}
-                        className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? color + " text-white" : "bg-white text-gray-600 border-gray-200"}`}>
+                        className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-sky-400 border-sky-400 text-white" : "bg-sky-50 text-sky-700 border-sky-200"}`}>
                         {t}
                       </button>
                     );
