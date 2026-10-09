@@ -10,7 +10,8 @@ import {
   DEAL_KIND_LABELS,
   STATUS_LABELS,
 } from "./customer-types";
-import type { Property } from "@/lib/properties-db";
+import { subscribeMyComplexes, type Property, type MyComplex } from "@/lib/properties-db";
+import { useAuth } from "@/lib/auth-context";
 import { PROPERTY_TYPES, DEAL_TYPES } from "@/app/properties/helpers";
 import DatedMemo from "@/app/components/DatedMemo";
 
@@ -26,6 +27,19 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
   const [form, setForm] = useState<Customer>(customer);
   const [saving, setSaving] = useState(false);
   const isNew = !customer.name;
+  const { user } = useAuth();
+  const [myComplexes, setMyComplexes] = useState<MyComplex[]>([]);
+  useEffect(() => {
+    if (!user?.agencyId) return;
+    return subscribeMyComplexes(user.agencyId, setMyComplexes);
+  }, [user?.agencyId]);
+
+  // 관심 단지: 쉼표로 구분된 글자에 단지 이름을 넣고 빼기
+  const areaList = (form.preferredArea || "").split(",").map(x => x.trim()).filter(Boolean);
+  const toggleComplex = (name: string) =>
+    setField("preferredArea", (areaList.includes(name) ? areaList.filter(x => x !== name) : [...areaList, name]).join(", "));
+  const wanted = form.wantedTypes ?? [];
+  const shownComplexes = myComplexes.filter(c => wanted.length === 0 || wanted.includes(c.propertyType));
 
   const setField = <K extends keyof Customer>(k: K, v: Customer[K]) =>
     setForm(p => ({ ...p, [k]: v }));
@@ -168,6 +182,24 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
             placeholder="예: 미사강변동, 미사역 인근"
             className={fieldCls}
           />
+          {shownComplexes.length > 0 && (
+            <div className="mt-2">
+              <div className="text-xs text-gray-500 mb-1">
+                내 단지 목록{wanted.length > 0 ? ` (${wanted.join("·")})` : ""} — 눌러서 여러 개 고르세요
+              </div>
+              <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                {shownComplexes.map(c => {
+                  const sel = areaList.includes(c.name);
+                  return (
+                    <button key={c.propertyType + c.name} type="button" onClick={() => toggleComplex(c.name)}
+                      className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-sky-400 border-sky-400 text-white" : "bg-sky-50 text-sky-700 border-sky-200"}`}>
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
