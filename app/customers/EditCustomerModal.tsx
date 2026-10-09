@@ -19,9 +19,10 @@ interface Props {
   properties?: Property[];   // 내 매물장 — 보여드린 매물에서 검색 가능
   onClose: () => void;
   onSave: (c: Customer) => Promise<void> | void;
+  existing?: Customer[];   // 이미 등록된 고객 — 같은 이름·전화번호 안내용
 }
 
-export default function EditCustomerModal({ customer, properties = [], onClose, onSave }: Props) {
+export default function EditCustomerModal({ customer, properties = [], onClose, onSave, existing = [] }: Props) {
   const [form, setForm] = useState<Customer>(customer);
   const [saving, setSaving] = useState(false);
   const isNew = !customer.name;
@@ -61,6 +62,16 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
     if (!form.name.trim()) {
       alert("이름을 입력해주세요");
       return;
+    }
+    const digits = (v: string) => (v || "").replace(/\D/g, "");
+    const phone = digits(form.phone);
+    if (phone) {
+      const name = form.name.trim();
+      const dup = existing.some(c => c.id !== form.id && c.name.trim() === name && digits(c.phone) === phone);
+      if (dup) {
+        alert("이미 등록된 고객이에요.\n같은 이름, 같은 전화번호의 고객이 있어요.");
+        return;
+      }
     }
     setSaving(true);
     try {

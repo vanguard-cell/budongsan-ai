@@ -553,6 +553,7 @@ export default function CustomersPage() {
         <EditCustomerModal
           customer={editing}
           properties={properties}
+          existing={customers}
           onClose={() => setEditing(null)}
           onSave={async (c) => { await upsert({ ...c, id: c.id || uid() }); setEditing(null); }}
         />
