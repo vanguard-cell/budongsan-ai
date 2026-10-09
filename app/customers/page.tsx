@@ -48,6 +48,7 @@ import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { exportCustomers } from "@/lib/export";
 import type { Contract } from "../expiry/contracts";
 import MemoText from "@/app/components/MemoText";
+import DatedMemo from "@/app/components/DatedMemo";
 
 type FilterKey = "all" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
 
@@ -506,6 +507,7 @@ export default function CustomersPage() {
                 onDelete={() => remove(c.id)}
                 onChangeStatus={(st) => changeStatus(c, st)}
                 onVisit={() => goVisit(c)}
+                onAddMemo={async (text) => { await fsSaveCustomer(user.agencyId, { ...c, memo: c.memo ? `${c.memo}\n${text}` : text }); }}
               />
             ))}
           </div>
@@ -610,7 +612,7 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
 /* ───── 고객 행 ───── */
 function CustomerRow({
   customer: c, properties, dday, severity,
-  onEdit, onDelete, onChangeStatus, onVisit,
+  onEdit, onDelete, onChangeStatus, onVisit, onAddMemo,
 }: {
   customer: Customer;
   properties: Property[];
@@ -620,7 +622,17 @@ function CustomerRow({
   onDelete: () => void;
   onChangeStatus: (s: Customer["status"]) => void;
   onVisit: () => void;
+  onAddMemo: (text: string) => Promise<void>;
 }) {
+  const [memoOpen, setMemoOpen] = useState(false);
+  const [memoDraft, setMemoDraft] = useState("");
+  const [memoSaving, setMemoSaving] = useState(false);
+  const saveMemo = async () => {
+    const t = memoDraft.split("\n").map(l => l.trimEnd()).filter(l => l.replace(/^\d{2}\.\d{2}\.\d{2} ▶\s*/, "").trim()).join("\n");
+    if (!t) { setMemoOpen(false); setMemoDraft(""); return; }
+    setMemoSaving(true);
+    try { await onAddMemo(t); setMemoOpen(false); setMemoDraft(""); } finally { setMemoSaving(false); }
+  };
   const cls = followUpClasses(severity);
   const isInactive = c.status === "lost" || c.status === "closed";
   const [showShown, setShowShown] = useState(false);
@@ -765,10 +777,29 @@ function CustomerRow({
         </div>
       </div>
 
+      {memoOpen && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <DatedMemo
+            value={memoDraft}
+            onChange={setMemoDraft}
+            placeholder="추가할 메모를 적으세요"
+            rows={3}
+            className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-blue-300"
+          />
+          <div className="flex gap-1.5 mt-1.5 justify-end">
+            <button onClick={() => { setMemoOpen(false); setMemoDraft(""); }} className="text-[11px] px-3 py-1 rounded-full border border-gray-300 bg-white text-gray-600 whitespace-nowrap">취소</button>
+            <button onClick={saveMemo} disabled={memoSaving} className="text-[11px] px-3 py-1 rounded-full bg-blue-600 text-white font-semibold disabled:opacity-50 whitespace-nowrap">{memoSaving ? "저장 중…" : "저장"}</button>
+          </div>
+        </div>
+      )}
+
       {/* 액션 — 색 구분감 강화 */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button onClick={onEdit} className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors">
           ✏️ 수정
+        </button>
+        <button onClick={() => setMemoOpen(v => !v)} className="text-[11px] px-2.5 py-1 rounded-full border border-yellow-300 bg-yellow-50 text-yellow-800 font-semibold hover:bg-yellow-100 transition-colors whitespace-nowrap">
+          📝 메모 추가
         </button>
         {c.status === "active" && (
           <>
