@@ -69,7 +69,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   const sevCls = sev ? severityClasses(sev) : null;
   const area = p.area ? (m2ToPyeong(p.area) ? `전용 ${p.area}㎡ · ${m2ToPyeong(p.area)}평` : `전용 ${p.area}㎡`) : "";
   const smsHref = (phone: string, name: string, tail: string) =>
-    `sms:${phone.replace(/\D/g, "")}?body=${encodeURIComponent(`안녕하세요${name ? ` ${name}님` : ""}, 미사금빛공인중개사입니다.\n${p.address} ${tail} 관련하여 연락드립니다.`)}`;
+    `sms:${phone.replace(/\D/g, "")}?body=${encodeURIComponent(`안녕하세요, 미사금빛공인중개사입니다.\n${p.address} ${tail} 관련하여 연락드립니다.`)}`;
   const hasTenant = !!(p.tenantName || p.tenantPhone);
 
   return (
