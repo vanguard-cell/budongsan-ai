@@ -46,12 +46,13 @@ interface Props {
   onClose: () => void;
   onEdit: (c: Customer) => void;
   onChangeStatus: (c: Customer, status: CustomerStatus) => void;
+  onVisit: (c: Customer) => void;
   onAddEvent: (c: Customer, ev: Omit<CustomerEvent, "at" | "by">) => Promise<void>;
   onEditEvent: (c: Customer, idx: number, text: string) => Promise<void>;
   onDeleteEvent: (c: Customer, idx: number) => Promise<void>;
 }
 
-export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeStatus, onAddEvent, onEditEvent, onDeleteEvent }: Props) {
+export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeStatus, onVisit, onAddEvent, onEditEvent, onDeleteEvent }: Props) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
@@ -176,7 +177,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
         <div className="grid grid-cols-2 gap-1.5">
           <ActionBtn icon="edit" label="수정" onClick={() => onEdit(c)} primary />
           <ActionBtn icon="hourglass_top" label="상담" onClick={() => onChangeStatus(c, "active")} active={c.status === "active"} />
-          <ActionBtn icon="handshake" label="방문" onClick={() => onChangeStatus(c, "matched")} active={c.status === "matched"} />
+          <ActionBtn icon="handshake" label="방문" onClick={() => onVisit(c)} active={c.status === "matched"} />
           <ActionBtn icon="task_alt" label="거래 완료" onClick={() => onChangeStatus(c, "closed")} active={c.status === "closed"} />
         </div>
         <button onClick={() => onChangeStatus(c, "lost")}

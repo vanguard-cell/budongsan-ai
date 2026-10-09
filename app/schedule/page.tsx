@@ -130,8 +130,15 @@ export default function SchedulePage() {
   // 홈 빠른 실행 "약속 추가" 진입 (?new=1) → 추가 모달 바로 열기
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (new URLSearchParams(window.location.search).get("new") === "1") {
-      setEditing({ ...emptySchedule(), scheduleType: "기타" });
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("new") === "1") {
+      // 고객 화면 '방문' 버튼에서 오면 방문 + 이름·전화번호 미리 채움
+      const isVisit = sp.get("type") === "방문";
+      setEditing({
+        ...emptySchedule(),
+        scheduleType: isVisit ? "방문" : "기타",
+        ...(isVisit ? { visitorName: sp.get("name") || "", visitorPhone: sp.get("phone") || "", customerId: sp.get("cid") || undefined } : {}),
+      });
     }
   }, []);
 

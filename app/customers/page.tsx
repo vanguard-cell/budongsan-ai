@@ -268,6 +268,12 @@ export default function CustomersPage() {
 
   const STATUS_LABEL: Record<Customer["status"], string> = { active: "상담", matched: "방문", closed: "거래 완료", lost: "이탈" };
   const by = () => user?.displayName || user?.email || "나";
+  // 방문 일정은 스케줄에서 관리 — 이름·전화번호를 담아 스케줄 '방문' 추가 화면으로 이동
+  const goVisit = (c: Customer) => {
+    const q = new URLSearchParams({ new: "1", type: "방문", name: c.name || "", phone: c.phone || "", cid: c.id });
+    router.push(`/schedule?${q.toString()}`);
+  };
+
   const changeStatus = async (c: Customer, status: Customer["status"]) => {
     if (!user) return;
     if (c.status === status) return;
@@ -499,6 +505,7 @@ export default function CustomersPage() {
                 onEdit={() => setEditing({ ...c })}
                 onDelete={() => remove(c.id)}
                 onChangeStatus={(st) => changeStatus(c, st)}
+                onVisit={() => goVisit(c)}
               />
             ))}
           </div>
@@ -515,6 +522,7 @@ export default function CustomersPage() {
         onClose={() => setPanelId(null)}
         onEdit={c => setEditing({ ...c })}
         onChangeStatus={(c, st) => changeStatus(c, st)}
+        onVisit={goVisit}
         onAddEvent={addCustomerEvent}
         onEditEvent={editCustomerEvent}
         onDeleteEvent={deleteCustomerEvent}
@@ -602,7 +610,7 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
 /* ───── 고객 행 ───── */
 function CustomerRow({
   customer: c, properties, dday, severity,
-  onEdit, onDelete, onChangeStatus,
+  onEdit, onDelete, onChangeStatus, onVisit,
 }: {
   customer: Customer;
   properties: Property[];
@@ -611,6 +619,7 @@ function CustomerRow({
   onEdit: () => void;
   onDelete: () => void;
   onChangeStatus: (s: Customer["status"]) => void;
+  onVisit: () => void;
 }) {
   const cls = followUpClasses(severity);
   const isInactive = c.status === "lost" || c.status === "closed";
@@ -763,8 +772,8 @@ function CustomerRow({
         </button>
         {c.status === "active" && (
           <>
-            <button onClick={() => onChangeStatus("matched")} className="text-[11px] px-2.5 py-1 rounded-full border border-green-300 bg-green-50 text-green-700 font-semibold hover:bg-green-100 transition-colors">
-              🤝 방문으로
+            <button onClick={onVisit} className="text-[11px] px-2.5 py-1 rounded-full border border-green-300 bg-green-50 text-green-700 font-semibold hover:bg-green-100 transition-colors whitespace-nowrap">
+              🤝 방문 일정
             </button>
             <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors">
               ✅ 거래 완료
