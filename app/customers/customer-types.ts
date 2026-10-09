@@ -107,8 +107,8 @@ export const DEAL_KIND_LABELS: Record<DealKind, string> = {
 };
 
 export const STATUS_LABELS: Record<CustomerStatus, string> = {
-  active:  "진행 중",
-  matched: "매칭",
+  active:  "상담",
+  matched: "방문",
   lost:    "이탈",
   closed:  "거래 완료",
 };

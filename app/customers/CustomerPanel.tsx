@@ -175,8 +175,8 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
         <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-1.5">작업</p>
         <div className="grid grid-cols-2 gap-1.5">
           <ActionBtn icon="edit" label="수정" onClick={() => onEdit(c)} primary />
-          <ActionBtn icon="hourglass_top" label="진행 중" onClick={() => onChangeStatus(c, "active")} active={c.status === "active"} />
-          <ActionBtn icon="handshake" label="매칭" onClick={() => onChangeStatus(c, "matched")} active={c.status === "matched"} />
+          <ActionBtn icon="hourglass_top" label="상담" onClick={() => onChangeStatus(c, "active")} active={c.status === "active"} />
+          <ActionBtn icon="handshake" label="방문" onClick={() => onChangeStatus(c, "matched")} active={c.status === "matched"} />
           <ActionBtn icon="task_alt" label="거래 완료" onClick={() => onChangeStatus(c, "closed")} active={c.status === "closed"} />
         </div>
         <button onClick={() => onChangeStatus(c, "lost")}

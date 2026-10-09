@@ -247,7 +247,7 @@ export default function CustomersPage() {
     await fsDeleteCustomer(user.agencyId, id);
   };
 
-  const STATUS_LABEL: Record<Customer["status"], string> = { active: "진행 중", matched: "매칭", closed: "거래 완료", lost: "이탈" };
+  const STATUS_LABEL: Record<Customer["status"], string> = { active: "상담", matched: "방문", closed: "거래 완료", lost: "이탈" };
   const by = () => user?.displayName || user?.email || "나";
   const changeStatus = async (c: Customer, status: Customer["status"]) => {
     if (!user) return;
@@ -421,7 +421,7 @@ export default function CustomersPage() {
         {/* 요약 카드 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
           <SummaryCard label="후속 연락 필요" count={counts.needFollowup} accent="red" />
-          <SummaryCard label="진행 중" count={counts.all} accent="blue" />
+          <SummaryCard label="상담" count={counts.all} accent="blue" />
           <SummaryCard label="VIP" count={counts.vip} accent="purple" />
           <SummaryCard label="거래 완료" count={counts.closed} accent="gray" />
         </div>
@@ -432,7 +432,7 @@ export default function CustomersPage() {
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>전체 ({counts.all})</FilterChip>
             <FilterChip active={filter === "needFollowup"} onClick={() => { setFilter("needFollowup"); recordFeatureUse(user?.uid, "cust_filter"); }}>🔔 후속 연락 ({counts.needFollowup})</FilterChip>
             <FilterChip active={filter === "vip"} onClick={() => { setFilter("vip"); recordFeatureUse(user?.uid, "cust_filter"); }}>⭐ VIP ({counts.vip})</FilterChip>
-            <FilterChip active={filter === "matched"} onClick={() => { setFilter("matched"); recordFeatureUse(user?.uid, "cust_filter"); }}>매칭 ({counts.matched})</FilterChip>
+            <FilterChip active={filter === "matched"} onClick={() => { setFilter("matched"); recordFeatureUse(user?.uid, "cust_filter"); }}>방문 ({counts.matched})</FilterChip>
             <FilterChip active={filter === "lost"} onClick={() => { setFilter("lost"); recordFeatureUse(user?.uid, "cust_filter"); }}>이탈 ({counts.lost})</FilterChip>
             <FilterChip active={filter === "closed"} onClick={() => { setFilter("closed"); recordFeatureUse(user?.uid, "cust_filter"); }}>완료 ({counts.closed})</FilterChip>
           </div>
@@ -793,7 +793,7 @@ function CustomerRow({
         {c.status === "active" && (
           <>
             <button onClick={() => onChangeStatus("matched")} className="text-[11px] px-2.5 py-1 rounded-full border border-green-300 bg-green-50 text-green-700 font-semibold hover:bg-green-100 transition-colors">
-              🤝 매칭으로
+              🤝 방문으로
             </button>
             <button onClick={() => onChangeStatus("closed")} className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition-colors">
               ✅ 거래 완료
@@ -810,7 +810,7 @@ function CustomerRow({
         )}
         {(c.status === "lost" || c.status === "closed") && (
           <button onClick={() => onChangeStatus("active")} className="text-[11px] px-2.5 py-1 rounded-full border border-purple-300 bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100 transition-colors">
-            ↩️ 다시 진행 중으로
+            ↩️ 다시 상담으로
           </button>
         )}
         <button onClick={onDelete} className="text-[11px] px-2.5 py-1 rounded-full border border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors ml-auto">
