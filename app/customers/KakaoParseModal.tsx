@@ -10,6 +10,7 @@
  *  4. [고객 등록] 클릭 → 저장
  */
 
+import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { useState } from "react";
 import type { Customer, CustomerSide, DealKind } from "./customer-types";
 import { emptyCustomer, SIDE_LABELS, DEAL_KIND_LABELS } from "./customer-types";
@@ -192,8 +193,7 @@ export default function KakaoParseModal({ onClose, onSave }: Props) {
 
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">입주 가능일</label>
-              <input type="date" value={draft.moveInDate} onChange={e => set("moveInDate", e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50" />
+              <KoreanDatePicker value={draft.moveInDate} onChange={v => set("moveInDate", v)} accent="blue" />
             </div>
 
             <div>

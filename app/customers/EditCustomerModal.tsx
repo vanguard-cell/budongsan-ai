@@ -1,5 +1,6 @@
 "use client";
 
+import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { useState, useEffect, useMemo } from "react";
 import {
   Customer,
@@ -156,12 +157,13 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="입주 가능일">
-            <input
-              type="date"
-              value={form.moveInDate}
-              onChange={e => setField("moveInDate", e.target.value)}
-              className={fieldCls}
-            />
+            <KoreanDatePicker value={form.moveInDate} onChange={v => setField("moveInDate", v)} accent="blue" />
+            {form.moveInDate && (
+              <button type="button" onClick={() => setField("moveInDate", "")}
+                className="whitespace-nowrap mt-1 text-xs text-red-600 hover:underline">
+                지우기
+              </button>
+            )}
           </Field>
           <Field label="다음 후속 연락">
             <input
