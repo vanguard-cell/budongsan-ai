@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Customer,
   CustomerSide,
@@ -52,11 +52,34 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
   };
 
   // 핸드폰 연락처 불러오기 (안드로이드 크롬 지원)
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // 연락처 파일(.vcf)에서 이름·전화번호 읽기 (바로 가져오기가 안 되는 폰용)
+  const onVcfFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const text = await file.text();
+    const unfolded = text.replace(/\r?\n[ \t]/g, "");
+    const fn = unfolded.match(/^FN[^:\n]*:(.+)$/im)?.[1]?.trim();
+    const tel = unfolded.match(/^TEL[^:\n]*:(.+)$/im)?.[1]?.trim();
+    if (!fn && !tel) {
+      alert("연락처 파일에서 이름·전화번호를 찾지 못했어요.");
+      return;
+    }
+    setForm(p => ({
+      ...p,
+      name: fn || p.name,
+      phone: tel ? tel.replace(/[^\d+]/g, "") : p.phone,
+    }));
+  };
+
   const pickContact = async () => {
     type ContactsApi = { select: (props: string[], opts?: { multiple?: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };
     const api = (navigator as Navigator & { contacts?: ContactsApi }).contacts;
     if (!api || typeof api.select !== "function") {
-      alert("이 핸드폰(브라우저)에서는 연락처를 바로 가져올 수 없어요.\n안드로이드 폰의 크롬으로 열어보시거나, 이름·연락처를 직접 입력해주세요.");
+      alert("이 핸드폰에서는 연락처를 바로 가져올 수 없어요.\n대신 연락처 앱에서 고객을 '공유'로 내보낸 파일(.vcf)을 골라주세요.");
+      fileRef.current?.click();
       return;
     }
     try {
@@ -97,6 +120,9 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           >
             📱 내 핸드폰 연락처에서 가져오기
           </button>
+        )}
+        {isNew && (
+          <input ref={fileRef} type="file" accept=".vcf,.vcard,text/vcard,text/x-vcard" className="hidden" onChange={onVcfFile} />
         )}
         {/* 기본 정보 */}
         <div className="grid grid-cols-2 gap-3">
