@@ -457,54 +457,6 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* 상단 — 고객 파이프라인 보드 (단계 한눈 + 드래그 이동). 아래 목록이 걸쳐 보이도록 높이 제한 */}
-        {loaded && customers.length > 0 && (
-          <div className="mb-5">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2">
-              <button onClick={() => setBoardOpen(o => { if (!o) recordFeatureUse(user?.uid, "cust_board_open"); return !o; })}
-                className="flex items-center gap-1.5 text-sm font-bold text-gray-800 dark:text-gray-100 hover:text-[var(--brand-blue)] transition-colors shrink-0">
-                <span className="material-symbols-outlined text-[18px] text-[var(--brand-blue)]">view_kanban</span>
-                진행 파이프라인 <span className="text-gray-400 font-medium">{boardCustomers.length}</span>
-                <span className={`material-symbols-outlined text-[18px] text-gray-400 transition-transform ${boardOpen ? "" : "-rotate-90"}`}>expand_more</span>
-              </button>
-              {/* 한눈 요약 — 단계별 건수 (보드 안 펼쳐도/스크롤 안 해도 분포 파악) */}
-              <div className="flex flex-wrap items-center gap-1">
-                {stageSummary.map(({ stage, meta, n }, i) => (
-                  <span key={stage} className="inline-flex items-center gap-1">
-                    {i > 0 && <span className="text-gray-300 dark:text-slate-600 text-[11px]">·</span>}
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold transition-opacity ${n === 0 ? "opacity-40" : ""}`}
-                      style={{ background: meta.bg, color: meta.fg }}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: meta.fg }} />
-                      {meta.short} {n}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-            {boardOpen && (
-              <div className="rounded-2xl border border-[var(--sidebar-bd)] bg-gray-50/50 dark:bg-slate-800/30 p-2">
-                <CustomerBoard
-                  customers={boardCustomers}
-                  selectedId={panelId || undefined}
-                  onSelect={id => setPanelId(id)}
-                  onMoveStage={moveStage}
-                  heightClass="max-h-[42vh]"
-                />
-                {hiddenWonCount > 0 && (
-                  <button
-                    onClick={() => setFilter("closed")}
-                    className="mt-1 w-full text-center text-[11px] text-gray-400 hover:text-[var(--brand-blue)] transition-colors py-1"
-                    title="지난 완료 건은 아래 [완료] 필터에서 전부 볼 수 있어요"
-                  >
-                    계약 성사 칸은 최근 30일만 표시 · 지난 완료 {hiddenWonCount}건 더 보기 →
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* 검색 — 상단 보드와 전체 명단 사이 */}
         <div className="mb-4">
