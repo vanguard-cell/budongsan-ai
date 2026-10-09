@@ -7,6 +7,7 @@
 
 import { useState } from "react";
 import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, effectiveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
+import type { Schedule } from "@/lib/schedules-db";
 import SideDrawer from "@/app/components/SideDrawer";
 import MemoText from "@/app/components/MemoText";
 
@@ -47,12 +48,13 @@ interface Props {
   onEdit: (c: Customer) => void;
   onChangeStatus: (c: Customer, status: CustomerStatus) => void;
   onVisit: (c: Customer) => void;
+  visits?: Schedule[];
   onAddEvent: (c: Customer, ev: Omit<CustomerEvent, "at" | "by">) => Promise<void>;
   onEditEvent: (c: Customer, idx: number, text: string) => Promise<void>;
   onDeleteEvent: (c: Customer, idx: number) => Promise<void>;
 }
 
-export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeStatus, onVisit, onAddEvent, onEditEvent, onDeleteEvent }: Props) {
+export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeStatus, onVisit, visits = [], onAddEvent, onEditEvent, onDeleteEvent }: Props) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
@@ -151,6 +153,19 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
             {c.preferredArea && <Row label="희망지역">{c.preferredArea}</Row>}
             {c.moveInDate && <Row label="입주가능">{c.moveInDate}</Row>}
             {c.shownProperties.length > 0 && <Row label="보여준 매물">{c.shownProperties.length}건</Row>}
+            {visits.length > 0 && (
+              <Row label="방문">
+                <div className="space-y-0.5">
+                  {visits.map(v => (
+                    <div key={v.id} className="break-all">
+                      <b className="whitespace-nowrap">{v.date.slice(5).replace("-", "/")} {v.time}</b>
+                      {v.propertyAddress && <> · {v.propertyAddress}</>}
+                      {v.status === "done" && <span className="ml-1 text-gray-400 whitespace-nowrap">(완료)</span>}
+                    </div>
+                  ))}
+                </div>
+              </Row>
+            )}
             {c.memo && <Row label="메모"><MemoText memo={c.memo} /></Row>}
           </tbody>
         </table>

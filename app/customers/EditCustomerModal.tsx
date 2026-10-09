@@ -147,9 +147,9 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           {shownComplexes.length > 0 && (
             <div className="mt-2">
               <div className="text-xs text-gray-500 mb-1">
-                내 단지 목록{wanted.length > 0 ? ` (${wanted.join("·")})` : ""} — 가나다 순, 옆으로 밀어서 보고 눌러서 고르세요
+                내 단지 목록{wanted.length > 0 ? ` (${wanted.join("·")})` : ""} — 가나다 순, 위아래로 밀어서 보고 눌러서 고르세요
               </div>
-              <div className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1">
+              <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-28 pb-1">
                 {shownComplexes.map(c => {
                   const sel = areaList.includes(c.name);
                   return (

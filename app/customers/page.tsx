@@ -11,7 +11,7 @@ import {
   logCustomerEvent,
   setCustomerHistory,
 } from "@/lib/customers-db";
-import { saveSchedule, type Schedule } from "@/lib/schedules-db";
+import { saveSchedule, subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import {
   Customer,
   type CustomerEvent,
@@ -113,6 +113,14 @@ export default function CustomersPage() {
     else if (v === "board") { setViewStyle("card"); setBoardOpen(true); }  // 보드는 상단 상시 노출
   }, []);
 
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  // 고객별 방문 일정 (스케줄에서 고객 연결된 것, 없으면 전화번호가 같은 것)
+  const visitsOf = (c: Customer): Schedule[] => {
+    const digits = (c.phone || "").replace(/\D/g, "");
+    return schedules.filter(sc => sc.scheduleType === "방문" && sc.status !== "cancelled" &&
+      (sc.customerId === c.id || (!sc.customerId && digits.length >= 8 && sc.visitorPhone.replace(/\D/g, "") === digits)));
+  };
+
   /* 실시간 구독 */
   useEffect(() => {
     if (!user) return;
@@ -122,7 +130,8 @@ export default function CustomersPage() {
     });
     const unsubC = subscribeContracts(user.agencyId, setContracts);
     const unsubP = subscribeProperties(user.agencyId, setProperties);
-    return () => { unsub(); unsubC(); unsubP(); };
+    const unsubS = subscribeSchedules(user.agencyId, setSchedules);
+    return () => { unsub(); unsubC(); unsubP(); unsubS(); };
   }, [user]);
 
   // ?focus=<id> 진입 시 — 표/카드 어느 뷰든 해당 고객 상세 패널 열기 (연계)
@@ -507,6 +516,7 @@ export default function CustomersPage() {
                 onDelete={() => remove(c.id)}
                 onChangeStatus={(st) => changeStatus(c, st)}
                 onVisit={() => goVisit(c)}
+                visits={visitsOf(c)}
                 onAddMemo={async (text) => { await fsSaveCustomer(user.agencyId, { ...c, memo: c.memo ? `${c.memo}\n${text}` : text }); }}
               />
             ))}
@@ -525,6 +535,7 @@ export default function CustomersPage() {
         onEdit={c => setEditing({ ...c })}
         onChangeStatus={(c, st) => changeStatus(c, st)}
         onVisit={goVisit}
+        visits={panelCustomer ? visitsOf(panelCustomer) : []}
         onAddEvent={addCustomerEvent}
         onEditEvent={editCustomerEvent}
         onDeleteEvent={deleteCustomerEvent}
@@ -612,7 +623,7 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
 /* ───── 고객 행 ───── */
 function CustomerRow({
   customer: c, properties, dday, severity,
-  onEdit, onDelete, onChangeStatus, onVisit, onAddMemo,
+  onEdit, onDelete, onChangeStatus, onVisit, onAddMemo, visits,
 }: {
   customer: Customer;
   properties: Property[];
@@ -622,6 +633,7 @@ function CustomerRow({
   onDelete: () => void;
   onChangeStatus: (s: Customer["status"]) => void;
   onVisit: () => void;
+  visits: Schedule[];
   onAddMemo: (text: string) => Promise<void>;
 }) {
   const [memoOpen, setMemoOpen] = useState(false);
@@ -766,6 +778,21 @@ function CustomerRow({
                   문자
                 </a>
               )}
+            </div>
+          )}
+
+          {visits.length > 0 && (
+            <div className="mt-2 text-[11px] text-green-800 bg-green-50 rounded px-2 py-1 border border-green-100 space-y-0.5">
+              {visits.slice(-5).map(v => (
+                <div key={v.id} className="flex gap-1">
+                  <span>🤝</span>
+                  <span className="flex-1 min-w-0 break-all">
+                    <b className="whitespace-nowrap">{v.date.slice(5).replace("-", "/")} {v.time}</b>
+                    {v.propertyAddress && <> · {v.propertyAddress}</>}
+                    {v.status === "done" && <span className="ml-1 text-gray-400 whitespace-nowrap">(완료)</span>}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
 
