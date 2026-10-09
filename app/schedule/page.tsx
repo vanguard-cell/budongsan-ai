@@ -793,23 +793,6 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
               방문자
               {form.customerId && <span className="ml-2 text-[11px] text-blue-600 font-normal">👥 고객연결</span>}
             </label>
-            <button type="button" onClick={async () => {
-              type ContactsApi = { select: (props: string[], opts?: { multiple?: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };
-              const api = (navigator as Navigator & { contacts?: ContactsApi }).contacts;
-              if (!api || typeof api.select !== "function") {
-                alert("이 핸드폰에서는 연락처를 바로 가져올 수 없어요.\n아래 이름 칸에 글자를 쓰면 앱에 저장된 고객이 나와요. 거기서 골라주세요.");
-                return;
-              }
-              try {
-                const r = await api.select(["name", "tel"], { multiple: false });
-                if (r?.[0]) {
-                  setForm(p => ({ ...p, visitorName: r[0].name?.[0] || p.visitorName, visitorPhone: r[0].tel?.[0] ? r[0].tel[0].replace(/[^\d+]/g, "") : p.visitorPhone, customerId: undefined }));
-                }
-              } catch { /* 취소 */ }
-            }}
-              className="w-full mb-2 py-2 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold whitespace-nowrap hover:bg-blue-100">
-              📱 내 핸드폰 연락처에서 찾기
-            </button>
             <div className="grid grid-cols-2 gap-2">
               <div className="relative">
                 <input value={form.visitorName} onChange={e => { set("visitorName", e.target.value); set("customerId", undefined); setShowVisitorList(true); }}

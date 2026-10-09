@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Customer,
   CustomerSide,
@@ -12,6 +12,7 @@ import {
   STATUS_LABELS,
 } from "./customer-types";
 import type { Property } from "@/lib/properties-db";
+import { PROPERTY_TYPES } from "@/app/properties/helpers";
 import DatedMemo from "@/app/components/DatedMemo";
 
 interface Props {
@@ -51,51 +52,6 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
     }));
   };
 
-  // 핸드폰 연락처 불러오기 (안드로이드 크롬 지원)
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  // 연락처 파일(.vcf)에서 이름·전화번호 읽기 (바로 가져오기가 안 되는 폰용)
-  const onVcfFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    const text = await file.text();
-    const unfolded = text.replace(/\r?\n[ \t]/g, "");
-    const fn = unfolded.match(/^FN[^:\n]*:(.+)$/im)?.[1]?.trim();
-    const tel = unfolded.match(/^TEL[^:\n]*:(.+)$/im)?.[1]?.trim();
-    if (!fn && !tel) {
-      alert("연락처 파일에서 이름·전화번호를 찾지 못했어요.");
-      return;
-    }
-    setForm(p => ({
-      ...p,
-      name: fn || p.name,
-      phone: tel ? tel.replace(/[^\d+]/g, "") : p.phone,
-    }));
-  };
-
-  const pickContact = async () => {
-    type ContactsApi = { select: (props: string[], opts?: { multiple?: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };
-    const api = (navigator as Navigator & { contacts?: ContactsApi }).contacts;
-    if (!api || typeof api.select !== "function") {
-      alert("이 핸드폰에서는 연락처를 바로 가져올 수 없어요.\n대신 연락처 앱에서 고객을 '공유'로 내보낸 파일(.vcf)을 골라주세요.");
-      fileRef.current?.click();
-      return;
-    }
-    try {
-      const res = await api.select(["name", "tel"], { multiple: false });
-      const c = res?.[0];
-      if (!c) return;
-      setForm(p => ({
-        ...p,
-        name: c.name?.[0] || p.name,
-        phone: c.tel?.[0]?.replace(/[^\d+]/g, "") || p.phone,
-      }));
-    } catch {
-      /* 취소 */
-    }
-  };
-
   const save = async () => {
     if (!form.name.trim()) {
       alert("이름을 입력해주세요");
@@ -112,18 +68,6 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
   return (
     <Modal onClose={onClose} title={isNew ? "매수자 추가" : "매수자 수정"}>
       <div className="space-y-3">
-        {isNew && (
-          <button
-            type="button"
-            onClick={pickContact}
-            className="w-full whitespace-nowrap py-2 rounded-lg border border-purple-300 bg-purple-50 text-purple-700 text-sm font-medium hover:bg-purple-100"
-          >
-            📱 내 핸드폰 연락처에서 가져오기
-          </button>
-        )}
-        {isNew && (
-          <input ref={fileRef} type="file" accept=".vcf,.vcard,text/vcard,text/x-vcard" className="hidden" onChange={onVcfFile} />
-        )}
         {/* 기본 정보 */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="이름" required>
@@ -287,13 +231,22 @@ function ShownPropertyRow({
   onRemove: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [typeFilter, setTypeFilter] = useState("");
+  const [dealFilter, setDealFilter] = useState("");
+
+  const typeOptions = useMemo(() => {
+    const seen = new Set<string>(PROPERTY_TYPES);
+    properties.forEach(p => { if (p.status === "active" && p.propertyType) seen.add(p.propertyType); });
+    return Array.from(seen);
+  }, [properties]);
 
   const suggestions = useMemo(() => {
-    const base = properties.filter(p => p.status === "active");
-    if (!s.address.trim()) return base.slice(0, 6);
+    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter));
+    const limit = typeFilter || dealFilter ? 30 : 6;
+    if (!s.address.trim()) return base.slice(0, limit);
     const q = s.address.toLowerCase();
-    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 6);
-  }, [s.address, properties]);
+    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 30);
+  }, [s.address, properties, typeFilter, dealFilter]);
 
   const select = (p: Property) => {
     onChange({ address: p.address });
@@ -302,6 +255,28 @@ function ShownPropertyRow({
 
   return (
     <div className="border border-gray-200 rounded-xl p-2.5 space-y-1.5 bg-gray-50/50 relative">
+      {properties.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {["", ...typeOptions].map(t => (
+            <button key={t || "all"} type="button"
+              onClick={() => { setTypeFilter(t); setOpen(true); }}
+              className={`shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] border transition-colors ${typeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+              {t || "전체"}
+            </button>
+          ))}
+        </div>
+      )}
+      {properties.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {["", "매매", "전세", "월세"].map(t => (
+            <button key={t || "all"} type="button"
+              onClick={() => { setDealFilter(t); setOpen(true); }}
+              className={`shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] border transition-colors ${dealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+              {t || "전체"}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex gap-1.5">
         <div className="flex-1 relative">
           <input
