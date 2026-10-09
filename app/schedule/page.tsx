@@ -698,6 +698,13 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
   const isNew = !schedule.propertyAddress;
   const [extraProps, setExtraProps] = useState<Property[]>([]);
   const [addingExtra, setAddingExtra] = useState(false);
+  const [showVisitorList, setShowVisitorList] = useState(false);
+  const visitorMatches = useMemo(() => {
+    const q = (form.visitorName || "").trim();
+    if (!q || form.customerId) return [];
+    const qd = q.replace(/\D/g, "");
+    return customers.filter(c => c.name?.includes(q) || (qd.length >= 3 && (c.phone || "").replace(/\D/g, "").includes(qd))).slice(0, 8);
+  }, [customers, form.visitorName, form.customerId]);
   const [propQuery, setPropQuery] = useState("");
   const [showPropList, setShowPropList] = useState(false);
   const [propTypeFilter, setPropTypeFilter] = useState("");
@@ -786,9 +793,42 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
               방문자
               {form.customerId && <span className="ml-2 text-[11px] text-blue-600 font-normal">👥 고객연결</span>}
             </label>
+            <button type="button" onClick={async () => {
+              type ContactsApi = { select: (props: string[], opts?: { multiple?: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };
+              const api = (navigator as Navigator & { contacts?: ContactsApi }).contacts;
+              if (!api || typeof api.select !== "function") {
+                alert("이 핸드폰에서는 연락처를 바로 가져올 수 없어요.\n아래 이름 칸에 글자를 쓰면 앱에 저장된 고객이 나와요. 거기서 골라주세요.");
+                return;
+              }
+              try {
+                const r = await api.select(["name", "tel"], { multiple: false });
+                if (r?.[0]) {
+                  setForm(p => ({ ...p, visitorName: r[0].name?.[0] || p.visitorName, visitorPhone: r[0].tel?.[0] ? r[0].tel[0].replace(/[^\d+]/g, "") : p.visitorPhone, customerId: undefined }));
+                }
+              } catch { /* 취소 */ }
+            }}
+              className="w-full mb-2 py-2 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold whitespace-nowrap hover:bg-blue-100">
+              📱 내 핸드폰 연락처에서 찾기
+            </button>
             <div className="grid grid-cols-2 gap-2">
-              <input value={form.visitorName} onChange={e => { set("visitorName", e.target.value); set("customerId", undefined); }}
-                placeholder="이름" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <div className="relative">
+                <input value={form.visitorName} onChange={e => { set("visitorName", e.target.value); set("customerId", undefined); setShowVisitorList(true); }}
+                  onFocus={() => setShowVisitorList(true)} onBlur={() => setTimeout(() => setShowVisitorList(false), 150)}
+                  placeholder="이름" autoComplete="off" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                {showVisitorList && visitorMatches.length > 0 && (
+                  <div className="absolute z-20 left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg">
+                    {visitorMatches.map(c => (
+                      <button key={c.id} type="button"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => { setForm(p => ({ ...p, visitorName: c.name, visitorPhone: c.phone || "", customerId: c.id })); setShowVisitorList(false); }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-50 last:border-0">
+                        <span className="font-medium">{c.name}</span>
+                        {c.phone && <span className="ml-2 text-xs text-gray-400">{c.phone}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <input type="tel" value={form.visitorPhone} onChange={e => { set("visitorPhone", e.target.value); set("customerId", undefined); }}
                 placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
