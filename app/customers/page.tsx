@@ -50,7 +50,7 @@ import type { Contract } from "../expiry/contracts";
 import MemoText from "@/app/components/MemoText";
 import DatedMemo from "@/app/components/DatedMemo";
 
-type FilterKey = "all" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
+type FilterKey = "all" | "active" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
 
 export default function CustomersPage() {
   const router = useRouter();
@@ -152,6 +152,7 @@ export default function CustomersPage() {
     return withDday
       .filter(({ c, s }) => {
         if (filter === "all") return c.status !== "lost" && c.status !== "closed";
+        if (filter === "active") return c.status === "active";
         if (filter === "needFollowup") return c.status === "active" && (s === "overdue" || s === "today" || s === "soon");
         if (filter === "vip") return c.vip && c.status !== "lost" && c.status !== "closed";
         if (filter === "matched") return c.status === "matched";
@@ -228,7 +229,7 @@ export default function CustomersPage() {
 
   /* 카운트 */
   const counts = useMemo(() => {
-    const result = { all: 0, needFollowup: 0, vip: 0, matched: 0, lost: 0, closed: 0 };
+    const result = { all: 0, active: 0, needFollowup: 0, vip: 0, matched: 0, lost: 0, closed: 0 };
     for (const c of customers) {
       const d = followUpDDay(c.nextFollowUp);
       const s = followUpSeverity(d);
@@ -237,6 +238,7 @@ export default function CustomersPage() {
       if (isActive) result.all++;
       if (c.status === "active" && (s === "overdue" || s === "today" || s === "soon")) result.needFollowup++;
       if (c.vip && isActive) result.vip++;
+      if (c.status === "active") result.active++;
       if (c.status === "matched") result.matched++;
       if (c.status === "lost") result.lost++;
       if (c.status === "closed") result.closed++;
@@ -465,8 +467,7 @@ export default function CustomersPage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
           <div className="flex flex-wrap items-center gap-2">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>전체 ({counts.all})</FilterChip>
-            <FilterChip active={filter === "needFollowup"} onClick={() => { setFilter("needFollowup"); recordFeatureUse(user?.uid, "cust_filter"); }}>🔔 후속 연락 ({counts.needFollowup})</FilterChip>
-            <FilterChip active={filter === "vip"} onClick={() => { setFilter("vip"); recordFeatureUse(user?.uid, "cust_filter"); }}>⭐ VIP ({counts.vip})</FilterChip>
+            <FilterChip active={filter === "active"} onClick={() => { setFilter("active"); recordFeatureUse(user?.uid, "cust_filter"); }}>🔔 후속 연락 ({counts.active})</FilterChip>
             <FilterChip active={filter === "matched"} onClick={() => { setFilter("matched"); recordFeatureUse(user?.uid, "cust_filter"); }}>방문 ({counts.matched})</FilterChip>
             <FilterChip active={filter === "lost"} onClick={() => { setFilter("lost"); recordFeatureUse(user?.uid, "cust_filter"); }}>이탈 ({counts.lost})</FilterChip>
             <FilterChip active={filter === "closed"} onClick={() => { setFilter("closed"); recordFeatureUse(user?.uid, "cust_filter"); }}>완료 ({counts.closed})</FilterChip>

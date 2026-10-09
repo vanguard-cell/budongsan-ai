@@ -59,7 +59,7 @@ function MenuItem({ icon, label, active, onClick }: { icon: string; label: strin
 }
 
 export type CustSort = "followup" | "name" | "newest";
-export type CustFilter = "all" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
+export type CustFilter = "all" | "active" | "needFollowup" | "vip" | "matched" | "lost" | "closed";
 
 interface Props {
   list: { c: Customer; d: number; s: string }[];
@@ -265,8 +265,8 @@ export default function CustomerTable({ list, selectedId, onRowClick, sortBy, on
               {renderTh({ k: "area", w: "w-[21%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
               {renderTh({ k: "followUp", w: "w-[13%]", menu: <MenuItem icon="event" label="연락 임박순" active={sortBy === "followup"} onClick={() => { onSortChange("followup"); setOpenMenu(null); }} /> })}
               {renderTh({ k: "status", w: "w-[10%]", menu: <>
-                {(["all", "needFollowup", "matched", "lost", "closed"] as CustFilter[]).map(f => {
-                  const labels: Record<CustFilter, string> = { all: "전체 보기", needFollowup: "후속 연락 필요", vip: "VIP만", matched: "방문만", lost: "이탈만", closed: "거래 완료만" };
+                {(["all", "active", "matched", "lost", "closed"] as CustFilter[]).map(f => {
+                  const labels: Record<CustFilter, string> = { all: "전체 보기", active: "상담만", needFollowup: "후속 연락 필요", vip: "VIP만", matched: "방문만", lost: "이탈만", closed: "거래 완료만" };
                   return (
                     <MenuItem key={f} icon={f === "all" ? "filter_list_off" : "filter_alt"} label={labels[f]}
                       active={filter === f} onClick={() => { onFilterChange(f); setOpenMenu(null); }} />
