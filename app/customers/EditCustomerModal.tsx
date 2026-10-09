@@ -149,13 +149,13 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
               <div className="text-xs text-gray-500 mb-1">
                 내 단지 목록{wanted.length > 0 ? ` (${wanted.join("·")})` : ""} — 가나다 순, 위아래로 밀어서 보고 눌러서 고르세요
               </div>
-              <div className="flex flex-wrap gap-1.5 overflow-y-auto max-h-28 pb-1">
+              <div className="flex flex-col gap-1.5 overflow-y-auto max-h-56 rounded-xl border border-teal-200 bg-teal-50/40 p-1.5">
                 {shownComplexes.map(c => {
                   const sel = areaList.includes(c.name);
                   return (
                     <button key={c.propertyType + c.name} type="button" onClick={() => toggleComplex(c.name)}
-                      className={`whitespace-nowrap shrink-0 px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-sky-400 border-sky-400 text-white" : "bg-sky-50 text-sky-700 border-sky-200"}`}>
-                      {c.name}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition-colors break-keep ${sel ? "bg-sky-400 border-sky-400 text-white font-semibold" : "bg-white text-gray-700 border-teal-200"}`}>
+                      {sel ? "✓ " : ""}{c.name}
                     </button>
                   );
                 })}
