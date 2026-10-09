@@ -51,6 +51,8 @@ function fromDoc(id: string, data: Record<string, unknown>): Customer {
     memo:           (data.memo as string) || "",
     createdAt,
     history:        Array.isArray(data.history) ? (data.history as CustomerEvent[]) : [],
+    wantedTypes:    Array.isArray(data.wantedTypes) ? (data.wantedTypes as string[]) : [],
+    wantedDeals:    Array.isArray(data.wantedDeals) ? (data.wantedDeals as string[]) : [],
     stage:          (data.stage as Customer["stage"]) || undefined,
   };
 }

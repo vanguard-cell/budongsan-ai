@@ -12,7 +12,7 @@ import {
   STATUS_LABELS,
 } from "./customer-types";
 import type { Property } from "@/lib/properties-db";
-import { PROPERTY_TYPES } from "@/app/properties/helpers";
+import { PROPERTY_TYPES, DEAL_TYPES } from "@/app/properties/helpers";
 import DatedMemo from "@/app/components/DatedMemo";
 
 interface Props {
@@ -29,6 +29,12 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
 
   const setField = <K extends keyof Customer>(k: K, v: Customer[K]) =>
     setForm(p => ({ ...p, [k]: v }));
+
+  const toggleIn = (k: "wantedTypes" | "wantedDeals", v: string) =>
+    setForm(p => {
+      const cur = p[k] ?? [];
+      return { ...p, [k]: cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v] };
+    });
 
   const addShown = () => {
     const today = new Date().toISOString().slice(0, 10);
@@ -126,6 +132,29 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
             placeholder="예: 5억 이하 / 보증금 1억·월세 100"
             className={fieldCls}
           />
+        </Field>
+
+        <Field label="찾는 매물 유형 (여러 개 선택 가능)">
+          <div className="flex flex-wrap gap-1.5">
+            {PROPERTY_TYPES.map(t => {
+              const on = (form.wantedTypes ?? []).includes(t);
+              return (
+                <button key={t} type="button" onClick={() => toggleIn("wantedTypes", t)}
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${on ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-400"}`}>
+                  {t}
+                </button>
+              );
+            })}
+            {DEAL_TYPES.map(t => {
+              const on = (form.wantedDeals ?? []).includes(t);
+              return (
+                <button key={t} type="button" onClick={() => toggleIn("wantedDeals", t)}
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs border transition-colors ${on ? "bg-rose-500 text-white border-rose-500" : "bg-white text-gray-600 border-gray-200 hover:border-rose-400"}`}>
+                  {t}
+                </button>
+              );
+            })}
+          </div>
         </Field>
 
         <Field label="관심 지역·단지">

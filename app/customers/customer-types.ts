@@ -38,6 +38,8 @@ export interface Customer {
   memo: string;
   createdAt: number;
   history?: CustomerEvent[];   // 여정 활동 이력 (전화·문자·상태변경·포기·메모)
+  wantedTypes?: string[];      // 찾는 매물 유형 (아파트·오피스텔 등)
+  wantedDeals?: string[];      // 찾는 거래 종류 (매매·전세·월세)
   stage?: CustomerStage;       // 보드에서 수동 지정한 단계 (없으면 자동 추론)
 }
 

@@ -145,6 +145,8 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
           <tbody>
             {c.nextFollowUp && <Row label="다음 연락">{c.nextFollowUp} ({followUpDDayLabel(followUpDDay(c.nextFollowUp))})</Row>}
             {c.budget && <Row label="예산">{c.budget}</Row>}
+            {(c.wantedTypes?.length ?? 0) > 0 && <Row label="찾는 유형">{c.wantedTypes!.join(" · ")}</Row>}
+            {(c.wantedDeals?.length ?? 0) > 0 && <Row label="거래종류">{c.wantedDeals!.join(" · ")}</Row>}
             {c.preferredArea && <Row label="희망지역">{c.preferredArea}</Row>}
             {c.moveInDate && <Row label="입주가능">{c.moveInDate}</Row>}
             {c.shownProperties.length > 0 && <Row label="보여준 매물">{c.shownProperties.length}건</Row>}
