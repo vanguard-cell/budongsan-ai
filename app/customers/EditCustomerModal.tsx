@@ -144,6 +144,24 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
               );
             })}
           </div>
+          {shownComplexes.length > 0 && (
+            <div className="mt-2">
+              <div className="text-xs text-gray-500 mb-1">
+                내 단지 목록{wanted.length > 0 ? ` (${wanted.join("·")})` : ""} — 가나다 순, 옆으로 밀어서 보고 눌러서 고르세요
+              </div>
+              <div className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1">
+                {shownComplexes.map(c => {
+                  const sel = areaList.includes(c.name);
+                  return (
+                    <button key={c.propertyType + c.name} type="button" onClick={() => toggleComplex(c.name)}
+                      className={`whitespace-nowrap shrink-0 px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-sky-400 border-sky-400 text-white" : "bg-sky-50 text-sky-700 border-sky-200"}`}>
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </Field>
 
         <Field label="목적">
@@ -182,24 +200,6 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
             placeholder="예: 미사강변동, 미사역 인근"
             className={fieldCls}
           />
-          {shownComplexes.length > 0 && (
-            <div className="mt-2">
-              <div className="text-xs text-gray-500 mb-1">
-                내 단지 목록{wanted.length > 0 ? ` (${wanted.join("·")})` : ""} — 가나다 순, 옆으로 밀어서 보고 눌러서 고르세요
-              </div>
-              <div className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1">
-                {shownComplexes.map(c => {
-                  const sel = areaList.includes(c.name);
-                  return (
-                    <button key={c.propertyType + c.name} type="button" onClick={() => toggleComplex(c.name)}
-                      className={`whitespace-nowrap shrink-0 px-3 py-1.5 rounded-full text-xs border transition-colors ${sel ? "bg-sky-400 border-sky-400 text-white" : "bg-sky-50 text-sky-700 border-sky-200"}`}>
-                      {c.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
