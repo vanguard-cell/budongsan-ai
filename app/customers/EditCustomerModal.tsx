@@ -51,6 +51,28 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
     }));
   };
 
+  // 핸드폰 연락처 불러오기 (안드로이드 크롬 지원)
+  const pickContact = async () => {
+    type ContactsApi = { select: (props: string[], opts?: { multiple?: boolean }) => Promise<{ name?: string[]; tel?: string[] }[]> };
+    const api = (navigator as Navigator & { contacts?: ContactsApi }).contacts;
+    if (!api || typeof api.select !== "function") {
+      alert("이 핸드폰(브라우저)에서는 연락처를 바로 가져올 수 없어요.\n안드로이드 폰의 크롬으로 열어보시거나, 이름·연락처를 직접 입력해주세요.");
+      return;
+    }
+    try {
+      const res = await api.select(["name", "tel"], { multiple: false });
+      const c = res?.[0];
+      if (!c) return;
+      setForm(p => ({
+        ...p,
+        name: c.name?.[0] || p.name,
+        phone: c.tel?.[0]?.replace(/[^\d+]/g, "") || p.phone,
+      }));
+    } catch {
+      /* 취소 */
+    }
+  };
+
   const save = async () => {
     if (!form.name.trim()) {
       alert("이름을 입력해주세요");
@@ -67,6 +89,15 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
   return (
     <Modal onClose={onClose} title={isNew ? "고객 추가" : "고객 수정"}>
       <div className="space-y-3">
+        {isNew && (
+          <button
+            type="button"
+            onClick={pickContact}
+            className="w-full whitespace-nowrap py-2 rounded-lg border border-purple-300 bg-purple-50 text-purple-700 text-sm font-medium hover:bg-purple-100"
+          >
+            📱 내 핸드폰 연락처에서 가져오기
+          </button>
+        )}
         {/* 기본 정보 */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="이름" required>
