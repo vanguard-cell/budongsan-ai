@@ -166,12 +166,13 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
             )}
           </Field>
           <Field label="다음 후속 연락">
-            <input
-              type="date"
-              value={form.nextFollowUp}
-              onChange={e => setField("nextFollowUp", e.target.value)}
-              className={fieldCls}
-            />
+            <KoreanDatePicker value={form.nextFollowUp} onChange={v => setField("nextFollowUp", v)} accent="blue" />
+            {form.nextFollowUp && (
+              <button type="button" onClick={() => setField("nextFollowUp", "")}
+                className="whitespace-nowrap mt-1 text-xs text-red-600 hover:underline">
+                지우기
+              </button>
+            )}
           </Field>
         </div>
 
