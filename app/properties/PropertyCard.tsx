@@ -106,6 +106,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             {p.propertyType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium">{p.propertyType}</span>}
             <span className={`flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded font-medium ${DEAL_BADGE[p.dealType] || "bg-gray-100 text-gray-600"}`}>{p.dealType}</span>
             {area && <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">{area}</span>}
+            {p.unitType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span>}
             <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
             {isClosed && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400">거래완료</span>}
             {hasContractDate && !isClosed && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold">계약진행중</span>}
@@ -124,10 +125,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           </div>
 
           {/* 3째줄: 방향 · 타입 · 방 개수 · 입주상태 · 임차인 보증금/월세 — 한 줄에 */}
-          {(p.direction || p.unitType || p.rooms || (p.occupancy && p.occupancy !== "tenant") || p.tenantDeposit || p.tenantMonthly) && (
+          {(p.direction || p.rooms || (p.occupancy && p.occupancy !== "tenant") || p.tenantDeposit || p.tenantMonthly) && (
             <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px]">
               {p.direction && <span className="whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
-              {p.unitType && <span className="whitespace-nowrap font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span>}
               {p.rooms && <span className="whitespace-nowrap text-gray-600 dark:text-gray-400">방{p.rooms}개</span>}
               {p.occupancy && p.occupancy !== "tenant" && <span className="whitespace-nowrap text-gray-600 dark:text-gray-400">{OCC_LABEL[p.occupancy]}</span>}
               {(p.tenantDeposit || p.tenantMonthly) && (

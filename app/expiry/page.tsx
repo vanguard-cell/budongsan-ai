@@ -805,12 +805,13 @@ function ContractRow({
 
         {/* 메인 정보 */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-x-1.5 min-w-0">
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
             {c.propertyType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-medium">{c.propertyType}</span>}
             <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{c.type}</span>
             {c.area && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600">{(() => { const p = m2ToPyeong(c.area!); return p ? `전용 ${c.area}㎡ · ${p}평` : `전용 ${c.area}㎡`; })()}</span>
             )}
+            {c.unitType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 font-semibold text-emerald-700">{c.unitType}타입</span>}
             {isClosed && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">종료</span>
             )}
