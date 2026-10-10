@@ -456,10 +456,11 @@ export default function CustomersPage() {
         </section>
 
         {/* 요약 카드 */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
-          <SummaryCard label="후속 연락 필요" count={counts.needFollowup} accent="red" />
-          <SummaryCard label="상담" count={counts.all} accent="blue" />
-          <SummaryCard label="거래 완료" count={counts.closed} accent="gray" />
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-5">
+          <SummaryCard label="상담" count={counts.active} accent="blue" />
+          <SummaryCard label="방문" count={counts.matched} accent="purple" />
+          <SummaryCard label="이탈" count={counts.lost} accent="red" />
+          <SummaryCard label="거래완료" count={counts.closed} accent="gray" />
         </div>
 
         {/* 필터 */}
@@ -599,7 +600,7 @@ function SummaryCard({ label, count, accent }: { label: string; count: number; a
     <div className={`rounded-2xl border p-3 sm:p-4 ${cls.bg}`}>
       <div className="flex items-center gap-2 mb-1">
         <div className={`w-2 h-2 rounded-full ${cls.dot}`} />
-        <div className="text-[11px] sm:text-xs text-gray-600">{label}</div>
+        <div className="text-[11px] sm:text-xs text-gray-600 whitespace-nowrap">{label}</div>
       </div>
       <div className="text-xl sm:text-2xl font-bold text-gray-900">{count}<span className="text-sm font-normal text-gray-500 ml-1">명</span></div>
     </div>
