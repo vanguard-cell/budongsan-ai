@@ -9,6 +9,7 @@ import {
   ShownProperty,
   DEAL_KIND_LABELS,
   STATUS_LABELS,
+  composeBudget,
 } from "./customer-types";
 import { subscribeMyComplexes, type Property, type MyComplex } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
@@ -88,7 +89,8 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
     }
     setSaving(true);
     try {
-      await onSave(form);
+      const hasRange = [form.saleMin, form.saleMax, form.depositMin, form.depositMax, form.rentMin, form.rentMax].some(v => (v || "").trim());
+      await onSave(hasRange ? { ...form, budget: composeBudget(form) } : form);
     } finally {
       setSaving(false);
     }
@@ -184,13 +186,27 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           <span className="text-[11px] text-gray-400">(수수료 큰 매물 / 우선 응대)</span>
         </label>
 
-        <Field label="예산">
-          <input
-            value={form.budget}
-            onChange={e => setField("budget", e.target.value)}
-            placeholder="예: 5억 이하 / 보증금 1억·월세 100"
-            className={fieldCls}
-          />
+        <Field label="예산 (만원 단위, 숫자만)">
+          {form.budget && ![form.saleMin, form.saleMax, form.depositMin, form.depositMax, form.rentMin, form.rentMax].some(Boolean) && (
+            <div className="text-xs text-gray-500 mb-1.5">기존 예산: <span className="font-semibold">{form.budget}</span> (아래에 넣으면 바뀌어요)</div>
+          )}
+          <div className="space-y-2">
+            {([
+              ["매매", "saleMin", "saleMax"],
+              ["보증금", "depositMin", "depositMax"],
+              ["월세", "rentMin", "rentMax"],
+            ] as const).map(([label, kMin, kMax]) => (
+              <div key={label} className="flex items-center gap-1.5">
+                <span className="w-12 shrink-0 text-sm font-semibold text-gray-600 whitespace-nowrap">{label}</span>
+                <input inputMode="numeric" value={form[kMin] || ""} onChange={e => setField(kMin, e.target.value.replace(/[^\d]/g, ""))}
+                  placeholder="최소" className={`${fieldCls} min-w-0 text-right`} />
+                <span className="text-xs text-gray-500 whitespace-nowrap">만원~</span>
+                <input inputMode="numeric" value={form[kMax] || ""} onChange={e => setField(kMax, e.target.value.replace(/[^\d]/g, ""))}
+                  placeholder="최대" className={`${fieldCls} min-w-0 text-right`} />
+                <span className="text-xs text-gray-500 whitespace-nowrap">만원</span>
+              </div>
+            ))}
+          </div>
         </Field>
 
         <Field label="관심 지역·단지">

@@ -45,6 +45,10 @@ export interface Customer {
   visitTime?: string;          // 방문 시간 (HH:MM)
   visitAddress?: string;       // 방문할 매물 주소
   visitResult?: ShownProperty["reaction"];   // 방문 결과 (좋아함/보통/별로)
+  // 예산 범위 (만원 단위 숫자 글자) — 없으면 budget 글자만 사용
+  saleMin?: string; saleMax?: string;
+  depositMin?: string; depositMax?: string;
+  rentMin?: string; rentMax?: string;
 }
 
 export const uid = () =>
@@ -337,4 +341,24 @@ export function sampleCustomers(): Customer[] {
       createdAt: now - 1000 * 60 * 60 * 24 * 90,
     },
   ];
+}
+
+const manwon = (v: string) => {
+  const n = Number((v || "").replace(/[^\d]/g, ""));
+  if (!n) return "";
+  const eok = Math.floor(n / 10000), rest = n % 10000;
+  return (eok ? `${eok}억` : "") + (rest ? `${eok ? " " : ""}${rest.toLocaleString()}만` : "") + "원";
+};
+const range = (a?: string, b?: string) => {
+  const x = manwon(a || ""), y = manwon(b || "");
+  return x || y ? `${x}~${y}` : "";
+};
+
+/** 예산 범위 칸들을 한 줄 글자로 (목록·상세 표시용) */
+export function composeBudget(c: Pick<Customer, "saleMin" | "saleMax" | "depositMin" | "depositMax" | "rentMin" | "rentMax">): string {
+  return [
+    range(c.saleMin, c.saleMax) && `매매 ${range(c.saleMin, c.saleMax)}`,
+    range(c.depositMin, c.depositMax) && `보증금 ${range(c.depositMin, c.depositMax)}`,
+    range(c.rentMin, c.rentMax) && `월세 ${range(c.rentMin, c.rentMax)}`,
+  ].filter(Boolean).join(" / ");
 }

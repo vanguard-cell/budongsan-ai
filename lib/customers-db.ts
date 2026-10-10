@@ -58,6 +58,12 @@ function fromDoc(id: string, data: Record<string, unknown>): Customer {
     visitTime:      (data.visitTime as string) || "",
     visitAddress:   (data.visitAddress as string) || "",
     visitResult:    (data.visitResult as Customer["visitResult"]) || "",
+    saleMin:        (data.saleMin as string) || "",
+    saleMax:        (data.saleMax as string) || "",
+    depositMin:     (data.depositMin as string) || "",
+    depositMax:     (data.depositMax as string) || "",
+    rentMin:        (data.rentMin as string) || "",
+    rentMax:        (data.rentMax as string) || "",
   };
 }
 
