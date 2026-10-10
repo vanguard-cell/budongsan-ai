@@ -3,8 +3,8 @@
 /**
  * 진입 페이지 (/) — 사용자가 앱 열면 가장 먼저 도착하는 곳
  *
- * - 로그인 OK → /dashboard 로 자동 이동
- * - 로그인 X  → /login?redirect=/dashboard
+ * - 로그인 OK → /properties(내 매물) 로 자동 이동
+ * - 로그인 X  → /login?redirect=/properties
  *
  * AI 문구 생성 페이지는 /ai-content 로 이동됨.
  */
@@ -20,9 +20,9 @@ export default function RootRedirect() {
   useEffect(() => {
     if (loading) return;
     if (user) {
-      router.replace("/dashboard");
+      router.replace("/properties");
     } else {
-      router.replace("/login?redirect=/dashboard");
+      router.replace("/login?redirect=/properties");
     }
   }, [user, loading, router]);
 
