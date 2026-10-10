@@ -306,15 +306,15 @@ export const AGENCY_NAME = "미사금빛공인중개사";
 
 /* ── SMS 템플릿 기본값 (플레이스홀더: {주소} {만기일}) ── */
 export const DEFAULT_SMS_TEMPLATES: Record<string, string> = {
-  "4m_tenant":   `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 4개월 남았습니다.\n재계약 의향 있으신지 여쭤봐도 될까요?`,
-  "3m_tenant":   `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 3개월 남았습니다.\n재계약 의향 있으신지 여쭤봐도 될까요?`,
-  "2m_tenant":   `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 2개월 남았습니다.\n묵시적 갱신 전 의향 확인 부탁드립니다.`,
-  "4m_landlord": `안녕하세요? ${AGENCY_NAME}입니다 😊\n{주소} 전월세 계약 만기 안내드립니다.\n만기일은 {만기일}로 약 4개월 남았습니다.\n만기 2개월 전까지는 재계약이나 갱신 의견을 임차인에게 전달해야 해서, 미리 말씀드려요.\n조건 변동사항 있으시면 편하게 알려주세요. 감사합니다.`,
-  "3m_landlord": `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 3개월 남았습니다.\n임차인 재계약 의향 확인 시작하겠습니다. 조건 변동사항 있으시면 알려주세요.`,
-  "2m_landlord": `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 2개월 남았습니다.\n임차인 의향 확인 결과 공유드릴 예정입니다. 새 임차인 모집 필요 시 알려주세요.`,
+  "4m_tenant": "",
+  "3m_tenant": "",
+  "2m_tenant": "",
+  "4m_landlord": "",
+  "3m_landlord": "",
+  "2m_landlord": "",
 };
 
-const SMS_TEMPLATE_STORAGE_KEY = "budongsan_sms_templates_v2";
+const SMS_TEMPLATE_STORAGE_KEY = "budongsan_sms_templates_v3";
 
 export function loadCustomSmsTemplates(): Record<string, string> {
   if (typeof window === "undefined") return {};
