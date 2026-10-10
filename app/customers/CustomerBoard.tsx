@@ -66,7 +66,6 @@ export default function CustomerBoard({ customers, selectedId, onSelect, onMoveS
                     >
                       <div className="flex items-center gap-1 mb-1">
                         <span className="text-[13px] font-bold text-gray-900 dark:text-gray-100 truncate">{c.name || "(이름없음)"}</span>
-                        {c.vip && <span className="text-amber-400 text-xs">★</span>}
                         <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-500 shrink-0">{SIDE_LABELS[c.side]}</span>
                       </div>
                       {c.budget && <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">💰 {c.budget}</div>}

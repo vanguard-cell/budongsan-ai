@@ -456,10 +456,9 @@ export default function CustomersPage() {
         </section>
 
         {/* 요약 카드 */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
           <SummaryCard label="후속 연락 필요" count={counts.needFollowup} accent="red" />
           <SummaryCard label="상담" count={counts.all} accent="blue" />
-          <SummaryCard label="VIP" count={counts.vip} accent="purple" />
           <SummaryCard label="거래 완료" count={counts.closed} accent="gray" />
         </div>
 
@@ -693,7 +692,6 @@ function CustomerRow({
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{SIDE_LABELS[c.side]}</span>
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{DEAL_KIND_LABELS[c.dealKind]}</span>
-            {c.vip && <span className="text-[11px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">⭐ VIP</span>}
             <span className="text-sm font-semibold text-gray-900">{c.name || "(이름 없음)"}</span>
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">{STATUS_LABELS[c.status]}</span>
           </div>

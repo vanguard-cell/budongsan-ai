@@ -174,18 +174,6 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           </select>
         </Field>
 
-        {/* VIP 토글 */}
-        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={form.vip}
-            onChange={e => setField("vip", e.target.checked)}
-            className="w-4 h-4 accent-purple-600"
-          />
-          <span className="font-medium text-gray-700">⭐ VIP 고객</span>
-          <span className="text-[11px] text-gray-400">(수수료 큰 매물 / 우선 응대)</span>
-        </label>
-
         <Field label="예산 (만원 단위, 숫자만)">
           {form.budget && ![form.saleMin, form.saleMax, form.depositMin, form.depositMax, form.rentMin, form.rentMax].some(Boolean) && (
             <div className="text-xs text-gray-500 mb-1.5">기존 예산: <span className="font-semibold">{form.budget}</span> (아래에 넣으면 바뀌어요)</div>
