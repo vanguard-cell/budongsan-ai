@@ -466,10 +466,10 @@ export default function CustomersPage() {
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
           <div className="flex flex-wrap items-center gap-2">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>전체 ({counts.all})</FilterChip>
-            <FilterChip active={filter === "active"} onClick={() => { setFilter("active"); recordFeatureUse(user?.uid, "cust_filter"); }}>🔔 후속 연락 ({counts.active})</FilterChip>
+            <FilterChip active={filter === "active"} onClick={() => { setFilter("active"); recordFeatureUse(user?.uid, "cust_filter"); }}>상담 ({counts.active})</FilterChip>
             <FilterChip active={filter === "matched"} onClick={() => { setFilter("matched"); recordFeatureUse(user?.uid, "cust_filter"); }}>방문 ({counts.matched})</FilterChip>
             <FilterChip active={filter === "lost"} onClick={() => { setFilter("lost"); recordFeatureUse(user?.uid, "cust_filter"); }}>이탈 ({counts.lost})</FilterChip>
-            <FilterChip active={filter === "closed"} onClick={() => { setFilter("closed"); recordFeatureUse(user?.uid, "cust_filter"); }}>완료 ({counts.closed})</FilterChip>
+            <FilterChip active={filter === "closed"} onClick={() => { setFilter("closed"); recordFeatureUse(user?.uid, "cust_filter"); }}>거래완료 ({counts.closed})</FilterChip>
           </div>
         </div>
 
