@@ -17,6 +17,7 @@ import UploadModal, { type MergeStrategy } from "./UploadModal";
 import ContractTable, { type ContractSort } from "./ContractTable";
 import ContractPanel from "./ContractPanel";
 import DatedMemo from "@/app/components/DatedMemo";
+import QuickMemoBox from "@/app/components/QuickMemoBox";
 import NotifyBell from "../NotifyBell";
 import { subscribeMyComplexes, addMyComplex, removeMyComplex, type MyComplex } from "@/lib/properties-db";
 import ExportModal from "../ExportModal";
@@ -370,6 +371,11 @@ export default function ExpiryPage() {
     }
   };
 
+  const addMemo = (c: Contract) => async (text: string) => {
+    if (!user) return;
+    await fsSaveContract(user.agencyId, { ...c, memo: c.memo ? `${c.memo}\n${text}` : text });
+  };
+
   const loadSampleData = async () => {
     if (!user) return;
     if (contracts.length > 0) {
@@ -629,6 +635,7 @@ export default function ExpiryPage() {
                   : undefined}
                 onReopenAsProperty={() => jumpReopenAsProperty(c)}
                 onCloneSameComplex={() => cloneSameComplex(c)}
+                onAddMemo={addMemo(c)}
               />
             ))}
           </div>
@@ -644,6 +651,7 @@ export default function ExpiryPage() {
         contract={panelId ? contracts.find(x => x.id === panelId) || null : null}
         onClose={() => setPanelId(null)}
         onEdit={c => setEditing({ ...c })}
+        onAddMemo={c => addMemo(c)}
         onSms={(c, target) => { recordFeatureUse(user?.uid, "expiry_sms"); setSmsTarget({ contract: c, target }); }}
         onCloneSameComplex={c => { cloneSameComplex(c); setPanelId(null); }}
         onReopenAsProperty={c => jumpReopenAsProperty(c)}
@@ -776,6 +784,7 @@ function ContractRow({
   onSms,
   onReopenAsProperty,
   onCloneSameComplex,
+  onAddMemo,
 }: {
   contract: Contract;
   dday: number;
@@ -788,7 +797,9 @@ function ContractRow({
   onJumpCustomer?: () => void;        // 연결된 고객 점프
   onReopenAsProperty?: () => void;    // 매물로 되돌리기 (재모집)
   onCloneSameComplex?: () => void;    // 같은 단지 다른 호수 빠른 등록
+  onAddMemo: (text: string) => Promise<void>;   // 메모 한 줄 추가
 }) {
+  const [memoOpen, setMemoOpen] = useState(false);
   const cls = severityClasses(severity);
   const isClosed = c.status === "closed";
 
@@ -864,6 +875,12 @@ function ContractRow({
         </div>
       </div>
 
+      {memoOpen && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <QuickMemoBox onAdd={onAddMemo} onCancel={() => setMemoOpen(false)} />
+        </div>
+      )}
+
       {/* 액션 버튼 — 색 구분감 강화: 수정(회) / 같은단지(청록) / 고객(파) / 매물복귀(녹) / 종료(주황) / 삭제(빨) */}
       <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
         <button
@@ -871,6 +888,12 @@ function ContractRow({
           className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors"
         >
           ✏️ 수정
+        </button>
+        <button
+          onClick={() => setMemoOpen(v => !v)}
+          className="text-[11px] px-2.5 py-1 rounded-full border border-yellow-300 bg-yellow-50 text-yellow-800 font-semibold hover:bg-yellow-100 transition-colors whitespace-nowrap"
+        >
+          📝 메모 추가
         </button>
         {!isClosed && onCloneSameComplex && (
           <button

@@ -8,6 +8,8 @@
 import { type Contract, type ContactTarget, dDay, dDayLabel, severityOf, formatPhone } from "./contracts";
 import SideDrawer from "@/app/components/SideDrawer";
 import MemoText from "@/app/components/MemoText";
+import QuickMemoBox from "@/app/components/QuickMemoBox";
+import { useState } from "react";
 
 function num(s: string) { if (!s) return s; const n = parseInt(s.replace(/[^\d]/g, ""), 10); return isNaN(n) ? s : n.toLocaleString(); }
 
@@ -55,6 +57,7 @@ interface Props {
   contract: Contract | null;
   onClose: () => void;
   onEdit: (c: Contract) => void;
+  onAddMemo: (c: Contract) => (text: string) => Promise<void>;
   onSms: (c: Contract, target: ContactTarget) => void;
   onCloneSameComplex: (c: Contract) => void;
   onReopenAsProperty: (c: Contract) => void;
@@ -63,7 +66,8 @@ interface Props {
   onJumpCustomer?: (c: Contract) => void;
 }
 
-export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onCloneSameComplex, onReopenAsProperty, onCloseContract, onRenew, onJumpCustomer }: Props) {
+export default function ContractPanel({ contract: c, onClose, onEdit, onAddMemo, onSms, onCloneSameComplex, onReopenAsProperty, onCloseContract, onRenew, onJumpCustomer }: Props) {
+  const [memoOpen, setMemoOpen] = useState(false);
   if (!c) return null;
   const dd = c.endDate ? dDay(c.endDate) : null;
   const sev = dd !== null ? severityOf(dd) : "safe";
@@ -116,10 +120,14 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onSms, onC
         </button>
         <div className="grid grid-cols-2 gap-1.5">
           <ActionBtn icon="edit" label="수정" onClick={() => onEdit(c)} />
+          <ActionBtn icon="sticky_note_2" label="메모 추가" onClick={() => setMemoOpen(v => !v)} />
           <ActionBtn icon="content_copy" label="같은 단지 추가" onClick={() => onCloneSameComplex(c)} />
           <ActionBtn icon="campaign" label="매물로 재모집" onClick={() => onReopenAsProperty(c)} />
           <ActionBtn icon="inventory_2" label="관리 종료(보관)" onClick={() => onCloseContract(c)} />
         </div>
+        {memoOpen && (
+          <div className="mt-2"><QuickMemoBox onAdd={onAddMemo(c)} onCancel={() => setMemoOpen(false)} /></div>
+        )}
         {onJumpCustomer && (
           <button onClick={() => onJumpCustomer(c)}
             className="w-full mt-1.5 py-2 rounded-lg text-[11px] font-semibold text-[var(--brand-blue)] dark:text-blue-400 hover:bg-[var(--tint-blue-bg)] transition-colors flex items-center justify-center gap-1">
