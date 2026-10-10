@@ -71,6 +71,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   const smsHref = (phone: string, name: string, tail: string) =>
     `sms:${phone.replace(/\D/g, "")}?body=${encodeURIComponent(`안녕하세요?\n매물 의뢰받은 미사금빛공인 입니다.\n${`${addressStr(p)} ${tail}`.replace(/\s*매물/g, "").replace(/\s+/g, " ").trim()} 매물 관련하여 연락 드립니다.\n의뢰하신 매물이 거래가 되었는지요?\n☆바쁘시지만 꼭 !확인 부탁드려요☆\n오늘도 즐거운 하루 되세요!!`)}`;
   const hasTenant = !!(p.tenantName || p.tenantPhone);
+  const regInfo = p.createdAt > 0 ? (() => {
+    const c = new Date(p.createdAt);
+    const days = Math.max(0, Math.floor((Date.now() - p.createdAt) / 86400000));
+    const ds = `${c.getFullYear()}-${String(c.getMonth() + 1).padStart(2, "0")}-${String(c.getDate()).padStart(2, "0")}`;
+    return { ds, label: days === 0 ? "오늘 등록" : `${days}일 지남` };
+  })() : null;
 
   return (
     <div className={`rounded-2xl border p-3 sm:p-4 transition-all ${cardClass}`}>
@@ -96,6 +102,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </div>
             {p.leaseEndDate && (
               <div className="mt-1 text-center whitespace-nowrap text-[10px] font-semibold text-blue-800 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 px-1 py-0.5 rounded">{p.leaseEndDate}</div>
+            )}
+            {regInfo && (
+              <div className="mt-1 text-center whitespace-nowrap text-[10px] leading-tight text-gray-500 dark:text-gray-400">
+                <div>등록 {regInfo.ds.slice(2)}</div>
+                <div className="font-semibold text-gray-700 dark:text-gray-300">{regInfo.label}</div>
+              </div>
             )}
           </div>
         )}
@@ -138,17 +150,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </div>
           )}
 
-          {/* 등록일 + 등록 후 경과일 */}
-          {p.createdAt > 0 && (() => {
-            const c = new Date(p.createdAt);
-            const days = Math.max(0, Math.floor((Date.now() - p.createdAt) / 86400000));
-            const ds = `${c.getFullYear()}-${String(c.getMonth() + 1).padStart(2, "0")}-${String(c.getDate()).padStart(2, "0")}`;
-            return (
-              <div className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                등록일 {ds} · <span className="font-semibold text-gray-700 dark:text-gray-300">{days === 0 ? "오늘 등록" : `${days}일 지남`}</span>
-              </div>
-            );
-          })()}
+          {/* 등록일 + 등록 후 경과일 (만기 배지가 없을 때만 본문에 표시) */}
+          {!sevCls && regInfo && (
+            <div className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+              등록일 {regInfo.ds} · <span className="font-semibold text-gray-700 dark:text-gray-300">{regInfo.label}</span>
+            </div>
+          )}
 
           {/* 연락처 — 임대인 → 임차인 */}
           {(p.ownerPhone || p.ownerName || hasTenant) && (
