@@ -64,7 +64,7 @@ export default function TeamPage() {
   };
 
   const copyInvite = () => {
-    const text = `[DealDone] ${agency?.name || "사무실"} 초대\n\n1. dealdone 앱 접속 후 구글 로그인\n2. 메뉴 → 직원 관리 → 초대 코드 입력\n3. 코드: ${inviteCode}`;
+    const text = `[DealDone] ${agency?.name || "사무실"} 초대\n\n1. 아래 주소로 접속 후 구글 로그인\n${window.location.origin}\n2. 메뉴 → 직원 관리 → 초대 코드 입력\n3. 코드: ${inviteCode}`;
     navigator.clipboard.writeText(text).then(() => alert("초대 안내문이 복사되었습니다.\n카톡으로 붙여넣어 보내세요!"));
   };
 
