@@ -188,24 +188,14 @@ export default function PropertiesPage() {
 
   /**
    * 거래완료 처리 — 매매·전세·월세 모두 만기 관리로 이동 (통일)
-   * - 전월세는 임차인 정보 있으면 고객관리 자동 등록
+   * - 임차인은 고객 목록에 자동 등록하지 않음
    * - moveToContract: Property → Contract 변환 + Property 삭제
    */
   const close = async (p: Property) => {
     if (!user) return;
     if (!confirm(`${p.address}\n\n${p.dealType} 거래완료 처리하시겠어요?\n→ 만기 관리(거래 이력)로 이동됩니다.`)) return;
     try {
-      // 전·월세는 임차인 자동 등록
-      let linkedCustomerId: string | undefined = p.linkedTenantId;
-      if (p.dealType !== "매매" && (p.tenantName || p.tenantPhone)) {
-        const id = await upsertTenantAsCustomer(user.agencyId, {
-          name: p.tenantName,
-          phone: p.tenantPhone,
-          propertyAddress: p.address,
-          contractDate: p.contractDate,
-        });
-        linkedCustomerId = id || linkedCustomerId;
-      }
+      const linkedCustomerId: string | undefined = p.linkedTenantId;
       await moveToContract(user.agencyId, p, linkedCustomerId);
       recordFeatureUse(user.uid, "prop_to_expiry");
       setTimeout(() => alert(`✅ ${p.dealType} 거래완료 — 만기 관리로 이동되었습니다.`), 100);
