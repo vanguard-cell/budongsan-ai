@@ -138,6 +138,18 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </div>
           )}
 
+          {/* 등록일 + 등록 후 경과일 */}
+          {p.createdAt > 0 && (() => {
+            const c = new Date(p.createdAt);
+            const days = Math.max(0, Math.floor((Date.now() - p.createdAt) / 86400000));
+            const ds = `${c.getFullYear()}-${String(c.getMonth() + 1).padStart(2, "0")}-${String(c.getDate()).padStart(2, "0")}`;
+            return (
+              <div className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                등록일 {ds} · <span className="font-semibold text-gray-700 dark:text-gray-300">{days === 0 ? "오늘 등록" : `${days}일 지남`}</span>
+              </div>
+            );
+          })()}
+
           {/* 연락처 — 임대인 → 임차인 */}
           {(p.ownerPhone || p.ownerName || hasTenant) && (
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
