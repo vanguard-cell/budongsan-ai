@@ -95,7 +95,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
       <div className="flex items-start gap-3">
         {/* 만기 D-day 배지 (만기 관리와 동일) */}
         {sevCls && leaseDD !== null && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex flex-col items-center">
             <div className={`inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border ${sevCls.badge} text-center`}>
               <div className="text-[10px] font-medium leading-tight">{severityLabel(sev!)}</div>
               <div className="text-sm font-bold leading-tight">{dDayLabel(leaseDD)}</div>
@@ -104,9 +104,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               )}
             </div>
             {regInfo && (
-              <div className="mt-1 text-center whitespace-nowrap text-[10px] leading-tight text-gray-500 dark:text-gray-400">
-                <div>등록 {regInfo.ds.slice(2)}</div>
-                <div className="font-semibold text-gray-700 dark:text-gray-300">{regInfo.label}</div>
+              <div className="mt-1 inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border border-emerald-300 bg-emerald-100 text-gray-900 text-center">
+                <div className="text-[10px] font-medium leading-tight">등록일</div>
+                <div className="text-sm font-bold leading-tight whitespace-nowrap">{regInfo.label}</div>
+                <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{regInfo.ds}</div>
               </div>
             )}
           </div>
