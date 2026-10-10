@@ -99,10 +99,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             <div className={`inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border ${sevCls.badge} text-center`}>
               <div className="text-[10px] font-medium leading-tight">{severityLabel(sev!)}</div>
               <div className="text-sm font-bold leading-tight">{dDayLabel(leaseDD)}</div>
+              {p.leaseEndDate && (
+                <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{p.leaseEndDate}</div>
+              )}
             </div>
-            {p.leaseEndDate && (
-              <div className="mt-1 text-center whitespace-nowrap text-[10px] font-semibold text-blue-800 bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 px-1 py-0.5 rounded">{p.leaseEndDate}</div>
-            )}
             {regInfo && (
               <div className="mt-1 text-center whitespace-nowrap text-[10px] leading-tight text-gray-500 dark:text-gray-400">
                 <div>등록 {regInfo.ds.slice(2)}</div>
