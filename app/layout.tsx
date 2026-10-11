@@ -61,7 +61,7 @@ export default function RootLayout({
         {/* Material Symbols 아이콘 (대시보드에서 사용) */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0&display=swap"
         />
         {/* 한국어 친화 폰트 — Pretendard CDN (한글 가독성 우수) */}
         <link
