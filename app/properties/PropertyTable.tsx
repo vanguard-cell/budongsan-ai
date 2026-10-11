@@ -45,7 +45,7 @@ export function stageOf(p: Property): { label: string; cls: string } {
   const today = new Date().toISOString().slice(0, 10);
   if (p.status === "closed")
     return { label: "거래완료", cls: "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400" };
-  if (p.balanceDate && p.balanceDate <= today)
+  if (p.balanceDate && p.balanceDate.slice(0, 10) <= today)
     return { label: "잔금 지남", cls: "bg-[var(--tint-red-bg)] text-[var(--tint-red-tx)] border border-[var(--tint-red-bd)]" };
   if (p.contractDate || p.downPaymentDate || p.balanceDate)
     return { label: "계약 진행", cls: "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)] border border-[var(--tint-blue-bd)]" };

@@ -51,7 +51,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   const hasContractDate = !!p.contractDate;
   const hasBalanceDate = !!p.balanceDate;
   const today = new Date().toISOString().slice(0, 10);
-  const balanceOverdue = hasBalanceDate && p.balanceDate <= today;
+  const balanceOverdue = hasBalanceDate && p.balanceDate.slice(0, 10) <= today;
 
   const OCC_LABEL: Record<string, string> = { tenant: "임대중", jeonse: "전세", wolse: "월세", owner: "주인거주", vacant: "공실" };
 

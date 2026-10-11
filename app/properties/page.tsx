@@ -206,7 +206,7 @@ export default function PropertiesPage() {
     return properties.filter(p =>
       p.status === "active"
       && p.balanceDate
-      && p.balanceDate <= today
+      && p.balanceDate.slice(0, 10) <= today
       && !dismissedAlertIds.has(p.id),
     );
   }, [properties, dismissedAlertIds]);
@@ -375,7 +375,7 @@ export default function PropertiesPage() {
 
     const today = new Date().toISOString().slice(0, 10);
     const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-    const balanceSoon = contracted.filter(p => p.balanceDate && p.balanceDate >= today && p.balanceDate <= in30).length;
+    const balanceSoon = contracted.filter(p => p.balanceDate && p.balanceDate.slice(0, 10) >= today && p.balanceDate.slice(0, 10) <= in30).length;
 
     return {
       // 거래종류 집계는 미계약(available) 기준 — 계약진행중 매물은 제외

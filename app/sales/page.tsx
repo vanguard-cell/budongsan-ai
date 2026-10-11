@@ -255,7 +255,7 @@ export default function SalesPage() {
                       <div key={p.id} className="flex items-center gap-2 text-xs py-2.5">
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 shrink-0">{p.dealType}</span>
                         <span className="text-gray-700 dark:text-gray-300 truncate flex-1">{p.address}</span>
-                        <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate}</span>
+                        <span className="text-[10px] text-gray-400 shrink-0">{p.balanceDate.slice(0, 10)}</span>
                         <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 shrink-0 tabular-nums">{fmtNum(p.commission)}만</span>
                         <button
                           onClick={() => hideFromSales(p.id, p.address)}

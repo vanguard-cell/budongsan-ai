@@ -18,7 +18,7 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
 
   const today = new Date().toISOString().slice(0, 10);
-  const balanceOverdueLocal = !!form.balanceDate && form.balanceDate <= today;
+  const balanceOverdueLocal = !!form.balanceDate && form.balanceDate.slice(0, 10) <= today;
 
   const save = async () => {
     if (!form.contractDate && !form.balanceDate) {
@@ -27,15 +27,16 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
     // 날짜 순서 검증 — 계약일 ≤ 중도금일 ≤ 잔금일 (계약일은 시간 포함 가능)
     const dateOnly = (v: string) => v ? v.slice(0, 10) : "";
     const cd = dateOnly(form.contractDate);
+    const bd = dateOnly(form.balanceDate);
     const errors: string[] = [];
     if (cd && form.downPaymentDate && cd > form.downPaymentDate) {
       errors.push(`• 중도금일(${form.downPaymentDate})이 계약일(${cd})보다 빠릅니다`);
     }
-    if (cd && form.balanceDate && cd > form.balanceDate) {
-      errors.push(`• 잔금일(${form.balanceDate})이 계약일(${cd})보다 빠릅니다`);
+    if (cd && bd && cd > bd) {
+      errors.push(`• 잔금일(${bd})이 계약일(${cd})보다 빠릅니다`);
     }
-    if (form.downPaymentDate && form.balanceDate && form.downPaymentDate > form.balanceDate) {
-      errors.push(`• 잔금일(${form.balanceDate})이 중도금일(${form.downPaymentDate})보다 빠릅니다`);
+    if (form.downPaymentDate && bd && form.downPaymentDate > bd) {
+      errors.push(`• 잔금일(${bd})이 중도금일(${form.downPaymentDate})보다 빠릅니다`);
     }
     if (errors.length > 0) {
       alert("⚠️ 날짜 순서가 잘못되었습니다:\n\n" + errors.join("\n") + "\n\n순서: 계약일 ≤ 중도금일 ≤ 잔금일");
@@ -89,9 +90,10 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
               <KoreanDatePicker
                 value={form.balanceDate}
                 onChange={(v) => set("balanceDate", v)}
-                label="💵 잔금일 ★"
+                showTime={true}
+                label="💵 잔금일 (날짜·시간) ★"
                 accent="amber"
-                placeholder="잔금일 선택"
+                placeholder="잔금 일시 선택"
               />
               <p className="text-[11px] text-red-600 mt-1.5">⚠️ 이 날짜 지나면 자동 알림 → 만기 관리로 이동 가능</p>
             </div>

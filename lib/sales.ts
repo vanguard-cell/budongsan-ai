@@ -69,7 +69,7 @@ export function computeSalesStats(properties: Property[], contracts: Contract[] 
     if (commOf(p) === 0 || !p.balanceDate) continue;
     const key = `${normAddr(p.address)}|${p.dealType || ""}`;
     const ex = dedup.get(key);
-    if (!ex || p.balanceDate > ex.balanceDate || (p.balanceDate === ex.balanceDate && commOf(p) > commOf(ex))) {
+    if (!ex || p.balanceDate.slice(0, 10) > ex.balanceDate.slice(0, 10) || (p.balanceDate.slice(0, 10) === ex.balanceDate.slice(0, 10) && commOf(p) > commOf(ex))) {
       dedup.set(key, p);
     }
   }
@@ -84,7 +84,7 @@ export function computeSalesStats(properties: Property[], contracts: Contract[] 
 
     if (month === thisMonth)               stats.thisMonth += amt;
     if (p.balanceDate.slice(0, 4) === thisYear) stats.thisYear  += amt;
-    if (p.balanceDate >= today)            stats.pending   += amt;
+    if (p.balanceDate.slice(0, 10) >= today)            stats.pending   += amt;
     stats.grand += amt;
 
     const dt = (p.dealType ?? "기타") as DealType | "기타";

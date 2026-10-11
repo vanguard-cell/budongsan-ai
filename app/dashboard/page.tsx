@@ -132,7 +132,7 @@ export default function DashboardPage() {
     [activeProps],
   );
   const overdueBalance = useMemo(
-    () => balanceItems.filter(p => p.balanceDate! < todayStr),
+    () => balanceItems.filter(p => p.balanceDate!.slice(0, 10) < todayStr),
     [balanceItems, todayStr],
   );
 
