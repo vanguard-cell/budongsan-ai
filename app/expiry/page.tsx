@@ -963,18 +963,14 @@ function ContactLine({
           <span className="text-gray-700 whitespace-nowrap">{formatPhone(phone)}</span>
           <a
             href={telUrl(phone)}
-            className="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[7px] leading-3 font-bold whitespace-nowrap"
+            className="inline-flex items-center justify-center w-6 h-6 rounded bg-emerald-100 text-emerald-800 whitespace-nowrap"
             aria-disabled={disabled}
-          >
-            통화
-          </a>
+           aria-label="통화" title="통화"><span className="material-symbols-outlined text-[16px]">phone_in_talk</span></a>
           <button
             onClick={onSms}
             disabled={disabled || !hasPhone}
-            className="inline-block px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[7px] leading-3 font-bold whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            문자
-          </button>
+            className="inline-flex items-center justify-center w-6 h-6 rounded bg-sky-100 text-sky-800 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+           aria-label="문자" title="문자"><span className="material-symbols-outlined text-[16px]">chat</span></button>
         </>
       )}
     </div>
