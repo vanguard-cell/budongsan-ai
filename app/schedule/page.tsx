@@ -508,13 +508,23 @@ export default function SchedulePage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  {groupByVisitor(items).map(g => g.items.length > 1 ? (
+                  {groupByVisitor(items).map(g => g.items.length > 1 || g.phone ? (
                     <div key={g.key} className="rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/40 dark:bg-emerald-950/20 p-1.5 space-y-1.5">
                       <div className="flex items-center gap-1.5 px-1.5 pt-0.5 text-[12px] font-bold text-emerald-700 dark:text-emerald-400">
                         <span className="material-symbols-outlined text-[14px]">person</span>
                         <span className="whitespace-nowrap">{g.name || "방문자"}</span>
                         {g.phone && <span className="whitespace-nowrap font-semibold">{formatPhone(g.phone)}</span>}
-                        <span className="ml-auto whitespace-nowrap text-[11px] font-semibold">매물 {g.items.length}건</span>
+                        {g.phone && (
+                          <>
+                            <a href={`tel:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold whitespace-nowrap">
+                              <span className="material-symbols-outlined text-[13px]">call</span>통화
+                            </a>
+                            <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-sky-600 text-white text-[11px] font-bold whitespace-nowrap">
+                              <span className="material-symbols-outlined text-[13px]">sms</span>문자
+                            </a>
+                          </>
+                        )}
+                        <span className="ml-auto whitespace-nowrap text-[11px] font-semibold">{g.items.length}건</span>
                       </div>
                       {g.items.map(item => (
                         <div key={item.key} onClick={() => setPanelItem(item)}>
