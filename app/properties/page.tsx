@@ -888,14 +888,14 @@ export default function PropertiesPage() {
                 {s.label}
               </button>
             ))}
-            {/* 입주상태 필터 — 집주인 / 공실 (토글) */}
+            {/* 입주상태 필터 — 주인거주 / 공실 (토글) */}
             <button onClick={() => setOccFilter(v => v === "owner" ? "" : "owner")}
               className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
                 occFilter === "owner"
                   ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
                   : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"
               }`}>
-              🏠 집주인
+              🏠 주인거주
             </button>
             <button onClick={() => setOccFilter(v => v === "vacant" ? "" : "vacant")}
               className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
