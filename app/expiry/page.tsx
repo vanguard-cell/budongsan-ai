@@ -960,19 +960,20 @@ function ContactLine({
       <span className="text-gray-800 truncate max-w-[6rem]">{name || "—"}</span>
       {hasPhone && (
         <>
+          <span className="text-gray-700 whitespace-nowrap">{formatPhone(phone)}</span>
           <a
             href={telUrl(phone)}
-            className="text-blue-600 hover:underline whitespace-nowrap"
+            className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-emerald-600 text-white text-[9px] font-bold whitespace-nowrap"
             aria-disabled={disabled}
           >
-            📞 {formatPhone(phone)}
+            <span className="material-symbols-outlined text-[10px]">call</span>통화
           </a>
           <button
             onClick={onSms}
             disabled={disabled || !hasPhone}
-            className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-sky-600 text-white text-[9px] font-bold whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            문자
+            <span className="material-symbols-outlined text-[10px]">sms</span>문자
           </button>
         </>
       )}
