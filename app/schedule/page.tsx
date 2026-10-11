@@ -266,16 +266,19 @@ export default function SchedulePage() {
 
   const todayCount = baseItems.filter(i => isToday(i.date)).length;
 
-  /* 필터별 카운트 — baseItems 기준(현재 선택한 필터와 무관하게 고정) */
-  const counts = useMemo(() => ({
-    all:             baseItems.length,
-    appointment:     baseItems.filter(i => i.source === "appointment").length,
-    visit:           baseItems.filter(i => i.source === "visit").length,
-    contractDate:    baseItems.filter(i => i.source === "contractDate").length,
-    downPaymentDate: baseItems.filter(i => i.source === "downPaymentDate").length,
-    balanceDate:     baseItems.filter(i => i.source === "balanceDate").length,
-    renewal:         baseItems.filter(i => i.source === "renewal").length,
-  }), [baseItems]);
+  /* 필터별 카운트 — 달력에서 보는 달 기준(선택한 필터와 무관하게 고정) */
+  const counts = useMemo(() => {
+    const monthItems = baseItems.filter(i => i.date.startsWith(viewMonth));
+    return {
+      all:             monthItems.length,
+      appointment:     monthItems.filter(i => i.source === "appointment").length,
+      visit:           monthItems.filter(i => i.source === "visit").length,
+      contractDate:    monthItems.filter(i => i.source === "contractDate").length,
+      downPaymentDate: monthItems.filter(i => i.source === "downPaymentDate").length,
+      balanceDate:     monthItems.filter(i => i.source === "balanceDate").length,
+      renewal:         monthItems.filter(i => i.source === "renewal").length,
+    };
+  }, [baseItems, viewMonth]);
 
   /* 네이버·구글 캘린더용 .ics — 오늘 이후 일정 전체 (탭·날짜 선택과 무관) */
   const exportIcs = () => {
