@@ -120,7 +120,7 @@ export default function SchedulePage() {
   const [loaded,     setLoaded]     = useState(false);
   const [editing,    setEditing]    = useState<Schedule | null>(null);
   const [filter,     setFilter]     = useState<SourceFilter>("all");
-  const [showPast,   setShowPast]   = useState(false);
+  const [viewMonth,  setViewMonth]  = useState<string>(() => new Date().toISOString().slice(0, 7));   // 달력이 보여주는 달 (YYYY-MM)
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [panelItem,  setPanelItem]  = useState<UnifiedItem | null>(null);   // 우측 상세 패널
 
@@ -153,15 +153,13 @@ export default function SchedulePage() {
   }, [user]);
 
   /* 베이스 아이템 — 만기일 제거, Property의 4개 날짜 추가.
-     filter·selectedDate는 적용하지 않음(탭/달력 카운트가 흔들리지 않게). showPast만 적용. */
-  const baseItems = useMemo<UnifiedItem[]>(() => {
+     filter·selectedDate는 적용하지 않음(탭/달력 카운트가 흔들리지 않게). */
+  const allItems = useMemo<UnifiedItem[]>(() => {
     const items: UnifiedItem[] = [];
 
     // ① 사용자가 등록한 일정 (집보기·계약일·중도금일·잔금일·기타)
     for (const s of schedules) {
       if (s.status === "cancelled") continue;
-      if (!showPast && s.status === "done") continue;
-      if (!showPast && !isFuture(s.date)) continue;
       const src = scheduleTypeToSource(s.scheduleType);
       items.push({ key: `s-${s.id}`, source: src, date: s.date, time: s.time, schedule: s });
     }
@@ -178,7 +176,6 @@ export default function SchedulePage() {
       ];
       for (const { kind, date, source } of dates) {
         if (!date) continue;
-        if (!showPast && !isFuture(date)) continue;
         items.push({
           key: `p-${p.id}-${kind}`, source,
           date: date.slice(0, 10),
@@ -192,7 +189,6 @@ export default function SchedulePage() {
     for (const cu of customers) {
       if (!cu.nextFollowUp) continue;
       if (cu.status === "closed" || cu.status === "lost") continue;
-      if (!showPast && !isFuture(cu.nextFollowUp)) continue;
       items.push({ key: `f-${cu.id}`, source: "appointment", date: cu.nextFollowUp, time: "", customer: cu });
     }
 
@@ -204,7 +200,7 @@ export default function SchedulePage() {
       // 재계약(연장)으로 생긴 계약 — 계약일·잔금일이 둘 다 재계약일이라 "재계약" 한 건으로 표시 (#39)
       if (ct.renewedFromId) {
         const date = ct.contractDate || ct.startDate;
-        if (date && (showPast || isFuture(date))) {
+        if (date) {
           items.push({
             key: `c-${ct.id}-renewal`, source: "renewal",
             date: date.slice(0, 10),
@@ -221,7 +217,6 @@ export default function SchedulePage() {
       ];
       for (const { kind, date, source } of dates) {
         if (!date) continue;
-        if (!showPast && !isFuture(date)) continue;
         // 만기 계약의 계약일도 시간 포함일 수 있다 — ②와 같은 이유로 분리
         items.push({
           key: `c-${ct.id}-${kind}`, source,
@@ -233,7 +228,19 @@ export default function SchedulePage() {
     }
 
     return items;
-  }, [schedules, customers, properties, contracts, showPast]);
+  }, [schedules, customers, properties, contracts]);
+
+  /* 목록에 보일 것 — 오늘 이후 일정 + 달력에서 보고 있는 달의 지난 일정 (#111)
+     지난 달을 넘겨 보면 그 달 일정만 보인다. 달력 점은 allItems 전체. */
+  const baseItems = useMemo<UnifiedItem[]>(() => {
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    return allItems.filter(i => {
+      if (selectedDate && i.date === selectedDate) return true;
+      const inView = i.date.slice(0, 7) === viewMonth;
+      if (viewMonth < thisMonth) return inView;
+      return isFuture(i.date) || inView;
+    });
+  }, [allItems, viewMonth, selectedDate]);
 
   /* 우측 목록 — baseItems에 filter + 선택 날짜 적용 */
   const unified = useMemo<UnifiedItem[]>(() => {
@@ -249,8 +256,8 @@ export default function SchedulePage() {
 
   /* 캘린더 점 — baseItems와 동일 집합(필터·선택 무시), 달력은 dot+카운트 표시 */
   const calendarItems = useMemo<CalendarItem[]>(
-    () => baseItems.map(i => ({ date: i.date, source: i.source, time: i.time || undefined, title: itemText(i).title || undefined })),
-    [baseItems],
+    () => allItems.map(i => ({ date: i.date, source: i.source, time: i.time || undefined, title: itemText(i).title || undefined })),
+    [allItems],
   );
 
   /* 날짜별 그룹 */
@@ -406,6 +413,7 @@ export default function SchedulePage() {
               items={calendarItems}
               onSelectDate={d => { if (d) recordFeatureUse(user?.uid, "sched_date"); setSelectedDate(d); }}
               selectedDate={selectedDate}
+              onMonthChange={setViewMonth}
             />
           </div>
 
@@ -458,7 +466,7 @@ export default function SchedulePage() {
           ))}
         </div>
 
-        {/* 캘린더 내보내기 + 지난 일정 토글 */}
+        {/* 캘린더 내보내기 */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <button
             onClick={exportIcs}
@@ -468,10 +476,6 @@ export default function SchedulePage() {
             <span className="material-symbols-outlined text-[16px]">ios_share</span>
             캘린더로 내보내기
           </button>
-          <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
-            <input type="checkbox" checked={showPast} onChange={e => setShowPast(e.target.checked)} className="accent-blue-600" />
-            지난 일정 포함
-          </label>
         </div>
 
         {/* 목록 */}
