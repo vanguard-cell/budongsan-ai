@@ -250,7 +250,13 @@ export default function SchedulePage() {
 
   /* 캘린더 점 — baseItems와 동일 집합(필터·선택 무시), 달력은 dot+카운트 표시 */
   const calendarItems = useMemo<CalendarItem[]>(
-    () => baseItems.map(i => ({ date: i.date, source: i.source, time: i.time || undefined, title: itemText(i).title || undefined })),
+    () => baseItems.map(i => {
+      // 방문은 사람 기준으로 세도록 방문자 식별값 전달 (이름·전화번호 없으면 일정마다 따로)
+      const name = i.schedule?.visitorName?.trim() || "";
+      const phone = (i.schedule?.visitorPhone || "").replace(/\D/g, "");
+      const visitorKey = i.source === "visit" ? (name || phone ? `v:${name}|${phone}` : i.key) : undefined;
+      return { date: i.date, source: i.source, time: i.time || undefined, title: itemText(i).title || undefined, visitorKey };
+    }),
     [baseItems],
   );
 

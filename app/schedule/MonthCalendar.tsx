@@ -19,6 +19,7 @@ export interface CalendarItem {
   source: CalendarSource;
   time?: string;                         // HH:MM (없을 수 있음)
   title?: string;                        // 단지명/주소 (없을 수 있음)
+  visitorKey?: string;                   // 방문: 같은 방문자는 같은 값 (사람 수로 세기 위함)
 }
 
 interface Props {
@@ -205,7 +206,8 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, onMon
               {info && (
                 <div className="flex flex-col gap-px mt-0.5 items-stretch w-full px-0.5">
                   {(Object.keys(SOURCE_COLORS) as CalendarSource[]).map(src => {
-                    const cnt = info.list.filter(it => it.source === src).length;
+                    const ofSrc = info.list.filter(it => it.source === src);
+                    const cnt = src === "visit" ? new Set(ofSrc.map((it, n) => it.visitorKey ?? `i${n}`)).size : ofSrc.length;
                     if (cnt === 0) return null;
                     return (
                       <span
