@@ -204,7 +204,7 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">{userName} {title}</p>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">미사금빛 부동산</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{user?.officeName || "미사금빛 부동산"}</p>
           </div>
         </div>
 

@@ -44,10 +44,11 @@ function LoginInner() {
   const redirect = searchParams.get("redirect") || "/expiry";
 
   const { user, loading, signInGoogle, signInEmail, signUpEmail } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">(searchParams.get("mode") === "signup" ? "signup" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [officeName, setOfficeName] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [inAppInfo, setInAppInfo] = useState<{ isInApp: boolean; appName: string }>({ isInApp: false, appName: "" });
@@ -124,7 +125,7 @@ function LoginInner() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        await signUpEmail(email, password, displayName);
+        await signUpEmail(email, password, displayName, officeName);
       } else {
         await signInEmail(email, password);
       }
@@ -215,12 +216,25 @@ function LoginInner() {
 
           {mode === "signup" && (
             <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">부동산 이름</label>
+              <input
+                type="text"
+                value={officeName}
+                onChange={(e) => setOfficeName(e.target.value)}
+                placeholder="예: 행복공인중개사"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
+          {mode === "signup" && (
+            <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">표시 이름</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="예: 미사금빛 김OO"
+                placeholder="예: 김OO"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
