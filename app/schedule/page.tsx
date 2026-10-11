@@ -272,7 +272,8 @@ export default function SchedulePage() {
     return {
       all:             monthItems.length,
       appointment:     monthItems.filter(i => i.source === "appointment").length,
-      visit:           monthItems.filter(i => i.source === "visit").length,
+      // 방문은 '사람' 기준: 같은 날 같은 방문자(이름+전화번호)는 매물이 여러 개여도 1명
+      visit:           groupByVisitor(monthItems.filter(i => i.source === "visit")).length,
       contractDate:    monthItems.filter(i => i.source === "contractDate").length,
       downPaymentDate: monthItems.filter(i => i.source === "downPaymentDate").length,
       balanceDate:     monthItems.filter(i => i.source === "balanceDate").length,
