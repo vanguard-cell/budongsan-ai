@@ -16,6 +16,7 @@ import type { Customer } from "@/app/customers/customer-types";
 import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 import SideDrawer from "@/app/components/SideDrawer";
 import { downloadIcs } from "@/lib/ics";
+import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { PROPERTY_TYPES } from "@/app/properties/helpers";
 
 /* ── 타입 ── */
@@ -618,6 +619,7 @@ export default function SchedulePage() {
         <ScheduleModal
           schedule={editing}
           properties={properties}
+          contracts={contracts}
           customers={customers}
           onClose={() => setEditing(null)}
           onSave={async list => { for (const s of list) await upsert(s); setEditing(null); }}
@@ -695,8 +697,8 @@ function propertyFullLabel(p: Property) {
 }
 
 /* ── 약속 등록/수정 모달 ── */
-function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
-  schedule: Schedule; properties: Property[]; customers: Customer[];
+function ScheduleModal({ schedule, properties: myProperties, contracts, customers, onClose, onSave }: {
+  schedule: Schedule; properties: Property[]; contracts: Contract[]; customers: Customer[];
   onClose: () => void; onSave: (list: Schedule[]) => Promise<void>;
 }) {
   const [form, setForm] = useState<Schedule>(schedule);
@@ -719,6 +721,15 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
 
   const set = <K extends keyof Schedule>(k: K, v: Schedule[K]) => setForm(p => ({ ...p, [k]: v }));
 
+  // 재계약 일정은 '내 매물'이 아니라 만기 매물(계약 목록)에서 고른다
+  const isRenewal = form.scheduleType === "재계약일";
+  const properties = useMemo<Property[]>(() => isRenewal
+    ? contracts.filter(c => c.status === "active").map(c => ({
+        ...emptyProperty(), id: c.id, address: c.address, dong: c.dong ?? "", ho: c.ho ?? "",
+        propertyType: (c.propertyType ?? "") as Property["propertyType"], dealType: c.type, price: c.deposit, ownerName: c.landlordName,
+      }))
+    : myProperties, [isRenewal, contracts, myProperties]);
+
   const filteredProps = useMemo(() => {
     const base = properties.filter(p => p.status === "active" && (!propTypeFilter || p.propertyType === propTypeFilter) && (!propDealFilter || p.dealType === propDealFilter));
     if (!propQuery.trim()) return base.slice(0, propTypeFilter || propDealFilter ? 30 : 8);
@@ -738,7 +749,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
       setAddingExtra(false); setPropQuery(""); setShowPropList(false);
       return;
     }
-    set("propertyAddress", propertyFullLabel(p)); set("propertyId", p.id);
+    set("propertyAddress", propertyFullLabel(p)); set("propertyId", isRenewal ? undefined : p.id);
     setPropQuery(propertyFullLabel(p)); setShowPropList(false);
   };
   const save = async () => {
@@ -771,27 +782,16 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
             </div>
           </div>
 
-          {/* 날짜·시간 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">날짜 <span className="text-red-400">*</span></label>
-              <input type="date" value={form.date} onChange={e => set("date", e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">시간</label>
-              <input type="text" inputMode="numeric" maxLength={5} placeholder="예: 14:30" value={form.time}
-                onChange={e => {
-                  const d = e.target.value.replace(/\D/g, "").slice(0, 4);
-                  set("time", d.length > 2 ? `${d.slice(0, 2)}:${d.slice(2)}` : d);
-                }}
-                onBlur={() => {
-                  const m = /^(\d{1,2}):?(\d{2})$/.exec(form.time);
-                  if (m && +m[1] < 24 && +m[2] < 60) set("time", `${m[1].padStart(2, "0")}:${m[2]}`);
-                  else if (form.time) set("time", "");
-                }}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
+          {/* 날짜·시간 — 계약일 입력과 같은 달력+시간 선택 */}
+          <div>
+            <KoreanDatePicker
+              value={form.date ? (form.time ? `${form.date}T${form.time}` : form.date) : ""}
+              onChange={v => setForm(p => ({ ...p, date: v.slice(0, 10), time: v.length > 10 ? v.slice(11, 16) : "" }))}
+              showTime={true}
+              label="날짜·시간 *"
+              accent="blue"
+              placeholder="날짜와 시간 선택"
+            />
           </div>
 
           {/* 방문자 */}
@@ -856,7 +856,7 @@ function ScheduleModal({ schedule, properties, customers, onClose, onSave }: {
               <div className="relative mb-2">
                 <input value={propQuery} onChange={e => { setPropQuery(e.target.value); setShowPropList(true); }}
                   onFocus={() => setShowPropList(true)}
-                  placeholder="🔍 내 매물에서 검색"
+                  placeholder={isRenewal ? "🔍 만기 매물에서 검색" : "🔍 내 매물에서 검색"}
                   className="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400" autoComplete="off" />
                 {showPropList && filteredProps.length > 0 && (
                   <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
