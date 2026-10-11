@@ -23,6 +23,9 @@ initializeApp({
 const dbf = getFirestore();
 const { toMs, loadAll, findByNo, findPending } = require("./feedback-lib");
 
+// 자동 처리 허용 사용자 — lib/feedback-auto.ts 의 AUTO_FIX_UIDS 와 같게 유지
+const AUTO_FIX_UIDS = ["ZP0FIxYM5Lh8tvobeldoNfdgozX2"];
+
 const STATUS = { pending: "🆕 문의", in_progress: "🔧 진행중", done: "✅ 완료" };
 
 function fmt(ts) {
@@ -54,23 +57,28 @@ function fmt(ts) {
     const createdAt = it.createdAt;
     const thread = Array.isArray(x.thread) ? x.thread : [];
     if (thread.length === 0 && x.text) thread.push({ sender: "user", senderName: x.submittedBy?.name, text: x.text, createdAt });
-    return { no: it.no, status: x.status || "pending", createdAt, thread, by: x.submittedBy?.name || x.submittedBy?.email || "?", lastReplyBy: x.lastReplyBy };
+    return { no: it.no, status: x.status || "pending", createdAt, thread, by: x.submittedBy?.name || x.submittedBy?.email || "?", autoFix: AUTO_FIX_UIDS.includes(x.submittedBy?.uid), lastReplyBy: x.lastReplyBy };
   });
 
   const onlyOpen = args.includes("--open");
   let list = mapped;
   if (onlyOpen) list = mapped.filter(it => it.status !== "done");
+  // 기본(처리 대상 후보) 모드에서는 자동 처리 허용 사용자 글만 — 루틴이 다른 사용자 건의를 처리하지 않게
+  const candidateMode = !onlyNo && !full;
+  const excluded = candidateMode ? list.filter(it => !it.autoFix).length : 0;
+  if (candidateMode) list = list.filter(it => it.autoFix);
   // 출력은 최신순(번호 큰 것부터)
   list.sort((a, b) => b.no - a.no);
 
   console.log(`\n📮 건의함 — 전체 ${total}건`);
-  if (!onlyNo && !full) console.log("   (처리 대상 후보만 표시: 🆕 문의 + 사용자가 마지막으로 쓴 글. 전체는 --all)");
+  if (candidateMode) console.log("   (처리 대상 후보만 표시: 🆕 문의 + 사용자가 마지막으로 쓴 글. 전체는 --all)");
+  if (excluded) console.log(`   (🔒 자동 처리 제외 사용자 글 ${excluded}건은 빼고 표시 — 관리자가 직접 확인)`);
   if (onlyOpen) console.log("   (미완료만 표시)");
   if (onlyNo) console.log(`   (#${onlyNo}만 표시)`);
   console.log("─".repeat(70));
 
   for (const it of list) {
-    const newBadge = it.lastReplyBy === "user" ? "  ❗새 답글" : "";
+    const newBadge = (it.lastReplyBy === "user" ? "  ❗새 답글" : "") + (it.autoFix ? "" : "  🔒자동처리 제외");
     console.log(`\n#${it.no}  ${STATUS[it.status]}  · ${it.by} · ${fmt(it.createdAt)}${newBadge}`);
     it.thread.forEach(m => {
       const who = m.sender === "admin" ? "💬 관리자" : `🙋 ${m.senderName || "사용자"}`;

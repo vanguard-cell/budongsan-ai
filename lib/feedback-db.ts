@@ -25,6 +25,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { AUTO_FIX_UIDS } from "./feedback-auto";
 
 export const ADMIN_EMAIL = "vpfldh87@gmail.com";
 
@@ -125,7 +126,7 @@ const ROUTINE_WINDOW_MS = 5 * 60_000;
  *  글 문서의 routineFiredAt 으로 5분 안에 이미 깨웠으면 건너뜀 (서버 인스턴스와 무관하게 중복 실행 방지) */
 function notifyRoutine(kind: "new" | "reply", feedbackId: string) {
   const user = auth.currentUser;
-  if (!user) return;
+  if (!user || !AUTO_FIX_UIDS.includes(user.uid)) return;
   const ref = doc(db, "feedback", feedbackId);
   runTransaction(db, async tx => {
     const snap = await tx.get(ref);
