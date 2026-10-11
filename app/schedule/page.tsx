@@ -518,11 +518,11 @@ export default function SchedulePage() {
                         {g.phone && <span className="whitespace-nowrap font-semibold">{formatPhone(g.phone)}</span>}
                         {g.phone && (
                           <>
-                            <a href={`tel:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-0.5 text-emerald-800 text-[7px] leading-3 font-bold whitespace-nowrap">
-                              <span className="material-symbols-outlined text-[8px]">call</span>통화
+                            <a href={`tel:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[7px] leading-3 font-bold whitespace-nowrap">
+                              통화
                             </a>
-                            <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-0.5 text-sky-800 text-[7px] leading-3 font-bold whitespace-nowrap">
-                              <span className="material-symbols-outlined text-[8px]">sms</span>문자
+                            <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-block px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[7px] leading-3 font-bold whitespace-nowrap">
+                              문자
                             </a>
                           </>
                         )}

@@ -770,9 +770,9 @@ function CustomerRow({
           {c.phone && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs">
               <span className="text-gray-700 whitespace-nowrap">{formatPhone(c.phone)}</span>
-              <a href={telUrl(c.phone)} className="inline-flex items-center gap-0.5 text-emerald-800 text-[7px] leading-3 font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[8px]">call</span>통화</a>
+              <a href={telUrl(c.phone)} className="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[7px] leading-3 font-bold whitespace-nowrap">통화</a>
               {!isInactive && (
-                <a href={smsUrl(c.phone, buildSmsBody())} className="inline-flex items-center gap-0.5 text-sky-800 text-[7px] leading-3 font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[8px]">sms</span>문자</a>
+                <a href={smsUrl(c.phone, buildSmsBody())} className="inline-block px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[7px] leading-3 font-bold whitespace-nowrap">문자</a>
               )}
             </div>
           )}

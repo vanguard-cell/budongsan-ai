@@ -963,17 +963,17 @@ function ContactLine({
           <span className="text-gray-700 whitespace-nowrap">{formatPhone(phone)}</span>
           <a
             href={telUrl(phone)}
-            className="inline-flex items-center gap-0.5 text-emerald-800 text-[7px] leading-3 font-bold whitespace-nowrap"
+            className="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[7px] leading-3 font-bold whitespace-nowrap"
             aria-disabled={disabled}
           >
-            <span className="material-symbols-outlined text-[8px]">call</span>통화
+            통화
           </a>
           <button
             onClick={onSms}
             disabled={disabled || !hasPhone}
-            className="inline-flex items-center gap-0.5 text-sky-800 text-[7px] leading-3 font-bold whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-block px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[7px] leading-3 font-bold whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-[8px]">sms</span>문자
+            문자
           </button>
         </>
       )}
