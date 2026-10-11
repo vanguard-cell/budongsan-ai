@@ -176,8 +176,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                   {p.ownerPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.ownerPhone)}</span>
-                      <a href={`tel:${p.ownerPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-emerald-100 text-gray-500 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">phone_in_talk</span></a>
-                      <a href={smsHref(p.ownerPhone, p.ownerName, "매물")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-500 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <a href={`tel:${p.ownerPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">phone_in_talk</span></a>
+                      <a href={smsHref(p.ownerPhone, p.ownerName, "매물")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                       {p.ownerCarrier && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-slate-700">{p.ownerCarrier}</span>}
                       
                     </>
@@ -191,8 +191,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                   {p.tenantPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.tenantPhone)}</span>
-                      <a href={`tel:${p.tenantPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-emerald-100 text-gray-500 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">phone_in_talk</span></a>
-                      <a href={smsHref(p.tenantPhone, p.tenantName, "임대차 만기")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-500 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <a href={`tel:${p.tenantPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">phone_in_talk</span></a>
+                      <a href={smsHref(p.tenantPhone, p.tenantName, "임대차 만기")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                       
                     </>
                   )}
