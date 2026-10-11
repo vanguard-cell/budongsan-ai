@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import CallIcon from "../components/CallIcon";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import {
@@ -770,7 +771,7 @@ function CustomerRow({
           {c.phone && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs">
               <span className="text-gray-700 whitespace-nowrap">{formatPhone(c.phone)}</span>
-              <a href={telUrl(c.phone)} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">phone_in_talk</span></a>
+              <a href={telUrl(c.phone)} className="inline-flex items-center justify-center mx-1 whitespace-nowrap" aria-label="통화" title="통화"><CallIcon size={24} /></a>
               {!isInactive && (
                 <a href={smsUrl(c.phone, buildSmsBody())} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
               )}
