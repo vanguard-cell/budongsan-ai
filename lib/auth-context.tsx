@@ -21,6 +21,7 @@ import {
 import { doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { kstDateStr } from "./kst";
+import { setAgencyDisplayName } from "../app/expiry/contracts";
 
 /**
  * 사용자 역할
@@ -38,6 +39,8 @@ export interface AppUser {
   displayName: string | null;
   photoURL: string | null;
   agencyId: string;
+  /** 회원가입 때 적은 부동산 이름 (없으면 null = 기존 기본 문구 사용) */
+  officeName: string | null;
   role: UserRole;
 }
 
@@ -50,7 +53,7 @@ interface AuthContextValue {
   loading: boolean;
   signInGoogle: () => Promise<void>;
   signInEmail: (email: string, password: string) => Promise<void>;
-  signUpEmail: (email: string, password: string, displayName: string) => Promise<void>;
+  signUpEmail: (email: string, password: string, displayName: string, officeName?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -93,6 +96,9 @@ export function recordFeatureUse(uid: string | undefined, key: string): void {
  * 사용자 문서 + 사무실(agency) 자동 생성 또는 조회
  * 같은 사용자가 다른 로그인 방식으로 들어와도 같은 agency를 사용 (이메일 기준)
  */
+/** 회원가입 화면에서 적은 부동산 이름 — 새 사무실을 만들 때 사용 */
+let pendingOfficeName = "";
+
 async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
   const userRef = doc(db, "users", fbUser.uid);
   const userSnap = await getDoc(userRef);
@@ -109,8 +115,10 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
 
     // 역할 결정 — agency.owner === uid 이면 대표, 아니면 파트너
     let role: UserRole = "partner";
+    let officeName: string | null = null;
     try {
       const agencySnap = await getDoc(doc(db, "agencies", data.agencyId));
+      if (agencySnap.exists()) officeName = agencySnap.data().officeName || null;
       if (agencySnap.exists() && agencySnap.data().owner === fbUser.uid) {
         role = "owner";
       }
@@ -125,6 +133,7 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
       displayName: fbUser.displayName || data.displayName || null,
       photoURL: fbUser.photoURL,
       agencyId: data.agencyId,
+      officeName,
       role,
     };
   }
@@ -136,6 +145,7 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
   await setDoc(agencyRef, {
     name: fbUser.displayName ? `${fbUser.displayName}의 사무실` : "내 사무실",
     owner: fbUser.uid,
+    ...(pendingOfficeName ? { officeName: pendingOfficeName } : {}),
     members: [fbUser.uid],
     createdAt: serverTimestamp(),
   });
@@ -157,6 +167,7 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
     displayName: fbUser.displayName,
     photoURL: fbUser.photoURL,
     agencyId,
+    officeName: pendingOfficeName || null,
     role: "owner",   // 사무실 개설자 = 대표
   };
 }
@@ -170,8 +181,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         if (fbUser) {
           const appUser = await ensureUserAndAgency(fbUser);
+          pendingOfficeName = "";
+          setAgencyDisplayName(appUser.officeName);
           setUser(appUser);
         } else {
+          setAgencyDisplayName(null);
           setUser(null);
         }
       } catch (e) {
@@ -193,7 +207,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signUpEmail = async (email: string, password: string, displayName: string) => {
+  const signUpEmail = async (email: string, password: string, displayName: string, officeName = "") => {
+    pendingOfficeName = officeName.trim();
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     // displayName 저장 (Firestore 사용자 문서에서 처리됨)
     if (cred.user && displayName) {

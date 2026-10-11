@@ -304,6 +304,13 @@ export interface SmsTemplate {
 
 export const AGENCY_NAME = "미사금빛공인중개사";
 
+/** 내 사무소 이름 — 회원가입 때 적은 이름이 있으면 문자 문구에 사용 (없으면 기본값) */
+let currentAgencyName = AGENCY_NAME;
+export function setAgencyDisplayName(name: string | null | undefined) {
+  currentAgencyName = name?.trim() || AGENCY_NAME;
+}
+export function getAgencyDisplayName() { return currentAgencyName; }
+
 /* ── SMS 템플릿 기본값 (플레이스홀더: {주소} {만기일}) ── */
 export const DEFAULT_SMS_TEMPLATES: Record<string, string> = {
   "4m_tenant":   `안녕하세요, ${AGENCY_NAME}입니다.\n{주소} 계약 만기일이 {만기일}로 약 4개월 남았습니다.\n재계약 의향 있으신지 여쭤봐도 될까요?`,
@@ -353,7 +360,7 @@ export function buildSmsTemplate(
   const key = `${stage}_${target}`;
   const custom = loadCustomSmsTemplates()[key];
   const templateText = custom ?? DEFAULT_SMS_TEMPLATES[key] ?? "";
-  return applyTemplate(templateText, contract);
+  return applyTemplate(templateText, contract).split(AGENCY_NAME).join(currentAgencyName);
 }
 
 /* SMS URL (mobile) — 번호와 본문을 자동 입력 */
