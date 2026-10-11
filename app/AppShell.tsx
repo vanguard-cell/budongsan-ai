@@ -23,6 +23,14 @@ function PageTracker() {
     const seg = pathname.split("/").filter(Boolean)[0] || "dashboard"; // "/" → 홈
     recordPageView(user.uid, seg);
   }, [pathname, user]);
+
+  // 마지막으로 본 페이지 기억 (앱 처음 열 때 이어서 보여주기)
+  useEffect(() => {
+    if (pathname === "/login" || pathname === "/") return;
+    try {
+      localStorage.setItem("lastPage", pathname);
+    } catch {}
+  }, [pathname]);
   return null;
 }
 
