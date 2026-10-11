@@ -731,7 +731,7 @@ function CustomerRow({
                           {matched ? (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium shrink-0">🔗 내 매물장</span>
                           ) : (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0" title="내 매물 관리에 없는 외부 매물">외부매물</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 shrink-0" title="매물관리에 없는 외부 매물">외부매물</span>
                           )}
                           {reactionEmoji && <span className="text-[11px]">{reactionEmoji}</span>}
                         </div>
@@ -751,7 +751,7 @@ function CustomerRow({
                         <a
                           href={`/properties#${matched.id}`}
                           className="text-[10px] px-1.5 py-0.5 rounded-full border border-emerald-300 text-emerald-700 hover:bg-emerald-50 shrink-0"
-                          title="내 매물 관리로 이동"
+                          title="매물관리로 이동"
                         >
                           →
                         </a>

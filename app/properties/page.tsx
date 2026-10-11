@@ -12,7 +12,7 @@ import {
 import { type Contract } from "@/app/expiry/contracts";
 import { subscribeSchedules, type Schedule } from "@/lib/schedules-db";
 import { moveToContract, subscribeContracts } from "@/lib/contracts-db";
-import { subscribeCustomers, upsertTenantAsCustomer } from "@/lib/customers-db";
+import { subscribeCustomers } from "@/lib/customers-db";
 import type { Customer } from "@/app/customers/customer-types";
 import { computeSalesStats } from "@/lib/sales";
 import Link from "next/link";
@@ -237,36 +237,6 @@ export default function PropertiesPage() {
     if (!confirm("⚠️ 모든 매물 데이터를 삭제합니다. 정말 진행할까요?")) return;
     for (const p of properties) await deleteProperty(user.agencyId, p.id);
   };
-
-  /** 기존 매물 임차인 → 고객관리 일괄 등록 (전·월세, linkedTenantId 없는 것만) */
-  const migrateTenantsToCustomers = async () => {
-    if (!user) return;
-    const targets = properties.filter(p =>
-      p.dealType !== "매매" && (p.tenantName || p.tenantPhone) && !p.linkedTenantId,
-    );
-    if (targets.length === 0) {
-      alert("일괄 등록할 임차인이 없습니다.");
-      return;
-    }
-    if (!confirm(`${targets.length}건의 매물 임차인을 고객관리에 일괄 등록할까요?`)) return;
-    let ok = 0, fail = 0;
-    for (const p of targets) {
-      try {
-        const id = await upsertTenantAsCustomer(user.agencyId, {
-          name: p.tenantName, phone: p.tenantPhone, propertyAddress: p.address, contractDate: p.contractDate,
-        });
-        if (id) {
-          await saveProperty(user.agencyId, { ...p, linkedTenantId: id });
-          ok++;
-        } else fail++;
-      } catch (e) {
-        console.error("[migrate]", e);
-        fail++;
-      }
-    }
-    alert(`✅ 일괄 등록 완료\n\n성공: ${ok}건\n실패: ${fail}건`);
-  };
-
 
   // 계약진행중 = "계약 진행" 모달에서 contractDate/중도금/잔금일을 입력한 매물
   // (tenantName/tenantPhone은 일반 매물 등록에도 쓰이므로 기준으로 쓰지 않음)
@@ -498,7 +468,7 @@ export default function PropertiesPage() {
           <div>
             <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
               <span className="material-symbols-outlined text-[var(--brand-blue)] dark:text-blue-400" style={{ fontSize: "2rem" }}>domain</span>
-              내 매물 관리
+              매물관리
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">
               광고 중인 매물 목록 — 등록·계약 진행·만기 이동 한눈에
@@ -507,18 +477,6 @@ export default function PropertiesPage() {
 
           {/* 우측: 액션 버튼 그룹 (Stitch 톤) */}
           <div className="flex flex-wrap gap-2 items-center">
-            {/* 기존 임차인 일괄 등록 — 조건부, 파랑 강조 */}
-            {properties.some(p => p.dealType !== "매매" && (p.tenantName || p.tenantPhone) && !p.linkedTenantId) && (
-              <button
-                onClick={migrateTenantsToCustomers}
-                title="기존 매물의 임차인을 고객관리에 일괄 등록"
-                className="px-4 py-2.5 rounded-xl border border-blue-300 bg-blue-50 text-blue-700 text-sm font-bold flex items-center gap-1.5 hover:bg-blue-100 transition-all shadow-sm"
-              >
-                <span className="material-symbols-outlined text-lg">sync</span>
-                기존 임차인 → 고객관리
-              </button>
-            )}
-
             {/* 보조 액션 그룹 (배경 surface-container) */}
             <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
               <button

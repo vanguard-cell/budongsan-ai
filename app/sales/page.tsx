@@ -323,7 +323,7 @@ function EmptyState({ onLoadSample }: { onLoadSample: () => void }) {
       <div className="text-5xl mb-3">📊</div>
       <div className="text-base font-semibold text-gray-900 mb-1">아직 집계된 매출이 없습니다</div>
       <div className="text-xs text-gray-500 mb-4 leading-relaxed">
-        내 매물 관리에서 <strong>[계약 진행]</strong> 모달을 열어<br />
+        매물관리에서 <strong>[계약 진행]</strong> 모달을 열어<br />
         <strong>잔금일</strong>과 <strong>중개 수수료</strong>를 입력하면 여기에 자동 집계됩니다.
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
