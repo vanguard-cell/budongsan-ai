@@ -176,8 +176,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                   {p.ownerPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.ownerPhone)}</span>
-                      <a href={`tel:${p.ownerPhone.replace(/\D/g, "")}`} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-emerald-600 text-white text-[9px] font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[10px]">call</span>통화</a>
-                      <a href={smsHref(p.ownerPhone, p.ownerName, "매물")} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-sky-600 text-white text-[9px] font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[10px]">sms</span>문자</a>
+                      <a href={`tel:${p.ownerPhone.replace(/\D/g, "")}`} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-emerald-600 text-white text-[8px] leading-4 font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[9px]">call</span>통화</a>
+                      <a href={smsHref(p.ownerPhone, p.ownerName, "매물")} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-sky-600 text-white text-[8px] leading-4 font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[9px]">sms</span>문자</a>
                       {p.ownerCarrier && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-slate-700">{p.ownerCarrier}</span>}
                       
                     </>
@@ -191,8 +191,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                   {p.tenantPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.tenantPhone)}</span>
-                      <a href={`tel:${p.tenantPhone.replace(/\D/g, "")}`} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-emerald-600 text-white text-[9px] font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[10px]">call</span>통화</a>
-                      <a href={smsHref(p.tenantPhone, p.tenantName, "임대차 만기")} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-sky-600 text-white text-[9px] font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[10px]">sms</span>문자</a>
+                      <a href={`tel:${p.tenantPhone.replace(/\D/g, "")}`} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-emerald-600 text-white text-[8px] leading-4 font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[9px]">call</span>통화</a>
+                      <a href={smsHref(p.tenantPhone, p.tenantName, "임대차 만기")} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-sky-600 text-white text-[8px] leading-4 font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[9px]">sms</span>문자</a>
                       
                     </>
                   )}

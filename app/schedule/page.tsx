@@ -518,11 +518,11 @@ export default function SchedulePage() {
                         {g.phone && <span className="whitespace-nowrap font-semibold">{formatPhone(g.phone)}</span>}
                         {g.phone && (
                           <>
-                            <a href={`tel:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-emerald-600 text-white text-[9px] font-bold whitespace-nowrap">
-                              <span className="material-symbols-outlined text-[10px]">call</span>통화
+                            <a href={`tel:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-emerald-600 text-white text-[8px] leading-4 font-bold whitespace-nowrap">
+                              <span className="material-symbols-outlined text-[9px]">call</span>통화
                             </a>
-                            <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-sky-600 text-white text-[9px] font-bold whitespace-nowrap">
-                              <span className="material-symbols-outlined text-[10px]">sms</span>문자
+                            <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-sky-600 text-white text-[8px] leading-4 font-bold whitespace-nowrap">
+                              <span className="material-symbols-outlined text-[9px]">sms</span>문자
                             </a>
                           </>
                         )}

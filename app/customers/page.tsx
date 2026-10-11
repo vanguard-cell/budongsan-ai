@@ -769,14 +769,10 @@ function CustomerRow({
           {/* 연락처 */}
           {c.phone && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs">
-              <a href={telUrl(c.phone)} className="text-blue-600 hover:underline">📞 {formatPhone(c.phone)}</a>
+              <span className="text-gray-700 whitespace-nowrap">{formatPhone(c.phone)}</span>
+              <a href={telUrl(c.phone)} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-emerald-600 text-white text-[8px] leading-4 font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[9px]">call</span>통화</a>
               {!isInactive && (
-                <a
-                  href={smsUrl(c.phone, buildSmsBody())}
-                  className="text-[10px] px-2 py-0.5 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50"
-                >
-                  문자
-                </a>
+                <a href={smsUrl(c.phone, buildSmsBody())} className="inline-flex items-center gap-0.5 px-1 py-0 rounded-full bg-sky-600 text-white text-[8px] leading-4 font-bold whitespace-nowrap"><span className="material-symbols-outlined text-[9px]">sms</span>문자</a>
               )}
             </div>
           )}
