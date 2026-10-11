@@ -119,8 +119,8 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           {isNew && (
             <div className="rounded-xl bg-teal-50 border border-teal-200 p-2.5 text-[11px] text-teal-700 leading-relaxed">
               💡 <strong>같은 단지에 여러 매물</strong>이 있으신가요?<br />
-              먼저 한 건 등록 후, 그 매물 카드의 <strong>📋 같은 단지 추가</strong> 버튼을 누르면<br />
-              단지명·유형·면적·방향이 자동 복사되어 동/호수만 입력하면 됩니다.
+              먼저 한 건 등록 후, 그 매물 카드의 <strong>📋 매물복사</strong> 버튼을 누르면<br />
+              내용이 그대로 복사되어 다른 부분(동/호수 등)만 고치면 됩니다.
             </div>
           )}
 

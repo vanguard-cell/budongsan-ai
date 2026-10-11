@@ -304,9 +304,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           ✏️ 수정
         </button>
         {!isClosed && (
-          <button onClick={onCloneSameComplex} title="같은 단지에 다른 호수 빠른 등록"
+          <button onClick={onCloneSameComplex} title="이 매물을 그대로 복사해서 새로 등록"
             className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-semibold hover:bg-teal-100 transition-colors">
-            📋 같은 단지 추가
+            📋 매물복사
           </button>
         )}
         {!isClosed && (

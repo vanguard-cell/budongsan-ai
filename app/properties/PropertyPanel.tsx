@@ -161,7 +161,7 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
         <p className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-1.5">작업</p>
         <div className="grid grid-cols-2 gap-1.5">
           <ActionBtn icon="edit" label="수정" onClick={() => onEdit(p)} />
-          <ActionBtn icon="content_copy" label="같은 단지 추가" onClick={() => onCloneSameComplex(p)} />
+          <ActionBtn icon="content_copy" label="매물복사" onClick={() => onCloneSameComplex(p)} />
           <ActionBtn icon="fact_check" label="계약 진행" onClick={() => onProgress(p)} />
           <ActionBtn icon="task_alt" label="거래완료 → 만기" onClick={() => onComplete(p)} primary />
         </div>

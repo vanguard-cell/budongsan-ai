@@ -329,7 +329,7 @@ export default function AdminPage() {
             {(() => {
               const FEATURE_LABEL: Record<string, string> = {
                 prop_add: "매물 등록", prop_edit: "매물 수정", prop_contract: "계약 진행",
-                prop_to_expiry: "만기로 보내기", prop_same: "같은단지 추가", prop_excel: "매물 엑셀업로드",
+                prop_to_expiry: "만기로 보내기", prop_same: "매물복사", prop_excel: "매물 엑셀업로드",
                 complex_pick: "단지 선택", cust_add: "고객 등록", cust_kakao: "카톡 붙여넣기",
                 cust_stage: "고객 단계이동", cust_log: "고객 여정기록",
                 contract_renew: "재계약(연장)", contract_reopen: "매물로 되돌리기", contract_close: "관리 종료",

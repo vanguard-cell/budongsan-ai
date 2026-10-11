@@ -163,26 +163,20 @@ export default function PropertiesPage() {
   };
 
   /**
-   * 같은 단지의 다른 호수 빠른 등록
-   * - 단지 공통 정보 인계: 주소(동/호 제외), 매물유형, 거래종류, 면적, 방수, 방향
-   * - 호별로 다른 정보는 비움: 동호수, 임대인·임차인, 가격, 계약일자, 메모
-   *   → 단지 내 매물 빠르게 여러 건 등록 가능
+   * 매물복사 — 매물 내용(단지·동호수·가격·메모 등)을 그대로 복사해 새 매물로 등록 창을 연다.
+   * 새 id/등록일/상태만 새로 만들고, 이력·연결 정보는 가져오지 않는다.
    */
   const cloneSameComplex = (p: Property) => {
     recordFeatureUse(user?.uid, "prop_same");
-    const baseAddress = stripUnit(p.address, p.dong, p.ho);
+    const fresh = emptyProperty();
     setEditing({
-      ...emptyProperty(),
-      // 단지 공통 — 매물끼리 같은 정보 유지
-      address:      baseAddress,
-      propertyType: p.propertyType,
-      dealType:     p.dealType,
-      area:         p.area,
-      unitType:     p.unitType,
-      rooms:        p.rooms,
-      direction:    p.direction,
-      // 호별 다른 정보는 빈 채로 → 사용자 입력
-      // dong, ho, ownerName, ownerPhone, tenantName/Phone, price, monthly, memo 등
+      ...p,
+      id: fresh.id,
+      createdAt: fresh.createdAt,
+      status: "active",
+      history: undefined,
+      linkedTenantId: undefined,
+      salesHidden: undefined,
     });
   };
 
