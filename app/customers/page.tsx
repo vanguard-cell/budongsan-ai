@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
+import { getAgencyDisplayName } from "@/app/expiry/contracts";
 import {
   subscribeCustomers,
   saveCustomer as fsSaveCustomer,
@@ -663,7 +664,7 @@ function CustomerRow({
   };
 
   const buildSmsBody = () => {
-    const greeting = `안녕하세요, 미사금빛공인중개사입니다.`;
+    const greeting = `안녕하세요, ${getAgencyDisplayName()}입니다.`;
     const follow = c.nextFollowUp
       ? `${c.preferredArea ? c.preferredArea + " 관련 " : ""}새 매물 찾아보았는데 연락 가능하실까요?`
       : "연락 가능하실 때 알려주세요.";
