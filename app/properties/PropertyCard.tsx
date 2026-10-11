@@ -76,7 +76,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
     const days = Math.max(0, Math.floor((Date.now() - p.createdAt) / 86400000));
     const ds = `${c.getFullYear()}-${String(c.getMonth() + 1).padStart(2, "0")}-${String(c.getDate()).padStart(2, "0")}`;
     return { ds, label: days === 0 ? "오늘 등록" : `${days}일 지남` };
-  })() : null;
+  })() : { ds: "", label: "미기록" };
+  const occBadge = p.occupancy === "owner" || p.occupancy === "vacant" ? OCC_LABEL[p.occupancy] : null;
 
   return (
     <div className={`rounded-2xl border p-3 sm:p-4 transition-all ${cardClass}`}>
@@ -94,7 +95,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
       <div className="flex items-start gap-3">
         {/* 만기 D-day 배지(만기 관리와 동일) + 등록일 배지 — 만기일이 없어도 등록일은 항상 표시 */}
-        {((sevCls && leaseDD !== null) || regInfo) && (
+        <>
           <div className="flex-shrink-0 flex flex-col items-center">
             {sevCls && leaseDD !== null && (
               <div className={`inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border ${sevCls.badge} text-center`}>
@@ -105,15 +106,20 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                 )}
               </div>
             )}
+            {occBadge && (
+              <div className={`${sevCls && leaseDD !== null ? "mt-1 " : ""}inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border ${p.occupancy === "vacant" ? "border-rose-300 bg-rose-100" : "border-indigo-300 bg-indigo-100"} text-gray-900 text-center`}>
+                <div className="text-sm font-bold leading-tight whitespace-nowrap">{occBadge}</div>
+              </div>
+            )}
             {regInfo && (
-              <div className={`${sevCls && leaseDD !== null ? "mt-1 " : ""}inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border border-emerald-300 bg-emerald-100 text-gray-900 text-center`}>
+              <div className={`${(sevCls && leaseDD !== null) || occBadge ? "mt-1 " : ""}inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border border-emerald-300 bg-emerald-100 text-gray-900 text-center`}>
                 <div className="text-[10px] font-medium leading-tight">등록일</div>
                 <div className="text-sm font-bold leading-tight whitespace-nowrap">{regInfo.label}</div>
-                <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{regInfo.ds}</div>
+                <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{regInfo.ds || "-"}</div>
               </div>
             )}
           </div>
-        )}
+        </>
 
         <div className="flex-1 min-w-0">
           {/* 1째줄: 매물종류 · 거래종류 · 전용·평수 · 금액 */}
