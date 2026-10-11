@@ -518,8 +518,8 @@ export default function SchedulePage() {
                         {g.phone && <span className="whitespace-nowrap font-semibold">{formatPhone(g.phone)}</span>}
                         {g.phone && (
                           <>
-                            <a href={`tel:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-6 h-6 rounded bg-emerald-100 text-gray-500 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined text-[16px]">phone_in_talk</span></a>
-                            <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-6 h-6 rounded bg-sky-100 text-gray-500 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined text-[16px]">chat</span></a>
+                            <a href={`tel:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-emerald-100 text-gray-500 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">phone_in_talk</span></a>
+                            <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-500 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                           </>
                         )}
                         <span className="ml-auto whitespace-nowrap text-[11px] font-semibold">{g.items.length}건</span>
