@@ -79,7 +79,7 @@ export const PAGE_THEMES: Record<PageKey, PageTheme> = {
     },
   },
   "properties": {
-    label: "매물관리",
+    label: "매물 관리",
     icon: "domain",
     emoji: "🏘️",
     href: "/properties",

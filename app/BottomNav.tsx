@@ -17,7 +17,7 @@ const MAIN_TABS = [
 // 사이드바 전체 메뉴 — PC (Material Symbols Outlined, 대시보드와 통일)
 const SIDEBAR_TABS = [
   { href: "/dashboard",  icon: "home",            label: "홈" },
-  { href: "/properties", icon: "domain",          label: "매물관리" },
+  { href: "/properties", icon: "domain",          label: "매물 관리" },
   { href: "/expiry",     icon: "event_busy",      label: "만기 관리" },
   { href: "/customers",  icon: "group",           label: "매수자 등록" },
   { href: "/schedule",     icon: "calendar_month",  label: "스케줄" },
