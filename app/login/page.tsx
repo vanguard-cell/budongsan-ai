@@ -44,7 +44,7 @@ function LoginInner() {
   const redirect = searchParams.get("redirect") || "/expiry";
 
   const { user, loading, signInGoogle, signInEmail, signUpEmail } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">(searchParams.get("mode") === "signup" ? "signup" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
