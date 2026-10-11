@@ -93,18 +93,20 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
       )}
 
       <div className="flex items-start gap-3">
-        {/* 만기 D-day 배지 (만기 관리와 동일) */}
-        {sevCls && leaseDD !== null && (
+        {/* 만기 D-day 배지(만기 관리와 동일) + 등록일 배지 — 만기일이 없어도 등록일은 항상 표시 */}
+        {((sevCls && leaseDD !== null) || regInfo) && (
           <div className="flex-shrink-0 flex flex-col items-center">
-            <div className={`inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border ${sevCls.badge} text-center`}>
-              <div className="text-[10px] font-medium leading-tight">{severityLabel(sev!)}</div>
-              <div className="text-sm font-bold leading-tight">{dDayLabel(leaseDD)}</div>
-              {p.leaseEndDate && (
-                <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{p.leaseEndDate}</div>
-              )}
-            </div>
+            {sevCls && leaseDD !== null && (
+              <div className={`inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border ${sevCls.badge} text-center`}>
+                <div className="text-[10px] font-medium leading-tight">{severityLabel(sev!)}</div>
+                <div className="text-sm font-bold leading-tight">{dDayLabel(leaseDD)}</div>
+                {p.leaseEndDate && (
+                  <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{p.leaseEndDate}</div>
+                )}
+              </div>
+            )}
             {regInfo && (
-              <div className="mt-1 inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border border-emerald-300 bg-emerald-100 text-gray-900 text-center">
+              <div className={`${sevCls && leaseDD !== null ? "mt-1 " : ""}inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border border-emerald-300 bg-emerald-100 text-gray-900 text-center`}>
                 <div className="text-[10px] font-medium leading-tight">등록일</div>
                 <div className="text-sm font-bold leading-tight whitespace-nowrap">{regInfo.label}</div>
                 <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{regInfo.ds}</div>
