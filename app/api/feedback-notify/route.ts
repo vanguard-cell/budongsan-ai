@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AUTO_FIX_UIDS } from "@/lib/feedback-auto";
 
 /**
  * 건의함 새 글/새 답글 알림 → Claude 루틴(건의함 자동 처리) 실행
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
 
   const uid = await verifyUser(idToken).catch(() => null);
   if (!uid) return NextResponse.json({ ok: false }, { status: 401 });
+  if (!AUTO_FIX_UIDS.includes(uid)) return NextResponse.json({ ok: true, skipped: "not-allowed" });
 
   const now = Date.now();
   if (now - (lastFired.get(uid) || 0) < COOLDOWN_MS) {
