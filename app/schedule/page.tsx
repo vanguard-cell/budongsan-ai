@@ -120,7 +120,8 @@ export default function SchedulePage() {
   const [loaded,     setLoaded]     = useState(false);
   const [editing,    setEditing]    = useState<Schedule | null>(null);
   const [filter,     setFilter]     = useState<SourceFilter>("all");
-  const [showPast,   setShowPast]   = useState(false);
+  const showPast = true;   // 지난 일정도 항상 표시 (목록은 달력에서 보는 달 기준)
+  const [viewMonth, setViewMonth] = useState<string>(() => new Date().toISOString().slice(0, 7));   // "YYYY-MM"
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [panelItem,  setPanelItem]  = useState<UnifiedItem | null>(null);   // 우측 상세 패널
 
@@ -239,13 +240,13 @@ export default function SchedulePage() {
   const unified = useMemo<UnifiedItem[]>(() => {
     return baseItems
       .filter(i => filter === "all" || i.source === filter)
-      .filter(i => !selectedDate || i.date === selectedDate)
+      .filter(i => selectedDate ? i.date === selectedDate : i.date.startsWith(viewMonth))
       .sort((a, b) => {
         const d = a.date.localeCompare(b.date);
         if (d !== 0) return d;
         return a.time.localeCompare(b.time);
       });
-  }, [baseItems, filter, selectedDate]);
+  }, [baseItems, filter, selectedDate, viewMonth]);
 
   /* 캘린더 점 — baseItems와 동일 집합(필터·선택 무시), 달력은 dot+카운트 표시 */
   const calendarItems = useMemo<CalendarItem[]>(
@@ -406,6 +407,7 @@ export default function SchedulePage() {
               items={calendarItems}
               onSelectDate={d => { if (d) recordFeatureUse(user?.uid, "sched_date"); setSelectedDate(d); }}
               selectedDate={selectedDate}
+              onMonthChange={setViewMonth}
             />
           </div>
 
@@ -468,10 +470,6 @@ export default function SchedulePage() {
             <span className="material-symbols-outlined text-[16px]">ios_share</span>
             캘린더로 내보내기
           </button>
-          <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
-            <input type="checkbox" checked={showPast} onChange={e => setShowPast(e.target.checked)} className="accent-blue-600" />
-            지난 일정 포함
-          </label>
         </div>
 
         {/* 목록 */}
@@ -480,7 +478,7 @@ export default function SchedulePage() {
         ) : grouped.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
             <div className="text-5xl mb-3">📅</div>
-            <div className="text-base font-semibold text-gray-900 mb-1">일정이 없습니다</div>
+            <div className="text-base font-semibold text-gray-900 mb-1">{selectedDate ? "이 날은" : `${Number(viewMonth.slice(5))}월에는`} 일정이 없습니다</div>
             <div className="text-xs text-gray-500 mb-4">약속을 추가하거나 만기·고객 탭을 확인해보세요</div>
             <button onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })} className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold">
               + 약속 추가

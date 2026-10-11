@@ -9,7 +9,7 @@
  * - 이전·다음 달 이동
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { holidayName } from "@/lib/holidays";
 
 export type CalendarSource = "appointment" | "visit" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
@@ -25,6 +25,8 @@ interface Props {
   items: CalendarItem[];
   onSelectDate: (date: string | null) => void;
   selectedDate: string | null;
+  /** 보고 있는 달이 바뀔 때 "YYYY-MM" 전달 */
+  onMonthChange?: (ym: string) => void;
   /** 통합 카드 안에 넣을 때 — 자체 테두리·배경 제거 */
   flat?: boolean;
 }
@@ -80,13 +82,15 @@ function todayStr(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export default function MonthCalendar({ items, onSelectDate, selectedDate, flat }: Props) {
+export default function MonthCalendar({ items, onSelectDate, selectedDate, onMonthChange, flat }: Props) {
   const today = todayStr();
   const initial = selectedDate || today;
   const [cursor, setCursor] = useState<{ y: number; m: number }>(() => {
     const d = new Date(initial);
     return { y: d.getFullYear(), m: d.getMonth() };
   });
+
+  useEffect(() => { onMonthChange?.(`${cursor.y}-${pad(cursor.m + 1)}`); }, [cursor, onMonthChange]);
 
   // 해당 월의 그리드 생성 (6주, 42칸)
   const grid = useMemo(() => {
