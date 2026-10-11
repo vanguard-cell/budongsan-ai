@@ -261,6 +261,8 @@ export default function SchedulePage() {
   );
 
   /* 날짜별 그룹 */
+  const linkedOf = (item: UnifiedItem) => findLinkedProperty(item.schedule, properties);
+  const openProperty = (p: Property) => router.push(`/properties?pid=${encodeURIComponent(p.id)}`);
   const grouped = useMemo(() => {
     const map: Record<string, UnifiedItem[]> = {};
     for (const i of unified) {
@@ -508,7 +510,7 @@ export default function SchedulePage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  {groupByVisitor(items).map(g => g.items.length > 1 || g.phone ? (
+                  {groupByVisitor(items).map(g => g.items.length > 1 || g.phone || g.name ? (
                     <div key={g.key} className="rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/40 dark:bg-emerald-950/20 p-1.5 space-y-1.5">
                       <div className="flex items-center gap-1.5 px-1.5 pt-0.5 text-[12px] font-bold text-emerald-700 dark:text-emerald-400">
                         <span className="material-symbols-outlined text-[14px]">person</span>
@@ -528,13 +530,13 @@ export default function SchedulePage() {
                       </div>
                       {g.items.map(item => (
                         <div key={item.key} onClick={() => setPanelItem(item)}>
-                          <CompactRow item={item} />
+                          <CompactRow item={item} linked={linkedOf(item)} onOpenProperty={openProperty} />
                         </div>
                       ))}
                     </div>
                   ) : (
                     <div key={g.items[0].key} onClick={() => setPanelItem(g.items[0])}>
-                      <CompactRow item={g.items[0]} />
+                      <CompactRow item={g.items[0]} linked={linkedOf(g.items[0])} onOpenProperty={openProperty} />
                     </div>
                   ))}
                 </div>
@@ -582,13 +584,10 @@ export default function SchedulePage() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">{phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}</div>
                 {(() => {
-                  const norm = (v: string) => v.replace(/\s+/g, "");
-                  const sAddr = norm(s.propertyAddress || "");
-                  const linked = (s.propertyId ? properties.find(x => x.id === s.propertyId) : undefined)
-                    || (sAddr ? properties.find(x => norm(propertyFullLabel(x)) === sAddr) || properties.find(x => x.address && norm(x.address) === sAddr) : undefined);
+                  const linked = findLinkedProperty(s, properties);
                   if (!linked) return null;
                   return (
-                    <button onClick={() => router.push(`/properties?pid=${encodeURIComponent(linked.id)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-emerald-600 text-white text-[12px] font-bold whitespace-nowrap hover:bg-emerald-700"><span className="material-symbols-outlined text-[15px]">domain</span>내 매물 보기</button>
+                    <button onClick={() => openProperty(linked)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-emerald-600 text-white text-[12px] font-bold whitespace-nowrap hover:bg-emerald-700"><span className="material-symbols-outlined text-[15px]">domain</span>내 매물 보기</button>
                   );
                 })()}
                 {s.memo && <p className="text-[12px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800 rounded-lg px-2.5 py-2">💬 {s.memo}</p>}
@@ -680,7 +679,16 @@ function itemText(item: UnifiedItem): { label: string; title: string } {
   return { label: "", title: "" };
 }
 
-function CompactRow({ item }: { item: UnifiedItem }) {
+/** 일정에 연결된 내 매물 찾기 (propertyId 우선, 없으면 주소 일치) */
+function findLinkedProperty(s: Schedule | undefined, properties: Property[]): Property | undefined {
+  if (!s) return undefined;
+  const norm = (v: string) => v.replace(/\s+/g, "");
+  const sAddr = norm(s.propertyAddress || "");
+  return (s.propertyId ? properties.find(x => x.id === s.propertyId) : undefined)
+    || (sAddr ? properties.find(x => norm(propertyFullLabel(x)) === sAddr) || properties.find(x => x.address && norm(x.address) === sAddr) : undefined);
+}
+
+function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linked?: Property; onOpenProperty?: (p: Property) => void }) {
   const { label, title } = itemText(item);
   let lead = "", done = false;
   if (item.schedule) {
@@ -700,6 +708,11 @@ function CompactRow({ item }: { item: UnifiedItem }) {
       <span className="w-[3px] h-4 rounded-sm shrink-0" style={{ background: bar }} />
       <span className="w-10 shrink-0 text-[11px] font-semibold" style={{ color: bar }}>{label}</span>
       <span className="flex-1 min-w-0 line-clamp-2 break-words text-[13px] leading-snug text-gray-800 dark:text-gray-100">{title}</span>
+      {linked && onOpenProperty && (
+        <button type="button" onClick={e => { e.stopPropagation(); onOpenProperty(linked); }} className="shrink-0 inline-flex items-center gap-0.5 px-2 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold whitespace-nowrap hover:bg-emerald-700">
+          <span className="material-symbols-outlined text-[13px]">domain</span>매물
+        </button>
+      )}
       {done && <span className="shrink-0 text-[10px] text-green-600 font-medium">완료</span>}
       <span className="material-symbols-outlined text-gray-300 dark:text-slate-600 text-[18px] shrink-0">chevron_right</span>
     </div>
