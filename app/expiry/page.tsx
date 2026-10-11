@@ -1,7 +1,6 @@
 "use client";
 
 import { stripUnit } from "@/lib/address";
-import CallIcon from "../components/CallIcon";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -964,9 +963,9 @@ function ContactLine({
           <span className="text-gray-700 whitespace-nowrap">{formatPhone(phone)}</span>
           <a
             href={telUrl(phone)}
-            className="inline-flex items-center justify-center mx-1 whitespace-nowrap"
+            className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap"
             aria-disabled={disabled}
-           aria-label="통화" title="통화"><CallIcon size={24} /></a>
+           aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
           <button
             onClick={onSms}
             disabled={disabled || !hasPhone}
