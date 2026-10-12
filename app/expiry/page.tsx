@@ -150,6 +150,13 @@ export default function ExpiryPage() {
     }
   }, []);
 
+  // 통합 검색에서 들어오면 (?focus=<계약id>) 해당 계약 상세 패널 바로 열기
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const focusId = new URLSearchParams(window.location.search).get("focus");
+    if (focusId) { setPanelId(focusId); setShowClosed(true); }
+  }, []);
+
   /* 데이터 실시간 구독 + 첫 진입 시 localStorage 마이그레이션 */
   useEffect(() => {
     if (!user) return;

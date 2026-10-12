@@ -102,7 +102,7 @@ export default function SearchPage() {
           </Section>
           <Section title="만기 관리" count={cRes.length}>
             {cRes.slice(0, MAX_SHOW).map(c => (
-              <Row key={c.id} href="/expiry"
+              <Row key={c.id} href={`/expiry?focus=${c.id}`}
                 main={c.address || "(주소 없음)"}
                 sub={[c.status !== "active" ? "종료" : "", c.tenantName && `임차인 ${c.tenantName}`, c.landlordName && `임대인 ${c.landlordName}`, c.endDate && `만기 ${c.endDate}`].filter(Boolean).join(" · ")} />
             ))}
