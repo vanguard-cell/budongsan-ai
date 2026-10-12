@@ -13,7 +13,6 @@ import {
 } from "./customer-types";
 import { subscribeMyComplexes, type Property, type MyComplex } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
-import { stripUnit } from "@/lib/address";
 import { PROPERTY_TYPES, DEAL_TYPES } from "@/app/properties/helpers";
 import DatedMemo from "@/app/components/DatedMemo";
 
@@ -334,20 +333,16 @@ function ShownPropertyRow({
 }) {
   const [typeFilter, setTypeFilter] = useState("");
   const [dealFilter, setDealFilter] = useState("");
-  const [complexFilter, setComplexFilter] = useState("");
+  const [query, setQuery] = useState("");
+  const [showList, setShowList] = useState(false);
 
-  const complexOf = (p: Property) => stripUnit(p.address || "", p.dong, p.ho).trim();
-  const complexOptions = useMemo(() => {
-    const seen = new Set<string>();
-    properties.forEach(p => {
-      if (p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter)) {
-        const c = complexOf(p);
-        if (c) seen.add(c);
-      }
-    });
-    return Array.from(seen).sort((a, b) => a.localeCompare(b, "ko"));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [properties, typeFilter, dealFilter]);
+  // 스케줄의 '매물 연결'과 같은 방식 — 주소 뒤에 동·호도 같이 보여줌
+  const fullLabel = (p: Property) => {
+    const parts: string[] = [];
+    if (p.dong && !p.address.includes(p.dong)) parts.push(/동$/.test(p.dong) ? p.dong : `${p.dong}동`);
+    if (p.ho && !p.address.includes(p.ho)) parts.push(/호$/.test(p.ho) ? p.ho : `${p.ho}호`);
+    return parts.length ? `${p.address} ${parts.join(" ")}` : p.address;
+  };
 
   const typeOptions = useMemo(() => {
     const seen = new Set<string>(PROPERTY_TYPES);
@@ -356,16 +351,17 @@ function ShownPropertyRow({
   }, [properties]);
 
   const suggestions = useMemo(() => {
-    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter) && (!complexFilter || complexOf(p) === complexFilter));
-    const limit = 100;
-    if (!s.address.trim()) return base.slice(0, limit);
-    const q = s.address.toLowerCase();
-    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 100);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s.address, properties, typeFilter, dealFilter, complexFilter]);
+    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter));
+    const q = query.trim().toLowerCase();
+    if (!q) return base.slice(0, 30);
+    return base.filter(p => fullLabel(p).toLowerCase().includes(q)).slice(0, 30);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, properties, typeFilter, dealFilter]);
 
   const select = (p: Property) => {
-    onChange({ address: p.address });
+    onChange({ address: fullLabel(p) });
+    setQuery(fullLabel(p));
+    setShowList(false);
   };
 
   return (
@@ -374,7 +370,7 @@ function ShownPropertyRow({
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", ...typeOptions].map(t => (
             <button key={t || "all"} type="button"
-              onClick={() => setTypeFilter(t)}
+              onClick={() => { setTypeFilter(t); setShowList(true); }}
               className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${typeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
             </button>
@@ -385,33 +381,46 @@ function ShownPropertyRow({
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", "매매", "전세", "월세"].map(t => (
             <button key={t || "all"} type="button"
-              onClick={() => setDealFilter(t)}
+              onClick={() => { setDealFilter(t); setShowList(true); }}
               className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${dealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
             </button>
           ))}
         </div>
       )}
-      {complexOptions.length > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {["", ...complexOptions].map(t => (
-            <button key={t || "all"} type="button"
-              onClick={() => setComplexFilter(t)}
-              className={`shrink-0 whitespace-nowrap max-w-[12rem] truncate px-3.5 py-1.5 rounded-full text-sm border transition-colors ${complexFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
-              {t || "전체 단지"}
-            </button>
-          ))}
+      {properties.length > 0 && (
+        <div className="relative">
+          <input
+            value={query}
+            onChange={e => { setQuery(e.target.value); setShowList(true); }}
+            onFocus={() => setShowList(true)}
+            placeholder="🔍 내 매물에서 검색"
+            autoComplete="off"
+            className="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          />
+          {showList && suggestions.length > 0 && (
+            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+              {suggestions.map(p => (
+                <button key={p.id} type="button" onMouseDown={e => { e.preventDefault(); select(p); }}
+                  className="w-full text-left px-3 py-2.5 hover:bg-emerald-50 border-b last:border-0 border-gray-100 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 shrink-0 whitespace-nowrap">{p.propertyType} · {p.dealType}</span>
+                    <span className="text-sm font-medium text-gray-800 break-all">{fullLabel(p)}</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">{p.price ? `${p.price}만` : ""}{p.ownerName ? ` · ${p.ownerName}` : ""}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
       <div className="flex gap-1.5">
-        <div className="flex-1 relative">
-          <input
-            value={s.address}
-            onChange={e => onChange({ address: e.target.value })}
-            placeholder="매물 주소 — 내 매물장에서 검색 또는 직접 입력"
-            className="w-full border border-blue-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
+        <input
+          value={s.address}
+          onChange={e => onChange({ address: e.target.value })}
+          placeholder="직접 입력: 힐스테이트 미사역 101동 1902호"
+          className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
         <button
           onClick={onRemove}
           className="text-sm px-3 rounded-lg border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors"
@@ -420,26 +429,6 @@ function ShownPropertyRow({
           ✕
         </button>
       </div>
-      {suggestions.length > 0 && (
-        <div>
-          <div className="text-sm text-gray-600 mb-1">내 매물 목록 ({suggestions.length}) — 위아래로 밀어서 보고 눌러서 고르세요</div>
-          <div className="flex flex-col gap-1 overflow-y-auto max-h-72 rounded-lg border border-teal-200 bg-teal-50/40 p-1">
-            {suggestions.map(p => {
-              const sel = s.address === p.address;
-              return (
-                <button key={p.id} type="button" onClick={() => select(p)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm border transition-colors ${sel ? "bg-sky-400 border-sky-400 text-white font-semibold" : "bg-white text-gray-700 border-teal-200"}`}>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap ${sel ? "bg-white/30" : "bg-blue-100 text-blue-700"}`}>{p.dealType}</span>
-                    <span className="truncate">{sel ? "✓ " : ""}{p.address}</span>
-                  </div>
-                  <div className={`text-xs mt-0.5 truncate ${sel ? "text-white/90" : "text-gray-500"}`}>{p.propertyType}{p.price ? ` · ${p.price}만` : ""}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
       <div className="flex gap-1.5">
         <input
           type="date"
