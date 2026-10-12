@@ -212,10 +212,6 @@ export default function DashboardPage() {
   const previewExpiry = e0
     ? `${e0.address} · ${dDayLabel(dDay(e0.endDate))}`
     : null;
-  const f0 = followUpNeeded[0];
-  const previewCustomer = f0
-    ? `${f0.name || "고객님"} · 연락 ${dDayLabel(followUpDDay(f0.nextFollowUp))}`
-    : null;
 
   return (
     <div className={`transition-[padding] duration-300 ease-out ${drawer ? "xl:pr-[400px]" : ""}`}>

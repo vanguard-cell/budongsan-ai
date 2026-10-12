@@ -9,7 +9,6 @@
 
 import * as XLSX from "xlsx";
 import type { Contract } from "@/app/expiry/contracts";
-import { dDay, dDayLabel, severityOf, severityLabel } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import {
   SIDE_LABELS,

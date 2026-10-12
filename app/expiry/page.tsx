@@ -1,7 +1,7 @@
 "use client";
 
 import { stripUnit } from "@/lib/address";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import { confirmBulkDelete } from "@/lib/backup";

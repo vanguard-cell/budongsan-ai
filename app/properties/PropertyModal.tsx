@@ -4,7 +4,7 @@
 
 import { stripUnit } from "@/lib/address";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
 import DatedMemo from "@/app/components/DatedMemo";

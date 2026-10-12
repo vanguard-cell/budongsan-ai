@@ -17,11 +17,6 @@ import { saveSchedule, subscribeSchedules, type Schedule } from "@/lib/schedules
 import {
   Customer,
   type CustomerEvent,
-  type CustomerStage,
-  STAGE_META,
-  STAGE_FLOW,
-  effectiveStage,
-  stageToStatus,
   FollowUpSeverity,
   SIDE_LABELS,
   DEAL_KIND_LABELS,
@@ -41,7 +36,6 @@ import EditCustomerModal from "./EditCustomerModal";
 import KakaoParseModal from "./KakaoParseModal";
 import CustomerTable, { type CustSort } from "./CustomerTable";
 import CustomerPanel from "./CustomerPanel";
-import CustomerBoard from "./CustomerBoard";
 import NotifyBell from "../NotifyBell";
 import ExportModal from "../ExportModal";
 import CustomersUploadModal, { type CustMergeStrategy } from "./CustomersUploadModal";
@@ -93,7 +87,7 @@ export default function CustomersPage() {
     if (v === "table") recordFeatureUse(user?.uid, "cust_view_table");
     try { localStorage.setItem("dealdone_customers_view", v); } catch {}
   };
-  const [boardOpen, setBoardOpen] = useState(true);              // 상단 파이프라인 보드 접기
+  const [, setBoardOpen] = useState(true);              // 상단 파이프라인 보드 접기
   const [panelId, setPanelId] = useState<string | null>(null);   // 우측 패널 (표/카드 공용)
   const [sortBy, setSortBy] = useState<CustSort>("followup");    // 표 헤더 정렬
   const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
@@ -113,6 +107,8 @@ export default function CustomersPage() {
     const v = p.get("view");
     if (v === "table" || v === "card") setViewStyle(v);
     else if (v === "board") { setViewStyle("card"); setBoardOpen(true); }  // 보드는 상단 상시 노출
+    // 첫 진입 때 주소창 값을 한 번만 반영 (setViewStyle 은 매 렌더 새로 만들어지는 함수라 의존성에서 뺌)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -187,47 +183,6 @@ export default function CustomersPage() {
         return a.d - b.d;
       });
   }, [customers, filter, query, sortBy, colSearch]);
-
-  /* 보드용 — 상태 필터 무시, 검색만 적용한 전체 고객 (계약 성사·실패 칼럼도 채워짐) */
-  // 완료 시점 추정 — '거래 완료/계약 성사' 이벤트 시각 → 없으면 마지막 활동 → 생성일
-  const wonAt = (c: Customer): number => {
-    const evs = c.history || [];
-    const done = evs.filter(e => { const t = e.text || ""; return t.includes("거래 완료") || t.includes("계약 성사"); }).map(e => e.at);
-    if (done.length) return Math.max(...done);
-    if (evs.length) return Math.max(...evs.map(e => e.at));
-    return c.createdAt;
-  };
-  const WON_RECENT_DAYS = 30;
-
-  const boardCustomers = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q) {
-      // 검색 중엔 완료 포함 전부 (찾는 고객이 보드에서도 보이게)
-      return customers.filter(c =>
-        c.name.toLowerCase().includes(q) || c.phone.includes(q) ||
-        c.preferredArea.toLowerCase().includes(q) || c.memo.toLowerCase().includes(q),
-      );
-    }
-    // 기본 보드: 오래된 완료건(계약 성사)은 숨김 — 데이터는 그대로, '완료' 필터에서 전부 보임
-    const cutoff = Date.now() - WON_RECENT_DAYS * 86400000;
-    return customers.filter(c => effectiveStage(c) !== "won" || wonAt(c) >= cutoff);
-  }, [customers, query]);
-
-  // 보드에서 숨긴 지난 완료 건수 (검색 중 아닐 때만 의미)
-  const hiddenWonCount = useMemo(() => {
-    if (query.trim()) return 0;
-    const totalWon = customers.filter(c => effectiveStage(c) === "won").length;
-    const shownWon = boardCustomers.filter(c => effectiveStage(c) === "won").length;
-    return totalWon - shownWon;
-  }, [customers, boardCustomers, query]);
-
-  /* 보드 단계별 건수 — 헤더 옆 한눈 요약 (펼치든 접든 항상 보임) */
-  const stageSummary = useMemo(() => {
-    const order: CustomerStage[] = [...STAGE_FLOW, "lost"];
-    const tally = Object.fromEntries(order.map(s => [s, 0])) as Record<CustomerStage, number>;
-    for (const c of boardCustomers) tally[effectiveStage(c)]++;
-    return order.map(s => ({ stage: s, meta: STAGE_META[s], n: tally[s] }));
-  }, [boardCustomers]);
 
   /* 카운트 */
   const counts = useMemo(() => {
@@ -308,15 +263,6 @@ export default function CustomersPage() {
     await logCustomerEvent(user.agencyId, c.id, { by: by(), kind: "status", text: `상태 변경 → ${STATUS_LABEL[status]}` });
     if (status === "closed") recordFeatureUse(user.uid, "cust_close");
     else if (status === "matched") recordFeatureUse(user.uid, "cust_match");
-  };
-
-  // 보드 드래그 — 단계 이동 (단계 + 상태 동기화)
-  const moveStage = async (c: Customer, stage: CustomerStage) => {
-    if (!user) return;
-    if (stage === "lost") { await changeStatus(c, "lost"); return; }   // 사유 prompt 포함
-    await fsSaveCustomer(user.agencyId, { ...c, stage, status: stageToStatus(stage) });
-    await logCustomerEvent(user.agencyId, c.id, { by: by(), kind: "status", text: `단계 → ${STAGE_META[stage].label}` });
-    recordFeatureUse(user.uid, "cust_stage");
   };
 
   const addCustomerEvent = async (c: Customer, ev: Omit<CustomerEvent, "at" | "by">) => {

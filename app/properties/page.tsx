@@ -364,6 +364,8 @@ export default function PropertiesPage() {
       const bp = pinnedIds.has(b.id) ? 0 : 1;
       return ap - bp;
     });
+    // complexKey·matchView 는 viewMode 등 이미 의존성에 있는 값으로만 결과가 바뀌는 함수라 뺌
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, roomFilter, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo, colSearch, onlyPid]);
 
   const counts = useMemo(() => {
@@ -404,6 +406,8 @@ export default function PropertiesPage() {
       if (c) map.set(c, (map.get(c) || 0) + 1);
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "ko"));
+    // complexKey·matchView 는 viewMode 등 이미 의존성에 있는 값으로만 결과가 바뀌는 함수라 뺌
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [properties, viewMode, filterPropType]);
 
   // 선택 단지의 동 목록
@@ -416,6 +420,8 @@ export default function PropertiesPage() {
       if (p.dong) map.set(p.dong, (map.get(p.dong) || 0) + 1);
     }
     return [...map.entries()].sort((a, b) => numOf(a[0]) - numOf(b[0]));
+    // complexKey·matchView 는 viewMode 등 이미 의존성에 있는 값으로만 결과가 바뀌는 함수라 뺌
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [properties, viewMode, selectedComplex, filterPropType]);
 
   // 거래 칩 개수 — 현재 탭 + 선택한 유형 기준 (유형 개수 = 매매+전세+월세)
@@ -430,6 +436,8 @@ export default function PropertiesPage() {
       전세: base.filter(p => p.dealType === "전세").length,
       월세: base.filter(p => p.dealType === "월세").length,
     } as Record<string, number>;
+    // complexKey·matchView 는 viewMode 등 이미 의존성에 있는 값으로만 결과가 바뀌는 함수라 뺌
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [properties, showClosed, viewMode, filterPropType]);
 
   // 매물 유형별 개수 (대분류 칩) — 현재 탭 기준
@@ -440,6 +448,8 @@ export default function PropertiesPage() {
     const map: Record<string, number> = { all: base.length };
     for (const t of PROPERTY_TYPES) map[t] = base.filter(p => p.propertyType === t).length;
     return map;
+    // complexKey·matchView 는 viewMode 등 이미 의존성에 있는 값으로만 결과가 바뀌는 함수라 뺌
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [properties, showClosed, viewMode]);
 
   // 수수료 매출 요약 — 내 매물 + 만기로 이전된 계약(contracts)을 함께 집계
