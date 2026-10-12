@@ -15,6 +15,37 @@ import {
   type AgencyDoc,
 } from "@/lib/team-db";
 
+// 복사 — 클립보드가 막힌 폰/앱 브라우저에서는 대체 방법 → 공유창 → 직접 복사 순으로 시도
+async function copyText(text: string) {
+  const done = () => alert("초대 안내문이 복사되었습니다.\n카톡으로 붙여넣어 보내세요!");
+  try {
+    await navigator.clipboard.writeText(text);
+    return done();
+  } catch {}
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (ok) return done();
+  } catch {}
+  try {
+    if (navigator.share) {
+      await navigator.share({ text });
+      return;
+    }
+  } catch {
+    return;
+  }
+  window.prompt("아래 글을 길게 눌러 복사하세요", text);
+}
+
 export default function TeamPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -65,7 +96,7 @@ export default function TeamPage() {
 
   const copyInvite = () => {
     const text = `[DealDone] ${agency?.name || "사무실"} 초대\n\n1. 아래 주소로 접속 후 구글 로그인\n${window.location.origin}\n2. 메뉴 → 직원 관리 → 초대 코드 입력\n3. 코드: ${inviteCode}`;
-    navigator.clipboard.writeText(text).then(() => alert("초대 안내문이 복사되었습니다.\n카톡으로 붙여넣어 보내세요!"));
+    copyText(text);
   };
 
   const handleJoin = async () => {
@@ -198,7 +229,7 @@ export default function TeamPage() {
           <button
             onClick={() => {
               const text = `[DealDone] 부동산 업무 앱 초대\n\n아래 링크로 들어가 회원가입하세요.\n(가입할 때 부동산 이름을 적으면 됩니다)\n${window.location.origin}/login?mode=signup`;
-              navigator.clipboard.writeText(text).then(() => alert("초대 안내문이 복사되었습니다.\n카톡으로 붙여넣어 보내세요!"));
+              copyText(text);
             }}
             className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center gap-1.5 whitespace-nowrap"
           >
