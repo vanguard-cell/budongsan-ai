@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, roleTitle } from "@/lib/auth-context";
 import {
-  subscribeAgency, createInvite, joinAgency, upsertMyMemberInfo,
+  subscribeAgency, createInvite, joinAgency, upsertMyMemberInfo, removeMember,
   type AgencyDoc,
 } from "@/lib/team-db";
 
@@ -95,8 +95,18 @@ export default function TeamPage() {
   };
 
   const copyInvite = () => {
-    const text = `[DealDone] ${agency?.name || "사무실"} 초대\n\n1. 아래 주소로 접속 후 구글 로그인\n${window.location.origin}\n2. 메뉴 → 직원 관리 → 초대 코드 입력\n3. 코드: ${inviteCode}`;
+    const text = `[DealDone] ${agency?.name || "사무실"} 초대\n\n1. 아래 주소로 접속 후 회원가입(또는 구글 로그인)\n${window.location.origin}\n2. 메뉴 → 직원 관리 → 초대 코드 입력\n3. 코드: ${inviteCode}\n(7일 안에, 1명만 쓸 수 있어요)`;
     copyText(text);
+  };
+
+  const handleRemove = async (uid: string, name: string) => {
+    if (!user) return;
+    if (!confirm(`${name || "이 직원"}님을 사무실에서 내보낼까요?\n내보내면 우리 사무실 매물·고객·일정을 더 볼 수 없어요.`)) return;
+    try {
+      await removeMember(user.agencyId, uid);
+    } catch (e) {
+      alert("내보내지 못했어요: " + (e instanceof Error ? e.message : String(e)));
+    }
   };
 
   const handleJoin = async () => {
@@ -171,8 +181,14 @@ export default function TeamPage() {
                         ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
                         : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
                     }`}>
-                      {isAgencyOwner ? "👑 대표님" : "🤝 파트너님"}
+                      {isAgencyOwner ? "👑 대표님" : "👀 직원(보기 전용)"}
                     </span>
+                    {isOwner && !isAgencyOwner && !isMe && (
+                      <button onClick={() => handleRemove(uid, info?.name || "")}
+                        className="text-[11px] px-2.5 py-1 rounded-full border border-red-200 text-red-600 font-semibold shrink-0 whitespace-nowrap hover:bg-red-50">
+                        내보내기
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -193,7 +209,8 @@ export default function TeamPage() {
             {inviteCode ? (
               <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border-2 border-indigo-200 dark:border-indigo-800 p-4 text-center">
                 <div className="text-[11px] text-indigo-600 dark:text-indigo-300 font-semibold mb-1">초대 코드</div>
-                <div className="text-3xl font-extrabold tracking-[0.3em] text-indigo-700 dark:text-indigo-200 mb-3">{inviteCode}</div>
+                <div className="text-3xl font-extrabold tracking-[0.3em] text-indigo-700 dark:text-indigo-200 mb-1">{inviteCode}</div>
+                <div className="text-[11px] text-indigo-500 dark:text-indigo-300 mb-3">7일 동안, 1명만 쓸 수 있어요 · 합류한 직원은 보기만 할 수 있어요</div>
                 <div className="flex gap-2 justify-center">
                   <button onClick={copyInvite} className="text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">content_copy</span>

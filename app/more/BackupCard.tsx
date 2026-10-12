@@ -91,7 +91,7 @@ export default function BackupCard() {
           className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold whitespace-nowrap disabled:opacity-60">
           {busy === "backup" ? "만드는 중…" : "백업 파일 받기"}
         </button>
-        <button onClick={() => fileRef.current?.click()} disabled={!!busy}
+        <button data-owner-only onClick={() => fileRef.current?.click()} disabled={!!busy}
           className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 text-sm font-semibold whitespace-nowrap disabled:opacity-60">
           {busy === "restore" ? "되살리는 중…" : "백업으로 되살리기"}
         </button>

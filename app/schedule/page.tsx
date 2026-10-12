@@ -356,43 +356,43 @@ export default function SchedulePage() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })}
+              data-owner-only onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })}
               className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 약속
             </button>
             <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "방문" })}
+              data-owner-only onClick={() => setEditing({ ...emptySchedule(), scheduleType: "방문" })}
               className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 방문
             </button>
             <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "계약일" })}
+              data-owner-only onClick={() => setEditing({ ...emptySchedule(), scheduleType: "계약일" })}
               className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 계약일
             </button>
             <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "중도금일" })}
+              data-owner-only onClick={() => setEditing({ ...emptySchedule(), scheduleType: "중도금일" })}
               className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 중도금일
             </button>
             <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "잔금일" })}
+              data-owner-only onClick={() => setEditing({ ...emptySchedule(), scheduleType: "잔금일" })}
               className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 잔금일
             </button>
             <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "재계약일" })}
+              data-owner-only onClick={() => setEditing({ ...emptySchedule(), scheduleType: "재계약일" })}
               className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 재계약
             </button>
             <button
-              onClick={loadSamples}
+              data-owner-only onClick={loadSamples}
               title="예시 일정 5건 추가"
               className="text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
             >
@@ -401,7 +401,7 @@ export default function SchedulePage() {
             </button>
             {schedules.length > 0 && (
               <button
-                onClick={clearAll}
+                data-owner-only onClick={clearAll}
                 title="등록한 모든 일정 삭제"
                 className="text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-red-600 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
               >
@@ -493,7 +493,7 @@ export default function SchedulePage() {
             <div className="text-5xl mb-3">📅</div>
             <div className="text-base font-semibold text-gray-900 mb-1">{selectedDate ? "이 날은" : `${Number(viewMonth.slice(5))}월에는`} 일정이 없습니다</div>
             <div className="text-xs text-gray-500 mb-4">약속을 추가하거나 만기·고객 탭을 확인해보세요</div>
-            <button onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })} className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold">
+            <button data-owner-only onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })} className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold">
               + 약속 추가
             </button>
           </div>

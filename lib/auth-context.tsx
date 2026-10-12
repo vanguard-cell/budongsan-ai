@@ -100,6 +100,34 @@ export function recordFeatureUse(uid: string | undefined, key: string): void {
 /** 회원가입 화면에서 적은 부동산 이름 — 새 사무실을 만들 때 사용 */
 let pendingOfficeName = "";
 
+/** 다른 사무실에서 내보내진 직원 → 본인 사무실(없으면 새로 만듦)로 users.agencyId 되돌리기 */
+async function backToOwnAgency(fbUser: User, agencyId: string): Promise<AppUser> {
+  const agencyRef = doc(db, "agencies", agencyId);
+  let officeName: string | null = null;
+  try {
+    const snap = await getDoc(agencyRef);
+    officeName = resolveOfficeName(agencyId, snap.data()?.officeName) || null;
+  } catch {
+    // 본인 사무실이 없음(읽기 거부) → 새로 만듦
+    await setDoc(agencyRef, {
+      name: fbUser.displayName ? `${fbUser.displayName}의 사무실` : "내 사무실",
+      owner: fbUser.uid,
+      members: [fbUser.uid],
+      createdAt: serverTimestamp(),
+    });
+  }
+  await setDoc(doc(db, "users", fbUser.uid), { agencyId }, { merge: true });
+  return {
+    uid: fbUser.uid,
+    email: fbUser.email,
+    displayName: fbUser.displayName,
+    photoURL: fbUser.photoURL,
+    agencyId,
+    officeName,
+    role: "owner",
+  };
+}
+
 async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
   const userRef = doc(db, "users", fbUser.uid);
   const userSnap = await getDoc(userRef);
@@ -124,6 +152,11 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
         role = "owner";
       }
     } catch (e) {
+      // 대표가 직원을 내보낸 경우 — 그 사무실을 더 못 읽으니 본인 원래 사무실로 되돌림
+      const personal = `agency_${fbUser.uid.slice(0, 12)}`;
+      if ((e as { code?: string }).code === "permission-denied" && data.agencyId !== personal) {
+        return backToOwnAgency(fbUser, personal);
+      }
       console.error("[auth] agency 조회 실패 — 기본 owner로 처리:", e);
       officeName = resolveOfficeName(data.agencyId, null) || null;
       role = "owner";   // 안전 폴백 (조회 실패 시 자신을 대표로 가정)

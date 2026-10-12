@@ -347,7 +347,7 @@ export default function CustomersPage() {
             {/* 보조 액션 그룹 */}
             <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
               <button
-                onClick={() => setShowUpload(true)}
+                data-owner-only onClick={() => setShowUpload(true)}
                 title="엑셀 일괄 업로드"
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
               >
@@ -363,7 +363,7 @@ export default function CustomersPage() {
                 <span className="hidden sm:inline">내보내기</span>
               </button>
               <button
-                onClick={loadSamples}
+                data-owner-only onClick={loadSamples}
                 title="예시 고객 5건 추가"
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
               >
@@ -372,7 +372,7 @@ export default function CustomersPage() {
               </button>
               {customers.length > 0 && (
                 <button
-                  onClick={clearAll}
+                  data-owner-only onClick={clearAll}
                   title="모든 고객 데이터 삭제"
                   className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
                 >
@@ -395,7 +395,7 @@ export default function CustomersPage() {
 
             {/* 메인 액션 */}
             <button
-              onClick={() => setEditing(emptyCustomer())}
+              data-owner-only onClick={() => setEditing(emptyCustomer())}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">person_add</span>

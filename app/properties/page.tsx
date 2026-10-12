@@ -492,7 +492,7 @@ export default function PropertiesPage() {
             {/* 보조 액션 그룹 (배경 surface-container) */}
             <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
               <button
-                onClick={() => setShowUpload(true)}
+                data-owner-only onClick={() => setShowUpload(true)}
                 title="엑셀 일괄 업로드"
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
               >
@@ -508,7 +508,7 @@ export default function PropertiesPage() {
                 <span className="hidden sm:inline">내보내기</span>
               </button>
               <button
-                onClick={loadSamples}
+                data-owner-only onClick={loadSamples}
                 title="예시 데이터 추가"
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
               >
@@ -517,7 +517,7 @@ export default function PropertiesPage() {
               </button>
               {properties.length > 0 && (
                 <button
-                  onClick={clearAll}
+                  data-owner-only onClick={clearAll}
                   title="전체 삭제"
                   className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
                 >
@@ -547,7 +547,7 @@ export default function PropertiesPage() {
 
             {/* 메인 액션 — 매물 등록 (solid 에메랄드 큰 버튼) */}
             <button
-              onClick={() => setEditing(emptyProperty())}
+              data-owner-only onClick={() => setEditing(emptyProperty())}
               className="px-5 py-2.5 bg-[var(--brand-blue)] hover:bg-[var(--brand-blue-dark)] text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">add</span>
@@ -958,7 +958,7 @@ export default function PropertiesPage() {
                 <div className="text-5xl mb-3">🏘️</div>
                 <div className="text-base font-semibold text-gray-900 mb-1">등록된 매물이 없습니다</div>
                 <div className="text-xs text-gray-500 mb-4">매물 등록 버튼을 눌러 추가해보세요</div>
-                <button onClick={() => setEditing(emptyProperty())} className="text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
+                <button data-owner-only onClick={() => setEditing(emptyProperty())} className="text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
                   + 첫 매물 등록
                 </button>
               </div>

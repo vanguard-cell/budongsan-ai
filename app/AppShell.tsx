@@ -12,6 +12,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import BottomNav from "./BottomNav";
+import ReadOnlyGuard from "./ReadOnlyGuard";
 import { useAuth, recordPageView } from "@/lib/auth-context";
 
 /** 페이지 사용량 추적 — 경로 첫 구간(예: /customers/123 → "customers")별 카운트 */
@@ -57,6 +58,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <PageTracker />
+      <ReadOnlyGuard />
       {/* 풀스크린(자체 사이드바·헤더) 페이지는 padding 없이, 일반 페이지는 sm:pl-56 */}
       <div className={isFullscreen ? "" : "sm:pl-56"}>
         {children}

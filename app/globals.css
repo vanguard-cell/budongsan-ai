@@ -247,3 +247,6 @@ input::placeholder, textarea::placeholder {
 .material-symbols-outlined.thin-icon {
   font-variation-settings: 'FILL' 0, 'wght' 100, 'GRAD' 0, 'opsz' 48;
 }
+
+/* 직원(파트너) 보기 전용 — 대표 전용 버튼 숨김 (app/ReadOnlyGuard.tsx) */
+body[data-readonly] [data-owner-only] { display: none !important; }

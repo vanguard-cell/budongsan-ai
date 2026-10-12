@@ -25,7 +25,7 @@ export default function OfficeNameCard() {
   };
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-4">
+    <div data-owner-only className="rounded-2xl border border-gray-200 bg-white p-4">
       <div className="flex items-center gap-3">
         <span className="text-3xl">🏢</span>
         <div className="min-w-0">

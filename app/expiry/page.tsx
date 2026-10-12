@@ -447,7 +447,7 @@ export default function ExpiryPage() {
                 <span className="hidden sm:inline">문구 설정</span>
               </button>
               <button
-                onClick={() => setShowUpload(true)}
+                data-owner-only onClick={() => setShowUpload(true)}
                 title="엑셀 일괄 업로드"
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
               >
@@ -463,7 +463,7 @@ export default function ExpiryPage() {
                 <span className="hidden sm:inline">내보내기</span>
               </button>
               <button
-                onClick={loadSampleData}
+                data-owner-only onClick={loadSampleData}
                 title="예시 계약 6건 추가"
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
               >
@@ -472,7 +472,7 @@ export default function ExpiryPage() {
               </button>
               {contracts.length > 0 && (
                 <button
-                  onClick={clearAllData}
+                  data-owner-only onClick={clearAllData}
                   title="모든 계약 데이터 삭제"
                   className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
                 >
@@ -495,7 +495,7 @@ export default function ExpiryPage() {
 
             {/* 메인 액션 */}
             <button
-              onClick={() => setEditing(emptyContract())}
+              data-owner-only onClick={() => setEditing(emptyContract())}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">add</span>
