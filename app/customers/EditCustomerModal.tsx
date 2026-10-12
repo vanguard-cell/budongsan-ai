@@ -169,6 +169,15 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           )}
         </Field>
 
+        <Field label="관심 지역·단지">
+          <input
+            value={form.preferredArea}
+            onChange={e => setField("preferredArea", e.target.value)}
+            placeholder="예: 미사강변동, 미사역 인근"
+            className={fieldCls}
+          />
+        </Field>
+
         <Field label="목적">
           <select value={form.dealKind} onChange={e => setField("dealKind", e.target.value as DealKind)} className={fieldCls}>
             {(Object.keys(DEAL_KIND_LABELS) as DealKind[]).map(s => (
@@ -198,15 +207,6 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
               </div>
             ))}
           </div>
-        </Field>
-
-        <Field label="관심 지역·단지">
-          <input
-            value={form.preferredArea}
-            onChange={e => setField("preferredArea", e.target.value)}
-            placeholder="예: 미사강변동, 미사역 인근"
-            className={fieldCls}
-          />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
