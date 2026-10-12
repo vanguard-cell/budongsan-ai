@@ -48,3 +48,4 @@ firebase-admin-key*.json
 
 # 건의함 답변 초안 (매번 바뀌는 임시 파일)
 scripts/reply-message.txt
+scripts/backup-data-batch-*.json
