@@ -181,7 +181,7 @@ export default function TeamPage() {
                         ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
                         : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
                     }`}>
-                      {isAgencyOwner ? "👑 대표님" : "👀 직원(보기 전용)"}
+                      {isAgencyOwner ? "👑 대표님" : "🤝 직원"}
                     </span>
                     {isOwner && !isAgencyOwner && !isMe && (
                       <button onClick={() => handleRemove(uid, info?.name || "")}
@@ -210,7 +210,7 @@ export default function TeamPage() {
               <div className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border-2 border-indigo-200 dark:border-indigo-800 p-4 text-center">
                 <div className="text-[11px] text-indigo-600 dark:text-indigo-300 font-semibold mb-1">초대 코드</div>
                 <div className="text-3xl font-extrabold tracking-[0.3em] text-indigo-700 dark:text-indigo-200 mb-1">{inviteCode}</div>
-                <div className="text-[11px] text-indigo-500 dark:text-indigo-300 mb-3">7일 동안, 1명만 쓸 수 있어요 · 합류한 직원은 보기만 할 수 있어요</div>
+                <div className="text-[11px] text-indigo-500 dark:text-indigo-300 mb-3">7일 동안, 1명만 쓸 수 있어요 · 직원은 스케줄·매물·매수자 등록·수정까지 (삭제·만기 계약은 대표만)</div>
                 <div className="flex gap-2 justify-center">
                   <button onClick={copyInvite} className="text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">content_copy</span>

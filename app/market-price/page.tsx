@@ -148,7 +148,7 @@ export default function MarketPricePage() {
               평형별 조회
             </button>
             <button
-              data-owner-only onClick={() => setEditing(emptyMarketPrice())}
+              onClick={() => setEditing(emptyMarketPrice())}
               className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">add</span>
@@ -180,7 +180,7 @@ export default function MarketPricePage() {
             <div className="text-xs text-gray-500 mb-4">단지별 실거래 최고가를 기록해보세요</div>
             {!query && (
               <div className="flex flex-wrap items-center justify-center gap-2">
-                <button data-owner-only onClick={() => setEditing(emptyMarketPrice())} className="text-sm px-4 py-2 rounded-full border-2 border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-semibold">
+                <button onClick={() => setEditing(emptyMarketPrice())} className="text-sm px-4 py-2 rounded-full border-2 border-violet-500 bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 font-semibold">
                   + 첫 기록 추가
                 </button>
                 <button data-owner-only onClick={loadSamples} className="text-sm px-4 py-2 rounded-full border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-gray-300 font-semibold flex items-center gap-1">

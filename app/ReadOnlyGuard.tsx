@@ -3,9 +3,10 @@ import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * 직원(파트너) = 보기 전용
- * - <body data-readonly> 를 켜서 data-owner-only 버튼(등록·업로드·전체 삭제 등)을 숨김 (globals.css)
- * - 그래도 저장을 시도해 보안 규칙에 막히면(permission-denied) 쉬운 말로 안내
+ * 직원(파트너) 권한 — 스케줄은 자유롭게, 매물·매수자·실거래는 등록·수정까지, 삭제·만기 계약·사무실 설정은 대표만
+ * (실제 제한은 firestore.rules, 여기는 화면 안내)
+ * - <body data-readonly> 를 켜서 data-owner-only 버튼(엑셀 업로드·전체 삭제·되살리기 등)을 숨김 (globals.css)
+ * - 그래도 막힌 작업을 시도해 보안 규칙에 걸리면(permission-denied) 쉬운 말로 안내
  */
 export default function ReadOnlyGuard() {
   const { user } = useAuth();
@@ -21,7 +22,7 @@ export default function ReadOnlyGuard() {
       e.preventDefault();
       if (Date.now() - last < 3000) return;
       last = Date.now();
-      alert("직원 계정은 보기만 할 수 있어요.\n등록·수정·삭제는 대표님만 할 수 있어요.");
+      alert("직원 계정은 이 작업을 할 수 없어요.\n삭제·만기 계약 수정·전체 작업은 대표님만 할 수 있어요.");
     };
     window.addEventListener("unhandledrejection", onReject);
     return () => {
@@ -34,7 +35,7 @@ export default function ReadOnlyGuard() {
   return (
     <div className="fixed top-0 inset-x-0 z-[70] pointer-events-none flex justify-center">
       <span className="mt-1 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold shadow whitespace-nowrap">
-        👀 보기 전용 (직원) — 등록·수정은 대표님만
+        👤 직원 — 삭제·만기 계약은 대표님만
       </span>
     </div>
   );

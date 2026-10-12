@@ -547,7 +547,7 @@ export default function PropertiesPage() {
 
             {/* 메인 액션 — 매물 등록 (solid 에메랄드 큰 버튼) */}
             <button
-              data-owner-only onClick={() => setEditing(emptyProperty())}
+              onClick={() => setEditing(emptyProperty())}
               className="px-5 py-2.5 bg-[var(--brand-blue)] hover:bg-[var(--brand-blue-dark)] text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">add</span>
@@ -958,7 +958,7 @@ export default function PropertiesPage() {
                 <div className="text-5xl mb-3">🏘️</div>
                 <div className="text-base font-semibold text-gray-900 mb-1">등록된 매물이 없습니다</div>
                 <div className="text-xs text-gray-500 mb-4">매물 등록 버튼을 눌러 추가해보세요</div>
-                <button data-owner-only onClick={() => setEditing(emptyProperty())} className="text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
+                <button onClick={() => setEditing(emptyProperty())} className="text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
                   + 첫 매물 등록
                 </button>
               </div>

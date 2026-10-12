@@ -395,7 +395,7 @@ export default function CustomersPage() {
 
             {/* 메인 액션 */}
             <button
-              data-owner-only onClick={() => setEditing(emptyCustomer())}
+              onClick={() => setEditing(emptyCustomer())}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">person_add</span>

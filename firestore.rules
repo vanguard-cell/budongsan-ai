@@ -82,7 +82,7 @@ service cloud.firestore {
         return request.auth != null
                && request.auth.uid in get(/databases/$(database)/documents/agencies/$(agencyId)).data.members;
       }
-      // 대표 체크 — 데이터 등록·수정·삭제는 대표만 (직원=보기 전용)
+      // 대표 체크 — 삭제·만기 계약·사무실 설정은 대표만
       function isAgencyOwner() {
         return request.auth != null
                && get(/databases/$(database)/documents/agencies/$(agencyId)).data.owner == request.auth.uid;
@@ -91,31 +91,34 @@ service cloud.firestore {
       // ── 사무실 안의 계약 ─────────────────────
       match /contracts/{contractId} {
         allow read: if isMember() || isGlobalAdmin();
-        allow create, update, delete: if isAgencyOwner();
+        allow create, update, delete: if isAgencyOwner();   // 만기 계약은 대표만 (직원 보기 전용)
       }
 
       // ── 사무실 안의 손님(CRM) ─────────────────
       match /customers/{customerId} {
         allow read: if isMember() || isGlobalAdmin();
-        allow create, update, delete: if isAgencyOwner();
+        allow create, update: if isMember();                 // 직원도 매수자 등록·수정
+        allow delete: if isAgencyOwner();
       }
 
       // ── 내 매물 ──────────────────────────────
       match /properties/{propertyId} {
         allow read: if isMember() || isGlobalAdmin();
-        allow create, update, delete: if isAgencyOwner();
+        allow create, update: if isMember();                 // 직원도 매물 등록·수정(메모 포함)
+        allow delete: if isAgencyOwner();
       }
 
       // ── 스케줄 ──────────────────────────────
       match /schedules/{scheduleId} {
         allow read: if isMember() || isGlobalAdmin();
-        allow create, update, delete: if isAgencyOwner();
+        allow create, update, delete: if isMember();         // 스케줄은 직원도 자유롭게
       }
 
       // ── 실거래 최고가 ────────────────────────
       match /marketPrices/{priceId} {
         allow read: if isMember() || isGlobalAdmin();
-        allow create, update, delete: if isAgencyOwner();
+        allow create, update: if isMember();
+        allow delete: if isAgencyOwner();
       }
 
     }
