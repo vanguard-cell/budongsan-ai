@@ -95,7 +95,7 @@ export default function SearchPage() {
         <div className="space-y-6">
           <Section title="내 매물" count={pRes.length}>
             {pRes.slice(0, MAX_SHOW).map(p => (
-              <Row key={p.id} href={`/properties?pid=${p.id}`}
+              <Row key={p.id} href={`/properties?pid=${p.id}&open=1`}
                 main={withUnit(p.address, p.dong, p.ho) || "(주소 없음)"}
                 tag={p.status === "closed" ? "종료" : ""}
                 lines={[person("임대인", p.ownerName, p.ownerPhone), person("임차인", p.tenantName, p.tenantPhone)]} />

@@ -54,6 +54,8 @@ export default function PropertiesPage() {
     // 화면이 열릴 때 주소창의 ?pid= 를 한 번 더 확인 (서버 화면과 어긋나도 그 호실만 보이게)
     const pid = new URLSearchParams(window.location.search).get("pid") || "";
     if (pid) setOnlyPid(pid);
+    // 통합 검색에서 들어오면 (?open=1) 그 매물 상세 패널 바로 열기
+    if (pid && new URLSearchParams(window.location.search).get("open") === "1") setPanelId(pid);
   }, []);
   useEffect(() => {
     // 검색 때는 다른 조건(탭·필터·한 호실만 보기)이 결과를 가리지 않게 모두 풀어줌
