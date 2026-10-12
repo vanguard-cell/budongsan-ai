@@ -97,14 +97,14 @@ export default function SearchPage() {
             {pRes.slice(0, MAX_SHOW).map(p => (
               <Row key={p.id} href={`/properties?pid=${p.id}`}
                 main={withUnit(p.address, p.dong, p.ho) || "(주소 없음)"}
-                sub={[p.status === "closed" ? "종료" : "", p.ownerName && `집주인 ${p.ownerName}`, p.tenantName && `임차인 ${p.tenantName}`, p.ownerPhone || p.tenantPhone].filter(Boolean).join(" · ")} />
+                sub={[p.status === "closed" ? "종료" : "", p.ownerName && `임대인 ${p.ownerName}`, p.tenantName && `임차인 ${p.tenantName}`, p.ownerPhone || p.tenantPhone].filter(Boolean).join(" · ")} />
             ))}
           </Section>
           <Section title="만기 관리" count={cRes.length}>
             {cRes.slice(0, MAX_SHOW).map(c => (
               <Row key={c.id} href={`/expiry?focus=${c.id}`}
                 main={withUnit(c.address, c.dong, c.ho) || "(주소 없음)"}
-                sub={[c.status !== "active" ? "종료" : "", c.tenantName && `임차인 ${c.tenantName}`, c.landlordName && `임대인 ${c.landlordName}`, c.endDate && `만기 ${c.endDate}`].filter(Boolean).join(" · ")} />
+                sub={[c.status !== "active" ? "종료" : "", c.landlordName && `임대인 ${c.landlordName}`, c.tenantName && `임차인 ${c.tenantName}`, c.endDate && `만기 ${c.endDate}`].filter(Boolean).join(" · ")} />
             ))}
           </Section>
           <Section title="고객" count={uRes.length}>
@@ -134,9 +134,9 @@ function Section({ title, count, children }: { title: string; count: number; chi
 function Row({ href, main, sub }: { href: string; main: string; sub: string }) {
   return (
     <li>
-      <Link href={href} className="block px-4 py-2.5 hover:bg-surface-container sm:flex sm:items-baseline sm:gap-6">
-        <div className="break-keep text-lg font-bold text-on-surface sm:w-[45%] sm:shrink-0">{main}</div>
-        {sub && <div className="break-keep text-base text-on-surface-variant sm:min-w-0 sm:flex-1">{sub}</div>}
+      <Link href={href} className="block px-4 py-2.5 hover:bg-surface-container sm:flex sm:items-baseline sm:gap-4">
+        <div className="break-keep text-lg font-bold text-on-surface sm:min-w-0 sm:flex-1 sm:truncate">{main}</div>
+        {sub && <div className="break-keep whitespace-nowrap text-base text-on-surface-variant sm:shrink-0">{sub}</div>}
       </Link>
     </li>
   );
