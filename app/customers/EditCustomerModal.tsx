@@ -16,6 +16,9 @@ import { useAuth } from "@/lib/auth-context";
 import { PROPERTY_TYPES, DEAL_TYPES } from "@/app/properties/helpers";
 import DatedMemo from "@/app/components/DatedMemo";
 
+// 단지 목록 선택은 복잡하다는 요청(건의 #117)으로 숨김 — 다시 쓰려면 true
+const SHOW_COMPLEX_PICKER = false;
+
 interface Props {
   customer: Customer;
   properties?: Property[];   // 내 매물장 — 보여드린 매물에서 검색 가능
@@ -146,7 +149,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
               );
             })}
           </div>
-          {shownComplexes.length > 0 && (
+          {SHOW_COMPLEX_PICKER && shownComplexes.length > 0 && (
             <div className="mt-2">
               <div className="text-xs text-gray-500 mb-1">
                 내 단지 목록{wanted.length > 0 ? ` (${wanted.join("·")})` : ""} — 가나다 순, 위아래로 밀어서 보고 눌러서 고르세요
