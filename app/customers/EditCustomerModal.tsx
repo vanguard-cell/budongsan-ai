@@ -13,6 +13,7 @@ import {
 } from "./customer-types";
 import { subscribeMyComplexes, type Property, type MyComplex } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
+import { stripUnit } from "@/lib/address";
 import { PROPERTY_TYPES, DEAL_TYPES } from "@/app/properties/helpers";
 import DatedMemo from "@/app/components/DatedMemo";
 
@@ -334,6 +335,20 @@ function ShownPropertyRow({
   const [open, setOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState("");
   const [dealFilter, setDealFilter] = useState("");
+  const [complexFilter, setComplexFilter] = useState("");
+
+  const complexOf = (p: Property) => stripUnit(p.address || "", p.dong, p.ho).trim();
+  const complexOptions = useMemo(() => {
+    const seen = new Set<string>();
+    properties.forEach(p => {
+      if (p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter)) {
+        const c = complexOf(p);
+        if (c) seen.add(c);
+      }
+    });
+    return Array.from(seen).sort((a, b) => a.localeCompare(b, "ko"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [properties, typeFilter, dealFilter]);
 
   const typeOptions = useMemo(() => {
     const seen = new Set<string>(PROPERTY_TYPES);
@@ -342,12 +357,13 @@ function ShownPropertyRow({
   }, [properties]);
 
   const suggestions = useMemo(() => {
-    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter));
-    const limit = typeFilter || dealFilter ? 30 : 6;
+    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter) && (!complexFilter || complexOf(p) === complexFilter));
+    const limit = typeFilter || dealFilter || complexFilter ? 30 : 6;
     if (!s.address.trim()) return base.slice(0, limit);
     const q = s.address.toLowerCase();
     return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 30);
-  }, [s.address, properties, typeFilter, dealFilter]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.address, properties, typeFilter, dealFilter, complexFilter]);
 
   const select = (p: Property) => {
     onChange({ address: p.address });
@@ -374,6 +390,17 @@ function ShownPropertyRow({
               onClick={() => { setDealFilter(t); setOpen(true); }}
               className={`shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] border transition-colors ${dealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
+            </button>
+          ))}
+        </div>
+      )}
+      {complexOptions.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {["", ...complexOptions].map(t => (
+            <button key={t || "all"} type="button"
+              onClick={() => { setComplexFilter(t); setOpen(true); }}
+              className={`shrink-0 whitespace-nowrap max-w-[10rem] truncate px-2.5 py-0.5 rounded-full text-[11px] border transition-colors ${complexFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+              {t || "전체 단지"}
             </button>
           ))}
         </div>
