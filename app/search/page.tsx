@@ -75,7 +75,7 @@ export default function SearchPage() {
   const total = pRes.length + cRes.length + uRes.length;
 
   return (
-    <div className="mx-auto max-w-3xl p-4 pb-24">
+    <div className="mx-auto max-w-6xl p-4 pb-24">
       <div className="mb-4 flex gap-2">
         <input
           value={input}
@@ -134,9 +134,9 @@ function Section({ title, count, children }: { title: string; count: number; chi
 function Row({ href, main, sub }: { href: string; main: string; sub: string }) {
   return (
     <li>
-      <Link href={href} className="block px-4 py-4 hover:bg-surface-container">
-        <div className="break-keep text-lg font-bold text-on-surface">{main}</div>
-        {sub && <div className="mt-1 break-keep text-base text-on-surface-variant">{sub}</div>}
+      <Link href={href} className="block px-4 py-2.5 hover:bg-surface-container sm:flex sm:items-baseline sm:gap-6">
+        <div className="break-keep text-lg font-bold text-on-surface sm:w-[45%] sm:shrink-0">{main}</div>
+        {sub && <div className="break-keep text-base text-on-surface-variant sm:min-w-0 sm:flex-1">{sub}</div>}
       </Link>
     </li>
   );
