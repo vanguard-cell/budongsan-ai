@@ -186,6 +186,27 @@ export default function TeamPage() {
           </div>
         )}
 
+        {/* 타부동산 초대 — 다른 사무실이 직접 가입해서 쓰도록 가입 링크 전달 */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 sm:p-5 mb-5">
+          <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">
+            <span className="material-symbols-outlined text-indigo-600 text-xl">share</span>
+            타부동산 초대
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            다른 부동산 사장님께 앱을 소개할 때 쓰세요. 가입 링크를 보내면 빈 화면에서 시작하고, 우리 매물·고객·매출은 보이지 않아요.
+          </p>
+          <button
+            onClick={() => {
+              const text = `[DealDone] 부동산 업무 앱 초대\n\n아래 링크로 들어가 회원가입하세요.\n(가입할 때 부동산 이름을 적으면 됩니다)\n${window.location.origin}/login?mode=signup`;
+              navigator.clipboard.writeText(text).then(() => alert("초대 안내문이 복사되었습니다.\n카톡으로 붙여넣어 보내세요!"));
+            }}
+            className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center gap-1.5 whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined text-lg">content_copy</span>
+            가입 링크 복사 (카톡 전송용)
+          </button>
+        </div>
+
         {/* 초대 코드로 합류 (모두 — 직원용) */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-4 sm:p-5">
           <div className="flex items-center gap-1.5 text-sm font-bold text-gray-900 dark:text-gray-100 mb-1">
