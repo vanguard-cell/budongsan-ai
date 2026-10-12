@@ -135,8 +135,8 @@ function Row({ href, main, sub }: { href: string; main: string; sub: string }) {
   return (
     <li>
       <Link href={href} className="block px-4 py-2.5 hover:bg-surface-container sm:flex sm:items-baseline sm:gap-4">
-        <div className="break-keep text-lg font-bold text-on-surface sm:min-w-0 sm:flex-1 sm:truncate">{main}</div>
-        {sub && <div className="break-keep whitespace-nowrap text-base text-on-surface-variant sm:shrink-0">{sub}</div>}
+        <div className="break-keep text-lg font-bold text-on-surface sm:min-w-0 sm:flex-[3]">{main}</div>
+        {sub && <div className="break-keep text-base text-on-surface-variant sm:min-w-0 sm:flex-[2]">{sub}</div>}
       </Link>
     </li>
   );
