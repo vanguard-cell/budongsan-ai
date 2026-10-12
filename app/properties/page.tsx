@@ -4,6 +4,7 @@ import { stripUnit } from "@/lib/address";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
+import { confirmBulkDelete } from "@/lib/backup";
 import {
   subscribeProperties, saveProperty, deleteProperty, emptyProperty,
   sampleProperties, savePropertiesBatch, logPropertyEvent,
@@ -214,6 +215,7 @@ export default function PropertiesPage() {
   const handleUploadConfirm = async (toSave: Property[], strategy: PropMergeStrategy) => {
     if (!user) return;
     if (strategy === "replace") {
+      if (properties.length > 0 && !(await confirmBulkDelete(user.agencyId, "기존 매물", properties.length))) return;
       for (const p of properties) {
         await deleteProperty(user.agencyId, p.id);
       }
@@ -234,7 +236,7 @@ export default function PropertiesPage() {
 
   const clearAll = async () => {
     if (!user) return;
-    if (!confirm("⚠️ 모든 매물 데이터를 삭제합니다. 정말 진행할까요?")) return;
+    if (!(await confirmBulkDelete(user.agencyId, "매물", properties.length))) return;
     for (const p of properties) await deleteProperty(user.agencyId, p.id);
   };
 

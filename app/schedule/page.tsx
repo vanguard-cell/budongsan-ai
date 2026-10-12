@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
+import { confirmBulkDelete } from "@/lib/backup";
 import {
   subscribeSchedules, saveSchedule, deleteSchedule, emptySchedule,
   saveSchedulesBatch, sampleSchedules,
@@ -330,7 +331,7 @@ export default function SchedulePage() {
   };
   const clearAll = async () => {
     if (!user) return;
-    if (!confirm("⚠️ 등록한 모든 일정(약속·계약일·중도금일·잔금일)을 삭제합니다.\n매물·고객에서 자동으로 따라오는 날짜는 영향받지 않습니다. 진행할까요?")) return;
+    if (!(await confirmBulkDelete(user.agencyId, "등록한 일정", schedules.length))) return;
     for (const s of schedules) await deleteSchedule(user.agencyId, s.id);
   };
 

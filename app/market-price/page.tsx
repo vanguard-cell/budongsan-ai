@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
+import { confirmBulkDelete } from "@/lib/backup";
 import {
   subscribeMarketPrices, saveMarketPrice, deleteMarketPrice, emptyMarketPrice,
   saveMarketPricesBatch, sampleMarketPrices,
@@ -96,7 +97,7 @@ export default function MarketPricePage() {
   };
   const clearAll = async () => {
     if (!user) return;
-    if (!confirm("⚠️ 기록된 모든 실거래 최고가를 삭제합니다. 진행할까요?")) return;
+    if (!(await confirmBulkDelete(user.agencyId, "실거래 최고가", items.length))) return;
     for (const m of items) await deleteMarketPrice(user.agencyId, m.id);
   };
 

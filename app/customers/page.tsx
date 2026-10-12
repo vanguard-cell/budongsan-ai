@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
+import { confirmBulkDelete } from "@/lib/backup";
 import { getAgencyDisplayName } from "@/app/expiry/contracts";
 import {
   subscribeCustomers,
@@ -351,13 +352,14 @@ export default function CustomersPage() {
 
   const clearAll = async () => {
     if (!user) return;
-    if (!confirm("⚠️ 모든 고객 데이터를 삭제합니다. 정말 진행할까요?")) return;
+    if (!(await confirmBulkDelete(user.agencyId, "매수자", customers.length))) return;
     for (const c of customers) await fsDeleteCustomer(user.agencyId, c.id);
   };
 
   const handleUploadConfirm = async (toSave: Customer[], strategy: CustMergeStrategy) => {
     if (!user) return;
     if (strategy === "replace") {
+      if (customers.length > 0 && !(await confirmBulkDelete(user.agencyId, "기존 매수자", customers.length))) return;
       for (const c of customers) await fsDeleteCustomer(user.agencyId, c.id);
     }
     await saveCustomersBatch(user.agencyId, toSave);

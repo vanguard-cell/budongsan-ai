@@ -4,6 +4,7 @@ import { stripUnit } from "@/lib/address";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
+import { confirmBulkDelete } from "@/lib/backup";
 import {
   subscribeContracts,
   saveContract as fsSaveContract,
@@ -386,7 +387,7 @@ export default function ExpiryPage() {
 
   const clearAllData = async () => {
     if (!user) return;
-    if (!confirm("⚠️ 모든 계약 데이터를 삭제합니다. 정말 진행할까요?")) return;
+    if (!(await confirmBulkDelete(user.agencyId, "만기 계약", contracts.length))) return;
     // 직렬 삭제 (한 사용자 범위라 일반 사용량에서 충분)
     for (const c of contracts) {
       await fsDeleteContract(user.agencyId, c.id);
@@ -396,7 +397,8 @@ export default function ExpiryPage() {
   const handleUploadConfirm = async (toSave: Contract[], strategy: MergeStrategy) => {
     if (!user) return;
     if (strategy === "replace") {
-      // 기존 데이터 전부 삭제 후 일괄 저장
+      // 기존 데이터 전부 삭제 후 일괄 저장 — 지우기 전 백업·확인
+      if (contracts.length > 0 && !(await confirmBulkDelete(user.agencyId, "기존 만기 계약", contracts.length))) return;
       for (const c of contracts) {
         await fsDeleteContract(user.agencyId, c.id);
       }
