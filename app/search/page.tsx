@@ -97,21 +97,23 @@ export default function SearchPage() {
             {pRes.slice(0, MAX_SHOW).map(p => (
               <Row key={p.id} href={`/properties?pid=${p.id}`}
                 main={withUnit(p.address, p.dong, p.ho) || "(주소 없음)"}
-                sub={[p.status === "closed" ? "종료" : "", p.ownerName && `임대인 ${p.ownerName}`, p.tenantName && `임차인 ${p.tenantName}`, p.ownerPhone || p.tenantPhone].filter(Boolean).join(" · ")} />
+                tag={p.status === "closed" ? "종료" : ""}
+                lines={[person("임대인", p.ownerName, p.ownerPhone), person("임차인", p.tenantName, p.tenantPhone)]} />
             ))}
           </Section>
           <Section title="만기 관리" count={cRes.length}>
             {cRes.slice(0, MAX_SHOW).map(c => (
               <Row key={c.id} href={`/expiry?focus=${c.id}`}
                 main={withUnit(c.address, c.dong, c.ho) || "(주소 없음)"}
-                sub={[c.status !== "active" ? "종료" : "", c.landlordName && `임대인 ${c.landlordName}`, c.tenantName && `임차인 ${c.tenantName}`, c.endDate && `만기 ${c.endDate}`].filter(Boolean).join(" · ")} />
+                tag={c.status !== "active" ? "종료" : ""}
+                lines={[person("임대인", c.landlordName, c.landlordPhone), person("임차인", c.tenantName, c.tenantPhone), c.endDate ? `만기 ${c.endDate}` : ""]} />
             ))}
           </Section>
           <Section title="고객" count={uRes.length}>
             {uRes.slice(0, MAX_SHOW).map(c => (
               <Row key={c.id} href={`/customers?focus=${c.id}`}
                 main={c.name || "(이름 없음)"}
-                sub={[c.phone, c.preferredArea].filter(Boolean).join(" · ")} />
+                lines={[c.phone || "", c.preferredArea || ""]} />
             ))}
           </Section>
         </div>
@@ -131,15 +133,25 @@ function Section({ title, count, children }: { title: string; count: number; chi
   );
 }
 
-function Row({ href, main, sub }: { href: string; main: string; sub: string }) {
+function Row({ href, main, tag, lines }: { href: string; main: string; tag?: string; lines: string[] }) {
+  const shown = lines.filter(Boolean);
   return (
     <li>
-      <Link href={href} className="block px-4 py-2.5 hover:bg-surface-container sm:flex sm:items-baseline sm:gap-4">
-        <div className="break-keep text-lg font-bold text-on-surface sm:min-w-0 sm:flex-[3]">{main}</div>
-        {sub && <div className="break-keep text-base text-on-surface-variant sm:min-w-0 sm:flex-[2]">{sub}</div>}
+      <Link href={href} className="block px-4 py-3 hover:bg-surface-container">
+        <div className="break-keep text-lg font-bold text-on-surface">
+          {tag && <span className="mr-2 whitespace-nowrap rounded bg-surface-container px-1.5 py-0.5 align-middle text-xs font-semibold text-on-surface-variant">{tag}</span>}
+          {main}
+        </div>
+        {shown.map((t, i) => <div key={i} className="mt-0.5 break-keep text-base text-on-surface-variant">{t}</div>)}
       </Link>
     </li>
   );
+}
+
+// "임대인 홍길동 010-0000-0000" 형태. 이름·전화 둘 다 없으면 빈 줄(표시 안 함)
+function person(label: string, name?: string, phone?: string) {
+  if (!name && !phone) return "";
+  return `${label}  ${name || "—"}  ${phone || ""}`.trim();
 }
 
 // 주소에 동·호수가 안 들어 있으면 뒤에 붙여서 보여줌
