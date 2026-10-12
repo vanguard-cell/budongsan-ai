@@ -59,9 +59,18 @@ function LoginInner() {
     if (!loading && user) router.replace(redirect);
   }, [loading, user, redirect, router]);
 
-  // 인앱 브라우저 감지
+  // 인앱 브라우저 감지 — 카카오톡이면 처음 한 번 자동으로 휴대폰 기본 브라우저로 열기
+  // (카톡으로 받은 초대 링크를 누른 부모님 세대가 구글 로그인 막힘에서 헤매지 않게)
   useEffect(() => {
-    setInAppInfo(detectInAppBrowser());
+    const info = detectInAppBrowser();
+    setInAppInfo(info);
+    if (info.isInApp && navigator.userAgent.toLowerCase().includes("kakaotalk")) {
+      try {
+        if (sessionStorage.getItem("triedExternal")) return;
+        sessionStorage.setItem("triedExternal", "1");
+      } catch { return; }
+      window.location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(window.location.href)}`;
+    }
   }, []);
 
   const copyUrl = async () => {

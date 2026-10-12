@@ -63,6 +63,12 @@ export default function TeamPage() {
 
   const isOwner = user?.role === "owner";
 
+  // 초대 링크(/team?code=XXXX)로 들어오면 코드 칸 미리 채우기
+  useEffect(() => {
+    const c = new URLSearchParams(window.location.search).get("code");
+    if (c) setJoinCode(c.toUpperCase());
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !user) router.replace("/login?redirect=/team");
   }, [authLoading, user, router]);
@@ -95,7 +101,9 @@ export default function TeamPage() {
   };
 
   const copyInvite = () => {
-    const text = `[DealDone] ${agency?.name || "사무실"} 초대\n\n1. 아래 주소로 접속 후 회원가입(또는 구글 로그인)\n${window.location.origin}\n2. 메뉴 → 직원 관리 → 초대 코드 입력\n3. 코드: ${inviteCode}\n(7일 안에, 1명만 쓸 수 있어요)`;
+    // 링크를 누르면 회원가입 화면 → 가입 후 직원 관리 화면으로 와서 코드가 미리 채워짐
+    const link = `${window.location.origin}/login?mode=signup&redirect=${encodeURIComponent(`/team?code=${inviteCode}`)}`;
+    const text = `[DealDone] ${agency?.name || "사무실"} 초대\n\n1. 아래 링크를 눌러 회원가입 (이메일·비밀번호)\n${link}\n2. 가입하면 '직원 관리' 화면이 열려요 → '합류' 버튼만 누르면 끝\n(코드: ${inviteCode} · 7일 안에, 1명만 쓸 수 있어요)`;
     copyText(text);
   };
 
