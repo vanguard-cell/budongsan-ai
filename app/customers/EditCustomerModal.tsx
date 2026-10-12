@@ -290,6 +290,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
                   key={idx}
                   shown={s}
                   properties={properties}
+                  complexes={myComplexes}
                   onChange={(patch) => updateShown(idx, patch)}
                   onRemove={() => removeShown(idx)}
                 />
@@ -327,10 +328,11 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
 
 /* ── 보여드린 매물 한 행 — 내 매물장 자동완성 검색 ── */
 function ShownPropertyRow({
-  shown: s, properties, onChange, onRemove,
+  shown: s, properties, complexes, onChange, onRemove,
 }: {
   shown: ShownProperty;
   properties: Property[];
+  complexes: MyComplex[];
   onChange: (patch: Partial<ShownProperty>) => void;
   onRemove: () => void;
 }) {
@@ -338,6 +340,7 @@ function ShownPropertyRow({
   const [dealFilter, setDealFilter] = useState("");
   const [query, setQuery] = useState("");
   const [showList, setShowList] = useState(false);
+  const [complexFilter, setComplexFilter] = useState("");
 
   // 스케줄의 '매물 연결'과 같은 방식 — 주소 뒤에 동·호도 같이 보여줌
   const fullLabel = (p: Property) => {
@@ -354,12 +357,18 @@ function ShownPropertyRow({
   }, [properties]);
 
   const suggestions = useMemo(() => {
-    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter));
+    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter) && (!complexFilter || p.address.includes(complexFilter)));
     const q = query.trim().toLowerCase();
     if (!q) return base.slice(0, 30);
     return base.filter(p => fullLabel(p).toLowerCase().includes(q)).slice(0, 30);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, properties, typeFilter, dealFilter]);
+  }, [query, properties, typeFilter, dealFilter, complexFilter]);
+
+  // 고른 종류(아파트/상가 등)에 맞는 내 단지 목록 — 가나다 순
+  const complexOptions = useMemo(
+    () => complexes.filter(c => !typeFilter || c.propertyType === typeFilter).sort((a, b) => a.name.localeCompare(b.name, "ko")),
+    [complexes, typeFilter],
+  );
 
   const select = (p: Property) => {
     onChange({ address: fullLabel(p) });
@@ -373,7 +382,7 @@ function ShownPropertyRow({
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", ...typeOptions].map(t => (
             <button key={t || "all"} type="button"
-              onClick={() => { setTypeFilter(t); setShowList(true); }}
+              onClick={() => { setTypeFilter(t); setComplexFilter(""); setShowList(true); }}
               className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${typeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
             </button>
@@ -387,6 +396,17 @@ function ShownPropertyRow({
               onClick={() => { setDealFilter(t); setShowList(true); }}
               className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${dealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
+            </button>
+          ))}
+        </div>
+      )}
+      {complexOptions.length > 0 && (
+        <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
+          {["", ...complexOptions.map(c => c.name)].map(n => (
+            <button key={n || "all"} type="button"
+              onClick={() => { setComplexFilter(n); setShowList(true); }}
+              className={`w-full text-left px-3 py-2 text-sm whitespace-nowrap overflow-hidden text-ellipsis ${complexFilter === n ? "bg-emerald-600 text-white" : "text-gray-700 hover:bg-emerald-50"}`}>
+              {n || "전체 단지"}
             </button>
           ))}
         </div>
