@@ -96,14 +96,14 @@ export default function SearchPage() {
           <Section title="내 매물" count={pRes.length}>
             {pRes.slice(0, MAX_SHOW).map(p => (
               <Row key={p.id} href={`/properties?pid=${p.id}`}
-                main={p.address || "(주소 없음)"}
+                main={withUnit(p.address, p.dong, p.ho) || "(주소 없음)"}
                 sub={[p.status === "closed" ? "종료" : "", p.ownerName && `집주인 ${p.ownerName}`, p.tenantName && `임차인 ${p.tenantName}`, p.ownerPhone || p.tenantPhone].filter(Boolean).join(" · ")} />
             ))}
           </Section>
           <Section title="만기 관리" count={cRes.length}>
             {cRes.slice(0, MAX_SHOW).map(c => (
               <Row key={c.id} href={`/expiry?focus=${c.id}`}
-                main={c.address || "(주소 없음)"}
+                main={withUnit(c.address, c.dong, c.ho) || "(주소 없음)"}
                 sub={[c.status !== "active" ? "종료" : "", c.tenantName && `임차인 ${c.tenantName}`, c.landlordName && `임대인 ${c.landlordName}`, c.endDate && `만기 ${c.endDate}`].filter(Boolean).join(" · ")} />
             ))}
           </Section>
@@ -124,7 +124,7 @@ function Section({ title, count, children }: { title: string; count: number; chi
   if (count === 0) return null;
   return (
     <section>
-      <h2 className="mb-2 text-sm font-bold text-on-surface">{title} <span className="text-primary">{count}</span></h2>
+      <h2 className="mb-2 text-base font-bold text-on-surface">{title} <span className="text-primary">{count}</span></h2>
       <ul className="divide-y divide-outline-variant overflow-hidden rounded-xl border border-outline-variant bg-surface">{children}</ul>
       {count > MAX_SHOW && <p className="mt-1 text-xs text-on-surface-variant">앞의 {MAX_SHOW}건만 보여요. 더 자세히 검색해 보세요.</p>}
     </section>
@@ -134,10 +134,18 @@ function Section({ title, count, children }: { title: string; count: number; chi
 function Row({ href, main, sub }: { href: string; main: string; sub: string }) {
   return (
     <li>
-      <Link href={href} className="block px-3 py-2.5 hover:bg-surface-container">
-        <div className="truncate text-sm font-semibold text-on-surface">{main}</div>
-        {sub && <div className="truncate text-xs text-on-surface-variant">{sub}</div>}
+      <Link href={href} className="block px-4 py-4 hover:bg-surface-container">
+        <div className="break-keep text-lg font-bold text-on-surface">{main}</div>
+        {sub && <div className="mt-1 break-keep text-base text-on-surface-variant">{sub}</div>}
       </Link>
     </li>
   );
+}
+
+// 주소에 동·호수가 안 들어 있으면 뒤에 붙여서 보여줌
+function withUnit(address?: string, dong?: string, ho?: string) {
+  const parts = [address || ""];
+  if (dong && !(address || "").includes(dong)) parts.push(/동$/.test(dong) ? dong : `${dong}동`);
+  if (ho && !(address || "").includes(ho)) parts.push(/호$/.test(ho) ? ho : `${ho}호`);
+  return parts.filter(Boolean).join(" ").trim();
 }
