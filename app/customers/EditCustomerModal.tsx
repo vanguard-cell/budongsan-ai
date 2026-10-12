@@ -152,12 +152,12 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
               <div className="text-xs text-gray-500 mb-1">
                 내 단지 목록{wanted.length > 0 ? ` (${wanted.join("·")})` : ""} — 가나다 순, 위아래로 밀어서 보고 눌러서 고르세요
               </div>
-              <div className="flex flex-col gap-1.5 overflow-y-auto max-h-56 rounded-xl border border-teal-200 bg-teal-50/40 p-1.5">
+              <div className="flex flex-col gap-1 overflow-y-auto max-h-24 rounded-lg border border-teal-200 bg-teal-50/40 p-1">
                 {shownComplexes.map(c => {
                   const sel = areaList.includes(c.name);
                   return (
                     <button key={c.propertyType + c.name} type="button" onClick={() => toggleComplex(c.name)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition-colors break-keep ${sel ? "bg-sky-400 border-sky-400 text-white font-semibold" : "bg-white text-gray-700 border-teal-200"}`}>
+                      className={`w-full text-left px-2 py-0.5 rounded-md text-[11px] border transition-colors break-keep ${sel ? "bg-sky-400 border-sky-400 text-white font-semibold" : "bg-white text-gray-700 border-teal-200"}`}>
                       {sel ? "✓ " : ""}{c.name}
                     </button>
                   );
@@ -269,10 +269,10 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
         {/* 매물 매칭 이력 */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">보여드린 매물 ({form.shownProperties.length})</label>
+            <label className="block text-base font-bold text-gray-800">보여드린 매물 ({form.shownProperties.length})</label>
             <button
               onClick={addShown}
-              className="text-[11px] px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+              className="text-sm px-4 py-1.5 rounded-full border border-blue-300 bg-blue-50 text-blue-700 font-semibold hover:border-blue-400 hover:text-blue-600 transition-colors"
             >
               + 추가
             </button>
@@ -371,13 +371,13 @@ function ShownPropertyRow({
   };
 
   return (
-    <div className="border border-gray-200 rounded-xl p-2.5 space-y-1.5 bg-gray-50/50 relative">
+    <div className="border border-gray-200 rounded-xl p-3.5 space-y-2.5 bg-gray-50/50 relative">
       {properties.length > 0 && (
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", ...typeOptions].map(t => (
             <button key={t || "all"} type="button"
               onClick={() => { setTypeFilter(t); setOpen(true); }}
-              className={`shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] border transition-colors ${typeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+              className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${typeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
             </button>
           ))}
@@ -388,7 +388,7 @@ function ShownPropertyRow({
           {["", "매매", "전세", "월세"].map(t => (
             <button key={t || "all"} type="button"
               onClick={() => { setDealFilter(t); setOpen(true); }}
-              className={`shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] border transition-colors ${dealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+              className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${dealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
             </button>
           ))}
@@ -399,7 +399,7 @@ function ShownPropertyRow({
           {["", ...complexOptions].map(t => (
             <button key={t || "all"} type="button"
               onClick={() => { setComplexFilter(t); setOpen(true); }}
-              className={`shrink-0 whitespace-nowrap max-w-[10rem] truncate px-2.5 py-0.5 rounded-full text-[11px] border transition-colors ${complexFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
+              className={`shrink-0 whitespace-nowrap max-w-[12rem] truncate px-3.5 py-1.5 rounded-full text-sm border transition-colors ${complexFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체 단지"}
             </button>
           ))}
@@ -413,10 +413,10 @@ function ShownPropertyRow({
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 200)}
             placeholder="매물 주소 — 내 매물장에서 검색 또는 직접 입력"
-            className="w-full border border-blue-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full border border-blue-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           {open && suggestions.length > 0 && (
-            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-40 overflow-y-auto">
+            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-72 overflow-y-auto">
               <div className="px-2 py-1 bg-blue-50 text-[10px] text-blue-700 font-medium border-b border-blue-100">
                 🏘️ 내 매물장에서 선택
               </div>
@@ -424,13 +424,13 @@ function ShownPropertyRow({
                 <button
                   key={p.id} type="button"
                   onMouseDown={e => { e.preventDefault(); select(p); }}
-                  className="w-full text-left px-2 py-1.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 text-xs"
+                  className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 text-sm"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="text-[9px] px-1 py-0.5 rounded bg-blue-100 text-blue-700 shrink-0">{p.dealType}</span>
                     <span className="font-medium text-gray-800 truncate">{p.address}</span>
                   </div>
-                  <div className="text-[10px] text-gray-500 mt-0.5 truncate">{p.propertyType}{p.price ? ` · ${p.price}만` : ""}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>
+                  <div className="text-xs text-gray-500 mt-0.5 truncate">{p.propertyType}{p.price ? ` · ${p.price}만` : ""}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>
                 </button>
               ))}
             </div>
@@ -438,7 +438,7 @@ function ShownPropertyRow({
         </div>
         <button
           onClick={onRemove}
-          className="text-[11px] px-2 rounded-lg border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors"
+          className="text-sm px-3 rounded-lg border border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 transition-colors"
           title="삭제"
         >
           ✕
@@ -449,12 +449,12 @@ function ShownPropertyRow({
           type="date"
           value={s.shownAt}
           onChange={e => onChange({ shownAt: e.target.value })}
-          className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
           value={s.reaction}
           onChange={e => onChange({ reaction: e.target.value as ShownProperty["reaction"] })}
-          className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">반응 선택</option>
           <option value="positive">👍 좋아함</option>
@@ -466,8 +466,8 @@ function ShownPropertyRow({
         value={s.note}
         onChange={e => onChange({ note: e.target.value })}
         placeholder="메모 (선택) — 엔터로 줄바꿈"
-        rows={2}
-        className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+        rows={3}
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
       />
     </div>
   );
