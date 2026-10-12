@@ -332,7 +332,6 @@ function ShownPropertyRow({
   onChange: (patch: Partial<ShownProperty>) => void;
   onRemove: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState("");
   const [dealFilter, setDealFilter] = useState("");
   const [complexFilter, setComplexFilter] = useState("");
@@ -358,16 +357,15 @@ function ShownPropertyRow({
 
   const suggestions = useMemo(() => {
     const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter) && (!complexFilter || complexOf(p) === complexFilter));
-    const limit = typeFilter || dealFilter || complexFilter ? 30 : 6;
+    const limit = 100;
     if (!s.address.trim()) return base.slice(0, limit);
     const q = s.address.toLowerCase();
-    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 30);
+    return base.filter(p => p.address.toLowerCase().includes(q)).slice(0, 100);
       // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.address, properties, typeFilter, dealFilter, complexFilter]);
 
   const select = (p: Property) => {
     onChange({ address: p.address });
-    setOpen(false);
   };
 
   return (
@@ -376,7 +374,7 @@ function ShownPropertyRow({
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", ...typeOptions].map(t => (
             <button key={t || "all"} type="button"
-              onClick={() => { setTypeFilter(t); setOpen(true); }}
+              onClick={() => setTypeFilter(t)}
               className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${typeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
             </button>
@@ -387,7 +385,7 @@ function ShownPropertyRow({
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", "매매", "전세", "월세"].map(t => (
             <button key={t || "all"} type="button"
-              onClick={() => { setDealFilter(t); setOpen(true); }}
+              onClick={() => setDealFilter(t)}
               className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${dealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체"}
             </button>
@@ -398,7 +396,7 @@ function ShownPropertyRow({
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", ...complexOptions].map(t => (
             <button key={t || "all"} type="button"
-              onClick={() => { setComplexFilter(t); setOpen(true); }}
+              onClick={() => setComplexFilter(t)}
               className={`shrink-0 whitespace-nowrap max-w-[12rem] truncate px-3.5 py-1.5 rounded-full text-sm border transition-colors ${complexFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
               {t || "전체 단지"}
             </button>
@@ -409,32 +407,10 @@ function ShownPropertyRow({
         <div className="flex-1 relative">
           <input
             value={s.address}
-            onChange={e => { onChange({ address: e.target.value }); setOpen(true); }}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setTimeout(() => setOpen(false), 200)}
+            onChange={e => onChange({ address: e.target.value })}
             placeholder="매물 주소 — 내 매물장에서 검색 또는 직접 입력"
             className="w-full border border-blue-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-          {open && suggestions.length > 0 && (
-            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-72 overflow-y-auto">
-              <div className="px-2 py-1 bg-blue-50 text-[10px] text-blue-700 font-medium border-b border-blue-100">
-                🏘️ 내 매물장에서 선택
-              </div>
-              {suggestions.map(p => (
-                <button
-                  key={p.id} type="button"
-                  onMouseDown={e => { e.preventDefault(); select(p); }}
-                  className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b last:border-0 border-gray-100 text-sm"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] px-1 py-0.5 rounded bg-blue-100 text-blue-700 shrink-0">{p.dealType}</span>
-                    <span className="font-medium text-gray-800 truncate">{p.address}</span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5 truncate">{p.propertyType}{p.price ? ` · ${p.price}만` : ""}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
         <button
           onClick={onRemove}
@@ -444,6 +420,26 @@ function ShownPropertyRow({
           ✕
         </button>
       </div>
+      {suggestions.length > 0 && (
+        <div>
+          <div className="text-sm text-gray-600 mb-1">내 매물 목록 ({suggestions.length}) — 위아래로 밀어서 보고 눌러서 고르세요</div>
+          <div className="flex flex-col gap-1 overflow-y-auto max-h-72 rounded-lg border border-teal-200 bg-teal-50/40 p-1">
+            {suggestions.map(p => {
+              const sel = s.address === p.address;
+              return (
+                <button key={p.id} type="button" onClick={() => select(p)}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm border transition-colors ${sel ? "bg-sky-400 border-sky-400 text-white font-semibold" : "bg-white text-gray-700 border-teal-200"}`}>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap ${sel ? "bg-white/30" : "bg-blue-100 text-blue-700"}`}>{p.dealType}</span>
+                    <span className="truncate">{sel ? "✓ " : ""}{p.address}</span>
+                  </div>
+                  <div className={`text-xs mt-0.5 truncate ${sel ? "text-white/90" : "text-gray-500"}`}>{p.propertyType}{p.price ? ` · ${p.price}만` : ""}{p.ownerName ? ` · 집주인 ${p.ownerName}` : ""}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div className="flex gap-1.5">
         <input
           type="date"
