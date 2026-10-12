@@ -1,0 +1,143 @@
+"use client";
+
+/** 통합 검색 결과 — 내 매물 · 만기 관리 · 고객을 한 번에 찾아 보여줌 */
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { subscribeProperties, type Property } from "@/lib/properties-db";
+import { subscribeContracts } from "@/lib/contracts-db";
+import { subscribeCustomers } from "@/lib/customers-db";
+import type { Contract } from "../expiry/contracts";
+import type { Customer } from "../customers/customer-types";
+
+const MAX_SHOW = 50;
+
+export default function SearchPage() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+  const [q, setQ] = useState("");
+  const [input, setInput] = useState("");
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+
+  useEffect(() => {
+    const read = () => {
+      const v = new URLSearchParams(window.location.search).get("q") || "";
+      setQ(v);
+      setInput(v);
+    };
+    read();
+    window.addEventListener("global-search", read);
+    return () => window.removeEventListener("global-search", read);
+  }, []);
+
+  useEffect(() => {
+    if (!loading && !user) router.replace("/login?redirect=/search");
+  }, [loading, user, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    const u1 = subscribeProperties(user.agencyId, setProperties);
+    const u2 = subscribeContracts(user.agencyId, setContracts);
+    const u3 = subscribeCustomers(user.agencyId, setCustomers);
+    return () => { u1(); u2(); u3(); };
+  }, [user]);
+
+  const term = q.trim().toLowerCase();
+  const digits = term.replace(/\D/g, "");
+  const hit = (...vals: (string | undefined)[]) =>
+    vals.some(v => {
+      if (!v) return false;
+      if (v.toLowerCase().includes(term)) return true;
+      return digits.length >= 3 && v.replace(/\D/g, "").includes(digits);
+    });
+
+  const pRes = useMemo(() => !term ? [] : properties.filter(p =>
+    hit(p.address, p.dong, p.ho, p.ownerName, p.ownerPhone, p.tenantName, p.tenantPhone)), // eslint-disable-line react-hooks/exhaustive-deps
+  [properties, term]);
+  const cRes = useMemo(() => !term ? [] : contracts.filter(c =>
+    hit(c.address, c.dong, c.ho, c.tenantName, c.tenantPhone, c.landlordName, c.landlordPhone, c.memo)), // eslint-disable-line react-hooks/exhaustive-deps
+  [contracts, term]);
+  const uRes = useMemo(() => !term ? [] : customers.filter(c =>
+    hit(c.name, c.phone, c.preferredArea, c.memo)), // eslint-disable-line react-hooks/exhaustive-deps
+  [customers, term]);
+
+  const submit = () => {
+    const v = input.trim();
+    if (!v) return;
+    router.push(`/search?q=${encodeURIComponent(v)}`);
+    setQ(v);
+  };
+
+  const total = pRes.length + cRes.length + uRes.length;
+
+  return (
+    <div className="mx-auto max-w-3xl p-4 pb-24">
+      <div className="mb-4 flex gap-2">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && submit()}
+          placeholder="이름·전화번호·주소 검색"
+          className="min-w-0 flex-1 rounded-lg border border-outline-variant bg-surface px-3 py-2 text-sm"
+        />
+        <button onClick={submit} className="whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary">검색</button>
+      </div>
+
+      {!term ? (
+        <p className="text-sm text-on-surface-variant">검색어를 입력해 주세요.</p>
+      ) : !user ? null : total === 0 ? (
+        <p className="text-sm text-on-surface-variant">&quot;{q}&quot;로 찾은 결과가 없어요.</p>
+      ) : (
+        <div className="space-y-6">
+          <Section title="내 매물" count={pRes.length}>
+            {pRes.slice(0, MAX_SHOW).map(p => (
+              <Row key={p.id} href={`/properties?pid=${p.id}`}
+                main={p.address || "(주소 없음)"}
+                sub={[p.status === "closed" ? "종료" : "", p.ownerName && `집주인 ${p.ownerName}`, p.tenantName && `임차인 ${p.tenantName}`, p.ownerPhone || p.tenantPhone].filter(Boolean).join(" · ")} />
+            ))}
+          </Section>
+          <Section title="만기 관리" count={cRes.length}>
+            {cRes.slice(0, MAX_SHOW).map(c => (
+              <Row key={c.id} href="/expiry"
+                main={c.address || "(주소 없음)"}
+                sub={[c.status !== "active" ? "종료" : "", c.tenantName && `임차인 ${c.tenantName}`, c.landlordName && `임대인 ${c.landlordName}`, c.endDate && `만기 ${c.endDate}`].filter(Boolean).join(" · ")} />
+            ))}
+          </Section>
+          <Section title="고객" count={uRes.length}>
+            {uRes.slice(0, MAX_SHOW).map(c => (
+              <Row key={c.id} href={`/customers?focus=${c.id}`}
+                main={c.name || "(이름 없음)"}
+                sub={[c.phone, c.preferredArea].filter(Boolean).join(" · ")} />
+            ))}
+          </Section>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Section({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
+  if (count === 0) return null;
+  return (
+    <section>
+      <h2 className="mb-2 text-sm font-bold text-on-surface">{title} <span className="text-primary">{count}</span></h2>
+      <ul className="divide-y divide-outline-variant overflow-hidden rounded-xl border border-outline-variant bg-surface">{children}</ul>
+      {count > MAX_SHOW && <p className="mt-1 text-xs text-on-surface-variant">앞의 {MAX_SHOW}건만 보여요. 더 자세히 검색해 보세요.</p>}
+    </section>
+  );
+}
+
+function Row({ href, main, sub }: { href: string; main: string; sub: string }) {
+  return (
+    <li>
+      <Link href={href} className="block px-3 py-2.5 hover:bg-surface-container">
+        <div className="truncate text-sm font-semibold text-on-surface">{main}</div>
+        {sub && <div className="truncate text-xs text-on-surface-variant">{sub}</div>}
+      </Link>
+    </li>
+  );
+}

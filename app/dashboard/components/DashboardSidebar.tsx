@@ -85,10 +85,9 @@ export default function DashboardSidebar({ open = true, peek = false, onPeekEnd,
   const doSearch = () => {
     const q = search.trim();
     if (!q) return;
-    try { sessionStorage.setItem("pending_global_search", q); } catch {}
-    router.push(`/properties?q=${encodeURIComponent(q)}`);
-    // 이미 매물 화면이면 주소만 바뀌고 검색칸은 그대로라서, 알림을 따로 보냄
-    window.dispatchEvent(new CustomEvent("global-search", { detail: q }));
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+    // 이미 검색 화면이면 주소만 바뀌므로 알림을 따로 보냄
+    setTimeout(() => window.dispatchEvent(new CustomEvent("global-search", { detail: q })), 0);
   };
 
   const isActive = (href: string) => {

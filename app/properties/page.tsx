@@ -1,6 +1,6 @@
 "use client";
 
-import { stripUnit } from "@/lib/address";
+import { stripUnit, complexShortName } from "@/lib/address";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -268,16 +268,6 @@ export default function PropertiesPage() {
   // 매물 대표 금액 (만원 int) — 매매/전세=price, 월세=보증금
   const priceNum = (p: Property) => parseInt((p.price || "0").replace(/\D/g, ""), 10) || 0;
   // 단지명(주소에서 동/호 제거) · 숫자 추출 — 동·호순 정렬·계층 탐색용
-  const complexShortName = (c: string) => {
-    const t = c.split(/\s+/);
-    const isRegion = (w: string) =>
-      /^(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)$/.test(w) ||
-      /^[가-힣]+(특별시|광역시|특별자치시|특별자치도|도|시|군|구|읍|면|동|리|로|길|대로)$/.test(w) ||
-      /^[가-힣]+\d+번?길$/.test(w) ||
-      /^(산)?\d+(-\d+)?(번지|번길)?$/.test(w);
-    while (t.length > 1 && isRegion(t[0])) t.shift();
-    return t.join(" ").replace(/\s*제?\d+층.*$/, "") || c;
-  };
   const baseAddr = (p: Property) => stripUnit(p.address || "", p.dong, p.ho);
   // 같은 단지(주소 표기만 다른 경우 포함)를 하나로 묶기 위한 이름
   const complexKey = (p: Property) => complexShortName(baseAddr(p));
