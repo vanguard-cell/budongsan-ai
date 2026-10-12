@@ -56,8 +56,29 @@ export default function PropertiesPage() {
     if (pid) setOnlyPid(pid);
   }, []);
   useEffect(() => {
-    const onSearch = (e: Event) => setQuery(String((e as CustomEvent).detail ?? ""));
+    // 검색 때는 다른 조건(탭·필터·한 호실만 보기)이 결과를 가리지 않게 모두 풀어줌
+    const applySearch = (q: string) => {
+      setQuery(q);
+      setOnlyPid("");
+      setShowClosed(false);
+      setFilterType("all");
+      setFilterPropType("all");
+      setOccFilter("");
+      setSelectedComplex("");
+      setSelectedDong("");
+      setSelectedHo("");
+      setPriceRange("all");
+      setRoomFilter("all");
+      setColSearch({});
+      setPage(1);
+    };
+    const onSearch = (e: Event) => { try { sessionStorage.removeItem("pending_global_search"); } catch {} applySearch(String((e as CustomEvent).detail ?? "")); };
     window.addEventListener("global-search", onSearch);
+    // 다른 화면에서 검색해서 넘어온 경우: 화면이 열린 뒤에 검색어를 받아 적용
+    try {
+      const pending = sessionStorage.getItem("pending_global_search");
+      if (pending) { sessionStorage.removeItem("pending_global_search"); applySearch(pending); }
+    } catch {}
     return () => window.removeEventListener("global-search", onSearch);
   }, []);
   const [filterType, setFilterType] = useState<"all" | DealType>("all");
@@ -280,9 +301,11 @@ export default function PropertiesPage() {
 
   const filtered = useMemo(() => {
     if (onlyPid) return properties.filter(p => p.id === onlyPid);
+    // 검색어가 있으면 탭(계약진행중/그 외)과 상관없이 전체에서 찾음
+    const searching = !!query.trim();
     const baseList = showClosed
       ? properties.filter(p => p.status === "closed")
-      : properties.filter(p => p.status === "active").filter(matchView);
+      : properties.filter(p => p.status === "active").filter(p => searching || matchView(p));
 
     // 컬럼 헤더 검색 (단지·동호 / 소재지) — 둘 다 전체 주소 텍스트로 매칭
     const addrTerm = (colSearch.address || "").trim().toLowerCase();
@@ -299,14 +322,15 @@ export default function PropertiesPage() {
       })
       .filter(p => {
         if (!query.trim()) return true;
-        const q = query.toLowerCase();
-        return p.address.toLowerCase().includes(q)
-            || p.ownerName.toLowerCase().includes(q)
-            || p.ownerPhone.includes(q)
+        const q = query.trim().toLowerCase();
+        const qd = q.replace(/\D/g, "");
+        const phoneHit = (ph?: string) => !!ph && (ph.includes(q) || (qd.length >= 3 && ph.replace(/\D/g, "").includes(qd)));
+        return (p.address || "").toLowerCase().includes(q)
+            || (p.ownerName || "").toLowerCase().includes(q)
+            || phoneHit(p.ownerPhone) || phoneHit(p.tenantPhone)
             || (p.dong || "").includes(q)
             || (p.ho || "").includes(q)
-            || (p.tenantName || "").toLowerCase().includes(q)
-            || (p.tenantPhone || "").includes(q);
+            || (p.tenantName || "").toLowerCase().includes(q);
       })
       .filter(p => {
         if (priceRange === "all") return true;
