@@ -10,6 +10,19 @@ import { useAuth } from "@/lib/auth-context";
 import DatedMemo from "@/app/components/DatedMemo";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong } from "./helpers";
 
+// 통신사 저장 형식: "KT", "KT(알뜰폰)", "알뜰폰" (예전 "알뜰폰(KT망)"도 읽을 수 있음)
+function parseCarrier(v: string): { base: string; mvno: boolean } {
+  const old = v.match(/^알뜰폰\((SKT|KT|LG U\+)망\)$/);
+  if (old) return { base: old[1], mvno: true };
+  if (v === "알뜰폰") return { base: "", mvno: true };
+  const m = v.match(/^(.+)\(알뜰폰\)$/);
+  if (m) return { base: m[1], mvno: true };
+  return { base: v, mvno: false };
+}
+function joinCarrier(base: string, mvno: boolean): string {
+  return mvno ? (base ? `${base}(알뜰폰)` : "알뜰폰") : base;
+}
+
 export default function PropertyModal({ property, savedComplexes = [], onClose, onSave }: {
   property: Property;
   savedComplexes?: { base: string; propertyType: string; count: number }[];
@@ -312,29 +325,18 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               집주인 통신사 <span className="text-[10px] text-gray-400">(선택)</span>
             </label>
             <div className="grid grid-cols-4 gap-1.5">
-              {CARRIERS.map(c => (
-                <button key={c} type="button" onClick={() => set("ownerCarrier", (c === "알뜰폰" ? form.ownerCarrier.startsWith("알뜰폰") : form.ownerCarrier === c) ? "" : c)}
-                  className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${(c === "알뜰폰" ? form.ownerCarrier.startsWith("알뜰폰") : form.ownerCarrier === c) ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
-                  {c}
-                </button>
-              ))}
+              {CARRIERS.map(c => {
+                const { base, mvno } = parseCarrier(form.ownerCarrier);
+                const on = c === "알뜰폰" ? mvno : base === c;
+                return (
+                  <button key={c} type="button"
+                    onClick={() => set("ownerCarrier", c === "알뜰폰" ? joinCarrier(base, !mvno) : joinCarrier(base === c ? "" : c, mvno))}
+                    className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${on ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                    {c}
+                  </button>
+                );
+              })}
             </div>
-            {form.ownerCarrier.startsWith("알뜰폰") && (
-              <div className="mt-2">
-                <div className="text-[11px] text-gray-500 mb-1">알뜰폰은 어느 통신사 망인가요?</div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {["SKT망", "KT망", "LG U+망"].map(n => {
-                    const v = `알뜰폰(${n})`;
-                    return (
-                      <button key={n} type="button" onClick={() => set("ownerCarrier", form.ownerCarrier === v ? "알뜰폰" : v)}
-                        className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${form.ownerCarrier === v ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
-                        {n}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* 임차인 (전세/월세 세입자) */}
