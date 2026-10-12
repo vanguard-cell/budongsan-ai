@@ -22,6 +22,7 @@ import { doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "fire
 import { auth, db } from "./firebase";
 import { kstDateStr } from "./kst";
 import { setAgencyDisplayName } from "../app/expiry/contracts";
+import { resolveOfficeName } from "./office";
 
 /**
  * 사용자 역할
@@ -118,12 +119,13 @@ async function ensureUserAndAgency(fbUser: User): Promise<AppUser> {
     let officeName: string | null = null;
     try {
       const agencySnap = await getDoc(doc(db, "agencies", data.agencyId));
-      if (agencySnap.exists()) officeName = agencySnap.data().officeName || null;
+      officeName = resolveOfficeName(data.agencyId, agencySnap.exists() ? agencySnap.data().officeName : null) || null;
       if (agencySnap.exists() && agencySnap.data().owner === fbUser.uid) {
         role = "owner";
       }
     } catch (e) {
       console.error("[auth] agency 조회 실패 — 기본 owner로 처리:", e);
+      officeName = resolveOfficeName(data.agencyId, null) || null;
       role = "owner";   // 안전 폴백 (조회 실패 시 자신을 대표로 가정)
     }
 

@@ -302,14 +302,17 @@ export interface SmsTemplate {
   text: string;
 }
 
-export const AGENCY_NAME = "미사금빛공인중개사";
-
-/** 내 사무소 이름 — 회원가입 때 적은 이름이 있으면 문자 문구에 사용 (없으면 기본값) */
-let currentAgencyName = AGENCY_NAME;
+/** 내 사무소 이름 — 로그인 때 lib/office.ts 로 정해짐 (정하지 않았으면 빈 문자열) */
+let currentAgencyName = "";
 export function setAgencyDisplayName(name: string | null | undefined) {
-  currentAgencyName = name?.trim() || AGENCY_NAME;
+  currentAgencyName = name?.trim() || "";
 }
 export function getAgencyDisplayName() { return currentAgencyName; }
+
+/** 문자 인사말 — 사무소 이름이 없으면 이름 없이 인사 */
+export function smsGreeting(): string {
+  return currentAgencyName ? `안녕하세요, ${currentAgencyName}입니다.` : "안녕하세요.";
+}
 
 /* ── SMS 템플릿 기본값 (플레이스홀더: {주소} {만기일}) ── */
 export const DEFAULT_SMS_TEMPLATES: Record<string, string> = {
@@ -360,7 +363,7 @@ export function buildSmsTemplate(
   const key = `${stage}_${target}`;
   const custom = loadCustomSmsTemplates()[key];
   const templateText = custom ?? DEFAULT_SMS_TEMPLATES[key] ?? "";
-  return applyTemplate(templateText, contract).split(AGENCY_NAME).join(currentAgencyName);
+  return applyTemplate(templateText, contract);
 }
 
 /* SMS URL (mobile) — 번호와 본문을 자동 입력 */

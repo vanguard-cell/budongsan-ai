@@ -5,7 +5,7 @@
 import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Schedule } from "@/lib/schedules-db";
-import { dDay, severityOf, severityClasses, severityLabel, dDayLabel } from "@/app/expiry/contracts";
+import { dDay, severityOf, severityClasses, severityLabel, dDayLabel, getAgencyDisplayName } from "@/app/expiry/contracts";
 import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr } from "./helpers";
 import MemoText from "@/app/components/MemoText";
 import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
@@ -69,7 +69,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   const sevCls = sev ? severityClasses(sev) : null;
   const area = p.area ? (m2ToPyeong(p.area) ? `전용 ${p.area}㎡ · ${m2ToPyeong(p.area)}평` : `전용 ${p.area}㎡`) : "";
   const smsHref = (phone: string, name: string, tail: string) =>
-    `sms:${phone.replace(/\D/g, "")}?body=${encodeURIComponent(`안녕하세요?\n매물 의뢰받은 미사금빛공인 입니다.\n${`${addressStr(p)} ${tail}`.replace(/\s*매물/g, "").replace(/\s+/g, " ").trim()} 매물 관련하여 연락 드립니다.\n의뢰하신 매물이 거래가 되었는지요?\n☆바쁘시지만 꼭 !확인 부탁드려요☆\n오늘도 즐거운 하루 되세요!!`)}`;
+    `sms:${phone.replace(/\D/g, "")}?body=${encodeURIComponent(`안녕하세요?\n${getAgencyDisplayName() ? `매물 의뢰받은 ${getAgencyDisplayName()} 입니다.` : "매물 의뢰 건으로 연락드립니다."}\n${`${addressStr(p)} ${tail}`.replace(/\s*매물/g, "").replace(/\s+/g, " ").trim()} 매물 관련하여 연락 드립니다.\n의뢰하신 매물이 거래가 되었는지요?\n☆바쁘시지만 꼭 !확인 부탁드려요☆\n오늘도 즐거운 하루 되세요!!`)}`;
   const hasTenant = !!(p.tenantName || p.tenantPhone);
   const regInfo = p.createdAt > 0 ? (() => {
     const c = new Date(p.createdAt);

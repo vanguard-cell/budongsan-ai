@@ -9,7 +9,7 @@
 
 import jsPDF from "jspdf";
 import type { Contract } from "@/app/expiry/contracts";
-import { dDay, dDayLabel, severityOf } from "@/app/expiry/contracts";
+import { dDay, dDayLabel, severityOf, getAgencyDisplayName } from "@/app/expiry/contracts";
 import { formatPhone } from "@/app/expiry/contracts";
 
 const COLORS = {
@@ -208,7 +208,7 @@ export async function printExpiryBoardHTML(contracts: Contract[]) {
     <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid #000;padding-bottom:12px;margin-bottom:20px">
       <div>
         <h1 style="font-size:32px;font-weight:900;margin:0">⏰ 만기 알림판</h1>
-        <div style="font-size:13px;color:#666;margin-top:4px">미사금빛공인중개사사무소 · D-90 이내 진행 계약</div>
+        <div style="font-size:13px;color:#666;margin-top:4px">${getAgencyDisplayName() ? `${getAgencyDisplayName()} · ` : ""}D-90 이내 진행 계약</div>
       </div>
       <div style="text-align:right;font-size:13px;color:#666">
         <div>출력일: ${today}</div>

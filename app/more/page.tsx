@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { ADMIN_EMAIL } from "@/lib/admin-db";
 import BackupCard from "./BackupCard";
+import OfficeNameCard from "./OfficeNameCard";
 
 const ITEMS = [
   { href: "/customers", icon: "👥", label: "매수자 등록",   desc: "매수자 이름·연락처·원하는 단지·예산·입주일·상담메모" },
@@ -29,6 +30,7 @@ export default function MorePage() {
         </div>
         <div className="space-y-3">
           <BackupCard />
+          <OfficeNameCard />
           {items.map(item => (
             <Link key={item.href} href={item.href}
               className="flex items-center gap-4 bg-white rounded-2xl border border-gray-200 p-4 hover:border-blue-400 hover:shadow-sm transition-all">
