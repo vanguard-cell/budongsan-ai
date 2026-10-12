@@ -313,12 +313,28 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </label>
             <div className="grid grid-cols-4 gap-1.5">
               {CARRIERS.map(c => (
-                <button key={c} type="button" onClick={() => set("ownerCarrier", form.ownerCarrier === c ? "" : c)}
-                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${form.ownerCarrier === c ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                <button key={c} type="button" onClick={() => set("ownerCarrier", (c === "알뜰폰" ? form.ownerCarrier.startsWith("알뜰폰") : form.ownerCarrier === c) ? "" : c)}
+                  className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${(c === "알뜰폰" ? form.ownerCarrier.startsWith("알뜰폰") : form.ownerCarrier === c) ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
                   {c}
                 </button>
               ))}
             </div>
+            {form.ownerCarrier.startsWith("알뜰폰") && (
+              <div className="mt-2">
+                <div className="text-[11px] text-gray-500 mb-1">알뜰폰은 어느 통신사 망인가요?</div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {["SKT망", "KT망", "LG U+망"].map(n => {
+                    const v = `알뜰폰(${n})`;
+                    return (
+                      <button key={n} type="button" onClick={() => set("ownerCarrier", form.ownerCarrier === v ? "알뜰폰" : v)}
+                        className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${form.ownerCarrier === v ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                        {n}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 임차인 (전세/월세 세입자) */}
