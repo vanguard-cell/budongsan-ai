@@ -10,6 +10,7 @@
  *   - iOS 16.4+ 만 지원
  */
 
+import { kstDateStr } from "./kst";
 import type { Contract } from "@/app/expiry/contracts";
 import { dDay, severityOf } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
@@ -75,13 +76,13 @@ function alreadySentToday(): boolean {
   if (typeof window === "undefined") return true;
   const lastSent = localStorage.getItem(NOTIFY_LAST_SENT_KEY);
   if (!lastSent) return false;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   return lastSent === today;
 }
 
 function markSent() {
   if (typeof window === "undefined") return;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   localStorage.setItem(NOTIFY_LAST_SENT_KEY, today);
 }
 

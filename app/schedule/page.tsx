@@ -18,6 +18,7 @@ import MonthCalendar, { type CalendarItem } from "./MonthCalendar";
 import SideDrawer from "@/app/components/SideDrawer";
 import { downloadIcs } from "@/lib/ics";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
+import { kstDateStr } from "@/lib/kst";
 import { PROPERTY_TYPES } from "@/app/properties/helpers";
 
 /* ── 타입 ── */
@@ -100,8 +101,8 @@ function formatPhone(raw: string): string {
   if (d.length === 10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
   return raw;
 }
-function isToday(date: string) { return date === new Date().toISOString().slice(0, 10); }
-function isFuture(date: string) { return date >= new Date().toISOString().slice(0, 10); }
+function isToday(date: string) { return date === kstDateStr(); }
+function isFuture(date: string) { return date >= kstDateStr(); }
 function fmtDate(date: string) {
   if (!date) return "";
   const d = new Date(date + "T00:00:00");
@@ -122,7 +123,7 @@ export default function SchedulePage() {
   const [editing,    setEditing]    = useState<Schedule | null>(null);
   const [filter,     setFilter]     = useState<SourceFilter>("all");
   const showPast = true;   // 지난 일정도 항상 표시 (목록은 달력에서 보는 달 기준)
-  const [viewMonth, setViewMonth] = useState<string>(() => new Date().toISOString().slice(0, 7));   // "YYYY-MM"
+  const [viewMonth, setViewMonth] = useState<string>(() => kstDateStr().slice(0, 7));   // "YYYY-MM"
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [panelItem,  setPanelItem]  = useState<UnifiedItem | null>(null);   // 우측 상세 패널
 
@@ -292,7 +293,7 @@ export default function SchedulePage() {
 
   /* 네이버·구글 캘린더용 .ics — 오늘 이후 일정 전체 (탭·날짜 선택과 무관) */
   const exportIcs = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = kstDateStr();
     const events = baseItems
       .filter(i => i.date >= today && i.schedule?.status !== "done")
       .map(i => {

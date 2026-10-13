@@ -3,6 +3,7 @@
  * 경로: /agencies/{agencyId}/schedules/{scheduleId}
  */
 
+import { kstDateStr } from "./kst";
 import {
   collection, doc, setDoc, deleteDoc,
   query, orderBy, onSnapshot, serverTimestamp, Timestamp,
@@ -29,7 +30,7 @@ export interface Schedule {
 }
 
 export function emptySchedule(): Schedule {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   return {
     id: Math.random().toString(36).slice(2) + Date.now().toString(36),
     date: today, time: "10:00",
