@@ -93,7 +93,7 @@ export default function SearchPage() {
         <p className="text-sm text-on-surface-variant">&quot;{q}&quot;로 찾은 결과가 없어요.</p>
       ) : (
         <div className="space-y-6">
-          <Section title="내 매물" count={pRes.length}>
+          <Section title="내 매물" count={pRes.length} moreHref={`/properties?q=${encodeURIComponent(q.trim())}`}>
             {pRes.slice(0, MAX_SHOW).map(p => (
               <Row key={p.id} href={`/properties?pid=${p.id}&open=1`}
                 main={withUnit(p.address, p.dong, p.ho) || "(주소 없음)"}
@@ -122,11 +122,14 @@ export default function SearchPage() {
   );
 }
 
-function Section({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
+function Section({ title, count, moreHref, children }: { title: string; count: number; moreHref?: string; children: React.ReactNode }) {
   if (count === 0) return null;
   return (
     <section>
-      <h2 className="mb-2 text-base font-bold text-on-surface">{title} <span className="text-primary">{count}</span></h2>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h2 className="text-base font-bold text-on-surface">{title} <span className="text-primary">{count}</span></h2>
+        {moreHref && <Link href={moreHref} className="whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-on-primary">매물관리 목록으로 보기</Link>}
+      </div>
       <ul className="divide-y divide-outline-variant overflow-hidden rounded-xl border border-outline-variant bg-surface">{children}</ul>
       {count > MAX_SHOW && <p className="mt-1 text-xs text-on-surface-variant">앞의 {MAX_SHOW}건만 보여요. 더 자세히 검색해 보세요.</p>}
     </section>
