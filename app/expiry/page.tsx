@@ -28,6 +28,7 @@ import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
 import MemoText from "@/app/components/MemoText";
+import { matchAllTokens } from "@/lib/search-match";
 import {
   Contract,
   ContractType,
@@ -155,6 +156,9 @@ export default function ExpiryPage() {
     if (typeof window === "undefined") return;
     const focusId = new URLSearchParams(window.location.search).get("focus");
     if (focusId) { setPanelId(focusId); setShowClosed(true); }
+    // 홈 검색에서 만기관리에만 있는 건이면 (?q=검색어) 검색칸에 넣고 바로 보여줌
+    const qs = new URLSearchParams(window.location.search).get("q");
+    if (qs) setQuery(qs);
   }, []);
 
   /* 데이터 실시간 구독 + 첫 진입 시 localStorage 마이그레이션 */
@@ -207,7 +211,8 @@ export default function ExpiryPage() {
           c.tenantName.toLowerCase().includes(q) ||
           c.landlordName.toLowerCase().includes(q) ||
           c.tenantPhone.includes(q) ||
-          c.landlordPhone.includes(q)
+          c.landlordPhone.includes(q) ||
+          matchAllTokens(q, [c.address, c.dong, c.ho, c.tenantName, c.landlordName, c.tenantPhone, c.landlordPhone])
         );
       })
       .sort((a, b) => {

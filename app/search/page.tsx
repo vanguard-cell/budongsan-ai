@@ -73,6 +73,12 @@ export default function SearchPage() {
     if (onlyProps) router.replace(`/properties?q=${encodeURIComponent(q.trim())}`);
   }, [onlyProps, q, router]);
 
+  // 만기관리에만 찾아졌으면 바로 만기관리 목록으로
+  const onlyContracts = cRes.length > 0 && pRes.length === 0 && uRes.length === 0;
+  useEffect(() => {
+    if (onlyContracts) router.replace(`/expiry?q=${encodeURIComponent(q.trim())}`);
+  }, [onlyContracts, q, router]);
+
   const submit = () => {
     const v = input.trim();
     if (!v) return;
