@@ -24,6 +24,7 @@ import {
 import { db } from "./firebase";
 import type { Customer, CustomerEvent, ShownProperty, CustomerSide, DealKind, CustomerStatus } from "@/app/customers/customer-types";
 import { uid as newCustomerId } from "@/app/customers/customer-types";
+import { kstDateStr } from "@/lib/kst";
 
 function customersCol(agencyId: string) {
   return collection(db, "agencies", agencyId, "customers");
@@ -168,7 +169,7 @@ export async function upsertTenantAsCustomer(
   if (!name && !phone) return null;
 
   const normPhone = normalizePhone(phone);
-  const shownAt = contractDate || new Date().toISOString().slice(0, 10);
+  const shownAt = contractDate || kstDateStr();
   const newShown: ShownProperty = {
     address: propertyAddress,
     shownAt,

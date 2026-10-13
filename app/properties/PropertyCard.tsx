@@ -9,6 +9,7 @@ import { dDay, severityOf, severityClasses, severityLabel, dDayLabel, getAgencyD
 import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr } from "./helpers";
 import MemoText from "@/app/components/MemoText";
 import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
+import { kstDateStr } from "@/lib/kst";
 
 const STYPE_COLORS: Record<string, string> = {
   "집보기": "bg-blue-100 text-blue-700",
@@ -51,7 +52,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   // 계약 진행 상태
   const hasContractDate = !!p.contractDate;
   const hasBalanceDate = !!p.balanceDate;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   const balanceOverdue = hasBalanceDate && p.balanceDate.slice(0, 10) <= today;
 
   const OCC_LABEL: Record<string, string> = { tenant: "임대중", jeonse: "전세", wolse: "월세", owner: "주인거주", vacant: "공실" };

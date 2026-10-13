@@ -12,6 +12,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { localDateStr } from "@/lib/kst";
 
 export interface MarketPrice {
   id: string;
@@ -102,7 +103,7 @@ export async function saveMarketPricesBatch(agencyId: string, list: MarketPrice[
 function dayAgo(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 const mid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 

@@ -18,6 +18,7 @@ import {
   followUpDDayLabel,
 } from "@/app/customers/customer-types";
 import type { Property } from "@/lib/properties-db";
+import { kstDateStr } from "@/lib/kst";
 
 export type ExportScope = "active" | "all";
 export type ExportFormat = "xlsx" | "csv";
@@ -90,7 +91,7 @@ function customersToRows(customers: Customer[], maskPersonal: boolean) {
       "D-day":         c.nextFollowUp ? followUpDDayLabel(d) : "",
       "보여드린 매물": shownSummary,
       "메모":          c.memo,
-      "등록일":        new Date(c.createdAt).toISOString().slice(0, 10),
+      "등록일":        kstDateStr(new Date(c.createdAt)),
     };
   });
 }
@@ -208,7 +209,7 @@ function propertiesToRows(properties: Property[], maskPersonal: boolean) {
     "옵션":          p.options,
     "상태":          p.status === "active" ? "진행중" : "거래완료",
     "메모":          p.memo,
-    "등록일":        new Date(p.createdAt).toISOString().slice(0, 10),
+    "등록일":        kstDateStr(new Date(p.createdAt)),
   }));
 }
 

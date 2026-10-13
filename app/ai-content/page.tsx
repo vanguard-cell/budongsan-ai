@@ -7,6 +7,7 @@ import html2canvas from "html2canvas";
 import InstallPrompt from "../InstallPrompt";
 import ComplexPickerWidget from "../ComplexPicker";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
+import { kstDateStr } from "@/lib/kst";
 
 /* ───────── 타입 ───────── */
 interface AgencyInfo { name: string; rep: string; phone: string; directions: string; intro: string; }
@@ -627,7 +628,7 @@ export default function Home() {
         pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
         remaining -= pageH;
       }
-      const fname = `매물_${form.complexName || form.location || "안내"}_${new Date().toISOString().slice(0,10)}.pdf`;
+      const fname = `매물_${form.complexName || form.location || "안내"}_${kstDateStr()}.pdf`;
       pdf.save(fname);
     } catch (e) {
       setError(e instanceof Error ? e.message : "PDF 생성 오류");

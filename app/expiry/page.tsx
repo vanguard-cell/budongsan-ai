@@ -55,6 +55,7 @@ import {
   CONTRACT_PROPERTY_TYPES,
   CONTRACT_DIRECTIONS,
 } from "./contracts";
+import { kstDateStr, localDateStr } from "@/lib/kst";
 
 /** ㎡ → 평 (소수점 1자리) — 매물 등록과 동일 */
 function m2ToPyeong(m2: string): string {
@@ -1022,8 +1023,8 @@ function RenewModal({ contract, onClose, onSave }: {
   onClose: () => void;
   onSave: (term: RenewTerm) => void | Promise<void>;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const plus2y = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return d.toISOString().slice(0, 10); })();
+  const today = kstDateStr();
+  const plus2y = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 2); return localDateStr(d); })();
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(plus2y);
   const [deposit, setDeposit] = useState(contract.deposit || "");

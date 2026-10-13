@@ -9,6 +9,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { localDateStr } from "@/lib/kst";
 
 export type PropertyType = "아파트" | "오피스텔" | "빌라/다세대" | "원룸/투룸" | "상가" | "사무실" | "토지" | "기타";
 export type DealType = "매매" | "전세" | "월세";
@@ -95,7 +96,7 @@ export function nextDateByCycle(fromDate: string, cycle: ManageCycle): string {
   const months = cycle === "3m" ? 3 : cycle === "6m" ? 6 : 12;
   const d = new Date(fromDate + "T00:00:00");
   d.setMonth(d.getMonth() + months);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 export function emptyProperty(): Property {
@@ -117,7 +118,7 @@ function dateOffset(days: number): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);

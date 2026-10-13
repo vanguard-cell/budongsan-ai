@@ -1,3 +1,4 @@
+import { localDateStr } from "@/lib/kst";
 /* 계약 데이터 모델 + localStorage 헬퍼 */
 
 export type ContractType = "전세" | "월세" | "매매";
@@ -151,7 +152,7 @@ export function defaultEndDate(startDate: string, years: number = 2): string {
   const d = new Date(startDate);
   if (isNaN(d.getTime())) return "";
   d.setFullYear(d.getFullYear() + years);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 /* 오늘 기준 N일 뒤 날짜 (YYYY-MM-DD) */
@@ -159,7 +160,7 @@ function dateOffset(daysFromToday: number): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() + daysFromToday);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 /* 예시 계약 6건 — 각 위험도 색상 골고루 + 종료 1건 */

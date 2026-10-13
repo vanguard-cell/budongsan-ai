@@ -3,7 +3,7 @@
  * 경로: /agencies/{agencyId}/schedules/{scheduleId}
  */
 
-import { kstDateStr } from "./kst";
+import { kstDateStr, localDateStr } from "./kst";
 import {
   collection, doc, setDoc, deleteDoc,
   query, orderBy, onSnapshot, serverTimestamp, Timestamp,
@@ -118,7 +118,7 @@ export async function saveSchedulesBatch(agencyId: string, list: Schedule[]): Pr
 function dayOffset(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 const sid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 

@@ -28,6 +28,7 @@ import PropertyModal from "./PropertyModal";
 import ContractProgressModal from "./ContractProgressModal";
 import PropertyTable from "./PropertyTable";
 import PropertyPanel from "./PropertyPanel";
+import { kstDateStr } from "@/lib/kst";
 
 export default function PropertiesPage() {
   const router = useRouter();
@@ -227,7 +228,7 @@ export default function PropertiesPage() {
 
   // 잔금일 경과 매물 (active + 잔금일 today 이전 + 아직 닫지 않은 알림)
   const balanceOverdue = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = kstDateStr();
     return properties.filter(p =>
       p.status === "active"
       && p.balanceDate
@@ -395,8 +396,8 @@ export default function PropertiesPage() {
     const weekAgo = Date.now() - 7 * 86400000;
     const thisWeekNew = available.filter(p => p.createdAt >= weekAgo).length;
 
-    const today = new Date().toISOString().slice(0, 10);
-    const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+    const today = kstDateStr();
+    const in30 = kstDateStr(new Date(Date.now() + 30 * 86400000));
     const balanceSoon = contracted.filter(p => p.balanceDate && p.balanceDate.slice(0, 10) >= today && p.balanceDate.slice(0, 10) <= in30).length;
 
     return {

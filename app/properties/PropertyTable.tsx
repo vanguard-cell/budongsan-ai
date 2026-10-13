@@ -17,6 +17,7 @@ import type { Property, PropertyType, DealType } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
 import { fmtNum, PROPERTY_TYPES, DEAL_TYPES, addressStr, splitAddress } from "./helpers";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
+import { kstDateStr } from "@/lib/kst";
 
 type SortKey = "newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho" | "area_asc" | "area_desc";
 type PriceRange = "all" | "u1" | "1to2" | "2to3" | "3to5" | "o5";
@@ -42,7 +43,7 @@ const DEAL_TINT: Record<string, string> = {
 
 /* 진행 단계 — 날짜 기반 자동 계산 (수정 불가 열) */
 export function stageOf(p: Property): { label: string; cls: string } {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   if (p.status === "closed")
     return { label: "거래완료", cls: "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400" };
   if (p.balanceDate && p.balanceDate.slice(0, 10) <= today)

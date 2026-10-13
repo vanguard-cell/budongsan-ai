@@ -1,3 +1,4 @@
+import { localDateStr } from "@/lib/kst";
 /* 고객 CRM 데이터 모델 + 헬퍼 */
 
 export type CustomerSide = "buyer" | "seller" | "tenant" | "landlord" | "etc";
@@ -246,7 +247,7 @@ function dateOffset(days: number): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 /** 예시 고객 5건 — 다양한 상태 */

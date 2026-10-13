@@ -17,6 +17,7 @@ import type { Contract } from "@/app/expiry/contracts";
 import { computeSalesStats, fmtNum } from "@/lib/sales";
 import { effectiveStage, STAGE_FLOW, STAGE_META, type Customer } from "@/app/customers/customer-types";
 import PeriodPicker, { type Period, periodLabel } from "@/app/components/PeriodPicker";
+import { kstDateStr } from "@/lib/kst";
 
 export default function InsightsPage() {
   const router = useRouter();
@@ -41,13 +42,13 @@ export default function InsightsPage() {
   // 기간 칩 — 매출 월 + 고객 활동 이벤트가 있는 월
   const months = useMemo(() => {
     const set = new Set<string>(sales.allMonths);
-    for (const c of customers) for (const e of c.history || []) set.add(new Date(e.at).toISOString().slice(0, 7));
+    for (const c of customers) for (const e of c.history || []) set.add(kstDateStr(new Date(e.at)).slice(0, 7));
     return [...set].sort().reverse();
   }, [customers, sales.allMonths]);
 
   useEffect(() => {
     if (period || !loaded) return;
-    setPeriod({ mode: "month", key: months[0] || new Date().toISOString().slice(0, 7) });
+    setPeriod({ mode: "month", key: months[0] || kstDateStr().slice(0, 7) });
   }, [loaded, months, period]);
 
   // 처리현황 — "현재" 스냅샷
@@ -70,7 +71,7 @@ export default function InsightsPage() {
     const res = { call: 0, visit: 0, shown: 0, won: 0, lost: 0, fail: {} as Record<string, number>, failTotal: 0 };
     if (!period) return res;
     const inPeriod = (at: number) => {
-      const ym = new Date(at).toISOString().slice(0, 7);
+      const ym = kstDateStr(new Date(at)).slice(0, 7);
       return period.mode === "year" ? ym.slice(0, 4) === period.key : ym === period.key;
     };
     for (const c of customers) for (const e of c.history || []) {
@@ -88,7 +89,7 @@ export default function InsightsPage() {
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
 
   const periodTitle = period ? periodLabel(period) : "";
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   const upcoming = customers.filter(c => c.nextFollowUp && c.nextFollowUp >= today && c.status !== "closed" && c.status !== "lost").length;
   const maxFunnel = Math.max(1, funnel[0]?.count || 1);
 

@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Customer } from "@/app/customers/customer-types";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
+import { kstDateStr } from "@/lib/kst";
 
 export default function ContractProgressModal({ property, onClose, onSave }: {
   property: Property;
@@ -17,7 +18,7 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof Property>(k: K, v: Property[K]) => setForm(p => ({ ...p, [k]: v }));
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   const balanceOverdueLocal = !!form.balanceDate && form.balanceDate.slice(0, 10) <= today;
 
   const save = async () => {

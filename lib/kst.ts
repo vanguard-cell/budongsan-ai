@@ -9,3 +9,9 @@
 export function kstDateStr(d: Date = new Date()): string {
   return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
+
+/** 브라우저(로컬) 시간 기준 달력 날짜 "YYYY-MM-DD" (toISOString의 하루 밀림 방지) */
+export function localDateStr(d: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}

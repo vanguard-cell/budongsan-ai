@@ -11,6 +11,7 @@ import jsPDF from "jspdf";
 import type { Contract } from "@/app/expiry/contracts";
 import { dDay, dDayLabel, severityOf, getAgencyDisplayName } from "@/app/expiry/contracts";
 import { formatPhone } from "@/app/expiry/contracts";
+import { kstDateStr } from "@/lib/kst";
 
 const COLORS = {
   danger: [220, 38, 38],   // 빨강
@@ -71,7 +72,7 @@ export function printExpiryBoardPDF(contracts: Contract[], opt: PrintOptions = {
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...COLORS.gray as [number, number, number]);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   doc.text(`Printed: ${today}`, pageWidth - margin, titleY, { align: "right" });
   if (opt.agencyName) {
     doc.text(opt.agencyName, pageWidth - margin, titleY + 4, { align: "right" });
@@ -199,7 +200,7 @@ export async function printExpiryBoardHTML(contracts: Contract[]) {
     box-sizing: border-box;
   `;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = kstDateStr();
   const totalDanger = targets.filter(t => t.s === "danger").length;
   const totalWarning = targets.filter(t => t.s === "warning").length;
   const totalCaution = targets.filter(t => t.s === "caution").length;

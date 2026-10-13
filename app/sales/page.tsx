@@ -23,6 +23,7 @@ import { subscribeContracts, saveContract } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
 import { computeSalesStats, slicePeriodStats, fmtNum, formatManToKorean } from "@/lib/sales";
 import PeriodPicker, { type Period, periodLabel } from "@/app/components/PeriodPicker";
+import { kstDateStr } from "@/lib/kst";
 
 export default function SalesPage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function SalesPage() {
   // 선택 기간 기본값 — 데이터 있는 최신 월 (없으면 이번 달)
   useEffect(() => {
     if (period || !loaded) return;
-    const latest = stats.allMonths[0] || new Date().toISOString().slice(0, 7);
+    const latest = stats.allMonths[0] || kstDateStr().slice(0, 7);
     setPeriod({ mode: "month", key: latest });
   }, [loaded, stats.allMonths, period]);
 
@@ -89,7 +90,7 @@ export default function SalesPage() {
   const chartData = useMemo(() => {
     const months: { key: string; label: string; value: number; isFuture: boolean }[] = [];
     const today = new Date();
-    const todayMonth = today.toISOString().slice(0, 7);
+    const todayMonth = kstDateStr(today).slice(0, 7);
     for (let i = 11; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;

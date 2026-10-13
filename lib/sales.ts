@@ -12,6 +12,7 @@
 
 import { emptyProperty, type Property, type DealType } from "./properties-db";
 import type { Contract } from "@/app/expiry/contracts";
+import { kstDateStr } from "@/lib/kst";
 
 /** 만기로 이전된 계약을 매출 집계용 Property 형태로 변환 (commission·잔금일 보존) */
 function contractToSalesProperty(c: Contract): Property {
@@ -50,9 +51,9 @@ const emptyStats = (): SalesStats => ({
 
 export function computeSalesStats(properties: Property[], contracts: Contract[] = []): SalesStats {
   const stats = emptyStats();
-  const thisMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-  const thisYear  = new Date().toISOString().slice(0, 4); // YYYY
-  const today     = new Date().toISOString().slice(0, 10);
+  const thisMonth = kstDateStr().slice(0, 7); // YYYY-MM
+  const thisYear  = kstDateStr().slice(0, 4); // YYYY
+  const today     = kstDateStr();
 
   // 내 매물 + 만기로 이전된 계약(수수료 보존)을 함께 집계
   const all = [...properties, ...contracts.map(contractToSalesProperty)];

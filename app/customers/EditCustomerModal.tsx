@@ -15,6 +15,7 @@ import { subscribeMyComplexes, type Property, type MyComplex } from "@/lib/prope
 import { useAuth } from "@/lib/auth-context";
 import { PROPERTY_TYPES, DEAL_TYPES } from "@/app/properties/helpers";
 import DatedMemo from "@/app/components/DatedMemo";
+import { kstDateStr } from "@/lib/kst";
 
 // 단지 목록 선택은 복잡하다는 요청(건의 #117)으로 숨김 — 다시 쓰려면 true
 const SHOW_COMPLEX_PICKER = false;
@@ -55,7 +56,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
     });
 
   const addShown = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = kstDateStr();
     setForm(p => ({
       ...p,
       shownProperties: [...p.shownProperties, { address: "", shownAt: today, reaction: "", note: "" }],
