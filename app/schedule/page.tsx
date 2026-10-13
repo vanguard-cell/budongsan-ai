@@ -751,6 +751,8 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
 
   // 재계약 일정은 '내 매물'이 아니라 만기 매물(계약 목록)에서 고른다
   const isRenewal = form.scheduleType === "재계약일";
+  // '기타'는 매물 없이 직접 내용을 써서 등록할 수 있다 (건의 #120)
+  const isEtc = form.scheduleType === "기타";
   const properties = useMemo<Property[]>(() => isRenewal
     ? contracts.filter(c => c.status === "active").map(c => ({
         ...emptyProperty(), id: c.id, address: c.address, dong: c.dong ?? "", ho: c.ho ?? "",
@@ -781,7 +783,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
     setPropQuery(propertyFullLabel(p)); setShowPropList(false);
   };
   const save = async () => {
-    if (!form.propertyAddress.trim()) { alert("매물 주소를 입력해주세요"); return; }
+    if (!form.propertyAddress.trim()) { alert(isEtc ? "일정 내용을 입력해주세요 (예: 세무사 상담)" : "매물 주소를 입력해주세요"); return; }
     if (!form.date) { alert("날짜를 선택해주세요"); return; }
     setSaving(true);
     const extras = extraProps.map(p => ({ ...form, id: emptySchedule().id, propertyAddress: propertyFullLabel(p), propertyId: p.id, createdAt: Date.now() }));
@@ -855,10 +857,11 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
           {/* 매물 연결 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              매물 연결 <span className="text-red-400">*</span>
+              {isEtc ? "일정 내용" : "매물 연결"} <span className="text-red-400">*</span>
+              {isEtc && <span className="ml-2 text-[11px] text-gray-400 font-normal">매물 없이 직접 써도 돼요</span>}
               {form.propertyId && <span className="ml-2 text-[11px] text-emerald-600 font-normal">🏘️ 연결됨</span>}
             </label>
-            {properties.length > 0 && (
+            {properties.length > 0 && !isEtc && (
               <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-0.5 px-0.5">
                 {["", ...propTypeOptions].map(t => (
                   <button key={t || "all"} type="button"
@@ -869,7 +872,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                 ))}
               </div>
             )}
-            {properties.length > 0 && (
+            {properties.length > 0 && !isEtc && (
               <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-0.5 px-0.5">
                 {["", "매매", "전세", "월세"].map(t => (
                   <button key={t || "all"} type="button"
@@ -880,7 +883,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                 ))}
               </div>
             )}
-            {properties.length > 0 && (
+            {properties.length > 0 && !isEtc && (
               <div className="relative mb-2">
                 <input value={propQuery} onChange={e => { setPropQuery(e.target.value); setShowPropList(true); }}
                   onFocus={() => setShowPropList(true)}
@@ -903,7 +906,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
               </div>
             )}
             <input value={form.propertyAddress} onChange={e => { set("propertyAddress", e.target.value); set("propertyId", undefined); }}
-              placeholder="직접 입력: 힐스테이트 미사역 101동 1902호"
+              placeholder={isEtc ? "예: 세무사 상담, 은행 가기, 점심 약속" : "직접 입력: 힐스테이트 미사역 101동 1902호"}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             {isNew && extraProps.length > 0 && (
               <div className="mt-2 space-y-1">
@@ -917,7 +920,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                 ))}
               </div>
             )}
-            {isNew && properties.length > 0 && (
+            {isNew && properties.length > 0 && !isEtc && (
               addingExtra ? (
                 <p className="mt-2 text-xs text-emerald-700">위 검색칸에서 추가할 매물을 골라주세요 <button type="button" onClick={() => setAddingExtra(false)} className="ml-1 underline text-gray-500">취소</button></p>
               ) : (
