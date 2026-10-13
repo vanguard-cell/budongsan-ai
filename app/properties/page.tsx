@@ -800,13 +800,14 @@ export default function PropertiesPage() {
               <button onClick={() => { setOnlyPid(""); window.history.replaceState(null, "", "/properties"); }} className="whitespace-nowrap px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[12px] font-bold">전체 매물 보기</button>
             </div>
           )}
-          <input
+          {/* 건의 #121: 평소엔 숨김(홈 검색에서 넘어온 검색어가 있을 때만 표시해 지울 수 있게 함) */}
+          {query && <input
             type="text"
             placeholder="🔍 주소 · 집주인 이름 · 연락처 검색"
             value={query}
             onChange={e => { if (!query && e.target.value) recordFeatureUse(user?.uid, "prop_search"); setQuery(e.target.value); }}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-2"
-          />
+          />}
 
           {/* 단지 → 동 → 호 조회 — 평소 접힘, "단지로 찾기" 클릭 시 펼침 */}
           {complexList.length > 0 && (
