@@ -53,6 +53,8 @@ export interface Property {
   downPaymentDate: string; // 중도금일 (YYYY-MM-DD)
   balanceDate: string;     // 잔금일 (YYYY-MM-DD) — 이 날짜 지나면 만기 관리로 이동
   commission: string;      // 중개 수수료 (만원) — 월별 매출 집계용
+  cpIlsil?: boolean;       // 이실장 등록 표시 (매물관리 카드 버튼)
+  cpSunbang?: boolean;     // 선방 등록 표시
   salesHidden?: boolean;   // true면 매출 관리 명세·집계에서 제외 (매물 정보는 그대로)
   linkedTenantId?: string; // 고객 관리에 자동 등록된 임차인 ID
   // 입주 상태 + 정기 관리 (주인 실거주 등 만기일 없는 매물 관리용)
@@ -294,6 +296,8 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     downPaymentDate: (d.downPaymentDate as string) || "",
     balanceDate:     (d.balanceDate     as string) || "",
     commission:      (d.commission      as string) || "",
+    cpIlsil:         d.cpIlsil === true ? true : undefined,
+    cpSunbang:       d.cpSunbang === true ? true : undefined,
     salesHidden:     d.salesHidden === true ? true : undefined,
     linkedTenantId:  (d.linkedTenantId  as string) || undefined,
     occupancy:       (d.occupancy       as Occupancy) || "",

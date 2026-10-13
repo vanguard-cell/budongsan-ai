@@ -1052,6 +1052,7 @@ export default function PropertiesPage() {
                       onProgress={() => setProgressing({ ...p })}
                       onCloneSameComplex={() => cloneSameComplex(p)}
                       onSaveMemo={memo => saveProperty(user.agencyId, { ...p, memo })}
+                      onToggleCp={key => saveProperty(user.agencyId, { ...p, [key]: !p[key] })}
                     />
                   ))}
                 </div>

@@ -19,7 +19,7 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo }: {
+export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo, onToggleCp }: {
   property: Property;
   schedules: Schedule[];
   isPinned: boolean;
@@ -31,6 +31,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   onProgress: () => void;
   onCloneSameComplex: () => void;
   onSaveMemo?: (memo: string) => void;
+  onToggleCp?: (key: "cpIlsil" | "cpSunbang") => void;
 }) {
   const [memoEditing, setMemoEditing] = useState(false);
   const [memoDraft, setMemoDraft] = useState("");
@@ -327,6 +328,16 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             📝 {hasContractDate ? "계약 정보 수정" : "계약 진행"}
           </button>
         )}
+        {onToggleCp && !isClosed && ([["cpIlsil", "이실장"], ["cpSunbang", "선방"]] as const).map(([key, name]) => (
+          <button key={key} onClick={() => onToggleCp(key)} title={`${name} 등록 표시 (누르면 켜지고, 다시 누르면 꺼져요)`}
+            className={`whitespace-nowrap text-[11px] px-2.5 py-1 rounded-full border font-semibold transition-colors ${
+              p[key]
+                ? "border-emerald-500 bg-emerald-500 text-white"
+                : "border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-400 dark:text-gray-500"
+            }`}>
+            {p[key] ? "✓ " : ""}{name}등록
+          </button>
+        ))}
         {isClosed ? (
           <button onClick={onReopen}
             className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold hover:bg-blue-100 transition-colors">
