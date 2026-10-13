@@ -114,7 +114,7 @@ export default function ExpiryPage() {
   const [selComplex, setSelComplex] = useState("");   // 단지·동·호로 찾기
   const [selDong, setSelDong] = useState("");
   const [selHo, setSelHo] = useState("");
-  const [showComplexSearch, setShowComplexSearch] = useState(false);
+  const [showComplexSearch, setShowComplexSearch] = useState(true);
   const [typeFilter, setTypeFilter] = useState("");   // 매물 종류(아파트·오피스텔 등)별 보기
   const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
   const [showUpload, setShowUpload] = useState(false);
