@@ -503,7 +503,7 @@ export default function SchedulePage() {
               <div key={date}>
                 {/* 날짜 헤더 */}
                 <div className={`flex items-center gap-2 mb-2 ${isToday(date) ? "text-blue-700" : "text-gray-500"}`}>
-                  <span className={`text-sm font-light text-black px-2.5 py-0.5 rounded-full whitespace-nowrap ${isToday(date) ? "bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-400 font-bold text-amber-900 shadow-[0_0_8px_2px_rgba(251,191,36,0.7)]" : "bg-sky-100"}`}>
+                  <span className={`text-sm font-light text-black px-2.5 py-0.5 rounded-full whitespace-nowrap ${isToday(date) ? "bg-gradient-to-r from-pink-100 via-rose-100 to-orange-100 font-bold text-rose-500 shadow-[0_0_6px_1px_rgba(251,207,232,0.8)]" : "bg-sky-100"}`}>
                     {isToday(date) ? "오늘" : fmtDate(date)}
                   </span>
                   <div className="flex-1 h-px bg-gray-200" />

@@ -189,7 +189,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, onMon
           const cellCls = isSelected
             ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-300"
             : isToday
-              ? "bg-gradient-to-br from-yellow-200 via-amber-300 to-yellow-400 border border-amber-400 shadow-[0_0_10px_2px_rgba(251,191,36,0.75)] ring-1 ring-yellow-300"
+              ? "bg-gradient-to-br from-pink-100 via-rose-100 to-orange-100 border border-pink-200 shadow-[0_0_8px_1px_rgba(251,207,232,0.8)]"
               : "hover:bg-gray-50 border border-transparent";
 
           return (
@@ -199,7 +199,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, onMon
               className={`relative min-h-[4.4rem] rounded-xl flex flex-col items-center justify-start pt-1 pb-0.5 transition-all ${cellCls}`}
               title={[date, holiday, info && `일정 ${info.total}건`].filter(Boolean).join(" · ")}
             >
-              <span className={`text-base font-bold ${isSelected ? "text-white" : isToday ? "text-amber-900" : baseColor}`}>{day}</span>
+              <span className={`text-base font-bold ${isSelected ? "text-white" : isToday ? "text-rose-500" : baseColor}`}>{day}</span>
               {holiday && inMonth && (
                 <span className={`text-[8px] leading-none mt-0.5 max-w-full px-0.5 truncate ${isSelected ? "text-white/90" : "text-red-400"}`}>{holiday}</span>
               )}
