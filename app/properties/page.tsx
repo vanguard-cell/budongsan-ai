@@ -813,8 +813,8 @@ export default function PropertiesPage() {
           {complexList.length > 0 && (
             <div className="mb-2">
               <button onClick={() => setShowComplexSearch(v => !v)}
-                className="flex items-center gap-1.5 text-[14px] font-bold text-[var(--brand-blue)] dark:text-blue-400 hover:underline whitespace-nowrap">
-                <span className="material-symbols-outlined text-[20px] leading-none">{showComplexSearch ? "expand_less" : "manage_search"}</span>
+                className="flex items-center gap-2 text-[17px] font-bold text-[var(--brand-blue)] dark:text-blue-400 hover:underline whitespace-nowrap">
+                <span className="material-symbols-outlined text-[24px] leading-none">{showComplexSearch ? "expand_less" : "manage_search"}</span>
                 단지·동·호로 찾기
                 {(selectedComplex || selectedDong || selectedHo) && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-[var(--brand-blue)]" />}
               </button>
@@ -824,7 +824,7 @@ export default function PropertiesPage() {
                 {/* 단지 드롭다운 */}
                 <select value={selectedComplex}
                   onChange={e => { setSelectedComplex(e.target.value); setSelectedDong(""); setSelectedHo(""); if (e.target.value) setSortBy("dongho"); }}
-                  className="col-span-2 border border-gray-200 rounded-lg px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                  className="col-span-2 border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
                   <option value="">단지 전체</option>
                   {complexList.map(([c, n]) => (
                     <option key={c} value={c}>{c} ({n})</option>
@@ -833,7 +833,7 @@ export default function PropertiesPage() {
                 {/* 동 드롭다운 */}
                 <select value={selectedDong} disabled={!selectedComplex}
                   onChange={e => setSelectedDong(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-gray-100 disabled:text-gray-400">
+                  className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-gray-100 disabled:text-gray-400">
                   <option value="">동 전체</option>
                   {dongList.map(([d, n]) => (
                     <option key={d} value={d}>{d}동 ({n})</option>
@@ -843,7 +843,7 @@ export default function PropertiesPage() {
                 <input type="text" value={selectedHo}
                   onChange={e => setSelectedHo(e.target.value)}
                   placeholder="호수"
-                  className="border border-gray-200 rounded-lg px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+                  className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
               </div>
               {(selectedComplex || selectedDong || selectedHo) && (
                 <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
@@ -856,7 +856,7 @@ export default function PropertiesPage() {
 
           {/* 가격대 빠른 필터 */}
           <div className="flex items-center gap-1 mt-2 flex-wrap">
-            <span className="text-[11px] text-gray-500 shrink-0">가격대</span>
+            <span className="text-[13px] font-semibold text-gray-600 shrink-0">가격대</span>
             {([
               { key: "all",   label: "전체" },
               { key: "u1",    label: "1억↓" },
@@ -866,7 +866,7 @@ export default function PropertiesPage() {
               { key: "o5",    label: "5억↑" },
             ] as const).map(r => (
               <button key={r.key} onClick={() => setPriceRange(r.key)}
-                className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+                className={`text-[13px] px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
                   priceRange === r.key
                     ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
                     : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
@@ -878,7 +878,7 @@ export default function PropertiesPage() {
 
           {/* 방 개수 빠른 필터 */}
           <div className="flex items-center gap-1 mt-2 flex-wrap">
-            <span className="text-[11px] text-gray-500 shrink-0 whitespace-nowrap">방</span>
+            <span className="text-[13px] font-semibold text-gray-600 shrink-0 whitespace-nowrap">방</span>
             {([
               { key: "all",    label: "전체" },
               { key: "r1", label: "1개" },
@@ -887,7 +887,7 @@ export default function PropertiesPage() {
               { key: "r4", label: "4개↑" },
             ] as const).map(r => (
               <button key={r.key} onClick={() => setRoomFilter(r.key)}
-                className={`text-[11px] px-2 py-0.5 rounded-full border whitespace-nowrap transition-colors ${
+                className={`text-[13px] px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
                   roomFilter === r.key
                     ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
                     : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
@@ -899,7 +899,7 @@ export default function PropertiesPage() {
 
           {/* 정렬 */}
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-            <span className="text-[11px] text-gray-500 shrink-0">정렬</span>
+            <span className="text-[13px] font-semibold text-gray-600 shrink-0">정렬</span>
             {([
               { key: "newest",     label: "📅 최신순" },
               { key: "price_asc",  label: "💰 금액 낮은순" },
@@ -911,7 +911,7 @@ export default function PropertiesPage() {
               { key: "area_desc",  label: "📐 면적 큰순" },
             ] as const).map(s => (
               <button key={s.key} onClick={() => setSortBy(s.key)}
-                className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+                className={`text-[13px] px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
                   sortBy === s.key
                     ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
                     : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
@@ -921,7 +921,7 @@ export default function PropertiesPage() {
             ))}
             {/* 입주상태 필터 — 주인거주 / 공실 (토글) */}
             <button onClick={() => setOccFilter(v => v === "owner" ? "" : "owner")}
-              className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+              className={`text-[13px] px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
                 occFilter === "owner"
                   ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
                   : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"
@@ -929,7 +929,7 @@ export default function PropertiesPage() {
               🏠 주인거주
             </button>
             <button onClick={() => setOccFilter(v => v === "vacant" ? "" : "vacant")}
-              className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+              className={`text-[13px] px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
                 occFilter === "vacant"
                   ? "bg-indigo-600 text-white border-indigo-600 font-semibold"
                   : "bg-white text-gray-600 border-gray-200 hover:border-indigo-400"
@@ -1199,17 +1199,17 @@ function PropSummaryTile({ tint, label, count, sub, active, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`text-left rounded-xl p-3 border transition-all hover:-translate-y-0.5 ${active ? "" : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:shadow-md"}`}
+      className={`text-left rounded-lg px-2.5 py-1.5 border transition-all hover:-translate-y-0.5 ${active ? "" : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:shadow-md"}`}
       style={active ? { background: C.bg, borderColor: C.ring, boxShadow: `0 0 0 2px ${C.ring}33` } : undefined}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-semibold" style={{ color: active ? C.tx : "#6b7280" }}>{label}</span>
-        {active && <span className="material-symbols-outlined text-[16px] leading-none" style={{ color: C.ring }}>check_circle</span>}
+        <span className="text-[11px] font-semibold whitespace-nowrap" style={{ color: active ? C.tx : "#6b7280" }}>{label}</span>
+        {active && <span className="material-symbols-outlined text-[14px] leading-none" style={{ color: C.ring }}>check_circle</span>}
       </div>
-      <div className="text-2xl font-bold mt-1 tabular-nums" style={{ color: count > 0 ? C.tx : "#9ca3af" }}>
-        {count}<span className="text-xs font-semibold ml-0.5" style={{ color: C.tx2 }}>건</span>
+      <div className="text-lg font-bold mt-0.5 tabular-nums leading-tight" style={{ color: count > 0 ? C.tx : "#9ca3af" }}>
+        {count}<span className="text-[11px] font-semibold ml-0.5" style={{ color: C.tx2 }}>건</span>
       </div>
-      <div className="text-[10.5px] mt-0.5 truncate" style={{ color: C.tx2 }}>{sub || " "}</div>
+      <div className="text-[10px] truncate" style={{ color: C.tx2 }}>{sub || " "}</div>
     </button>
   );
 }
