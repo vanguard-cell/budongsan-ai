@@ -116,7 +116,7 @@ export default function PropertiesPage() {
   };
   // 우측 패널 — 표/카드에서 선택된 매물 (id로 보관해 실시간 갱신 반영)
   const [panelId, setPanelId] = useState<string | null>(null);
-  const [showComplexSearch, setShowComplexSearch] = useState(false);   // 단지·동·호 조회 접기/펼치기
+  const [showComplexSearch, setShowComplexSearch] = useState(true);   // 단지·동·호 조회 접기/펼치기 (기본 펼침)
   const [colSearch, setColSearch] = useState<Record<string, string>>({});   // 표 컬럼 헤더 검색
   const onColSearch = (col: string, term: string) => setColSearch(s => ({ ...s, [col]: term }));
   // 즐겨찾기 (localStorage)
@@ -812,18 +812,18 @@ export default function PropertiesPage() {
           {complexList.length > 0 && (
             <div className="mb-2">
               <button onClick={() => setShowComplexSearch(v => !v)}
-                className="flex items-center gap-1 text-[12px] font-semibold text-[var(--brand-blue)] dark:text-blue-400 hover:underline">
-                <span className="material-symbols-outlined text-[16px] leading-none">{showComplexSearch ? "expand_less" : "manage_search"}</span>
+                className="flex items-center gap-1.5 text-[14px] font-bold text-[var(--brand-blue)] dark:text-blue-400 hover:underline whitespace-nowrap">
+                <span className="material-symbols-outlined text-[20px] leading-none">{showComplexSearch ? "expand_less" : "manage_search"}</span>
                 단지·동·호로 찾기
                 {(selectedComplex || selectedDong || selectedHo) && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-[var(--brand-blue)]" />}
               </button>
               {showComplexSearch && (
-              <div className="border border-blue-100 rounded-xl bg-blue-50/40 p-2.5 mt-1.5">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              <div className="border border-blue-100 rounded-xl bg-blue-50/40 p-3 mt-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {/* 단지 드롭다운 */}
                 <select value={selectedComplex}
                   onChange={e => { setSelectedComplex(e.target.value); setSelectedDong(""); setSelectedHo(""); if (e.target.value) setSortBy("dongho"); }}
-                  className="col-span-2 border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                  className="col-span-2 border border-gray-200 rounded-lg px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
                   <option value="">단지 전체</option>
                   {complexList.map(([c, n]) => (
                     <option key={c} value={c}>{c} ({n})</option>
@@ -832,7 +832,7 @@ export default function PropertiesPage() {
                 {/* 동 드롭다운 */}
                 <select value={selectedDong} disabled={!selectedComplex}
                   onChange={e => setSelectedDong(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-gray-100 disabled:text-gray-400">
+                  className="border border-gray-200 rounded-lg px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-gray-100 disabled:text-gray-400">
                   <option value="">동 전체</option>
                   {dongList.map(([d, n]) => (
                     <option key={d} value={d}>{d}동 ({n})</option>
@@ -842,7 +842,7 @@ export default function PropertiesPage() {
                 <input type="text" value={selectedHo}
                   onChange={e => setSelectedHo(e.target.value)}
                   placeholder="호수"
-                  className="border border-gray-200 rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+                  className="border border-gray-200 rounded-lg px-3 py-3 text-base bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
               </div>
               {(selectedComplex || selectedDong || selectedHo) && (
                 <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
