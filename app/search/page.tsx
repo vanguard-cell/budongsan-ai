@@ -65,6 +65,12 @@ export default function SearchPage() {
     hit(c.name, c.phone, c.preferredArea, c.memo)), // eslint-disable-line react-hooks/exhaustive-deps
   [customers, term]);
 
+  // 내 매물만 찾아졌으면 버튼 누를 필요 없이 바로 매물관리 목록으로 보여줌
+  const onlyProps = pRes.length > 0 && cRes.length === 0 && uRes.length === 0;
+  useEffect(() => {
+    if (onlyProps) router.replace(`/properties?q=${encodeURIComponent(q.trim())}`);
+  }, [onlyProps, q, router]);
+
   const submit = () => {
     const v = input.trim();
     if (!v) return;
