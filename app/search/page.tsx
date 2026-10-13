@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import { subscribeCustomers } from "@/lib/customers-db";
+import { matchAllTokens } from "@/lib/search-match";
 import type { Contract } from "../expiry/contracts";
 import type { Customer } from "../customers/customer-types";
 
@@ -56,7 +57,8 @@ export default function SearchPage() {
     });
 
   const pRes = useMemo(() => !term ? [] : properties.filter(p =>
-    hit(p.address, p.dong, p.ho, p.ownerName, p.ownerPhone, p.tenantName, p.tenantPhone)), // eslint-disable-line react-hooks/exhaustive-deps
+    hit(p.address, p.dong, p.ho, p.ownerName, p.ownerPhone, p.tenantName, p.tenantPhone)
+    || matchAllTokens(term, [p.address, p.dong, p.ho, p.ownerName, p.ownerPhone, p.tenantName, p.tenantPhone])), // eslint-disable-line react-hooks/exhaustive-deps
   [properties, term]);
   const cRes = useMemo(() => !term ? [] : contracts.filter(c =>
     hit(c.address, c.dong, c.ho, c.tenantName, c.tenantPhone, c.landlordName, c.landlordPhone, c.memo)), // eslint-disable-line react-hooks/exhaustive-deps

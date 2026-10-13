@@ -1,6 +1,7 @@
 "use client";
 
 import { stripUnit, complexShortName } from "@/lib/address";
+import { matchAllTokens } from "@/lib/search-match";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -322,7 +323,8 @@ export default function PropertiesPage() {
             || phoneHit(p.ownerPhone) || phoneHit(p.tenantPhone)
             || (p.dong || "").includes(q)
             || (p.ho || "").includes(q)
-            || (p.tenantName || "").toLowerCase().includes(q);
+            || (p.tenantName || "").toLowerCase().includes(q)
+            || matchAllTokens(q, [p.address, p.dong, p.ho, p.ownerName, p.ownerPhone, p.tenantName, p.tenantPhone]);
       })
       .filter(p => {
         if (priceRange === "all") return true;
