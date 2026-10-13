@@ -24,6 +24,7 @@ import { exportProperties } from "@/lib/export";
 import SparklineChart from "@/app/dashboard/components/SparklineChart";
 import { fmtNum, formatDateKo, PROPERTY_TYPES } from "./helpers";
 import PropertyCard from "./PropertyCard";
+import TrashModal from "./TrashModal";
 import PropertyModal from "./PropertyModal";
 import ContractProgressModal from "./ContractProgressModal";
 import PropertyTable from "./PropertyTable";
@@ -40,6 +41,7 @@ export default function PropertiesPage() {
   const [editing, setEditing] = useState<Property | null>(null);
   const [progressing, setProgressing] = useState<Property | null>(null);   // 계약 진행 모달
   const [showUpload, setShowUpload] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [query, setQuery] = useState(() => {
     // 헤더 통합검색에서 ?q= 로 들어오면 검색창에 반영
@@ -509,6 +511,14 @@ export default function PropertiesPage() {
           <div className="flex flex-wrap gap-2 items-center">
             {/* 보조 액션 그룹 (배경 surface-container) */}
             <div className="flex gap-1 bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
+              <button
+                onClick={() => setShowTrash(true)}
+                title="삭제한 매물 되살리기"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <span className="material-symbols-outlined text-base">restore_from_trash</span>
+                <span className="hidden sm:inline">보관함</span>
+              </button>
               <button
                 data-owner-only onClick={() => setShowUpload(true)}
                 title="엑셀 일괄 업로드"
@@ -1158,6 +1168,8 @@ export default function PropertiesPage() {
           });
         }}
       />
+
+      {showTrash && user && <TrashModal agencyId={user.agencyId} onClose={() => setShowTrash(false)} />}
 
       {showUpload && (
         <PropertiesUploadModal

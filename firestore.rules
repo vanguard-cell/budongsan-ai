@@ -108,6 +108,13 @@ service cloud.firestore {
         allow delete: if isAgencyOwner();
       }
 
+      // ── 매물 휴지통 (삭제한 매물 보관 → 되살리기) ──
+      match /propertyTrash/{propertyId} {
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update: if isMember();
+        allow delete: if isMember();
+      }
+
       // ── 스케줄 ──────────────────────────────
       match /schedules/{scheduleId} {
         allow read: if isMember() || isGlobalAdmin();

@@ -4,7 +4,7 @@
  */
 
 import {
-  collection, doc, setDoc, deleteDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
+  collection, doc, setDoc, deleteDoc, getDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
   query, orderBy, onSnapshot, serverTimestamp, Timestamp,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -372,8 +372,40 @@ export async function saveProperty(agencyId: string, p: Property): Promise<void>
   await setDoc(ref(agencyId, id), payload);
 }
 
-export async function deleteProperty(agencyId: string, id: string): Promise<void> {
+/** 삭제 — 기본은 휴지통에 복사해 두고 지움 (거래완료 이동 등은 skipTrash) */
+export async function deleteProperty(agencyId: string, id: string, opts?: { skipTrash?: boolean }): Promise<void> {
+  if (!opts?.skipTrash) {
+    try {
+      const snap = await getDoc(ref(agencyId, id));
+      if (snap.exists()) {
+        await setDoc(doc(db, "agencies", agencyId, "propertyTrash", id), { ...snap.data(), deletedAt: Date.now() });
+      }
+    } catch (e) {
+      console.error("[properties] 휴지통 보관 실패:", e);
+    }
+  }
   await deleteDoc(ref(agencyId, id));
+}
+
+export interface TrashedProperty extends Property { deletedAt: number }
+
+/** 휴지통 목록 (최근 삭제순) */
+export async function fetchTrashedProperties(agencyId: string): Promise<TrashedProperty[]> {
+  const snap = await getDocs(collection(db, "agencies", agencyId, "propertyTrash"));
+  return snap.docs
+    .map(d => {
+      const data = d.data() as Record<string, unknown>;
+      return { ...fromDoc(d.id, data), deletedAt: (data.deletedAt as number) || 0 };
+    })
+    .sort((a, b) => b.deletedAt - a.deletedAt);
+}
+
+/** 휴지통에서 되살리기 */
+export async function restoreProperty(agencyId: string, p: TrashedProperty): Promise<void> {
+  const { deletedAt, ...rest } = p;
+  void deletedAt;
+  await saveProperty(agencyId, rest);
+  await deleteDoc(doc(db, "agencies", agencyId, "propertyTrash", p.id));
 }
 
 /**
