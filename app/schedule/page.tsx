@@ -733,7 +733,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
   const [form, setForm] = useState<Schedule>(schedule);
   const [saving, setSaving] = useState(false);
   // 같은 방문에 매물 여러 개 (건의 #64) — 저장 구조는 그대로, 매물마다 일정을 하나씩 만든다. 새 일정에서만.
-  const isNew = !schedule.propertyAddress;
+  // 기존 일정을 수정할 때도 매물을 더 붙일 수 있다 (건의 #126)
   const [extraProps, setExtraProps] = useState<Property[]>([]);
   const [addingExtra, setAddingExtra] = useState(false);
   const [showVisitorList, setShowVisitorList] = useState(false);
@@ -909,7 +909,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
             <input value={form.propertyAddress} onChange={e => { set("propertyAddress", e.target.value); set("propertyId", undefined); }}
               placeholder={isEtc ? "예: 세무사 상담, 은행 가기, 점심 약속" : "직접 입력: 힐스테이트 미사역 101동 1902호"}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            {isNew && extraProps.length > 0 && (
+            {extraProps.length > 0 && (
               <div className="mt-2 space-y-1">
                 {extraProps.map(p => (
                   <div key={p.id} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-sm">
@@ -921,7 +921,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                 ))}
               </div>
             )}
-            {isNew && properties.length > 0 && !isEtc && (
+            {properties.length > 0 && !isEtc && (
               addingExtra ? (
                 <p className="mt-2 text-xs text-emerald-700">위 검색칸에서 추가할 매물을 골라주세요 <button type="button" onClick={() => setAddingExtra(false)} className="ml-1 underline text-gray-500">취소</button></p>
               ) : (
