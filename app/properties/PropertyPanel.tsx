@@ -14,6 +14,7 @@ import SideDrawer from "@/app/components/SideDrawer";
 import { fmtNum, formatPhone } from "./helpers";
 import { stageOf } from "./PropertyTable";
 import { dDay } from "@/app/expiry/contracts";
+import { kstDateStr } from "@/lib/kst";
 import MemoText from "@/app/components/MemoText";
 
 const EVENT_DOT: Record<PropertyEvent["kind"], string> = {
@@ -21,8 +22,8 @@ const EVENT_DOT: Record<PropertyEvent["kind"], string> = {
   complete: "bg-emerald-500", expiry: "bg-gray-500", link: "bg-purple-500", note: "bg-blue-400",
 };
 function fmtEventTime(ms: number): string {
-  const d = new Date(ms);
-  return `${d.getMonth() + 1}.${d.getDate()}`;
+  const [, m, dd] = kstDateStr(new Date(ms)).split("-");
+  return `${Number(m)}.${Number(dd)}`;
 }
 
 const STAGE_ACCENT: Record<string, string> = {

@@ -74,9 +74,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
     `sms:${phone.replace(/\D/g, "")}?body=${encodeURIComponent(`안녕하세요?\n${getAgencyDisplayName() ? `매물 의뢰받은 ${getAgencyDisplayName()} 입니다.` : "매물 의뢰 건으로 연락드립니다."}\n${`${addressStr(p)} ${tail}`.replace(/\s*매물/g, "").replace(/\s+/g, " ").trim()} 매물 관련하여 연락 드립니다.\n의뢰하신 매물이 거래가 되었는지요?\n☆바쁘시지만 꼭 !확인 부탁드려요☆\n오늘도 즐거운 하루 되세요!!`)}`;
   const hasTenant = !!(p.tenantName || p.tenantPhone);
   const regInfo = p.createdAt > 0 ? (() => {
-    const c = new Date(p.createdAt);
-    const days = Math.max(0, Math.floor((Date.now() - p.createdAt) / 86400000));
-    const ds = `${c.getFullYear()}-${String(c.getMonth() + 1).padStart(2, "0")}-${String(c.getDate()).padStart(2, "0")}`;
+    const ds = kstDateStr(new Date(p.createdAt));
+    const days = Math.max(0, Math.round((Date.parse(today) - Date.parse(ds)) / 86400000));
     return { ds, label: days === 0 ? "오늘 등록" : `${days}일 지남` };
   })() : { ds: "", label: "미기록" };
   const occBadge = p.occupancy === "owner" || p.occupancy === "vacant" ? OCC_LABEL[p.occupancy] : null;
