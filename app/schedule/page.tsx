@@ -737,6 +737,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
   // 공동중개: 내 매물이 없으니 주소·상대 부동산 이름/전화번호를 직접 적는다 (건의 #127)
   const [coBroker, setCoBroker] = useState(!!(schedule.coBrokerName || schedule.coBrokerPhone));
   const [extraProps, setExtraProps] = useState<Property[]>([]);
+  const [coExtras, setCoExtras] = useState<{ key: number; address: string; name: string; phone: string }[]>([]);
   const [addingExtra, setAddingExtra] = useState(false);
   const [showVisitorList, setShowVisitorList] = useState(false);
   const visitorMatches = useMemo(() => {
@@ -791,7 +792,12 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
     setSaving(true);
     const extras = extraProps.map(p => ({ ...form, id: emptySchedule().id, propertyAddress: propertyFullLabel(p), propertyId: p.id, createdAt: Date.now() }));
     const main = coBroker ? { ...form } : { ...form, coBrokerName: undefined, coBrokerPhone: undefined };
-    try { await onSave([main, ...extras.map(x => ({ ...x, coBrokerName: undefined, coBrokerPhone: undefined }))]); }
+    // 공동중개 물건 여러 개: 물건마다 일정 하나씩 (주소가 빈 칸은 건너뜀)
+    const coList = coBroker ? coExtras.filter(c => c.address.trim()).map(c => ({
+      ...form, id: emptySchedule().id, propertyId: undefined, propertyAddress: c.address.trim(),
+      coBrokerName: c.name.trim() || undefined, coBrokerPhone: c.phone.trim() || undefined, createdAt: Date.now(),
+    })) : [];
+    try { await onSave([main, ...extras.map(x => ({ ...x, coBrokerName: undefined, coBrokerPhone: undefined })), ...coList]); }
     catch { alert("저장 중 오류가 발생했습니다."); }
     finally { setSaving(false); }
   };
@@ -867,7 +873,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
             </label>
             {!isEtc && !isRenewal && (
               <div className="flex gap-1.5 pb-2">
-                <button type="button" onClick={() => { setCoBroker(v => !v); setAddingExtra(false); setExtraProps([]); }}
+                <button type="button" onClick={() => { setCoBroker(v => !v); setAddingExtra(false); setExtraProps([]); setCoExtras([]); }}
                   className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors ${coBroker ? "bg-amber-500 text-white border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-400"}`}>
                   🤝 공동중개 (내 매물 아님)
                 </button>
@@ -928,6 +934,32 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                   className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400" />
               </div>
             )}
+            {coBroker && coExtras.map((c, i) => (
+              <div key={c.key} className="mt-2 p-2 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
+                <div className="flex items-center gap-2">
+                  <input value={c.address} onChange={e => setCoExtras(xs => xs.map(x => x.key === c.key ? { ...x, address: e.target.value } : x))}
+                    placeholder={`공동중개 물건 ${i + 2} 주소`}
+                    className="flex-1 min-w-0 border border-amber-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                  <button type="button" onClick={() => setCoExtras(xs => xs.filter(x => x.key !== c.key))}
+                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:bg-white hover:text-red-500">✕</button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input value={c.name} onChange={e => setCoExtras(xs => xs.map(x => x.key === c.key ? { ...x, name: e.target.value } : x))} placeholder="상대 부동산 이름"
+                    className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                  <input type="tel" value={c.phone} onChange={e => setCoExtras(xs => xs.map(x => x.key === c.key ? { ...x, phone: e.target.value } : x))} placeholder="전화번호"
+                    className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                </div>
+              </div>
+            ))}
+            {coBroker && (
+              <button type="button" onClick={() => {
+                if (!form.propertyAddress.trim()) { alert("먼저 위에 첫 번째 물건 주소를 적어주세요"); return; }
+                setCoExtras(xs => [...xs, { key: Date.now() + xs.length, address: "", name: form.coBrokerName ?? "", phone: form.coBrokerPhone ?? "" }]);
+              }}
+                className="mt-2 w-full py-2 rounded-xl border border-dashed border-amber-300 text-amber-700 text-sm whitespace-nowrap hover:bg-amber-50">
+                ＋ 공동중개 물건 추가 (몇 개든 가능)
+              </button>
+            )}
             {extraProps.length > 0 && (
               <div className="mt-2 space-y-1">
                 {extraProps.map(p => (
@@ -949,6 +981,9 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                   ＋ 매물 추가 (몇 개든 가능)
                 </button>
               )
+            )}
+            {coBroker && coExtras.length > 0 && (
+              <p className="mt-1 text-[11px] text-gray-500">물건 {coExtras.length + 1}개 — 같은 날짜·시간·방문자로 일정이 물건마다 하나씩 저장돼요</p>
             )}
             {extraProps.length > 0 && (
               <p className="mt-1 text-[11px] text-gray-500">매물 {extraProps.length + 1}개 — 같은 날짜·시간·방문자로 일정이 매물마다 하나씩 저장돼요</p>
