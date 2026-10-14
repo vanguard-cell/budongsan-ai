@@ -23,6 +23,8 @@ export interface Schedule {
   propertyAddress: string;
   propertyId?: string;   // 연결된 매물 ID
   customerId?: string;   // 연결된 고객 ID
+  coBrokerName?: string;  // 공동중개 상대 부동산 이름
+  coBrokerPhone?: string; // 공동중개 상대 부동산 전화번호
   scheduleType: ScheduleType;
   memo: string;
   status: ScheduleStatus;
@@ -62,6 +64,8 @@ function fromDoc(id: string, d: Record<string, unknown>): Schedule {
     propertyAddress: (d.propertyAddress as string) || "",
     propertyId:      (d.propertyId      as string) || undefined,
     customerId:      (d.customerId      as string) || undefined,
+    coBrokerName:    (d.coBrokerName    as string) || undefined,
+    coBrokerPhone:   (d.coBrokerPhone   as string) || undefined,
     scheduleType:    rawType as ScheduleType,
     memo:            (d.memo            as string) || "",
     status:          (d.status          as ScheduleStatus) || "scheduled",

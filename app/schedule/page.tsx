@@ -580,7 +580,8 @@ export default function SchedulePage() {
                   </div>
                   <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{s.propertyAddress || "주소 미입력"}</p>
                 </div>
-                <div className="flex flex-wrap gap-1.5">{phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}</div>
+                <div className="flex flex-wrap gap-1.5">{phoneChip("방문자", s.visitorName, s.visitorPhone, "visitor")}{phoneChip("공동중개", s.coBrokerName, s.coBrokerPhone, "owner")}</div>
+                {s.coBrokerName && !s.coBrokerPhone && <p className="text-[12px] text-amber-700">🤝 공동중개 {s.coBrokerName}</p>}
                 {(() => {
                   const linked = findLinkedProperty(s, properties);
                   if (!linked) return null;
@@ -732,8 +733,9 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
 }) {
   const [form, setForm] = useState<Schedule>(schedule);
   const [saving, setSaving] = useState(false);
-  // 같은 방문에 매물 여러 개 (건의 #64) — 저장 구조는 그대로, 매물마다 일정을 하나씩 만든다. 새 일정에서만.
-  // 기존 일정을 수정할 때도 매물을 더 붙일 수 있다 (건의 #126)
+  // 같은 방문에 매물 여러 개 (건의 #64) — 저장 구조는 그대로, 매물마다 일정을 하나씩 만든다. 기존 일정 수정 때도 가능 (건의 #126).
+  // 공동중개: 내 매물이 없으니 주소·상대 부동산 이름/전화번호를 직접 적는다 (건의 #127)
+  const [coBroker, setCoBroker] = useState(!!(schedule.coBrokerName || schedule.coBrokerPhone));
   const [extraProps, setExtraProps] = useState<Property[]>([]);
   const [addingExtra, setAddingExtra] = useState(false);
   const [showVisitorList, setShowVisitorList] = useState(false);
@@ -788,7 +790,8 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
     if (!form.date) { alert("날짜를 선택해주세요"); return; }
     setSaving(true);
     const extras = extraProps.map(p => ({ ...form, id: emptySchedule().id, propertyAddress: propertyFullLabel(p), propertyId: p.id, createdAt: Date.now() }));
-    try { await onSave([{ ...form }, ...extras]); }
+    const main = coBroker ? { ...form } : { ...form, coBrokerName: undefined, coBrokerPhone: undefined };
+    try { await onSave([main, ...extras.map(x => ({ ...x, coBrokerName: undefined, coBrokerPhone: undefined }))]); }
     catch { alert("저장 중 오류가 발생했습니다."); }
     finally { setSaving(false); }
   };
@@ -862,7 +865,15 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
               {isEtc && <span className="ml-2 text-[11px] text-gray-400 font-normal">매물 없이 직접 써도 돼요</span>}
               {form.propertyId && <span className="ml-2 text-[11px] text-emerald-600 font-normal">🏘️ 연결됨</span>}
             </label>
-            {properties.length > 0 && !isEtc && (
+            {!isEtc && !isRenewal && (
+              <div className="flex gap-1.5 pb-2">
+                <button type="button" onClick={() => { setCoBroker(v => !v); setAddingExtra(false); setExtraProps([]); }}
+                  className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors ${coBroker ? "bg-amber-500 text-white border-amber-500" : "bg-white text-gray-600 border-gray-200 hover:border-amber-400"}`}>
+                  🤝 공동중개 (내 매물 아님)
+                </button>
+              </div>
+            )}
+            {properties.length > 0 && !isEtc && !coBroker && (
               <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-0.5 px-0.5">
                 {["", ...propTypeOptions].map(t => (
                   <button key={t || "all"} type="button"
@@ -873,7 +884,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                 ))}
               </div>
             )}
-            {properties.length > 0 && !isEtc && (
+            {properties.length > 0 && !isEtc && !coBroker && (
               <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-0.5 px-0.5">
                 {["", "매매", "전세", "월세"].map(t => (
                   <button key={t || "all"} type="button"
@@ -884,7 +895,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                 ))}
               </div>
             )}
-            {properties.length > 0 && !isEtc && (
+            {properties.length > 0 && !isEtc && !coBroker && (
               <div className="relative mb-2">
                 <input value={propQuery} onChange={e => { setPropQuery(e.target.value); setShowPropList(true); }}
                   onFocus={() => setShowPropList(true)}
@@ -907,8 +918,16 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
               </div>
             )}
             <input value={form.propertyAddress} onChange={e => { set("propertyAddress", e.target.value); set("propertyId", undefined); }}
-              placeholder={isEtc ? "예: 세무사 상담, 은행 가기, 점심 약속" : "직접 입력: 힐스테이트 미사역 101동 1902호"}
+              placeholder={isEtc ? "예: 세무사 상담, 은행 가기, 점심 약속" : coBroker ? "공동중개 물건 주소: 힐스테이트 미사역 101동 1902호" : "직접 입력: 힐스테이트 미사역 101동 1902호"}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            {coBroker && (
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <input value={form.coBrokerName ?? ""} onChange={e => set("coBrokerName", e.target.value)} placeholder="상대 부동산 이름"
+                  className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400" />
+                <input type="tel" value={form.coBrokerPhone ?? ""} onChange={e => set("coBrokerPhone", e.target.value)} placeholder="전화번호"
+                  className="w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400" />
+              </div>
+            )}
             {extraProps.length > 0 && (
               <div className="mt-2 space-y-1">
                 {extraProps.map(p => (
@@ -921,7 +940,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                 ))}
               </div>
             )}
-            {properties.length > 0 && !isEtc && (
+            {properties.length > 0 && !isEtc && !coBroker && (
               addingExtra ? (
                 <p className="mt-2 text-xs text-emerald-700">위 검색칸에서 추가할 매물을 골라주세요 <button type="button" onClick={() => setAddingExtra(false)} className="ml-1 underline text-gray-500">취소</button></p>
               ) : (
