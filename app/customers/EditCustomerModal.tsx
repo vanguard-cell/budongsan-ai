@@ -483,16 +483,6 @@ function ShownPropertyRow({
           onChange={e => onChange({ shownAt: e.target.value })}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <select
-          value={s.reaction}
-          onChange={e => onChange({ reaction: e.target.value as ShownProperty["reaction"] })}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">반응 선택</option>
-          <option value="positive">👍 좋아함</option>
-          <option value="neutral">😐 보통</option>
-          <option value="negative">👎 별로</option>
-        </select>
       </div>
       <textarea
         value={s.note}
