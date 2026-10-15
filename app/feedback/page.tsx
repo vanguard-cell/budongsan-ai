@@ -13,6 +13,7 @@ import {
   confirmByUser,
   deleteFeedback,
   ADMIN_EMAIL,
+  retryMissedNotify,
   type FeedbackItem,
   type FeedbackStatus,
 } from "@/lib/feedback-db";
@@ -78,9 +79,12 @@ export default function FeedbackPage() {
   /* 실시간 구독 */
   useEffect(() => {
     if (!user) return;
+    let retried = false;
     const unsub = subscribeFeedback(user.uid, isAdmin, list => {
       setItems(list);
       setLoaded(true);
+      // 처음 불러왔을 때 한 번 — 놓친 자동 처리 알림이 있으면 다시 보냄
+      if (!retried && !isAdmin) { retried = true; retryMissedNotify(list); }
     });
     return () => unsub();
   }, [user, isAdmin]);

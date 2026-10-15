@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth-context";
 import { PROPERTY_TYPES, DEAL_TYPES } from "@/app/properties/helpers";
 import DatedMemo from "@/app/components/DatedMemo";
 import { kstDateStr } from "@/lib/kst";
+import { stripUnit, complexShortName } from "@/lib/address";
 
 // 단지 목록 선택은 복잡하다는 요청(건의 #117)으로 숨김 — 다시 쓰려면 true
 const SHOW_COMPLEX_PICKER = false;
@@ -357,19 +358,29 @@ function ShownPropertyRow({
     return Array.from(seen);
   }, [properties]);
 
+  // 매물의 단지 이름 (주소에서 시·구·동·호 걷어낸 것) — 단지 목록·단지 거르기에 사용
+  const complexOf = (p: Property) => complexShortName(stripUnit(p.address, p.dong, p.ho));
+
   const suggestions = useMemo(() => {
-    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter) && (!complexFilter || p.address.includes(complexFilter)));
+    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter) && (!complexFilter || complexOf(p) === complexFilter || p.address.includes(complexFilter)));
     const q = query.trim().toLowerCase();
     if (!q) return base.slice(0, 30);
     return base.filter(p => fullLabel(p).toLowerCase().includes(q)).slice(0, 30);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [query, properties, typeFilter, dealFilter, complexFilter]);
 
-  // 고른 종류(아파트/상가 등)에 맞는 내 단지 목록 — 가나다 순
-  const complexOptions = useMemo(
-    () => complexes.filter(c => !typeFilter || c.propertyType === typeFilter).sort((a, b) => a.name.localeCompare(b.name, "ko")),
-    [complexes, typeFilter],
-  );
+  // 단지 목록 — 실제 등록된 매물의 단지 + 내 단지 목록, 고른 종류·거래에 맞는 것만, 가나다 순 (건의 #128)
+  const complexOptions = useMemo(() => {
+    const count = new Map<string, number>();
+    properties
+      .filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter))
+      .forEach(p => { const n = complexOf(p); if (n) count.set(n, (count.get(n) || 0) + 1); });
+    complexes
+      .filter(c => !typeFilter || c.propertyType === typeFilter)
+      .forEach(c => { if (!count.has(c.name)) count.set(c.name, 0); });
+    return Array.from(count, ([name, n]) => ({ name, n })).sort((a, b) => a.name.localeCompare(b.name, "ko"));
+     
+  }, [complexes, properties, typeFilter, dealFilter]);
 
   const select = (p: Property) => {
     onChange({ address: fullLabel(p) });
@@ -403,11 +414,11 @@ function ShownPropertyRow({
       )}
       {complexOptions.length > 0 && (
         <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
-          {["", ...complexOptions.map(c => c.name)].map(n => (
+          {[{ name: "", n: -1 }, ...complexOptions].map(({ name: n, n: cnt }) => (
             <button key={n || "all"} type="button"
               onClick={() => { setComplexFilter(n); setShowList(true); }}
               className={`w-full text-left px-3 py-2 text-sm whitespace-nowrap overflow-hidden text-ellipsis ${complexFilter === n ? "bg-emerald-600 text-white" : "text-gray-700 hover:bg-emerald-50"}`}>
-              {n || "전체 단지"}
+              {n || "전체 단지"}{cnt > 0 ? ` (${cnt})` : ""}
             </button>
           ))}
         </div>

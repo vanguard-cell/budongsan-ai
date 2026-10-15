@@ -50,6 +50,7 @@ export interface FeedbackItem {
   thread: FeedbackMessage[];  // 대화 스레드
   userConfirmed?: boolean;    // 처리완료를 문의자가 확인했는지 (확인 독촉용)
   lastReplyBy?: "user" | "admin";  // 마지막 메시지 보낸 쪽 — "새 답글" 배지용
+  routineFiredAt?: number;         // 자동 처리 루틴을 마지막으로 깨운 시각
   submittedBy: {
     uid: string;
     email: string;
@@ -86,6 +87,7 @@ function fromDoc(id: string, data: Record<string, unknown>): FeedbackItem {
     createdAt, reply, thread, submittedBy,
     userConfirmed: (data.userConfirmed as boolean) ?? false,
     lastReplyBy: (data.lastReplyBy as "user" | "admin") || undefined,
+    routineFiredAt: (data.routineFiredAt as number) || undefined,
   };
 }
 
@@ -146,6 +148,19 @@ function notifyRoutine(kind: "new" | "reply", feedbackId: string) {
       });
     })
     .catch(e => console.warn("[feedback] 자동 처리 알림 실패:", e));
+}
+
+/**
+ * 놓친 알림 다시 보내기 — 건의함을 열 때 호출
+ * 사용자가 마지막으로 쓴 글인데 그 뒤로 루틴을 깨운 기록이 없으면(한도 초과·네트워크 문제 등) 다시 깨움.
+ * (5분 중복 방지는 notifyRoutine 안에서 그대로 적용)
+ */
+export function retryMissedNotify(items: FeedbackItem[]): void {
+  for (const it of items) {
+    if (it.lastReplyBy !== "user" || it.status === "done") continue;
+    const lastUserAt = Math.max(0, ...it.thread.filter(m => m.sender === "user").map(m => m.createdAt));
+    if (lastUserAt && (it.routineFiredAt || 0) < lastUserAt) notifyRoutine("reply", it.id);
+  }
 }
 
 /** 새 건의 등록 — 첫 메시지를 thread에 담음 */
