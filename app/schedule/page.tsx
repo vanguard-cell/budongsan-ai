@@ -20,6 +20,7 @@ import { downloadIcs } from "@/lib/ics";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { kstDateStr } from "@/lib/kst";
 import { PROPERTY_TYPES } from "@/app/properties/helpers";
+import { stripUnit, complexShortName } from "@/lib/address";
 
 /* ── 타입 ── */
 type SourceFilter = "all" | "appointment" | "visit" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
@@ -750,6 +751,7 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
   const [showPropList, setShowPropList] = useState(false);
   const [propTypeFilter, setPropTypeFilter] = useState("");
   const [propDealFilter, setPropDealFilter] = useState("");
+  const [propComplexFilter, setPropComplexFilter] = useState("");
 
   const set = <K extends keyof Schedule>(k: K, v: Schedule[K]) => setForm(p => ({ ...p, [k]: v }));
 
@@ -765,11 +767,21 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
     : myProperties, [isRenewal, contracts, myProperties]);
 
   const filteredProps = useMemo(() => {
-    const base = properties.filter(p => p.status === "active" && (!propTypeFilter || p.propertyType === propTypeFilter) && (!propDealFilter || p.dealType === propDealFilter));
-    if (!propQuery.trim()) return base.slice(0, propTypeFilter || propDealFilter ? 30 : 8);
+    const base = properties.filter(p => p.status === "active" && (!propTypeFilter || p.propertyType === propTypeFilter) && (!propDealFilter || p.dealType === propDealFilter)
+      && (!propComplexFilter || complexShortName(stripUnit(p.address, p.dong, p.ho)) === propComplexFilter || p.address.includes(propComplexFilter)));
+    if (!propQuery.trim()) return base.slice(0, propTypeFilter || propDealFilter || propComplexFilter ? 30 : 8);
     const q = propQuery.toLowerCase();
     return base.filter(p => propertyFullLabel(p).toLowerCase().includes(q)).slice(0, 30);
-  }, [propQuery, propTypeFilter, propDealFilter, properties]);
+  }, [propQuery, propTypeFilter, propDealFilter, propComplexFilter, properties]);
+
+  // 단지 목록 — 실제 등록된 매물의 단지, 고른 종류·거래에 맞는 것만, 가나다 순
+  const propComplexOptions = useMemo(() => {
+    const count = new Map<string, number>();
+    properties
+      .filter(p => p.status === "active" && (!propTypeFilter || p.propertyType === propTypeFilter) && (!propDealFilter || p.dealType === propDealFilter))
+      .forEach(p => { const n = complexShortName(stripUnit(p.address, p.dong, p.ho)); if (n) count.set(n, (count.get(n) || 0) + 1); });
+    return Array.from(count, ([name, n]) => ({ name, n })).sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  }, [properties, propTypeFilter, propDealFilter]);
 
   const propTypeOptions = useMemo(() => {
     const seen = new Set<string>(PROPERTY_TYPES);
@@ -897,6 +909,17 @@ function ScheduleModal({ schedule, properties: myProperties, contracts, customer
                     onClick={() => { setPropDealFilter(t); setShowPropList(true); }}
                     className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-full text-xs border transition-colors ${propDealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
                     {t || "전체"}
+                  </button>
+                ))}
+              </div>
+            )}
+            {propComplexOptions.length > 0 && !isEtc && !coBroker && (
+              <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white divide-y divide-gray-100 mb-2">
+                {[{ name: "", n: -1 }, ...propComplexOptions].map(({ name: n, n: cnt }) => (
+                  <button key={n || "all"} type="button"
+                    onClick={() => { setPropComplexFilter(n); setShowPropList(true); }}
+                    className={`w-full text-left px-3 py-2 text-sm whitespace-nowrap overflow-hidden text-ellipsis ${propComplexFilter === n ? "bg-emerald-600 text-white" : "text-gray-700 hover:bg-emerald-50"}`}>
+                    {n || "전체 단지"}{cnt > 0 ? ` (${cnt})` : ""}
                   </button>
                 ))}
               </div>
