@@ -405,14 +405,6 @@ export default function CustomersPage() {
           </div>
         </section>
 
-        {/* 요약 카드 */}
-        <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-5">
-          <SummaryCard label="상담" count={counts.active} accent="blue" />
-          <SummaryCard label="방문" count={counts.matched} accent="purple" />
-          <SummaryCard label="이탈" count={counts.lost} accent="red" />
-          <SummaryCard label="거래완료" count={counts.closed} accent="gray" />
-        </div>
-
         {/* 필터 */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4 mb-4">
           <div className="flex flex-wrap items-center gap-2">
@@ -534,25 +526,6 @@ export default function CustomersPage() {
           onConfirm={handleUploadConfirm}
         />
       )}
-    </div>
-  );
-}
-
-/* ───── 요약 카드 ───── */
-function SummaryCard({ label, count, accent }: { label: string; count: number; accent: "red" | "blue" | "purple" | "gray" }) {
-  const cls = {
-    red:    { bg: "bg-red-50/50 border-red-200", dot: "bg-red-500" },
-    blue:   { bg: "bg-blue-50/50 border-blue-200", dot: "bg-blue-500" },
-    purple: { bg: "bg-purple-50/50 border-purple-200", dot: "bg-purple-500" },
-    gray:   { bg: "bg-white border-gray-200", dot: "bg-gray-400" },
-  }[accent];
-  return (
-    <div className={`rounded-2xl border p-3 sm:p-4 ${cls.bg}`}>
-      <div className="flex items-center gap-2 mb-1">
-        <div className={`w-2 h-2 rounded-full ${cls.dot}`} />
-        <div className="text-[11px] sm:text-xs text-gray-600 whitespace-nowrap">{label}</div>
-      </div>
-      <div className="text-xl sm:text-2xl font-bold text-gray-900">{count}<span className="text-sm font-normal text-gray-500 ml-1">명</span></div>
     </div>
   );
 }
