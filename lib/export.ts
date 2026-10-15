@@ -85,7 +85,7 @@ function customersToRows(customers: Customer[], maskPersonal: boolean) {
       "VIP":           c.vip ? "★" : "",
       "예산":          c.budget,
       "관심지역":      c.preferredArea,
-      "입주가능일":    c.moveInDate,
+      "입주가능일":    c.moveInDateEnd ? `${c.moveInDate} ~ ${c.moveInDateEnd}` : c.moveInDate,
       "상태":          STATUS_LABELS[c.status],
       "다음 후속연락": c.nextFollowUp,
       "D-day":         c.nextFollowUp ? followUpDDayLabel(d) : "",

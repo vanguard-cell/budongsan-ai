@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, effectiveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
+import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, fmtMoveIn, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, effectiveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
 import type { Schedule } from "@/lib/schedules-db";
 import SideDrawer from "@/app/components/SideDrawer";
 import MemoText from "@/app/components/MemoText";
@@ -145,12 +145,11 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
       <div className="px-1 mt-1">
         <table className="w-full text-[12px]">
           <tbody>
-            {c.nextFollowUp && <Row label="다음 연락">{c.nextFollowUp} ({followUpDDayLabel(followUpDDay(c.nextFollowUp))})</Row>}
             {c.budget && <Row label="예산">{c.budget}</Row>}
             {(c.wantedTypes?.length ?? 0) > 0 && <Row label="찾는 유형">{c.wantedTypes!.join(" · ")}</Row>}
             {(c.wantedDeals?.length ?? 0) > 0 && <Row label="거래종류">{c.wantedDeals!.join(" · ")}</Row>}
             {c.preferredArea && <Row label="희망지역">{c.preferredArea}</Row>}
-            {c.moveInDate && <Row label="입주가능">{c.moveInDate}</Row>}
+            {c.moveInDate && <Row label="입주가능">{fmtMoveIn(c)}</Row>}
             {c.shownProperties.length > 0 && <Row label="보여준 매물">{c.shownProperties.length}건</Row>}
             {visits.length > 0 && (
               <Row label="방문">

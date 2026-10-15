@@ -47,6 +47,7 @@ function fromDoc(id: string, data: Record<string, unknown>): Customer {
     budget:         (data.budget as string) || "",
     preferredArea:  (data.preferredArea as string) || "",
     moveInDate:     (data.moveInDate as string) || "",
+    moveInDateEnd:  (data.moveInDateEnd as string) || "",
     status:         (data.status as CustomerStatus) || "active",
     nextFollowUp:   (data.nextFollowUp as string) || "",
     shownProperties: Array.isArray(data.shownProperties) ? (data.shownProperties as ShownProperty[]) : [],

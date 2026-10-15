@@ -213,26 +213,24 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
           </div>
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="입주 가능일">
-            <KoreanDatePicker value={form.moveInDate} onChange={v => setField("moveInDate", v)} accent="blue" />
-            {form.moveInDate && (
-              <button type="button" onClick={() => setField("moveInDate", "")}
-                className="whitespace-nowrap mt-1 text-xs text-red-600 hover:underline">
-                지우기
-              </button>
-            )}
-          </Field>
-          <Field label="다음 후속 연락">
-            <KoreanDatePicker value={form.nextFollowUp} onChange={v => setField("nextFollowUp", v)} accent="blue" />
-            {form.nextFollowUp && (
-              <button type="button" onClick={() => setField("nextFollowUp", "")}
-                className="whitespace-nowrap mt-1 text-xs text-red-600 hover:underline">
-                지우기
-              </button>
-            )}
-          </Field>
-        </div>
+        <Field label="입주 가능일 (기간으로 넣을 수 있어요)">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <div className="text-[11px] text-gray-500 mb-0.5 whitespace-nowrap">부터</div>
+              <KoreanDatePicker value={form.moveInDate} onChange={v => setField("moveInDate", v)} accent="blue" />
+            </div>
+            <div>
+              <div className="text-[11px] text-gray-500 mb-0.5 whitespace-nowrap">까지 (없으면 비워두세요)</div>
+              <KoreanDatePicker value={form.moveInDateEnd || ""} onChange={v => setField("moveInDateEnd", v)} accent="blue" />
+            </div>
+          </div>
+          {(form.moveInDate || form.moveInDateEnd) && (
+            <button type="button" onClick={() => { setField("moveInDate", ""); setField("moveInDateEnd", ""); }}
+              className="whitespace-nowrap mt-1 text-xs text-red-600 hover:underline">
+              지우기
+            </button>
+          )}
+        </Field>
 
         <Field label="상태">
           <select value={form.status} onChange={e => setField("status", e.target.value as CustomerStatus)} className={fieldCls}>

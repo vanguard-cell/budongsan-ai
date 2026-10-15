@@ -31,6 +31,7 @@ import {
   emptyCustomer,
   sampleCustomers,
   uid,
+  fmtMoveIn,
 } from "./customer-types";
 import EditCustomerModal from "./EditCustomerModal";
 import KakaoParseModal from "./KakaoParseModal";
@@ -649,8 +650,8 @@ function CustomerRow({
           <div className="text-xs text-gray-600 mt-1 space-y-0.5">
             {c.budget && <div>💰 예산: <span className="text-gray-800">{c.budget}</span></div>}
             {c.preferredArea && <div>📍 지역: <span className="text-gray-800">{c.preferredArea}</span></div>}
-            {c.moveInDate && <div>📅 입주 가능: <span className="text-gray-800">{c.moveInDate}</span></div>}
-            {c.nextFollowUp && <div>🔔 후속 예정: <span className="text-gray-800">{c.nextFollowUp}</span></div>}
+            {c.moveInDate && <div>📅 입주 가능: <span className="text-gray-800">{fmtMoveIn(c)}</span></div>}
+            {false && c.nextFollowUp && <div>🔔 후속 예정: <span className="text-gray-800">{c.nextFollowUp}</span></div>}
             {false && c.shownProperties.length > 0 && (
               <div>
                 <button

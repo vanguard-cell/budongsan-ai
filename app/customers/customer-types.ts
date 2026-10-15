@@ -32,7 +32,8 @@ export interface Customer {
   vip: boolean;             // VIP 표시 (인터뷰: "수수료 많이 받는 매물이 VIP")
   budget: string;           // 자유 텍스트 ("5억 이하" 등)
   preferredArea: string;    // 원하는 단지/지역
-  moveInDate: string;       // 입주 가능일 (YYYY-MM-DD)
+  moveInDate: string;       // 입주 가능일 (YYYY-MM-DD) — 기간이면 시작일
+  moveInDateEnd?: string;   // 입주 가능 기간 끝일 (YYYY-MM-DD, 없으면 단일 날짜)
   status: CustomerStatus;
   nextFollowUp: string;     // 다음 후속 연락 예정일 (YYYY-MM-DD)
   shownProperties: ShownProperty[];
@@ -362,4 +363,15 @@ export function composeBudget(c: Pick<Customer, "saleMin" | "saleMax" | "deposit
     range(c.depositMin, c.depositMax) && `보증금 ${range(c.depositMin, c.depositMax)}`,
     range(c.rentMin, c.rentMax) && `월세 ${range(c.rentMin, c.rentMax)}`,
   ].filter(Boolean).join(" / ");
+}
+
+/** 입주 가능일 표시 — 기간이면 "26.11.3 ~ 27.1.1", 하루면 원래 날짜 */
+export function fmtMoveIn(c: { moveInDate: string; moveInDateEnd?: string }): string {
+  const short = (d: string) => {
+    const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(d);
+    return m ? `${m[1].slice(2)}.${+m[2]}.${+m[3]}` : d;
+  };
+  if (c.moveInDate && c.moveInDateEnd) return `${short(c.moveInDate)} ~ ${short(c.moveInDateEnd)}`;
+  if (c.moveInDateEnd) return `~ ${short(c.moveInDateEnd)}`;
+  return c.moveInDate;
 }
