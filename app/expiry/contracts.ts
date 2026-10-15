@@ -75,10 +75,21 @@ export function dDay(endDate: string): number {
 
 export type Severity = "danger" | "warning" | "caution" | "safe";
 
+/** 오늘로부터 n개월 뒤까지 남은 일수 (달력 기준, 말일 보정) */
+function daysUntilMonthsAhead(n: number): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const t = new Date(today.getFullYear(), today.getMonth() + n, 1);
+  const lastDay = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+  t.setDate(Math.min(today.getDate(), lastDay));
+  return Math.round((t.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export function severityOf(dday: number): Severity {
-  if (dday <= 60) return "danger";   // 이미 만기 / D-60 이내 (2개월)
-  if (dday <= 90) return "warning";  // D-90 이내 (3개월) — 묵시적 갱신 위험
-  if (dday <= 120) return "caution"; // D-120 이내 (4개월)
+  if (!isFinite(dday)) return "safe";
+  if (dday <= daysUntilMonthsAhead(2)) return "danger";   // 이미 만기 / 2개월 이내
+  if (dday <= daysUntilMonthsAhead(3)) return "warning";  // 3개월 이내 — 묵시적 갱신 위험
+  if (dday <= daysUntilMonthsAhead(4)) return "caution";  // 4개월 이내
   return "safe";
 }
 

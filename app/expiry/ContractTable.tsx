@@ -7,7 +7,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { type Contract, type ContractType, type Severity, dDay } from "./contracts";
+import { type Contract, type ContractType, type Severity, dDay, severityOf } from "./contracts";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 
 type ColKey = "address" | "type" | "price" | "tenant" | "landlord" | "start" | "end" | "sev" | "region";
@@ -60,8 +60,8 @@ function EndCell({ date }: { date: string }) {
   const dd = dDay(date);
   const short = date.slice(2).replace(/-/g, "/");
   if (dd < 0) return <span className="font-bold text-[var(--tint-red-tx)]">{short} ({-dd}일 지남)</span>;
-  if (dd <= 60) return <span className="font-bold text-[var(--tint-red-tx)]">{short} (D-{dd})</span>;
-  if (dd <= 90) return <span className="font-semibold text-amber-600 dark:text-amber-400">{short} (D-{dd})</span>;
+  if (severityOf(dd) === "danger") return <span className="font-bold text-[var(--tint-red-tx)]">{short} (D-{dd})</span>;
+  if (severityOf(dd) === "warning") return <span className="font-semibold text-amber-600 dark:text-amber-400">{short} (D-{dd})</span>;
   return <span className="text-gray-700 dark:text-gray-300">{short}</span>;
 }
 

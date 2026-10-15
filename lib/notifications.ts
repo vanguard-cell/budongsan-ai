@@ -129,7 +129,7 @@ export async function sendDailyDigest(
   // 메시지 조립
   const lines: string[] = [];
   if (expiryUrgent > 0) lines.push(`🔴 만기 D-30 이내 ${expiryUrgent}건`);
-  if (expiryWarning > 0) lines.push(`🟠 만기 D-60 이내 ${expiryWarning}건`);
+  if (expiryWarning > 0) lines.push(`🟠 만기 2개월 이내 ${expiryWarning}건`);
   if (followupToday > 0) lines.push(`🔔 오늘 후속 연락 ${followupToday}명`);
   if (followupSoon > 0) lines.push(`📅 D-3 이내 후속 ${followupSoon}명`);
 
