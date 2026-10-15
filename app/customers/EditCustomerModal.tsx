@@ -338,8 +338,8 @@ function ShownPropertyRow({
   onChange: (patch: Partial<ShownProperty>) => void;
   onRemove: () => void;
 }) {
-  const [typeFilter, setTypeFilter] = useState("");
-  const [dealFilter, setDealFilter] = useState("");
+  const typeFilter = "";
+  const dealFilter = "";
   const [query, setQuery] = useState("");
   const [showList, setShowList] = useState(false);
   const [complexFilter, setComplexFilter] = useState("");
@@ -354,13 +354,7 @@ function ShownPropertyRow({
     return parts.length ? `${p.address} ${parts.join(" ")}` : p.address;
   };
 
-  const typeOptions = useMemo(() => {
-    const seen = new Set<string>(PROPERTY_TYPES);
-    properties.forEach(p => { if (p.status === "active" && p.propertyType) seen.add(p.propertyType); });
-    return Array.from(seen);
-  }, [properties]);
-
-  // 계약 진행 중인 매물은 보여줄 목록에서 제외 (건의 #128)
+    // 계약 진행 중인 매물은 보여줄 목록에서 제외 (건의 #128)
   const isContracted = (p: Property) => !!(p.contractDate || p.downPaymentDate || p.balanceDate);
 
   // 매물의 단지 이름 (주소에서 시·구·동·호 걷어낸 것) — 단지 목록·단지 거르기에 사용
@@ -402,28 +396,7 @@ function ShownPropertyRow({
           🔍 다른 매물 다시 고르기
         </button>
       )}
-      {properties.length > 0 && picking && (
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {["", ...typeOptions].map(t => (
-            <button key={t || "all"} type="button"
-              onClick={() => { setTypeFilter(t); setComplexFilter(""); setShowList(true); }}
-              className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${typeFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
-              {t || "전체"}
-            </button>
-          ))}
-        </div>
-      )}
-      {properties.length > 0 && picking && (
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {["", "매매", "전세", "월세"].map(t => (
-            <button key={t || "all"} type="button"
-              onClick={() => { setDealFilter(t); setShowList(true); }}
-              className={`shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-sm border transition-colors ${dealFilter === t ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"}`}>
-              {t || "전체"}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* 종류·거래 버튼 줄은 화면에서 뺌 — 단지 목록과 검색만 (건의 #128) */}
       {picking && complexOptions.length > 0 && (
         <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
           {[{ name: "", n: -1 }, ...complexOptions].map(({ name: n, n: cnt }) => (
