@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import { confirmBulkDelete } from "@/lib/backup";
-import { smsGreeting } from "@/app/expiry/contracts";
+import { getAgencyDisplayName } from "@/app/expiry/contracts";
 import {
   subscribeCustomers,
   saveCustomer as fsSaveCustomer,
@@ -586,11 +586,16 @@ function CustomerRow({
   };
 
   const buildSmsBody = () => {
-    const greeting = smsGreeting();
-    const follow = c.nextFollowUp
-      ? `${c.preferredArea ? c.preferredArea + " 관련 " : ""}새 매물 찾아보았는데 연락 가능하실까요?`
-      : "연락 가능하실 때 알려주세요.";
-    return `${greeting}\n${follow}`;
+    const office = getAgencyDisplayName();
+    const wanted = [...(c.wantedTypes || []), ...(c.wantedDeals || [])].join(" ").trim();
+    return [
+      "안녕하세요?",
+      ...(office ? [`${office} 입니다.`] : []),
+      "",
+      `의뢰하셨던 ${wanted || "매물"} 구하셨는지요?`,
+      "",
+      "연락 주시면 좀더 찾아 보겠습니다.",
+    ].join("\n");
   };
 
   return (
