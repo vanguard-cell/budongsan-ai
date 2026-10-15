@@ -19,7 +19,7 @@ import SideDrawer from "@/app/components/SideDrawer";
 import { downloadIcs } from "@/lib/ics";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { kstDateStr } from "@/lib/kst";
-import { PROPERTY_TYPES } from "@/app/properties/helpers";
+import { PROPERTY_TYPES, fmtKoreanNum, formatDateKo } from "@/app/properties/helpers";
 import { stripUnit, complexShortName } from "@/lib/address";
 
 /* ── 타입 ── */
@@ -495,7 +495,12 @@ export default function SchedulePage() {
                             <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                           </>
                         )}
-                        <span className="ml-auto whitespace-nowrap text-[11px] font-semibold">{g.items.length}건</span>
+                        {g.items.some(i => i.schedule) && (
+                          <button type="button" onClick={e => { e.stopPropagation(); shareVisitedList(date, g.name, g.items.map(i => i.schedule).filter((x): x is Schedule => !!x).map(x => ({ s: x, p: findLinkedProperty(x, properties) }))); }} className="ml-auto inline-flex items-center gap-0.5 px-2 py-1 rounded-full bg-amber-400 text-white text-[11px] font-bold whitespace-nowrap hover:bg-amber-500" title="본 매물을 정리해서 보내기">
+                            <span className="material-symbols-outlined text-[13px]">send</span>보내기
+                          </button>
+                        )}
+                        <span className={`${g.items.some(i => i.schedule) ? "" : "ml-auto "}whitespace-nowrap text-[11px] font-semibold`}>{g.items.length}건</span>
                       </div>
                       {g.items.map(item => (
                         <div key={item.key} onClick={() => setPanelItem(item)}>
@@ -614,6 +619,40 @@ export default function SchedulePage() {
       )}
     </div>
   );
+}
+
+/** 손님이 그날 본 매물을 주소·가격·입주일로 정리해서 문자/카톡으로 보내기 (공유 창, 안 되면 복사) */
+async function shareVisitedList(date: string, name: string, rows: { s: Schedule; p?: Property }[]) {
+  const lines = rows.map(({ s, p }, i) => {
+    const addr = (p ? propertyFullLabel(p) : s.propertyAddress) || "주소 미입력";
+    const parts: string[] = [];
+    if (p && p.price) {
+      const price = p.dealType === "월세" && p.monthly
+        ? `${p.dealType} ${fmtKoreanNum(p.price)}/${fmtKoreanNum(p.monthly)}만`
+        : `${p.dealType} ${fmtKoreanNum(p.price)}${/억$/.test(fmtKoreanNum(p.price)) ? "" : "만"}`;
+      parts.push(`💰 ${price}`);
+    }
+    if (p) {
+      if (p.occupancy === "vacant") parts.push("🗓 입주: 즉시 가능");
+      else if (p.leaseEndDate) parts.push(`🗓 입주: ${formatDateKo(p.leaseEndDate)} 이후`);
+    }
+    return `${i + 1}. ${addr}${parts.length ? "\n   " + parts.join("\n   ") : ""}`;
+  });
+  const text = `${name ? name + "님, " : ""}${formatDateKo(date)} 보신 매물 정리해 드려요 😊\n\n${lines.join("\n\n")}`;
+  try {
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      await navigator.share({ text });
+      return;
+    }
+  } catch (e) {
+    if ((e as Error)?.name === "AbortError") return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("본 매물 내용이 복사됐어요. 카톡이나 문자에 붙여넣기 하세요.");
+  } catch {
+    window.prompt("아래 내용을 복사해서 보내세요", text);
+  }
 }
 
 /** 같은 날 같은 방문자(이름+전화번호)의 일정을 한 묶음으로 — 그날 어디를 봤는지 한눈에 */
