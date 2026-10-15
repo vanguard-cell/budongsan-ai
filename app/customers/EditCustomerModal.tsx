@@ -358,11 +358,14 @@ function ShownPropertyRow({
     return Array.from(seen);
   }, [properties]);
 
+  // 계약 진행 중인 매물은 보여줄 목록에서 제외 (건의 #128)
+  const isContracted = (p: Property) => !!(p.contractDate || p.downPaymentDate || p.balanceDate);
+
   // 매물의 단지 이름 (주소에서 시·구·동·호 걷어낸 것) — 단지 목록·단지 거르기에 사용
   const complexOf = (p: Property) => complexShortName(stripUnit(p.address, p.dong, p.ho));
 
   const suggestions = useMemo(() => {
-    const base = properties.filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter) && (!complexFilter || complexOf(p) === complexFilter || p.address.includes(complexFilter)));
+    const base = properties.filter(p => p.status === "active" && !isContracted(p) && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter) && (!complexFilter || complexOf(p) === complexFilter || p.address.includes(complexFilter)));
     const q = query.trim().toLowerCase();
     if (!q) return base.slice(0, 30);
     return base.filter(p => fullLabel(p).toLowerCase().includes(q)).slice(0, 30);
@@ -373,7 +376,7 @@ function ShownPropertyRow({
   const complexOptions = useMemo(() => {
     const count = new Map<string, number>();
     properties
-      .filter(p => p.status === "active" && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter))
+      .filter(p => p.status === "active" && !isContracted(p) && (!typeFilter || p.propertyType === typeFilter) && (!dealFilter || p.dealType === dealFilter))
       .forEach(p => { const n = complexOf(p); if (n) count.set(n, (count.get(n) || 0) + 1); });
     complexes
       .filter(c => !typeFilter || c.propertyType === typeFilter)
