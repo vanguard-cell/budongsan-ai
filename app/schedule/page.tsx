@@ -358,40 +358,10 @@ export default function SchedulePage() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })}
+              onClick={() => setEditing({ ...emptySchedule(), scheduleType: ({ visit: "방문", contractDate: "계약일", downPaymentDate: "중도금일", balanceDate: "잔금일", renewal: "재계약일" } as Record<string, ScheduleType>)[filter] ?? "기타" })}
               className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
               + 등록
-            </button>
-            <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "방문" })}
-              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
-            >
-              + 방문
-            </button>
-            <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "계약일" })}
-              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
-            >
-              + 계약일
-            </button>
-            <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "중도금일" })}
-              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
-            >
-              + 중도금일
-            </button>
-            <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "잔금일" })}
-              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
-            >
-              + 잔금일
-            </button>
-            <button
-              onClick={() => setEditing({ ...emptySchedule(), scheduleType: "재계약일" })}
-              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
-            >
-              + 재계약
             </button>
             <button
               data-owner-only onClick={loadSamples}
