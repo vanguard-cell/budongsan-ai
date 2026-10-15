@@ -621,24 +621,17 @@ export default function SchedulePage() {
   );
 }
 
-/** 손님이 그날 본 매물을 주소·가격·입주일로 정리해서 문자/카톡으로 보내기 (공유 창, 안 되면 복사) */
+/** 손님이 그날 본 매물을 단지·동호수로 정리해서 문자/카톡으로 보내기 (공유 창, 안 되면 복사) */
 async function shareVisitedList(date: string, name: string, rows: { s: Schedule; p?: Property }[]) {
   const lines = rows.map(({ s, p }, i) => {
-    const addr = (p ? propertyFullLabel(p) : s.propertyAddress) || "주소 미입력";
-    const parts: string[] = [];
-    if (p && p.price) {
-      const price = p.dealType === "월세" && p.monthly
-        ? `${p.dealType} ${fmtKoreanNum(p.price)}/${fmtKoreanNum(p.monthly)}만`
-        : `${p.dealType} ${fmtKoreanNum(p.price)}${/억$/.test(fmtKoreanNum(p.price)) ? "" : "만"}`;
-      parts.push(`💰 ${price}`);
-    }
-    if (p) {
-      if (p.occupancy === "vacant") parts.push("🗓 입주: 즉시 가능");
-      else if (p.leaseEndDate) parts.push(`🗓 입주: ${formatDateKo(p.leaseEndDate)} 이후`);
-    }
-    return `${i + 1}. ${addr}${parts.length ? "\n   " + parts.join("\n   ") : ""}`;
+    const full = (p ? propertyFullLabel(p) : s.propertyAddress) || "";
+    // 지번까지의 소재지는 빼고 단지 + 동호수만 (지번이 없으면 전체)
+    const tokens = full.trim().split(/\s+/);
+    const cut = tokens.findIndex(t => /^\d+(-\d+)?$/.test(t));
+    const label = (cut !== -1 && cut < tokens.length - 1 ? tokens.slice(cut + 1).join(" ") : full.trim()) || "단지 미입력";
+    return `${i + 1}. ${label}`;
   });
-  const text = `${name ? name + "님, " : ""}${formatDateKo(date)} 보신 매물 정리해 드려요 😊\n\n${lines.join("\n\n")}`;
+  const text = `고객님 보실 매물 정리해서 보내드려요\n\n${lines.join("\n")}`;
   try {
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       await navigator.share({ text });

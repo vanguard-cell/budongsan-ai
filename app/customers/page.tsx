@@ -531,7 +531,7 @@ export default function CustomersPage() {
 }
 
 function FilterChip({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
-  const base = "text-xs px-3 py-1.5 rounded-full border transition-colors";
+  const base = "text-xs px-3 py-1.5 rounded-md border whitespace-nowrap transition-colors";
   return (
     <button
       onClick={onClick}
