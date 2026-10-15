@@ -352,7 +352,10 @@ export function resetCustomSmsTemplate(stage: NotifyStage, target: ContactTarget
 /** 플레이스홀더({주소}, {만기일})를 실제 값으로 치환 */
 /** 단지명 + 동 + 호수 (동·호가 따로 저장된 경우 붙여서) */
 export function fullAddress(contract: Contract): string {
-  return [contract.address, contract.dong && `${contract.dong}동`, contract.ho && `${contract.ho}호`].filter(Boolean).join(" ");
+  const addr = contract.address || "";
+  const d = (contract.dong || "").trim();
+  const h = (contract.ho || "").trim();
+  return [addr, d && !addr.includes(`${d}동`) && `${d}동`, h && !addr.includes(`${h}호`) && `${h}호`].filter(Boolean).join(" ");
 }
 
 export function applyTemplate(template: string, contract: Contract): string {
@@ -370,7 +373,8 @@ export function buildSmsTemplate(
 ): string {
   const key = `${stage}_${target}`;
   const custom = loadCustomSmsTemplates()[key];
-  const templateText = custom ?? DEFAULT_SMS_TEMPLATES[key] ?? "";
+  // 비어 있게 저장된 문구는 기본 문구를 쓴다
+  const templateText = (custom && custom.trim() ? custom : DEFAULT_SMS_TEMPLATES[key]) ?? "";
   return applyTemplate(templateText, contract);
 }
 
