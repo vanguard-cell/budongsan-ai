@@ -363,6 +363,8 @@ export function applyTemplate(template: string, contract: Contract): string {
     .replace(/\{인사말\}/g, smsGreeting())
     .replace(/\{물건\}/g, fullAddress(contract))
     .replace(/\{주소\}/g, fullAddress(contract))
+    // 문구에 "(단지.동.호수)"처럼 글자 그대로 적어 저장한 경우에도 실제 단지·동·호수로 바꿔 넣는다
+    .replace(/[(（\[]\s*단지[\s.·,/\-]*동[\s.·,/\-]*호수?\s*[)）\]]/g, fullAddress(contract))
     .replace(/\{만기일\}/g, contract.endDate);
 }
 
