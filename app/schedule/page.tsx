@@ -496,7 +496,7 @@ export default function SchedulePage() {
                           </>
                         )}
                         {g.items.some(i => i.schedule) && (
-                          <button type="button" onClick={e => { e.stopPropagation(); shareVisitedList(date, g.name, g.items.map(i => i.schedule).filter((x): x is Schedule => !!x).map(x => ({ s: x, p: findLinkedProperty(x, properties) }))); }} className="ml-auto inline-flex items-center gap-0.5 px-2 py-1 rounded-full bg-amber-400 text-white text-[11px] font-bold whitespace-nowrap hover:bg-amber-500" title="본 매물을 정리해서 보내기">
+                          <button type="button" onClick={e => { e.stopPropagation(); shareVisitedList(date, g.name, g.phone, g.items.map(i => i.schedule).filter((x): x is Schedule => !!x).map(x => ({ s: x, p: findLinkedProperty(x, properties) }))); }} className="ml-auto inline-flex items-center gap-0.5 px-2 py-1 rounded-full bg-amber-400 text-white text-[11px] font-bold whitespace-nowrap hover:bg-amber-500" title="본 매물을 정리해서 보내기">
                             <span className="material-symbols-outlined text-[13px]">send</span>보내기
                           </button>
                         )}
@@ -622,7 +622,7 @@ export default function SchedulePage() {
 }
 
 /** 손님이 그날 본 매물을 단지·동호수로 정리해서 문자/카톡으로 보내기 (공유 창, 안 되면 복사) */
-async function shareVisitedList(date: string, name: string, rows: { s: Schedule; p?: Property }[]) {
+async function shareVisitedList(date: string, name: string, phone: string, rows: { s: Schedule; p?: Property }[]) {
   const lines = rows.map(({ s, p }, i) => {
     const full = (p ? propertyFullLabel(p) : s.propertyAddress) || "";
     // 지번까지의 소재지는 빼고 단지 + 동호수만 (지번이 없으면 전체)
@@ -631,7 +631,15 @@ async function shareVisitedList(date: string, name: string, rows: { s: Schedule;
     const label = (cut !== -1 && cut < tokens.length - 1 ? tokens.slice(cut + 1).join(" ") : full.trim()) || "단지 미입력";
     return `${i + 1}. ${label}`;
   });
-  const text = `고객님 보실 매물 정리해서 보내드려요\n\n${lines.join("\n")}`;
+  const text = `☆고객님 이번에 방문할 물건 정리해서 보내드려요☆\n\n${lines.join("\n")}`;
+  // 방문자 전화번호가 있으면 그 번호로 문자 작성창을 바로 연다 (내용이 미리 들어가 있음)
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length >= 8 && typeof navigator !== "undefined") {
+    const sep = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?";
+    try { await navigator.clipboard.writeText(text); } catch {}
+    window.location.href = `sms:${digits}${sep}body=${encodeURIComponent(text)}`;
+    return;
+  }
   try {
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       await navigator.share({ text });
