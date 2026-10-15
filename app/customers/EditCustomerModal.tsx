@@ -20,6 +20,8 @@ import { stripUnit, complexShortName } from "@/lib/address";
 
 // 단지 목록 선택은 복잡하다는 요청(건의 #117)으로 숨김 — 다시 쓰려면 true
 const SHOW_COMPLEX_PICKER = false;
+// 건의 #128: '보여드린 매물' 칸 숨김 (기존 기록은 그대로 보존)
+const SHOW_SHOWN_PROPERTIES = false;
 
 interface Props {
   customer: Customer;
@@ -271,6 +273,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
         )}
 
         {/* 매물 매칭 이력 */}
+        {SHOW_SHOWN_PROPERTIES && (
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-base font-bold text-gray-800">보여드린 매물 ({form.shownProperties.length})</label>
@@ -300,6 +303,7 @@ export default function EditCustomerModal({ customer, properties = [], onClose, 
             </div>
           )}
         </div>
+        )}
 
         <Field label="메모 (엔터 = 다음 줄 + 오늘 날짜 자동)">
           <DatedMemo

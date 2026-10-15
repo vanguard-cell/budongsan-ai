@@ -651,7 +651,7 @@ function CustomerRow({
             {c.preferredArea && <div>📍 지역: <span className="text-gray-800">{c.preferredArea}</span></div>}
             {c.moveInDate && <div>📅 입주 가능: <span className="text-gray-800">{c.moveInDate}</span></div>}
             {c.nextFollowUp && <div>🔔 후속 예정: <span className="text-gray-800">{c.nextFollowUp}</span></div>}
-            {c.shownProperties.length > 0 && (
+            {false && c.shownProperties.length > 0 && (
               <div>
                 <button
                   onClick={() => setShowShown(v => !v)}
