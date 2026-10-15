@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, DEAL_KIND_LABELS, STATUS_LABELS, fmtMoveIn, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, effectiveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
+import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, interestLabel, STATUS_LABELS, fmtMoveIn, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, effectiveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
 import type { Schedule } from "@/lib/schedules-db";
 import SideDrawer from "@/app/components/SideDrawer";
 import MemoText from "@/app/components/MemoText";
@@ -94,7 +94,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
         </p>
         <div className="flex flex-wrap gap-1.5 mt-2">
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{SIDE_LABELS[c.side]}</span>
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{DEAL_KIND_LABELS[c.dealKind]}</span>
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{interestLabel(c)}</span>
           <span className="px-2 py-0.5 rounded-md text-[11px] font-bold text-white" style={{ backgroundColor: accent }}>{STATUS_LABELS[c.status]}</span>
           {dd !== null && (sev === "overdue" || sev === "today" || sev === "soon") && (
             <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-[var(--tint-red-bg)] text-[var(--tint-red-tx)] border border-[var(--tint-red-bd)]">

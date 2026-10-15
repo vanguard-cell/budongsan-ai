@@ -19,7 +19,7 @@ import {
   type CustomerEvent,
   FollowUpSeverity,
   SIDE_LABELS,
-  DEAL_KIND_LABELS,
+  interestLabel,
   STATUS_LABELS,
   followUpDDay,
   followUpDDayLabel,
@@ -642,7 +642,7 @@ function CustomerRow({
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{SIDE_LABELS[c.side]}</span>
-            <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{DEAL_KIND_LABELS[c.dealKind]}</span>
+            <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">{interestLabel(c)}</span>
             <span className="text-sm font-semibold text-gray-900">{c.name || "(이름 없음)"}</span>
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">{STATUS_LABELS[c.status]}</span>
           </div>

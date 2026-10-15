@@ -116,6 +116,15 @@ export const DEAL_KIND_LABELS: Record<DealKind, string> = {
   etc:    "기타",
 };
 
+/** 목록·상세 배지용: 관심 등록한 유형+거래(예: "상가 월세"), 없으면 기존 실거주/투자 표시 */
+export function interestLabel(c: Customer): string {
+  const types = (c.wantedTypes ?? []).filter(Boolean);
+  const deals = (c.wantedDeals ?? []).filter(Boolean);
+  if (types.length === 0 && deals.length === 0) return DEAL_KIND_LABELS[c.dealKind] ?? "";
+  const t = types.length > 2 ? `${types.slice(0, 2).join("·")} 외` : types.join("·");
+  return [t, deals.join("·")].filter(Boolean).join(" ");
+}
+
 export const STATUS_LABELS: Record<CustomerStatus, string> = {
   active:  "상담",
   matched: "방문",
