@@ -1696,7 +1696,7 @@ function SmsTemplateSettingsModal({ onClose }: { onClose: () => void }) {
     for (const s of STAGES) {
       for (const t of TARGETS) {
         const key = `${s}_${t}`;
-        merged[key] = saved[key] ?? DEFAULT_SMS_TEMPLATES[key] ?? "";
+        merged[key] = (saved[key] && saved[key].trim() ? saved[key] : DEFAULT_SMS_TEMPLATES[key]) ?? "";
       }
     }
     return merged;
@@ -1724,7 +1724,7 @@ function SmsTemplateSettingsModal({ onClose }: { onClose: () => void }) {
     <Modal onClose={onClose} title="📝 문자 문구 설정">
       <div className="space-y-4">
         <div className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 leading-relaxed">
-          💡 <span className="font-medium text-blue-700">{"{주소}"}</span>와 <span className="font-medium text-blue-700">{"{만기일}"}</span>은 문자 보낼 때 자동으로 실제 값으로 바뀝니다.
+          💡 <span className="font-medium text-blue-700">{"{물건}"}</span>(단지·동·호수), <span className="font-medium text-blue-700">{"{주소}"}</span>, <span className="font-medium text-blue-700">{"{만기일}"}</span>은 문자 보낼 때 자동으로 실제 값으로 바뀝니다.
         </div>
 
         {STAGES.map(s => (

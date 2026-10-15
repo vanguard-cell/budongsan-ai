@@ -362,7 +362,7 @@ export function applyTemplate(template: string, contract: Contract): string {
   return template
     .replace(/\{인사말\}/g, smsGreeting())
     .replace(/\{물건\}/g, fullAddress(contract))
-    .replace(/\{주소\}/g, contract.address)
+    .replace(/\{주소\}/g, fullAddress(contract))
     .replace(/\{만기일\}/g, contract.endDate);
 }
 
