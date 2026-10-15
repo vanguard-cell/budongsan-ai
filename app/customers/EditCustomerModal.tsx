@@ -476,21 +476,7 @@ function ShownPropertyRow({
           ✕
         </button>
       </div>
-      <div className="flex gap-1.5">
-        <input
-          type="date"
-          value={s.shownAt}
-          onChange={e => onChange({ shownAt: e.target.value })}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-      <textarea
-        value={s.note}
-        onChange={e => onChange({ note: e.target.value })}
-        placeholder="메모 (선택) — 엔터로 줄바꿈"
-        rows={3}
-        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-      />
+      {/* 날짜·메모 칸은 화면에서만 숨김 — 기존 기록은 그대로 보존 (건의 #128) */}
     </div>
   );
 }
