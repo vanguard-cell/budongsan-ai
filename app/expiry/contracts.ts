@@ -320,7 +320,7 @@ export const DEFAULT_SMS_TEMPLATES: Record<string, string> = {
   "4m_tenant": "",
   "3m_tenant": "",
   "2m_tenant": "",
-  "4m_landlord": "",
+  "4m_landlord": "{인사말}\n\n{물건} 물건\n계약 만기 4개월 전 안내드립니다.\n혹시 만기일이 다른 경우 연락 주시면 수정하겠습니다.\n\n만기 2개월 전까지 계약의 변경이나 종료 사실을 임차인에게\n전달해야 합니다.\n그렇지 않을 경우 묵시적 갱신으로 전환되어 임대인의\n권리를 행사할 수 없습니다.\n기타 궁금하신 사항은 연락 주세요.",
   "3m_landlord": "",
   "2m_landlord": "",
 };
@@ -350,8 +350,15 @@ export function resetCustomSmsTemplate(stage: NotifyStage, target: ContactTarget
 }
 
 /** 플레이스홀더({주소}, {만기일})를 실제 값으로 치환 */
+/** 단지명 + 동 + 호수 (동·호가 따로 저장된 경우 붙여서) */
+export function fullAddress(contract: Contract): string {
+  return [contract.address, contract.dong && `${contract.dong}동`, contract.ho && `${contract.ho}호`].filter(Boolean).join(" ");
+}
+
 export function applyTemplate(template: string, contract: Contract): string {
   return template
+    .replace(/\{인사말\}/g, smsGreeting())
+    .replace(/\{물건\}/g, fullAddress(contract))
     .replace(/\{주소\}/g, contract.address)
     .replace(/\{만기일\}/g, contract.endDate);
 }

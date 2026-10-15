@@ -49,6 +49,7 @@ import {
   uid,
   sampleContracts,
   DEFAULT_SMS_TEMPLATES,
+  fullAddress,
   loadCustomSmsTemplates,
   saveCustomSmsTemplate,
   resetCustomSmsTemplate,
@@ -1605,7 +1606,9 @@ function SmsModal({
           <button
             onClick={() => {
               // 현재 텍스트에서 주소·만기일을 플레이스홀더로 바꿔 저장
+              const full = fullAddress(contract);
               const tpl = text
+                .replace(new RegExp(full.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "{물건}")
                 .replace(new RegExp(contract.address.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "{주소}")
                 .replace(new RegExp(contract.endDate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "{만기일}");
               saveCustomSmsTemplate(stage, target, tpl);
