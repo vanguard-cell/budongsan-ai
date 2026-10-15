@@ -320,7 +320,7 @@ export const DEFAULT_SMS_TEMPLATES: Record<string, string> = {
   "4m_tenant": "",
   "3m_tenant": "",
   "2m_tenant": "",
-  "4m_landlord": "{인사말}\n\n{물건} 물건\n계약 만기 4개월 전 안내드립니다.\n혹시 만기일이 다른 경우 연락 주시면 수정하겠습니다.\n\n만기 2개월 전까지 계약의 변경이나 종료 사실을 임차인에게\n전달해야 합니다.\n그렇지 않을 경우 묵시적 갱신으로 전환되어 임대인의\n권리를 행사할 수 없습니다.\n기타 궁금하신 사항은 연락 주세요.",
+  "4m_landlord": "{인사말}\n\n{물건} 물건\n계약 만기 4개월 전 안내드립니다.\n혹시 만기일이 다른 경우 연락 주시면 수정하겠습니다.\n\n만기 2개월 전까지 계약의 변경이나 종료 사실을 임차인에게 전달해야 합니다.\n그렇지 않을 경우 묵시적 갱신으로 전환되어 임대인의 권리를 행사할 수 없습니다.\n\n기타 궁금하신 사항은 연락 주세요.",
   "3m_landlord": "",
   "2m_landlord": "",
 };
@@ -358,8 +358,13 @@ export function fullAddress(contract: Contract): string {
   return [addr, d && !addr.includes(`${d}동`) && `${d}동`, h && !addr.includes(`${h}호`) && `${h}호`].filter(Boolean).join(" ");
 }
 
+/** 문장 중간에서 억지로 줄바꿈된 부분(마침표 없이 끝나는 긴 줄)을 이어 붙여 폰에서 보기 좋게 */
+export function reflowSms(text: string): string {
+  return text.replace(/\r\n/g, "\n").replace(/([^\n.!?。…~)\]]{15,})[ \t]*\n(?=[^\n\s])/g, "$1 ");
+}
+
 export function applyTemplate(template: string, contract: Contract): string {
-  return template
+  return reflowSms(template)
     .replace(/\{인사말\}/g, smsGreeting())
     .replace(/\{물건\}/g, fullAddress(contract))
     .replace(/\{주소\}/g, fullAddress(contract))
