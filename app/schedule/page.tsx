@@ -495,12 +495,12 @@ export default function SchedulePage() {
                             <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                           </>
                         )}
-                        {g.items.some(i => i.schedule) && (
+                        {SHOW_SHARE_BUTTON && g.items.some(i => i.schedule) && (
                           <button type="button" onClick={e => { e.stopPropagation(); shareVisitedList(date, g.name, g.phone, g.items.map(i => i.schedule).filter((x): x is Schedule => !!x).map(x => ({ s: x, p: findLinkedProperty(x, properties) }))); }} className="ml-auto inline-flex items-center gap-0.5 px-2 py-1 rounded-full bg-amber-400 text-white text-[11px] font-bold whitespace-nowrap hover:bg-amber-500" title="본 매물을 정리해서 보내기">
                             <span className="material-symbols-outlined text-[13px]">send</span>보내기
                           </button>
                         )}
-                        <span className={`${g.items.some(i => i.schedule) ? "" : "ml-auto "}whitespace-nowrap text-[11px] font-semibold`}>{g.items.length}건</span>
+                        <span className={`${SHOW_SHARE_BUTTON && g.items.some(i => i.schedule) ? "" : "ml-auto "}whitespace-nowrap text-[11px] font-semibold`}>{g.items.length}건</span>
                       </div>
                       {g.items.map(item => (
                         <div key={item.key} onClick={() => setPanelItem(item)}>
@@ -620,6 +620,9 @@ export default function SchedulePage() {
     </div>
   );
 }
+
+/** 보내기 버튼 숨김 (건의 #132 — 나중에 다시 켤 수 있게 코드는 보관) */
+const SHOW_SHARE_BUTTON = false;
 
 /** 손님이 그날 본 매물을 단지·동호수로 정리해서 문자/카톡으로 보내기 (공유 창, 안 되면 복사) */
 async function shareVisitedList(date: string, name: string, phone: string, rows: { s: Schedule; p?: Property }[]) {
