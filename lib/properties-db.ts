@@ -9,6 +9,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { sharedSubscribe } from "./live";
 import { localDateStr } from "@/lib/kst";
 
 export type PropertyType = "아파트" | "오피스텔" | "빌라/다세대" | "원룸/투룸" | "상가" | "사무실" | "토지" | "기타";
@@ -346,15 +347,17 @@ export function mergedTimeline(p: Property): PropertyEvent[] {
 }
 
 export function subscribeProperties(agencyId: string, onChange: (list: Property[]) => void): Unsubscribe {
-  const q = query(col(agencyId), orderBy("createdAt", "desc"));
-  return onSnapshot(
-    q,
-    snap => onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>))),
-    err => {
-      console.error("[properties] subscribe 실패:", err);
-      onChange([]);
-    },
-  );
+  return sharedSubscribe(`properties:${agencyId}`, (onChange: (list: Property[]) => void, failed: () => void) => {
+    const q = query(col(agencyId), orderBy("createdAt", "desc"));
+    return onSnapshot(
+      q,
+      snap => onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>))),
+      err => {
+        console.error("[properties] subscribe 실패:", err);
+        onChange([]); failed();
+      },
+    );
+  }, onChange);
 }
 
 /** 일회성 조회 (관리자 열람용) */

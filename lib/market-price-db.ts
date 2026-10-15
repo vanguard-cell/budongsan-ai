@@ -12,6 +12,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { sharedSubscribe } from "./live";
 import { localDateStr } from "@/lib/kst";
 
 export interface MarketPrice {
@@ -63,13 +64,15 @@ function fromDoc(id: string, d: Record<string, unknown>): MarketPrice {
 }
 
 export function subscribeMarketPrices(agencyId: string, onChange: (list: MarketPrice[]) => void): Unsubscribe {
-  // 단일 orderBy(createdAt desc) — 인덱스 불필요
-  const q = query(col(agencyId), orderBy("createdAt", "desc"));
-  return onSnapshot(
-    q,
-    snap => onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>))),
-    err => { console.error("[marketPrices] subscribe 실패:", err); onChange([]); },
-  );
+  return sharedSubscribe(`marketPrices:${agencyId}`, (onChange: (list: MarketPrice[]) => void, failed: () => void) => {
+    // 단일 orderBy(createdAt desc) — 인덱스 불필요
+    const q = query(col(agencyId), orderBy("createdAt", "desc"));
+    return onSnapshot(
+      q,
+      snap => onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>))),
+      err => { console.error("[marketPrices] subscribe 실패:", err); onChange([]); failed(); },
+    );
+  }, onChange);
 }
 
 export async function saveMarketPrice(agencyId: string, m: MarketPrice): Promise<void> {

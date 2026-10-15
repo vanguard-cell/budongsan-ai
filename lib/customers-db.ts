@@ -22,6 +22,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { sharedSubscribe } from "./live";
 import type { Customer, CustomerEvent, ShownProperty, CustomerSide, DealKind, CustomerStatus } from "@/app/customers/customer-types";
 import { uid as newCustomerId } from "@/app/customers/customer-types";
 import { kstDateStr } from "@/lib/kst";
@@ -103,19 +104,21 @@ export function subscribeCustomers(
   agencyId: string,
   onChange: (customers: Customer[]) => void,
 ): Unsubscribe {
-  // Firestore는 한 쿼리에 다중 정렬 한계가 있으므로 클라이언트에서 한 번 더 정렬
-  const q = query(customersCol(agencyId), orderBy("createdAt", "desc"));
-  return onSnapshot(
-    q,
-    (snap) => {
-      const list = snap.docs.map(d => fromDoc(d.id, d.data()));
-      onChange(list);
-    },
-    err => {
-      console.error("[customers] subscribe 실패:", err);
-      onChange([]);
-    },
-  );
+  return sharedSubscribe(`customers:${agencyId}`, (onChange: (customers: Customer[]) => void, failed: () => void) => {
+    // Firestore는 한 쿼리에 다중 정렬 한계가 있으므로 클라이언트에서 한 번 더 정렬
+    const q = query(customersCol(agencyId), orderBy("createdAt", "desc"));
+    return onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map(d => fromDoc(d.id, d.data()));
+        onChange(list);
+      },
+      err => {
+        console.error("[customers] subscribe 실패:", err);
+        onChange([]); failed();
+      },
+    );
+  }, onChange);
 }
 
 export async function saveCustomer(agencyId: string, c: Customer): Promise<void> {

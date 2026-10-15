@@ -20,6 +20,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { sharedSubscribe } from "./live";
 import type { Contract, ContractType } from "@/app/expiry/contracts";
 import type { Property } from "./properties-db";
 import { deleteProperty } from "./properties-db";
@@ -81,17 +82,19 @@ export function subscribeContracts(
   agencyId: string,
   onChange: (contracts: Contract[]) => void,
 ): Unsubscribe {
-  const q = query(contractsCol(agencyId), orderBy("endDate", "asc"));
-  return onSnapshot(
-    q,
-    (snap) => {
-      onChange(snap.docs.map(d => fromDoc(d.id, d.data())));
-    },
-    err => {
-      console.error("[contracts] subscribe 실패:", err);
-      onChange([]);
-    },
-  );
+  return sharedSubscribe(`contracts:${agencyId}`, (onChange: (contracts: Contract[]) => void, failed: () => void) => {
+    const q = query(contractsCol(agencyId), orderBy("endDate", "asc"));
+    return onSnapshot(
+      q,
+      (snap) => {
+        onChange(snap.docs.map(d => fromDoc(d.id, d.data())));
+      },
+      err => {
+        console.error("[contracts] subscribe 실패:", err);
+        onChange([]); failed();
+      },
+    );
+  }, onChange);
 }
 
 /** 추가/수정 (upsert) — Firestore undefined 거부 방어 */

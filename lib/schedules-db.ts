@@ -10,6 +10,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { sharedSubscribe } from "./live";
 
 export type ScheduleType = "집보기" | "방문" | "계약일" | "중도금일" | "잔금일" | "재계약일" | "기타";
 export type ScheduleStatus = "scheduled" | "done" | "cancelled";
@@ -73,21 +74,23 @@ function fromDoc(id: string, d: Record<string, unknown>): Schedule {
 }
 
 export function subscribeSchedules(agencyId: string, onChange: (list: Schedule[]) => void): Unsubscribe {
-  // 단일 orderBy만 사용 (date) → 인덱스 불필요. time 정렬은 클라이언트에서.
-  const q = query(col(agencyId), orderBy("date", "asc"));
-  return onSnapshot(
-    q,
-    snap => {
-      const list = snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>));
-      // 같은 날짜는 시간으로 정렬
-      list.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-      onChange(list);
-    },
-    err => {
-      console.error("[schedules] subscribe 실패:", err);
-      onChange([]);
-    },
-  );
+  return sharedSubscribe(`schedules:${agencyId}`, (onChange: (list: Schedule[]) => void, failed: () => void) => {
+    // 단일 orderBy만 사용 (date) → 인덱스 불필요. time 정렬은 클라이언트에서.
+    const q = query(col(agencyId), orderBy("date", "asc"));
+    return onSnapshot(
+      q,
+      snap => {
+        const list = snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>));
+        // 같은 날짜는 시간으로 정렬
+        list.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+        onChange(list);
+      },
+      err => {
+        console.error("[schedules] subscribe 실패:", err);
+        onChange([]); failed();
+      },
+    );
+  }, onChange);
 }
 
 export async function saveSchedule(agencyId: string, s: Schedule): Promise<void> {
