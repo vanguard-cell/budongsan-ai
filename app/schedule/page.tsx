@@ -361,7 +361,7 @@ export default function SchedulePage() {
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })}
               className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
             >
-              + 약속
+              + 등록
             </button>
             <button
               onClick={() => setEditing({ ...emptySchedule(), scheduleType: "방문" })}
@@ -496,7 +496,7 @@ export default function SchedulePage() {
             <div className="text-base font-semibold text-gray-900 mb-1">{selectedDate ? "이 날은" : `${Number(viewMonth.slice(5))}월에는`} 일정이 없습니다</div>
             <div className="text-xs text-gray-500 mb-4">약속을 추가하거나 만기·고객 탭을 확인해보세요</div>
             <button onClick={() => setEditing({ ...emptySchedule(), scheduleType: "기타" })} className="text-sm px-4 py-2 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold">
-              + 약속 추가
+              + 등록
             </button>
           </div>
         ) : (
