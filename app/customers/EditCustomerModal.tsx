@@ -343,6 +343,8 @@ function ShownPropertyRow({
   const [query, setQuery] = useState("");
   const [showList, setShowList] = useState(false);
   const [complexFilter, setComplexFilter] = useState("");
+  // 이미 매물이 골라진 행은 고르는 칸을 접어 둠 — 행마다 쌓여 정신없다는 요청 (건의 #128)
+  const [picking, setPicking] = useState(!s.address);
 
   // 스케줄의 '매물 연결'과 같은 방식 — 주소 뒤에 동·호도 같이 보여줌
   const fullLabel = (p: Property) => {
@@ -389,11 +391,18 @@ function ShownPropertyRow({
     onChange({ address: fullLabel(p) });
     setQuery(fullLabel(p));
     setShowList(false);
+    setPicking(false);
   };
 
   return (
     <div className="border border-gray-200 rounded-xl p-3.5 space-y-2.5 bg-gray-50/50 relative">
-      {properties.length > 0 && (
+      {properties.length > 0 && !picking && (
+        <button type="button" onClick={() => setPicking(true)}
+          className="whitespace-nowrap text-xs px-3 py-1.5 rounded-full border border-emerald-300 text-emerald-700 bg-white hover:bg-emerald-50">
+          🔍 다른 매물 다시 고르기
+        </button>
+      )}
+      {properties.length > 0 && picking && (
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", ...typeOptions].map(t => (
             <button key={t || "all"} type="button"
@@ -404,7 +413,7 @@ function ShownPropertyRow({
           ))}
         </div>
       )}
-      {properties.length > 0 && (
+      {properties.length > 0 && picking && (
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {["", "매매", "전세", "월세"].map(t => (
             <button key={t || "all"} type="button"
@@ -415,7 +424,7 @@ function ShownPropertyRow({
           ))}
         </div>
       )}
-      {complexOptions.length > 0 && (
+      {picking && complexOptions.length > 0 && (
         <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
           {[{ name: "", n: -1 }, ...complexOptions].map(({ name: n, n: cnt }) => (
             <button key={n || "all"} type="button"
@@ -426,7 +435,7 @@ function ShownPropertyRow({
           ))}
         </div>
       )}
-      {properties.length > 0 && (
+      {properties.length > 0 && picking && (
         <div className="relative">
           <input
             value={query}
