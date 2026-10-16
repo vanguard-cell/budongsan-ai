@@ -706,6 +706,10 @@ export default function ExpiryPage() {
           contract={smsTarget.contract}
           target={smsTarget.target}
           onClose={() => setSmsTarget(null)}
+          onSent={async note => {
+            const latest = contracts.find(x => x.id === smsTarget.contract.id) ?? smsTarget.contract;
+            await addMemo(latest)(note);
+          }}
         />
       )}
 
@@ -1541,10 +1545,12 @@ function SmsModal({
   contract,
   target,
   onClose,
+  onSent,
 }: {
   contract: Contract;
   target: ContactTarget;
   onClose: () => void;
+  onSent?: (note: string) => void | Promise<void>;
 }) {
   const [stage, setStage] = useState<NotifyStage>("4m");
   const [text, setText] = useState(() => buildSmsTemplate(contract, target, "4m"));
@@ -1640,6 +1646,13 @@ function SmsModal({
           </button>
           <a
             href={smsUrl(phone, text)}
+            onClick={() => {
+              // 문자 보내기를 누르면 '날짜-N개월 만기 문자전송'을 메모에 자동 기록
+              const [, mm, dd] = localDateStr().split("-");
+              const label = stage === "4m" ? "4개월" : stage === "3m" ? "3개월" : "2개월";
+              const who = target === "tenant" ? "임차인" : "임대인";
+              void onSent?.(`${Number(mm)}/${Number(dd)}-${label} 만기 문자전송(${who})`);
+            }}
             className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors text-center"
           >
             문자 보내기
