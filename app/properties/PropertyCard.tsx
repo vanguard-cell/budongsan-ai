@@ -72,6 +72,13 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   const area = p.area ? (m2ToPyeong(p.area) ? `전용 ${p.area}㎡ · ${m2ToPyeong(p.area)}평` : `전용 ${p.area}㎡`) : "";
   const smsHref = (phone: string, name: string, tail: string) =>
     `sms:${phone.replace(/\D/g, "")}?body=${encodeURIComponent(`안녕하세요?\n${getAgencyDisplayName() ? `매물 의뢰받은 ${getAgencyDisplayName()} 입니다.` : "매물 의뢰 건으로 연락드립니다."}\n${`${addressStr(p)} ${tail}`.replace(/\s*매물/g, "").replace(/\s+/g, " ").trim()} 매물 관련하여 연락 드립니다.\n의뢰하신 매물이 거래가 되었는지요?\n☆바쁘시지만 꼭 !확인 부탁드려요☆\n오늘도 즐거운 하루 되세요!!`)}`;
+  // 문자 버튼을 누르면 '날짜-매물 확인 문자 전송'을 메모에 자동 기록 (건의 #141)
+  const logSms = (who: string) => {
+    if (!onSaveMemo) return;
+    const [, mm, dd] = today.split("-");
+    const line = `${Number(mm)}/${Number(dd)}-매물 확인 문자 전송(${who})`;
+    onSaveMemo(p.memo ? `${p.memo}\n${line}` : line);
+  };
   const hasTenant = !!(p.tenantName || p.tenantPhone);
   const regInfo = p.createdAt > 0 ? (() => {
     const ds = kstDateStr(new Date(p.createdAt));
@@ -178,7 +185,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.ownerPhone)}</span>
                       <a href={`tel:${p.ownerPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                      <a href={smsHref(p.ownerPhone, p.ownerName, "매물")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <a href={smsHref(p.ownerPhone, p.ownerName, "매물")} onClick={() => logSms("임대인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                       {p.ownerCarrier && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-slate-700">{p.ownerCarrier}</span>}
                       
                     </>
@@ -193,7 +200,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.tenantPhone)}</span>
                       <a href={`tel:${p.tenantPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                      <a href={smsHref(p.tenantPhone, p.tenantName, "임대차 만기")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <a href={smsHref(p.tenantPhone, p.tenantName, "임대차 만기")} onClick={() => logSms("임차인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                       
                     </>
                   )}
