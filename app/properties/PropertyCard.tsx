@@ -100,10 +100,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           <div className="flex-shrink-0 flex flex-col items-center">
             {sevCls && leaseDD !== null && (
               <div className={`inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border ${sevCls.badge} text-center`}>
-                <div className="text-[10px] font-medium leading-tight">{severityLabel(sev!)}</div>
-                <div className="text-sm font-bold leading-tight">{dDayLabel(leaseDD)}</div>
+                <div className="text-[11px] font-medium leading-tight !text-gray-900">{severityLabel(sev!)}</div>
+                <div className="text-lg font-extrabold leading-tight whitespace-nowrap !text-gray-900">{dDayLabel(leaseDD)}</div>
                 {p.leaseEndDate && (
-                  <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{p.leaseEndDate}</div>
+                  <div className="mt-0.5 whitespace-nowrap text-xs font-bold leading-tight !text-gray-900">{p.leaseEndDate}</div>
                 )}
               </div>
             )}
@@ -114,9 +114,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             )}
             {regInfo && (
               <div className={`${(sevCls && leaseDD !== null) || occBadge ? "mt-1 " : ""}inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border border-emerald-300 bg-emerald-100 text-gray-900 text-center`}>
-                <div className="text-[10px] font-medium leading-tight">등록일</div>
-                <div className="text-sm font-bold leading-tight whitespace-nowrap">{regInfo.label}</div>
-                <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{regInfo.ds || "-"}</div>
+                <div className="text-[9px] font-medium leading-tight">등록일</div>
+                <div className="text-xs font-semibold leading-tight whitespace-nowrap">{regInfo.label}</div>
+                <div className="mt-0.5 whitespace-nowrap text-[9px] font-medium leading-tight">{regInfo.ds || "-"}</div>
               </div>
             )}
           </div>
