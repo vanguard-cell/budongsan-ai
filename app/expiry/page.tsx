@@ -831,6 +831,7 @@ function ContractRow({
           <div className={`inline-flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 rounded-xl border ${cls.badge} text-center`}>
             <div className="text-[10px] font-medium leading-tight">{severityLabel(severity)}</div>
             <div className="text-sm font-bold leading-tight">{dDayLabel(dday)}</div>
+            {c.endDate && <div className="mt-0.5 whitespace-nowrap text-[10px] font-semibold leading-tight">{c.endDate}</div>}
           </div>
         </div>
 
