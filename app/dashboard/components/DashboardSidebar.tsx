@@ -39,6 +39,7 @@ const NAV: NavItem[] = [
 const SUB_NAV: NavItem[] = [
   { href: "/team",       icon: "groups",          label: "직원 관리" },
   { href: "/feedback",   icon: "feedback",        label: "건의함" },
+  { href: "/more",       icon: "settings_backup_restore", label: "백업·설정" },
 ];
 
 const ADMIN_NAV: NavItem = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리" };

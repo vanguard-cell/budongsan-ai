@@ -26,6 +26,7 @@ const SIDEBAR_TABS = [
   // { href: "/market-price", icon: "trending_up",     label: "실거래 최고가" },  // 숨김 (건의 #59)
   { href: "/team",         icon: "groups",          label: "직원 관리" },
   { href: "/feedback",     icon: "feedback",        label: "건의함" },
+  { href: "/more",         icon: "settings_backup_restore", label: "백업·설정" },
 ];
 
 const ADMIN_TAB = { href: "/admin", icon: "admin_panel_settings", label: "유저 관리" };
