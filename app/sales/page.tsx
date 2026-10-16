@@ -73,7 +73,7 @@ export default function SalesPage() {
   const clearSamples = async () => {
     if (!user || sampleProps.length === 0) return;
     if (!confirm(`예시 매출 ${sampleProps.length}건(거래완료 예시 매물)을 삭제합니다.\n실제 매물은 영향받지 않습니다. 진행할까요?`)) return;
-    for (const p of sampleProps) await deleteProperty(user.agencyId, p.id);
+    for (const p of sampleProps) await deleteProperty(user.agencyId, p.id, { skipTrash: true });
   };
 
   // 명세에서 한 건 빼기 — 매출 목록에서만 숨기고 매물/계약 정보는 그대로 둠

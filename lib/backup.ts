@@ -17,13 +17,14 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-export const BACKUP_COLLECTIONS = ["contracts", "properties", "customers", "schedules", "marketPrices"] as const;
+export const BACKUP_COLLECTIONS = ["contracts", "properties", "customers", "schedules", "marketPrices", "propertyTrash"] as const;
 export const BACKUP_LABELS: Record<(typeof BACKUP_COLLECTIONS)[number], string> = {
   contracts: "만기 계약",
   properties: "매물",
   customers: "매수자",
   schedules: "스케줄",
   marketPrices: "실거래",
+  propertyTrash: "지운 매물 보관함",
 };
 /** 사무소 문서에서 백업·복원하는 설정 필드 (owner·members 같은 권한 필드는 건드리지 않음) */
 const AGENCY_FIELDS = ["myComplexes", "officeName"] as const;

@@ -64,13 +64,13 @@ function fromDoc(id: string, d: Record<string, unknown>): MarketPrice {
 }
 
 export function subscribeMarketPrices(agencyId: string, onChange: (list: MarketPrice[]) => void): Unsubscribe {
-  return sharedSubscribe(`marketPrices:${agencyId}`, (onChange: (list: MarketPrice[]) => void, failed: () => void) => {
+  return sharedSubscribe(`marketPrices:${agencyId}`, (onChange: (list: MarketPrice[]) => void, failed: (empty: MarketPrice[]) => void) => {
     // 단일 orderBy(createdAt desc) — 인덱스 불필요
     const q = query(col(agencyId), orderBy("createdAt", "desc"));
     return onSnapshot(
       q,
       snap => onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>))),
-      err => { console.error("[marketPrices] subscribe 실패:", err); onChange([]); failed(); },
+      err => { console.error("[marketPrices] subscribe 실패:", err); failed([]); },
     );
   }, onChange);
 }

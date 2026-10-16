@@ -5,16 +5,38 @@
  * 리스너가 닫혔다 다시 열려 수백 건을 다시 읽음(Firebase 무료 한도 초과 원인).
  * 여기서 리스너를 공유하고, 마지막 화면이 닫힌 뒤에도 KEEP_MS 동안 유지해서
  * 다른 화면으로 옮겨도 다시 읽지 않게 함. (바뀐 문서만 받음)
+ *
+ * 연결이 끊기면(한도 초과·네트워크 등) 이미 보여주던 목록은 그대로 두고(빈 목록으로 바꾸지 않음 —
+ * "매물이 갑자기 다 없어졌다"로 보이던 문제), 화면 위에 안내를 띄운 뒤 잠시 후 다시 연결한다.
  */
 import type { Unsubscribe } from "firebase/firestore";
 
 const KEEP_MS = 20 * 60 * 1000;
+const RETRY_MIN_MS = 30_000;
+const RETRY_MAX_MS = 5 * 60_000;
+
+/** 연결 상태 알림 — LiveStatusBanner 가 받아서 표시 */
+export const LIVE_STATUS_EVENT = "live-status";
+const failedKeys = new Set<string>();
+function reportStatus(key: string, ok: boolean) {
+  const had = failedKeys.size > 0;
+  if (ok) failedKeys.delete(key); else failedKeys.add(key);
+  const has = failedKeys.size > 0;
+  if (had !== has && typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(LIVE_STATUS_EVENT, { detail: { ok: !has } }));
+  }
+}
+export function liveHasError(): boolean {
+  return failedKeys.size > 0;
+}
 
 interface Entry {
   unsub: Unsubscribe | null;
   listeners: Set<(v: unknown) => void>;
   last?: unknown;
   timer?: ReturnType<typeof setTimeout>;
+  retryTimer?: ReturnType<typeof setTimeout>;
+  retries: number;
 }
 
 const entries = new Map<string, Entry>();
@@ -24,12 +46,13 @@ const copy = <T,>(v: T): T => (Array.isArray(v) ? (v.slice() as T) : v);
 
 export function sharedSubscribe<T>(
   key: string,
-  start: (emit: (v: T) => void, failed: () => void) => Unsubscribe,
+  /** failed(empty): 구독이 끊겼을 때 호출. 한 번도 못 받았으면 empty 를 보여줘 '불러오는 중'에서 멈추지 않게 */
+  start: (emit: (v: T) => void, failed: (empty: T) => void) => Unsubscribe,
   onChange: (v: T) => void,
 ): Unsubscribe {
   let e = entries.get(key);
   if (!e) {
-    e = { unsub: null, listeners: new Set() };
+    e = { unsub: null, listeners: new Set(), retries: 0 };
     entries.set(key, e);
   }
   const entry = e;
@@ -43,20 +66,31 @@ export function sharedSubscribe<T>(
     const last = entry.last;
     queueMicrotask(() => { if (entry.listeners.has(listener)) listener(copy(last)); });
   }
-  if (!entry.unsub) {
+
+  const connect = () => {
     entry.unsub = start(
       v => {
         entry.last = v;
+        entry.retries = 0;
+        reportStatus(key, true);
         entry.listeners.forEach(l => l(copy(v)));
       },
-      // 구독 실패(권한·한도 초과 등) — 끊긴 리스너는 버리고, 다음에 여는 화면이 새로 연결하게
-      () => {
+      empty => {
+        // 끊긴 리스너는 버리고, 보여주던 목록은 유지한 채 잠시 후 다시 연결
         entry.unsub = null;
-        entry.last = undefined;
-        if (entries.get(key) === entry) entries.delete(key);
+        reportStatus(key, false);
+        if (entry.last === undefined) entry.listeners.forEach(l => l(copy(empty)));
+        if (entry.retryTimer || entries.get(key) !== entry) return;
+        const delay = Math.min(RETRY_MAX_MS, RETRY_MIN_MS * 2 ** entry.retries);
+        entry.retries++;
+        entry.retryTimer = setTimeout(() => {
+          entry.retryTimer = undefined;
+          if (entries.get(key) === entry && !entry.unsub) connect();
+        }, delay);
       },
     );
-  }
+  };
+  if (!entry.unsub && !entry.retryTimer) connect();
 
   let done = false;
   return () => {
@@ -68,6 +102,8 @@ export function sharedSubscribe<T>(
         entry.timer = undefined;
         if (entry.listeners.size > 0) return;
         entry.unsub?.();
+        if (entry.retryTimer) clearTimeout(entry.retryTimer);
+        reportStatus(key, true);
         entries.delete(key);
       }, KEEP_MS);
     }

@@ -82,7 +82,7 @@ export function subscribeContracts(
   agencyId: string,
   onChange: (contracts: Contract[]) => void,
 ): Unsubscribe {
-  return sharedSubscribe(`contracts:${agencyId}`, (onChange: (contracts: Contract[]) => void, failed: () => void) => {
+  return sharedSubscribe(`contracts:${agencyId}`, (onChange: (contracts: Contract[]) => void, failed: (empty: Contract[]) => void) => {
     const q = query(contractsCol(agencyId), orderBy("endDate", "asc"));
     return onSnapshot(
       q,
@@ -91,7 +91,7 @@ export function subscribeContracts(
       },
       err => {
         console.error("[contracts] subscribe 실패:", err);
-        onChange([]); failed();
+        failed([]);
       },
     );
   }, onChange);
@@ -186,7 +186,7 @@ export async function moveToContract(
 ): Promise<Contract> {
   const contract = propertyToContract(property, linkedCustomerId ?? property.linkedTenantId);
   await saveContract(agencyId, contract);
-  await deleteProperty(agencyId, property.id);
+  await deleteProperty(agencyId, property.id, { skipTrash: true });   // 삭제가 아니라 만기 관리로 이동
   return contract;
 }
 

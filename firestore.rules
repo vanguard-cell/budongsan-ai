@@ -108,6 +108,12 @@ service cloud.firestore {
         allow delete: if isAgencyOwner();
       }
 
+      // ── 지운 매물 보관함 (실수로 지운 매물 되살리기) — 지우기·되살리기는 매물 삭제와 같이 대표만 ──
+      match /propertyTrash/{propertyId} {
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update, delete: if isAgencyOwner();
+      }
+
       // ── 스케줄 ──────────────────────────────
       match /schedules/{scheduleId} {
         allow read: if isMember() || isGlobalAdmin();

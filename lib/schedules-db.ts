@@ -74,7 +74,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Schedule {
 }
 
 export function subscribeSchedules(agencyId: string, onChange: (list: Schedule[]) => void): Unsubscribe {
-  return sharedSubscribe(`schedules:${agencyId}`, (onChange: (list: Schedule[]) => void, failed: () => void) => {
+  return sharedSubscribe(`schedules:${agencyId}`, (onChange: (list: Schedule[]) => void, failed: (empty: Schedule[]) => void) => {
     // 단일 orderBy만 사용 (date) → 인덱스 불필요. time 정렬은 클라이언트에서.
     const q = query(col(agencyId), orderBy("date", "asc"));
     return onSnapshot(
@@ -87,7 +87,7 @@ export function subscribeSchedules(agencyId: string, onChange: (list: Schedule[]
       },
       err => {
         console.error("[schedules] subscribe 실패:", err);
-        onChange([]); failed();
+        failed([]);
       },
     );
   }, onChange);

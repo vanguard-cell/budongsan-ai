@@ -4,7 +4,7 @@
  */
 
 import {
-  collection, doc, setDoc, deleteDoc, getDocs, updateDoc, arrayUnion, arrayRemove,
+  collection, doc, setDoc, deleteDoc, getDoc, getDocs, writeBatch, updateDoc, arrayUnion, arrayRemove,
   query, orderBy, onSnapshot, serverTimestamp, Timestamp,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -347,14 +347,14 @@ export function mergedTimeline(p: Property): PropertyEvent[] {
 }
 
 export function subscribeProperties(agencyId: string, onChange: (list: Property[]) => void): Unsubscribe {
-  return sharedSubscribe(`properties:${agencyId}`, (onChange: (list: Property[]) => void, failed: () => void) => {
+  return sharedSubscribe(`properties:${agencyId}`, (onChange: (list: Property[]) => void, failed: (empty: Property[]) => void) => {
     const q = query(col(agencyId), orderBy("createdAt", "desc"));
     return onSnapshot(
       q,
       snap => onChange(snap.docs.map(d => fromDoc(d.id, d.data() as Record<string, unknown>))),
       err => {
         console.error("[properties] subscribe 실패:", err);
-        onChange([]); failed();
+        failed([]);
       },
     );
   }, onChange);
@@ -376,8 +376,51 @@ export async function saveProperty(agencyId: string, p: Property): Promise<void>
   await setDoc(ref(agencyId, id), payload);
 }
 
-export async function deleteProperty(agencyId: string, id: string): Promise<void> {
-  await deleteDoc(ref(agencyId, id));
+function trashCol(agencyId: string) {
+  return collection(db, "agencies", agencyId, "propertyTrash");
+}
+
+/**
+ * 매물 삭제 — 지우기 전에 원본 그대로 보관함(propertyTrash)에 옮겨 둠 (실수로 지워도 되살리기, 건의 #124)
+ * 보관과 삭제를 한 번에(batch) 처리 → 보관에 실패하면 지우지도 않음
+ * skipTrash: 거래완료로 만기 관리에 옮기는 경우처럼 지우는 게 아니라 '이동'일 때
+ */
+export async function deleteProperty(agencyId: string, id: string, opts?: { skipTrash?: boolean }): Promise<void> {
+  if (opts?.skipTrash) {
+    await deleteDoc(ref(agencyId, id));
+    return;
+  }
+  const snap = await getDoc(ref(agencyId, id));
+  const batch = writeBatch(db);
+  if (snap.exists()) batch.set(doc(trashCol(agencyId), id), { ...snap.data(), deletedAt: Date.now() });
+  batch.delete(ref(agencyId, id));
+  await batch.commit();
+}
+
+export interface TrashedProperty extends Property { deletedAt: number }
+
+/** 보관함 목록 (최근 삭제순) */
+export async function fetchTrashedProperties(agencyId: string): Promise<TrashedProperty[]> {
+  const snap = await getDocs(trashCol(agencyId));
+  return snap.docs
+    .map(d => {
+      const data = d.data() as Record<string, unknown>;
+      return { ...fromDoc(d.id, data), deletedAt: (data.deletedAt as number) || 0 };
+    })
+    .sort((a, b) => b.deletedAt - a.deletedAt);
+}
+
+/** 보관함에서 되살리기 — 보관해 둔 원본 그대로 매물로 되돌리고 보관함에서 뺌 (한 번에) */
+export async function restoreProperty(agencyId: string, id: string): Promise<void> {
+  const tref = doc(trashCol(agencyId), id);
+  const snap = await getDoc(tref);
+  if (!snap.exists()) return;
+  const data = { ...snap.data() };
+  delete data.deletedAt;
+  const batch = writeBatch(db);
+  batch.set(ref(agencyId, id), data);
+  batch.delete(tref);
+  await batch.commit();
 }
 
 /**
