@@ -30,7 +30,7 @@ export default function MemoText({ memo, collapsible = false }: { memo: string; 
       {collapsible && entries.length > 1 && (
         <button
           type="button"
-          onClick={() => setOpen(v => !v)}
+          onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
           className="whitespace-nowrap text-[11px] text-blue-600 dark:text-blue-400 font-semibold mb-0.5"
         >
           {open ? "▲ 접기" : `▼ 이전 메모 ${entries.length - 1}개 펼치기`}

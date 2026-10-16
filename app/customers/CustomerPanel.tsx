@@ -164,7 +164,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
                 </div>
               </Row>
             )}
-            {c.memo && <Row label="메모"><MemoText memo={c.memo} /></Row>}
+            {c.memo && <Row label="메모"><MemoText memo={c.memo} collapsible /></Row>}
           </tbody>
         </table>
       </div>

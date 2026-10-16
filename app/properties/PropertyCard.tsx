@@ -270,7 +270,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             <>
               {p.memo && (
                 <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded px-2 py-1 border border-gray-100 dark:border-slate-700 whitespace-pre-wrap">
-                  <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={p.memo} /></span></span>
+                  <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={p.memo} collapsible /></span></span>
                 </div>
               )}
               {onSaveMemo && (
