@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 /**
  * 메모 보기 (건의 #76)
  *
@@ -15,11 +19,24 @@ export function splitMemo(memo: string): string[] {
   return entries;
 }
 
-export default function MemoText({ memo }: { memo: string }) {
+export default function MemoText({ memo, collapsible = false }: { memo: string; collapsible?: boolean }) {
+  const [open, setOpen] = useState(false);
   const entries = splitMemo(memo);
+  // 접기 가능: 메모가 2개 이상이면 마지막 것만 보이고 나머지는 펼치기 (건의 #137)
+  const fold = collapsible && entries.length > 1 && !open;
+  const shown = fold ? entries.slice(-1) : entries;
   return (
     <>
-      {entries.map((e, i) => (
+      {collapsible && entries.length > 1 && (
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          className="whitespace-nowrap text-[11px] text-blue-600 dark:text-blue-400 font-semibold mb-0.5"
+        >
+          {open ? "▲ 접기" : `▼ 이전 메모 ${entries.length - 1}개 펼치기`}
+        </button>
+      )}
+      {shown.map((e, i) => (
         <div
           key={i}
           className={`whitespace-pre-wrap ${i > 0 ? "border-t border-gray-300 dark:border-slate-600 mt-1 pt-1" : ""}`}

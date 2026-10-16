@@ -94,7 +94,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onAddMemo,
             {c.options && <Row label="옵션">{c.options}</Row>}
             {c.startDate && <Row label="시작일">{c.startDate}</Row>}
             {c.endDate && <Row label="만기일">{c.endDate}</Row>}
-            {c.memo && <Row label="메모"><MemoText memo={c.memo} /></Row>}
+            {c.memo && <Row label="메모"><MemoText memo={c.memo} collapsible /></Row>}
           </tbody>
         </table>
       </div>

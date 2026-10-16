@@ -889,7 +889,7 @@ function ContractRow({
 
           {c.memo && (
             <div className="mt-2 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-1 border border-gray-100">
-              <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={c.memo} /></span></span>
+              <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={c.memo} collapsible /></span></span>
             </div>
           )}
         </div>
