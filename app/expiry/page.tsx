@@ -28,6 +28,7 @@ import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
 import MemoText from "@/app/components/MemoText";
+import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { matchAllTokens } from "@/lib/search-match";
 import {
   Contract,
@@ -1433,20 +1434,22 @@ function EditModal({
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="계약 시작일">
-            <input
-              type="date"
-              value={form.startDate}
-              onChange={e => handleStartDate(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <KoreanDatePicker value={form.startDate} onChange={handleStartDate} accent="blue" />
           </Field>
           <Field label="만기일" required>
-            <input
-              type="date"
-              value={form.endDate}
-              onChange={e => setField("endDate", e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <KoreanDatePicker value={form.endDate} onChange={v => setField("endDate", v)} accent="blue" />
+            <div className="flex gap-1.5 mt-1.5">
+              {[1, 2].map(y => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => setField("endDate", defaultEndDate(form.endDate || form.startDate || localDateStr(new Date()), y))}
+                  className="whitespace-nowrap text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 active:bg-blue-100"
+                >
+                  {form.endDate ? `+${y}년` : `${y}년 뒤`}
+                </button>
+              ))}
+            </div>
           </Field>
         </div>
 

@@ -10,13 +10,13 @@ import { useState } from "react";
  */
 const DATE_LINE = /^\d{2}\.\d{2}\.\d{2}(\s|$)/;
 // 다른 곳(만기 관리 등)에서 넘어온 메모의 날짜 모양도 인식 — 2026.10.02 / 26-10-02 / 26/10/02 / 10/2 / 10.2 (건의 #144)
-const LOOSE_DATE_LINE = /^(\d{2}|\d{4})[./-]\d{1,2}[./-]\d{1,2}(\D|$)|^\d{1,2}[./]\d{1,2}(\s|$|[▶:-])/;
+const LOOSE_DATE_LINE = /^(\d{2}|\d{4})[./-]\d{1,2}[./-]\d{1,2}(\D|$)|^\d{1,2}[./]\d{1,2}(\s|$|[▶:-])|^(\d{2,4}\s*년\s*)?\d{1,2}\s*월\s*\d{1,2}\s*일/;
 
 export function splitMemo(memo: string): string[] {
   const lines = memo.split("\n");
   const entries: string[] = [];
   for (const line of lines) {
-    const t = line.trim();
+    const t = line.trim().replace(/^[\[(『'’‘]+/, "");
     if (entries.length === 0 || DATE_LINE.test(t) || LOOSE_DATE_LINE.test(t)) entries.push(line);
     else entries[entries.length - 1] += "\n" + line;
   }
