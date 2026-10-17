@@ -126,6 +126,7 @@ export default function SchedulePage() {
   const showPast = true;   // 지난 일정도 항상 표시 (목록은 달력에서 보는 달 기준)
   const [viewMonth, setViewMonth] = useState<string>(() => kstDateStr().slice(0, 7));   // "YYYY-MM"
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showPastList, setShowPastList] = useState(false);   // 목록에 지난 일정도 보기 (기본: 오늘부터)
   const [panelItem,  setPanelItem]  = useState<UnifiedItem | null>(null);   // 우측 상세 패널
 
   useEffect(() => {
@@ -244,12 +245,13 @@ export default function SchedulePage() {
     return baseItems
       .filter(i => filter === "all" || i.source === filter)
       .filter(i => selectedDate ? i.date === selectedDate : i.date.startsWith(viewMonth))
+      .filter(i => selectedDate || showPastList || viewMonth < kstDateStr().slice(0, 7) || i.date >= kstDateStr())
       .sort((a, b) => {
         const d = a.date.localeCompare(b.date);
         if (d !== 0) return d;
         return a.time.localeCompare(b.time);
       });
-  }, [baseItems, filter, selectedDate, viewMonth]);
+  }, [baseItems, filter, selectedDate, viewMonth, showPastList]);
 
   /* 캘린더 점 — baseItems와 동일 집합(필터·선택 무시), 달력은 dot+카운트 표시 */
   const calendarItems = useMemo<CalendarItem[]>(
@@ -455,6 +457,14 @@ export default function SchedulePage() {
             <span className="material-symbols-outlined text-[16px]">ios_share</span>
             캘린더로 내보내기
           </button>
+          {!selectedDate && viewMonth >= kstDateStr().slice(0, 7) && (
+            <button
+              onClick={() => setShowPastList(v => !v)}
+              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
+            >
+              {showPastList ? "오늘부터 보기" : "지난 일정 전체보기"}
+            </button>
+          )}
         </div>
 
         {/* 목록 */}
