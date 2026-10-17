@@ -351,6 +351,8 @@ export default function ExpiryPage() {
     setEditing({
       ...c,
       address: stripUnit(c.address || "", c.dong, c.ho),
+      // 화면에 보이는 종류(주소의 (오피스텔) 표시 우선)를 그대로 따라가게
+      propertyType: (typeOf(c) === UNTYPED ? c.propertyType : typeOf(c)) as Contract["propertyType"],
       id: fresh.id,
       createdAt: fresh.createdAt,
       status: "active",
