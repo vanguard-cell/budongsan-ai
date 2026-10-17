@@ -77,7 +77,7 @@ function MenuItem({ icon, label, active, onClick }: { icon: string; label: strin
   );
 }
 
-export type ContractSort = "endAsc" | "endDesc" | "newest";
+export type ContractSort = "endAsc" | "endDesc" | "newest" | "unit";
 export type ContractFilter = "all" | Severity;
 
 interface Props {
@@ -277,6 +277,7 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
               {renderTh({ k: "address", w: "w-[30%]", menu: <>
                 {searchInput("address")}
                 <MenuItem icon="schedule" label="최근 등록순" active={sortBy === "newest"} onClick={() => { onSortChange("newest"); setOpenMenu(null); }} />
+                <MenuItem icon="apartment" label="동호수순" active={sortBy === "unit"} onClick={() => { onSortChange("unit"); setOpenMenu(null); }} />
               </> })}
               {renderTh({ k: "type", w: "w-[6%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}
               {renderTh({ k: "price", w: "w-[10%]", menu: <MenuItem icon="info" label="더블클릭으로 수정" onClick={() => setOpenMenu(null)} /> })}

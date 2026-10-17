@@ -221,6 +221,15 @@ export default function ExpiryPage() {
       .sort((a, b) => {
         if (sortBy === "endDesc") return b.d - a.d;
         if (sortBy === "newest") return b.c.createdAt - a.c.createdAt;
+        if (sortBy === "unit") {   // 동호수순 — 단지 이름 → 동 → 호 (숫자 크기대로, 비어 있으면 뒤로)
+          const n = (v?: string) => { const m = (v || "").match(/\d+/); return m ? Number(m[0]) : Infinity; };
+          const base = complexBase(a.c).localeCompare(complexBase(b.c), "ko");
+          if (base) return base;
+          const dg = n(a.c.dong) - n(b.c.dong);
+          if (dg && !Number.isNaN(dg)) return dg;
+          const hg = n(a.c.ho) - n(b.c.ho);
+          return hg && !Number.isNaN(hg) ? hg : a.d - b.d;
+        }
         return a.d - b.d;   // endAsc (기본) — 만기 빠른순
       });
   }, [contracts, filter, showClosed, query, sortBy, colSearch, typeFilter, selComplex, selDong, selHo]);
