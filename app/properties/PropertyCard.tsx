@@ -85,6 +85,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
     const days = Math.max(0, Math.round((Date.parse(today) - Date.parse(ds)) / 86400000));
     return { ds, label: days === 0 ? "오늘 등록" : `${days}일 지남` };
   })() : { ds: "", label: "미기록" };
+  const short2 = (d: string) => (/^\d{4}-/.test(d) ? d.slice(2) : d);
   const occBadge = p.occupancy === "owner" || p.occupancy === "vacant" ? OCC_LABEL[p.occupancy] : null;
 
   return (
@@ -110,7 +111,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                 <div className="text-[11px] font-medium leading-tight !text-gray-900">{severityLabel(sev!)}</div>
                 <div className="text-sm font-bold leading-tight whitespace-nowrap !text-gray-900">{dDayLabel(leaseDD)}</div>
                 {p.leaseEndDate && (
-                  <div className="mt-0.5 whitespace-nowrap text-[14px] font-extrabold leading-tight !text-gray-900">{p.leaseEndDate}</div>
+                  <div className="mt-0.5 whitespace-nowrap text-[14px] font-extrabold leading-tight !text-gray-900">{short2(p.leaseEndDate)}</div>
                 )}
               </div>
             )}
@@ -123,7 +124,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               <div className={`${(sevCls && leaseDD !== null) || occBadge ? "mt-1 " : ""}inline-flex flex-col items-center justify-center w-[62px] min-h-[45px] px-0.5 py-1 rounded-lg border border-emerald-300 bg-emerald-100 text-gray-900 text-center`}>
                 <div className="text-[8px] font-medium leading-tight">등록일</div>
                 <div className="text-[10px] font-semibold leading-tight whitespace-nowrap">{regInfo.label}</div>
-                <div className="mt-0.5 whitespace-nowrap text-[8px] font-medium leading-tight">{regInfo.ds || "-"}</div>
+                <div className="mt-0.5 whitespace-nowrap text-[8px] font-medium leading-tight">{short2(regInfo.ds) || "-"}</div>
               </div>
             )}
           </div>
@@ -170,7 +171,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           {/* 등록일 + 등록 후 경과일 (만기 배지가 없을 때만 본문에 표시) */}
           {!sevCls && regInfo && (
             <div className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
-              등록일 {regInfo.ds} · <span className="font-semibold text-gray-700 dark:text-gray-300">{regInfo.label}</span>
+              등록일 {short2(regInfo.ds)} · <span className="font-semibold text-gray-700 dark:text-gray-300">{regInfo.label}</span>
             </div>
           )}
 
