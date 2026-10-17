@@ -9,12 +9,20 @@ import { useState } from "react";
  * 날짜가 없는 옛 메모는 선 없이 그대로 보임.
  */
 const DATE_LINE = /^\d{2}\.\d{2}\.\d{2}(\s|$)/;
+// 다른 곳(만기 관리 등)에서 넘어온 메모의 날짜 모양도 인식 — 2026.10.02 / 26-10-02 / 26/10/02 / 10/2 / 10.2 (건의 #144)
+const LOOSE_DATE_LINE = /^(\d{2}|\d{4})[./-]\d{1,2}[./-]\d{1,2}(\D|$)|^\d{1,2}[./]\d{1,2}(\s|$|[▶:-])/;
 
 export function splitMemo(memo: string): string[] {
+  const lines = memo.split("\n");
   const entries: string[] = [];
-  for (const line of memo.split("\n")) {
-    if (entries.length === 0 || DATE_LINE.test(line)) entries.push(line);
+  for (const line of lines) {
+    const t = line.trim();
+    if (entries.length === 0 || DATE_LINE.test(t) || LOOSE_DATE_LINE.test(t)) entries.push(line);
     else entries[entries.length - 1] += "\n" + line;
+  }
+  // 날짜가 하나도 없는 여러 줄 메모는 한 줄씩 한 칸으로 봄
+  if (entries.length === 1 && lines.filter(l => l.trim()).length > 1) {
+    return lines.filter(l => l.trim());
   }
   return entries;
 }
