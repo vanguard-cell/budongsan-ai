@@ -83,7 +83,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   const regInfo = p.createdAt > 0 ? (() => {
     const ds = kstDateStr(new Date(p.createdAt));
     const days = Math.max(0, Math.round((Date.parse(today) - Date.parse(ds)) / 86400000));
-    return { ds, label: days === 0 ? "오늘" : `${days}일 지남` };
+    return { ds, label: days === 0 ? "오늘" : `+${days}일` };
   })() : { ds: "", label: "미기록" };
   const short2 = (d: string) => (/^\d{4}-/.test(d) ? d.slice(2) : d);
   const occBadge = p.occupancy === "owner" || p.occupancy === "vacant" ? OCC_LABEL[p.occupancy] : null;
