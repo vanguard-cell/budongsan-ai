@@ -1450,6 +1450,36 @@ function EditModal({
           </Field>
         </div>
 
+        {/* 만기일 빠른 수정 버튼 (건의 #145) */}
+        <div className="flex flex-wrap items-center gap-1.5 -mt-1">
+          <span className="whitespace-nowrap text-[11px] text-gray-500">빠른 입력</span>
+          {form.startDate && [1, 2].map(y => (
+            <button
+              key={`s${y}`}
+              type="button"
+              onClick={() => setField("endDate", defaultEndDate(form.startDate, y))}
+              className="whitespace-nowrap text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200"
+            >
+              시작일+{y}년
+            </button>
+          ))}
+          {form.endDate && ([[0.5, "+6개월"], [1, "+1년"], [2, "+2년"]] as const).map(([y, label]) => (
+            <button
+              key={`e${y}`}
+              type="button"
+              onClick={() => {
+                const d = new Date(form.endDate);
+                if (isNaN(d.getTime())) return;
+                if (y === 0.5) d.setMonth(d.getMonth() + 6); else d.setFullYear(d.getFullYear() + y);
+                setField("endDate", localDateStr(d));
+              }}
+              className="whitespace-nowrap text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"
+            >
+              만기일{label}
+            </button>
+          ))}
+        </div>
+
         {/* 임대인 먼저 (집주인) → 임차인 (세입자) — 한국 부동산 관행 */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="임대인 이름">
