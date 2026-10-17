@@ -350,6 +350,7 @@ export default function ExpiryPage() {
     const fresh = emptyContract();
     setEditing({
       ...c,
+      address: stripUnit(c.address || "", c.dong, c.ho),
       id: fresh.id,
       createdAt: fresh.createdAt,
       status: "active",
