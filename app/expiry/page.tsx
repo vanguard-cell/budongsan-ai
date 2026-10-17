@@ -1,7 +1,7 @@
 "use client";
 
 import { stripUnit } from "@/lib/address";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import { confirmBulkDelete } from "@/lib/backup";
@@ -1738,10 +1738,13 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  // 글자를 끌어서 선택하다 손가락/마우스가 창 밖에서 떼어져도 창이 닫히지 않게 — 바깥을 "눌러서 시작한" 경우만 닫음
+  const downOnBackdrop = useRef(false);
   return (
     <div
       className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
-      onClick={onClose}
+      onPointerDown={e => { downOnBackdrop.current = e.target === e.currentTarget; }}
+      onClick={e => { if (e.target === e.currentTarget && downOnBackdrop.current) onClose(); }}
     >
       <div
         className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[calc(100dvh-5rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl"
