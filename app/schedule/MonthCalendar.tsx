@@ -233,7 +233,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, onMon
         })}
       </div>
 
-      {/* 액션 (색 설명 범례는 숨김 — 건의 #67) */}
+      {/* 액션 (색 설명 범례는 숨김 — 건의 #67, 아래 '오늘' 버튼은 숨김 — 건의 #153: 월 제목을 누르면 오늘로 이동) */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 pt-3 border-t border-gray-100">
         <div className="flex-1" />
         {selectedDate && (
@@ -241,9 +241,6 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, onMon
             전체 보기
           </button>
         )}
-        <button onClick={goToday} className="text-sm px-3.5 py-1.5 whitespace-nowrap rounded-full border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200">
-          오늘
-        </button>
       </div>
     </div>
   );
