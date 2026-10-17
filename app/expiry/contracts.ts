@@ -23,6 +23,7 @@ export interface Contract {
   landlordName: string;
   landlordPhone: string;
   landlordCarrier?: string; // 임대인 통신사 (내 매물의 집주인 통신사와 같은 형식)
+  extraContacts?: { relation: string; name: string; phone: string }[]; // 추가 연락처 (상담·배우자 등 — 여러 명)
   // 매물 상세 — 내 매물 등록 폼과 동일하게 (어머니 요청)
   propertyType?: string;    // 아파트/오피스텔/빌라 등
   area?: string;            // 전용면적 (㎡) — 숫자만

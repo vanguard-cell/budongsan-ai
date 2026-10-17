@@ -23,7 +23,7 @@ import NotifyBell from "../NotifyBell";
 import { subscribeMyComplexes, addMyComplex, removeMyComplex, type MyComplex } from "@/lib/properties-db";
 import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
-import { saveProperty, contractBackToProperty, CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption } from "@/lib/properties-db";
+import { saveProperty, contractBackToProperty, CONTACT_RELATIONS, CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption } from "@/lib/properties-db";
 import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
@@ -380,7 +380,7 @@ export default function ExpiryPage() {
     try {
       const prop = contractBackToProperty({
         address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
-        landlordName: c.landlordName, landlordPhone: c.landlordPhone, landlordCarrier: c.landlordCarrier, memo: c.memo,
+        landlordName: c.landlordName, landlordPhone: c.landlordPhone, landlordCarrier: c.landlordCarrier, extraContacts: c.extraContacts, memo: c.memo,
         dong: c.dong, ho: c.ho, propertyType: c.propertyType,
         area: c.area, unitType: c.unitType, direction: c.direction, rooms: c.rooms, options: c.options,
         tenantName: c.tenantName, tenantPhone: c.tenantPhone, endDate: c.endDate,
@@ -912,6 +912,15 @@ function ContractRow({
               onSms={() => onSms("tenant")}
               disabled={isClosed}
             />
+            {(c.extraContacts ?? []).filter(x => x.phone).map((x, i) => (
+              <ContactLine
+                key={i}
+                label={x.relation || "연락처"}
+                name={x.name}
+                phone={x.phone}
+                disabled={isClosed}
+              />
+            ))}
           </div>
 
           {c.memo && (
@@ -999,7 +1008,7 @@ function ContactLine({
   name: string;
   carrier?: string;
   phone: string;
-  onSms: () => void;
+  onSms?: () => void;
   disabled?: boolean;
 }) {
   const hasPhone = !!phone.replace(/\D/g, "");
@@ -1016,11 +1025,11 @@ function ContactLine({
             className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap"
             aria-disabled={disabled}
            aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-          <button
+          {onSms && <button
             onClick={onSms}
             disabled={disabled || !hasPhone}
             className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
-           aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></button>
+           aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></button>}
         </>
       )}
     </div>
@@ -1534,6 +1543,31 @@ function EditModal({
                 </button>
               );
             })}
+          </div>
+        </Field>
+
+        <Field label="추가 연락처 (상담·배우자 등)">
+          <div className="space-y-2">
+            {(form.extraContacts ?? []).map((x, i) => {
+              const upd = (patch: Partial<{ relation: string; name: string; phone: string }>) =>
+                setField("extraContacts", (form.extraContacts ?? []).map((y, j) => (j === i ? { ...y, ...patch } : y)));
+              return (
+                <div key={i} className="flex items-center gap-1.5">
+                  <select value={x.relation} onChange={e => upd({ relation: e.target.value })}
+                    className="w-20 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50">
+                    {CONTACT_RELATIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <input value={x.name} onChange={e => upd({ name: e.target.value })} placeholder="이름"
+                    className="w-20 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
+                  <input type="tel" value={x.phone} onChange={e => upd({ phone: e.target.value })} placeholder="010-0000-0000"
+                    className="min-w-0 flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
+                  <button type="button" onClick={() => setField("extraContacts", (form.extraContacts ?? []).filter((_, j) => j !== i))}
+                    className="flex-shrink-0 text-gray-400 px-1 whitespace-nowrap" aria-label="삭제">✕</button>
+                </div>
+              );
+            })}
+            <button type="button" onClick={() => setField("extraContacts", [...(form.extraContacts ?? []), { relation: "상담", name: "", phone: "" }])}
+              className="text-xs font-semibold text-blue-600 whitespace-nowrap">+ 추가</button>
           </div>
         </Field>
 

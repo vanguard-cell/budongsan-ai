@@ -457,6 +457,7 @@ export function contractBackToProperty(c: {
   landlordName: string;
   landlordPhone: string;
   landlordCarrier?: string;
+  extraContacts?: ExtraContact[];
   memo: string;
   // 물건 고유 정보 (재모집 시에도 그대로 보존)
   dong?: string;
@@ -482,6 +483,7 @@ export function contractBackToProperty(c: {
     ownerName: c.landlordName,
     ownerPhone: c.landlordPhone,
     ownerCarrier: c.landlordCarrier || "",
+    extraContacts: c.extraContacts?.length ? c.extraContacts : undefined,
     tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "", tenantDeposit: c.deposit || "", tenantMonthly: c.monthly || "", leaseEndDate: c.endDate || "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
     occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: c.options || "",
