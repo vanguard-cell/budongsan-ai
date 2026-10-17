@@ -73,13 +73,13 @@ export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
 };
 /** 캘린더 셀 안 미니 알약용 — 테두리 없이 배경+텍스트만 (좁은 공간) */
 export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
-  appointment: "bg-sky-200 text-gray-900 border-transparent",
-  etc: "bg-lime-200 text-gray-900 border-transparent",
-  visit: "bg-sky-200 text-gray-900 border-transparent",
-  contractDate: "bg-rose-200 text-gray-900 border-transparent",
-  downPaymentDate: "bg-amber-200 text-gray-900 border-transparent",
-  balanceDate: "bg-orange-200 text-gray-900 border-transparent",
-  renewal: "bg-violet-200 text-gray-900 border-transparent",
+  appointment: "bg-sky-200 text-gray-900 border-sky-400",
+  etc: "bg-lime-200 text-gray-900 border-lime-400",
+  visit: "bg-sky-200 text-gray-900 border-sky-400",
+  contractDate: "bg-rose-200 text-gray-900 border-rose-400",
+  downPaymentDate: "bg-amber-200 text-gray-900 border-amber-400",
+  balanceDate: "bg-orange-200 text-gray-900 border-orange-400",
+  renewal: "bg-violet-200 text-gray-900 border-violet-400",
 };
 
 function pad(n: number): string { return String(n).padStart(2, "0"); }
