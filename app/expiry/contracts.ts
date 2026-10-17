@@ -145,7 +145,7 @@ export function severityClasses(s: Severity): {
 /* D-day 표시 문자열 */
 export function dDayLabel(dday: number): string {
   if (dday === Infinity) return "—";
-  if (dday < 0) return `만기 ${-dday}일 지남`;
+  if (dday < 0) return `만기+${-dday}일`;
   if (dday === 0) return "오늘 만기";
   return `D-${dday}`;
 }
