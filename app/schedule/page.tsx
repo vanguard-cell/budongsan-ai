@@ -457,14 +457,21 @@ export default function SchedulePage() {
             <span className="material-symbols-outlined text-[16px]">ios_share</span>
             캘린더로 내보내기
           </button>
-          {!selectedDate && viewMonth >= kstDateStr().slice(0, 7) && (
-            <button
-              onClick={() => setShowPastList(v => !v)}
-              className="text-sm px-3.5 py-2 rounded-xl border border-sky-300 bg-sky-100 text-sky-900 font-normal hover:bg-sky-200 transition-colors whitespace-nowrap"
-            >
-              {showPastList ? "오늘부터 보기" : "지난 일정 전체보기"}
-            </button>
-          )}
+          <div className="flex items-center gap-1.5">
+            {([["오늘", false], ["전체보기", true]] as const).map(([label, past]) => (
+              <button
+                key={label}
+                onClick={() => setShowPastList(past)}
+                className={`text-sm px-3.5 py-2 rounded-xl border font-normal transition-colors whitespace-nowrap ${
+                  showPastList === past
+                    ? "border-sky-500 bg-sky-500 text-white"
+                    : "border-sky-300 bg-sky-100 text-sky-900 hover:bg-sky-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* 목록 */}
