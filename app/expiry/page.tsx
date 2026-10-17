@@ -575,6 +575,18 @@ export default function ExpiryPage() {
               ))}
             </div>
           )}
+          <div className="flex flex-wrap items-center gap-1.5 mb-3">
+            <span className="text-[11px] text-gray-400 mr-0.5">정렬</span>
+            {([
+              { key: "endAsc", label: "만기 빠른순" },
+              { key: "unit", label: "🏢 동호수순" },
+              { key: "newest", label: "최근 등록순" },
+            ] as const).map(o => (
+              <FilterChip key={o.key} active={sortBy === o.key} onClick={() => setSortBy(o.key)}>
+                <span className="whitespace-nowrap">{o.label}</span>
+              </FilterChip>
+            ))}
+          </div>
           {complexList.length > 0 && (
             <div className="mb-2">
               <button onClick={() => setShowComplexSearch(v => !v)}
