@@ -23,7 +23,7 @@ import NotifyBell from "../NotifyBell";
 import { subscribeMyComplexes, addMyComplex, removeMyComplex, type MyComplex } from "@/lib/properties-db";
 import ExportModal from "../ExportModal";
 import { subscribeCustomers } from "@/lib/customers-db";
-import { saveProperty, contractBackToProperty, OPTION_PRESETS, toggleOption, hasOption } from "@/lib/properties-db";
+import { saveProperty, contractBackToProperty, CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption } from "@/lib/properties-db";
 import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
@@ -380,7 +380,7 @@ export default function ExpiryPage() {
     try {
       const prop = contractBackToProperty({
         address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
-        landlordName: c.landlordName, landlordPhone: c.landlordPhone, memo: c.memo,
+        landlordName: c.landlordName, landlordPhone: c.landlordPhone, landlordCarrier: c.landlordCarrier, memo: c.memo,
         dong: c.dong, ho: c.ho, propertyType: c.propertyType,
         area: c.area, unitType: c.unitType, direction: c.direction, rooms: c.rooms, options: c.options,
         tenantName: c.tenantName, tenantPhone: c.tenantPhone, endDate: c.endDate,
@@ -900,6 +900,7 @@ function ContractRow({
             <ContactLine
               label="임대인"
               name={c.landlordName}
+              carrier={c.landlordCarrier}
               phone={c.landlordPhone}
               onSms={() => onSms("landlord")}
               disabled={isClosed}
@@ -989,12 +990,14 @@ function ContractRow({
 function ContactLine({
   label,
   name,
+  carrier,
   phone,
   onSms,
   disabled,
 }: {
   label: string;
   name: string;
+  carrier?: string;
   phone: string;
   onSms: () => void;
   disabled?: boolean;
@@ -1007,6 +1010,7 @@ function ContactLine({
       {hasPhone && (
         <>
           <span className="text-gray-700 whitespace-nowrap">{formatPhone(phone)}</span>
+          {carrier && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 whitespace-nowrap">{carrier}</span>}
           <a
             href={telUrl(phone)}
             className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap"
@@ -1515,6 +1519,23 @@ function EditModal({
             />
           </Field>
         </div>
+
+        <Field label="임대인 통신사 (선택)">
+          <div className="grid grid-cols-4 gap-1.5">
+            {CARRIERS.map(cr => {
+              const cur = form.landlordCarrier || "";
+              const { base, mvno } = parseCarrier(cur);
+              const on = cr === "알뜰폰" ? mvno : base === cr;
+              return (
+                <button key={cr} type="button"
+                  onClick={() => setField("landlordCarrier", cr === "알뜰폰" ? joinCarrier(base, !mvno) : joinCarrier(base === cr ? "" : cr, mvno))}
+                  className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${on ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                  {cr}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="임차인 이름">

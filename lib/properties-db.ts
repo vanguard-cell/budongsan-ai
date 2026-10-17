@@ -74,6 +74,19 @@ export interface Property {
 /** 집주인 통신사 프리셋 */
 export const CARRIERS = ["SKT", "KT", "LG U+", "알뜰폰"] as const;
 
+// 통신사 저장 형식: "KT", "KT(알뜰폰)", "알뜰폰" (예전 "알뜰폰(KT망)"도 읽을 수 있음)
+export function parseCarrier(v: string): { base: string; mvno: boolean } {
+  const old = v.match(/^알뜰폰\((SKT|KT|LG U\+)망\)$/);
+  if (old) return { base: old[1], mvno: true };
+  if (v === "알뜰폰") return { base: "", mvno: true };
+  const m = v.match(/^(.+)\(알뜰폰\)$/);
+  if (m) return { base: m[1], mvno: true };
+  return { base: v, mvno: false };
+}
+export function joinCarrier(base: string, mvno: boolean): string {
+  return mvno ? (base ? `${base}(알뜰폰)` : "알뜰폰") : base;
+}
+
 /** 집 옵션 빠른 선택 — 쉼표로 이어붙여 options에 저장 (직접 타이핑도 가능) */
 export const OPTION_PRESETS = ["에어컨", "냉장고", "세탁기", "건조기", "인덕션", "전자레인지", "식기세척기", "붙박이장"] as const;
 
@@ -437,6 +450,7 @@ export function contractBackToProperty(c: {
   monthly: string;
   landlordName: string;
   landlordPhone: string;
+  landlordCarrier?: string;
   memo: string;
   // 물건 고유 정보 (재모집 시에도 그대로 보존)
   dong?: string;
@@ -461,7 +475,7 @@ export function contractBackToProperty(c: {
     area: c.area || "", unitType: c.unitType || "", dong: c.dong || "", ho: c.ho || "", floor: "", rooms: c.rooms || "", direction: c.direction || "",
     ownerName: c.landlordName,
     ownerPhone: c.landlordPhone,
-    ownerCarrier: "",
+    ownerCarrier: c.landlordCarrier || "",
     tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "", tenantDeposit: c.deposit || "", tenantMonthly: c.monthly || "", leaseEndDate: c.endDate || "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",
     occupancy: "", nextManageDate: "", manageCycle: "", manageTags: [], options: c.options || "",

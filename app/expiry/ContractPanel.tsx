@@ -107,7 +107,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onAddMemo,
       )}
       {(c.landlordPhone || c.tenantPhone) && (
         <p className="px-1 text-[10px] text-gray-400 dark:text-gray-500">
-          {[c.landlordPhone && `임대인 ${formatPhone(c.landlordPhone)}`, c.tenantPhone && `임차인 ${formatPhone(c.tenantPhone)}`].filter(Boolean).join(" · ")}
+          {[c.landlordPhone && `임대인 ${formatPhone(c.landlordPhone)}${c.landlordCarrier ? ` (${c.landlordCarrier})` : ""}`, c.tenantPhone && `임차인 ${formatPhone(c.tenantPhone)}`].filter(Boolean).join(" · ")}
         </p>
       )}
 

@@ -5,23 +5,10 @@
 import { stripUnit } from "@/lib/address";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { useState, useEffect } from "react";
-import { CARRIERS, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
+import { CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
 import DatedMemo from "@/app/components/DatedMemo";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong } from "./helpers";
-
-// 통신사 저장 형식: "KT", "KT(알뜰폰)", "알뜰폰" (예전 "알뜰폰(KT망)"도 읽을 수 있음)
-function parseCarrier(v: string): { base: string; mvno: boolean } {
-  const old = v.match(/^알뜰폰\((SKT|KT|LG U\+)망\)$/);
-  if (old) return { base: old[1], mvno: true };
-  if (v === "알뜰폰") return { base: "", mvno: true };
-  const m = v.match(/^(.+)\(알뜰폰\)$/);
-  if (m) return { base: m[1], mvno: true };
-  return { base: v, mvno: false };
-}
-function joinCarrier(base: string, mvno: boolean): string {
-  return mvno ? (base ? `${base}(알뜰폰)` : "알뜰폰") : base;
-}
 
 export default function PropertyModal({ property, savedComplexes = [], onClose, onSave }: {
   property: Property;
