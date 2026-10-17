@@ -194,7 +194,7 @@ export default function MonthCalendar({ items, onSelectDate, selectedDate, onMon
           const cellCls = isSelected
             ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-300"
             : isToday
-              ? "bg-gradient-to-br from-pink-100 via-rose-100 to-orange-100 border border-pink-200 shadow-[0_0_8px_1px_rgba(251,207,232,0.8)]"
+              ? "bg-gradient-to-br from-pink-100 via-rose-100 to-orange-100 border-2 border-pink-400 shadow-[0_0_8px_1px_rgba(251,207,232,0.8)]"
               : "hover:bg-gray-50 border border-transparent";
 
           return (
