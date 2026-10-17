@@ -1778,7 +1778,12 @@ function Modal({ children, onClose, title }: { children: React.ReactNode; onClos
     <div
       className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4"
       onPointerDown={e => { downOnBackdrop.current = e.target === e.currentTarget; }}
-      onClick={e => { if (e.target === e.currentTarget && downOnBackdrop.current) onClose(); }}
+      onClick={e => {
+        const selecting = (window.getSelection()?.toString() ?? "").length > 0; // 글자 블록을 잡은 상태에서는 닫지 않음
+        const ok = e.target === e.currentTarget && downOnBackdrop.current && !selecting;
+        downOnBackdrop.current = false;
+        if (ok) onClose();
+      }}
     >
       <div
         className="bg-white rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[calc(100dvh-5rem)] sm:max-h-[90vh] overflow-y-auto shadow-2xl"
