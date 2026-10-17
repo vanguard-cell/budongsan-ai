@@ -260,7 +260,9 @@ export default function SchedulePage() {
       const name = i.schedule?.visitorName?.trim() || "";
       const phone = (i.schedule?.visitorPhone || "").replace(/\D/g, "");
       const visitorKey = i.source === "visit" ? (name || phone ? `v:${name}|${phone}` : i.key) : undefined;
-      return { date: i.date, source: i.source, time: i.time || undefined, title: itemText(i).title || undefined, visitorKey };
+      // 직접 등록한 '기타'는 달력에서 '기타'로 따로 표시 (건의 #152)
+      const calSource = i.schedule?.scheduleType === "기타" ? "etc" : i.source;
+      return { date: i.date, source: calSource, time: i.time || undefined, title: itemText(i).title || undefined, visitorKey };
     }),
     [baseItems],
   );

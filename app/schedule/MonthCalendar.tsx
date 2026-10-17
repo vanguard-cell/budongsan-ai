@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { holidayName } from "@/lib/holidays";
 
-export type CalendarSource = "appointment" | "visit" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
+export type CalendarSource = "appointment" | "etc" | "visit" | "contractDate" | "downPaymentDate" | "balanceDate" | "renewal";
 
 export interface CalendarItem {
   date: string;                          // YYYY-MM-DD
@@ -35,6 +35,7 @@ interface Props {
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 export const SOURCE_COLORS: Record<CalendarSource, string> = {
   appointment: "bg-sky-500",
+  etc: "bg-lime-400",
   visit: "bg-sky-500",
   contractDate: "bg-sky-500",
   downPaymentDate: "bg-sky-500",
@@ -43,6 +44,7 @@ export const SOURCE_COLORS: Record<CalendarSource, string> = {
 };
 export const SOURCE_LABELS: Record<CalendarSource, string> = {
   appointment:     "약속",
+  etc:             "기타",
   visit:           "방문",
   contractDate:    "계약일",
   downPaymentDate: "중도금일",
@@ -52,6 +54,7 @@ export const SOURCE_LABELS: Record<CalendarSource, string> = {
 /** 캘린더 셀 안에 표시할 짧은 라벨 — 1글자 (작은 셀에 들어가도록) */
 export const SOURCE_SHORT_LABELS: Record<CalendarSource, string> = {
   appointment:     "약",
+  etc:             "기",
   visit:           "방",
   contractDate:    "계",
   downPaymentDate: "중",
@@ -61,6 +64,7 @@ export const SOURCE_SHORT_LABELS: Record<CalendarSource, string> = {
 /** 글자까지 덮는 알약 형태 범례용 — 배경+텍스트+테두리 일체형 */
 export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
   appointment: "bg-sky-100 text-sky-900 border-sky-300",
+  etc: "bg-lime-200 text-lime-900 border-lime-400",
   visit: "bg-sky-100 text-sky-900 border-sky-300",
   contractDate: "bg-sky-100 text-sky-900 border-sky-300",
   downPaymentDate: "bg-sky-100 text-sky-900 border-sky-300",
@@ -70,6 +74,7 @@ export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
 /** 캘린더 셀 안 미니 알약용 — 테두리 없이 배경+텍스트만 (좁은 공간) */
 export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
   appointment: "bg-sky-500 text-white border-transparent",
+  etc: "bg-lime-400 text-gray-900 border-transparent",
   visit: "bg-sky-500 text-white border-transparent",
   contractDate: "bg-rose-500 text-white border-transparent",
   downPaymentDate: "bg-amber-500 text-white border-transparent",
