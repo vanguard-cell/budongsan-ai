@@ -59,7 +59,7 @@ const SOURCE_BAR: Record<ItemSource, string> = {
   visit:           "#0EA5E9",
   contractDate:    "#7F77DD",
   downPaymentDate: "#D4537E",
-  balanceDate:     "#EF9F27",
+  balanceDate:     "#FB923C",
   renewal:         "#10B981",
 };
 const SCHEDULE_SHORT: Record<ScheduleType, string> = {

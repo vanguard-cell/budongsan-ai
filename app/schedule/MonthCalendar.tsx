@@ -39,7 +39,7 @@ export const SOURCE_COLORS: Record<CalendarSource, string> = {
   visit: "bg-sky-500",
   contractDate: "bg-sky-500",
   downPaymentDate: "bg-sky-500",
-  balanceDate: "bg-sky-500",
+  balanceDate: "bg-orange-400",
   renewal: "bg-sky-500",
 };
 export const SOURCE_LABELS: Record<CalendarSource, string> = {
@@ -68,7 +68,7 @@ export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
   visit: "bg-sky-100 text-sky-900 border-sky-300",
   contractDate: "bg-sky-100 text-sky-900 border-sky-300",
   downPaymentDate: "bg-sky-100 text-sky-900 border-sky-300",
-  balanceDate: "bg-sky-100 text-sky-900 border-sky-300",
+  balanceDate: "bg-orange-200 text-orange-900 border-orange-400",
   renewal: "bg-sky-100 text-sky-900 border-sky-300",
 };
 /** 캘린더 셀 안 미니 알약용 — 테두리 없이 배경+텍스트만 (좁은 공간) */
@@ -78,7 +78,7 @@ export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
   visit: "bg-sky-500 text-white border-transparent",
   contractDate: "bg-rose-500 text-white border-transparent",
   downPaymentDate: "bg-amber-500 text-white border-transparent",
-  balanceDate: "bg-emerald-600 text-white border-transparent",
+  balanceDate: "bg-orange-400 text-gray-900 border-transparent",
   renewal: "bg-violet-500 text-white border-transparent",
 };
 
