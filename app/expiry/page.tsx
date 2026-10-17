@@ -1438,18 +1438,6 @@ function EditModal({
           </Field>
           <Field label="만기일" required>
             <KoreanDatePicker value={form.endDate} onChange={v => setField("endDate", v)} accent="blue" />
-            <div className="flex gap-1.5 mt-1.5">
-              {[1, 2].map(y => (
-                <button
-                  key={y}
-                  type="button"
-                  onClick={() => setField("endDate", defaultEndDate(form.endDate || form.startDate || localDateStr(new Date()), y))}
-                  className="whitespace-nowrap text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 active:bg-blue-100"
-                >
-                  {form.endDate ? `+${y}년` : `${y}년 뒤`}
-                </button>
-              ))}
-            </div>
           </Field>
         </div>
 
