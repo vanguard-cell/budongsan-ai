@@ -45,6 +45,7 @@ export interface Property {
   ownerName: string;
   ownerPhone: string;
   ownerCarrier: string;  // 집주인 통신사 (SKT·KT·LG U+·알뜰폰)
+  extraContacts?: ExtraContact[]; // 소유자 외 추가 연락처 (상담·배우자 등 — 여러 명)
   tenantName: string;    // 임차인 이름
   tenantPhone: string;   // 임차인 연락처
   tenantDeposit: string; // 현재 임차인 보증금 (만원)
@@ -70,6 +71,10 @@ export interface Property {
   createdAt: number;
   history?: PropertyEvent[];   // 활동 이력 (하이브리드 — 적용 시점부터 누적)
 }
+
+/** 추가 연락처 1명 — 관계(상담/배우자/자녀/대리인…) + 이름 + 전화 */
+export interface ExtraContact { relation: string; name: string; phone: string }
+export const CONTACT_RELATIONS = ["상담", "배우자", "자녀", "부모", "대리인", "관리인", "기타"] as const;
 
 /** 집주인 통신사 프리셋 */
 export const CARRIERS = ["SKT", "KT", "LG U+", "알뜰폰"] as const;
@@ -302,6 +307,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     ownerName:    (d.ownerName    as string) || "",
     ownerPhone:   (d.ownerPhone   as string) || "",
     ownerCarrier: (d.ownerCarrier as string) || "",
+    extraContacts: Array.isArray(d.extraContacts) ? (d.extraContacts as ExtraContact[]) : undefined,
     tenantName:   (d.tenantName   as string) || "",
     tenantPhone:  (d.tenantPhone  as string) || "",
     tenantDeposit:(d.tenantDeposit as string) || "",

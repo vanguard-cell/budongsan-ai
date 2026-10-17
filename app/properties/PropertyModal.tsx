@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
 import DatedMemo from "@/app/components/DatedMemo";
+import { CONTACT_RELATIONS, type ExtraContact } from "@/lib/properties-db";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong } from "./helpers";
 
 export default function PropertyModal({ property, savedComplexes = [], onClose, onSave }: {
@@ -295,12 +296,12 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           {/* 집주인 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">집주인 이름</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">소유자 이름</label>
               <input value={form.ownerName} onChange={e => set("ownerName", e.target.value)}
                 placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">집주인 연락처</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">소유자 연락처</label>
               <input type="tel" value={formatPhone(form.ownerPhone || "")} onChange={e => set("ownerPhone", formatPhoneInput(e.target.value))}
                 placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
@@ -321,6 +322,34 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                     className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${on ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
                     {c}
                   </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 추가 연락처 — 상담 전화·배우자 등 2명 이상 */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">추가 연락처 <span className="text-[10px] text-gray-400">(상담·배우자 등)</span></label>
+              <button type="button" onClick={() => set("extraContacts", [...(form.extraContacts ?? []), { relation: "상담", name: "", phone: "" }])}
+                className="text-xs font-semibold text-blue-600 whitespace-nowrap">+ 추가</button>
+            </div>
+            <div className="space-y-2">
+              {(form.extraContacts ?? []).map((c, i) => {
+                const upd = (patch: Partial<ExtraContact>) => set("extraContacts", (form.extraContacts ?? []).map((x, j) => j === i ? { ...x, ...patch } : x));
+                return (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <select value={c.relation} onChange={e => upd({ relation: e.target.value })}
+                      className="w-20 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50">
+                      {CONTACT_RELATIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                    <input value={c.name} onChange={e => upd({ name: e.target.value })} placeholder="이름"
+                      className="w-20 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
+                    <input type="tel" value={formatPhone(c.phone || "")} onChange={e => upd({ phone: formatPhoneInput(e.target.value) })} placeholder="010-0000-0000"
+                      className="min-w-0 flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
+                    <button type="button" onClick={() => set("extraContacts", (form.extraContacts ?? []).filter((_, j) => j !== i))}
+                      className="flex-shrink-0 text-gray-400 px-1 whitespace-nowrap" aria-label="삭제">✕</button>
+                  </div>
                 );
               })}
             </div>
