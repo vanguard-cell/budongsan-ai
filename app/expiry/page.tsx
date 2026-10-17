@@ -334,19 +334,19 @@ export default function ExpiryPage() {
   };
 
   /**
-   * 같은 단지 다른 호수 빠른 계약 등록
-   * - 단지명(주소에서 동/호 제외)과 거래종류·임대인 정보 인계
-   * - 임차인·동·호·가격·날짜는 비움 (호별로 다름)
+   * 매물복사 — 계약 내용(단지·동호수·가격·임차인·메모 등)을 그대로 복사해 새 계약 등록 창을 연다.
+   * 새 id/등록일/상태만 새로 만들고, 고객·재계약·매물 연결 정보는 가져오지 않는다.
    */
   const cloneSameComplex = (c: Contract) => {
-    const baseAddress = stripUnit(c.address || "", c.dong, c.ho);
+    const fresh = emptyContract();
     setEditing({
-      ...emptyContract(),
-      address: baseAddress,
-      type: c.type,
-      // 임대인은 같은 단지에서 같을 수도 있어 인계 (필요시 수정 가능)
-      landlordName: c.landlordName,
-      landlordPhone: c.landlordPhone,
+      ...c,
+      id: fresh.id,
+      createdAt: fresh.createdAt,
+      status: "active",
+      linkedCustomerId: undefined,
+      fromPropertyId: undefined,
+      renewedFromId: undefined,
     });
   };
 
@@ -920,10 +920,10 @@ function ContractRow({
         {!isClosed && onCloneSameComplex && (
           <button
             onClick={onCloneSameComplex}
-            title="같은 단지에 다른 호수 빠른 등록 — 단지명·종류·임대인 인계, 동/호·임차인·가격만 입력"
+            title="이 계약을 그대로 복사해서 새로 등록"
             className="text-[11px] px-2.5 py-1 rounded-full border border-teal-300 bg-teal-50 text-teal-700 font-semibold hover:bg-teal-100 transition-colors"
           >
-            📋 같은 단지 추가
+            📋 매물복사
           </button>
         )}
         {onReopenAsProperty && !isClosed && (
@@ -1264,8 +1264,8 @@ function EditModal({
         {isNew && (
           <div className="rounded-xl bg-teal-50 border border-teal-200 p-2.5 text-[11px] text-teal-700 leading-relaxed">
             💡 <strong>같은 단지에 여러 호수</strong>가 있으신가요?<br />
-            먼저 한 건 등록 후, 그 만기 카드의 <strong>📋 같은 단지 추가</strong> 버튼을 누르면<br />
-            단지명·거래종류·임대인이 자동 복사되어 동/호수만 입력하면 됩니다.
+            먼저 한 건 등록 후, 그 만기 카드의 <strong>📋 매물복사</strong> 버튼을 누르면<br />
+            내용이 그대로 복사되어 다른 부분(동/호수 등)만 고치면 됩니다.
           </div>
         )}
 

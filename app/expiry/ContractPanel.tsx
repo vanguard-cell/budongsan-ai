@@ -121,7 +121,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onAddMemo,
         <div className="grid grid-cols-2 gap-1.5">
           <ActionBtn icon="edit" label="수정" onClick={() => onEdit(c)} />
           <ActionBtn icon="sticky_note_2" label="메모 추가" onClick={() => setMemoOpen(v => !v)} />
-          <ActionBtn icon="content_copy" label="같은 단지 추가" onClick={() => onCloneSameComplex(c)} />
+          <ActionBtn icon="content_copy" label="매물복사" onClick={() => onCloneSameComplex(c)} />
           <ActionBtn icon="campaign" label="매물로 재모집" onClick={() => onReopenAsProperty(c)} />
           <ActionBtn icon="inventory_2" label="관리 종료(보관)" onClick={() => onCloseContract(c)} />
         </div>
