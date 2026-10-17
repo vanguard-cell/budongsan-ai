@@ -40,7 +40,7 @@ export const SOURCE_COLORS: Record<CalendarSource, string> = {
   contractDate: "bg-sky-500",
   downPaymentDate: "bg-sky-500",
   balanceDate: "bg-orange-400",
-  renewal: "bg-sky-500",
+  renewal: "bg-violet-300",
 };
 export const SOURCE_LABELS: Record<CalendarSource, string> = {
   appointment:     "약속",
@@ -73,13 +73,13 @@ export const SOURCE_PILL_CLASSES: Record<CalendarSource, string> = {
 };
 /** 캘린더 셀 안 미니 알약용 — 테두리 없이 배경+텍스트만 (좁은 공간) */
 export const SOURCE_CELL_CLASSES: Record<CalendarSource, string> = {
-  appointment: "bg-sky-500 text-gray-900 border-transparent",
-  etc: "bg-lime-400 text-gray-900 border-transparent",
-  visit: "bg-sky-500 text-gray-900 border-transparent",
-  contractDate: "bg-rose-500 text-gray-900 border-transparent",
-  downPaymentDate: "bg-amber-500 text-gray-900 border-transparent",
-  balanceDate: "bg-orange-400 text-gray-900 border-transparent",
-  renewal: "bg-violet-500 text-gray-900 border-transparent",
+  appointment: "bg-sky-200 text-gray-900 border-transparent",
+  etc: "bg-lime-200 text-gray-900 border-transparent",
+  visit: "bg-sky-200 text-gray-900 border-transparent",
+  contractDate: "bg-rose-200 text-gray-900 border-transparent",
+  downPaymentDate: "bg-amber-200 text-gray-900 border-transparent",
+  balanceDate: "bg-orange-200 text-gray-900 border-transparent",
+  renewal: "bg-violet-200 text-gray-900 border-transparent",
 };
 
 function pad(n: number): string { return String(n).padStart(2, "0"); }
