@@ -10,6 +10,7 @@ import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr }
 import MemoText from "@/app/components/MemoText";
 import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
 import { kstDateStr } from "@/lib/kst";
+import { printProperty } from "./print-property";
 
 const STYPE_COLORS: Record<string, string> = {
   "집보기": "bg-blue-100 text-blue-700",
@@ -332,6 +333,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
         <button onClick={onEdit}
           className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
           ✏️ 수정
+        </button>
+        <button onClick={() => printProperty(p)} title="이 호실 정보를 한 장으로 프린트"
+          className="whitespace-nowrap text-[11px] px-2.5 py-1 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+          🖨️ 프린트
         </button>
         {!isClosed && (
           <button onClick={onCloneSameComplex} title="이 매물을 그대로 복사해서 새로 등록"
