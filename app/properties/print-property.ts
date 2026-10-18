@@ -41,9 +41,18 @@ export function printProperty(p: Property) {
 <table>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join("")}</table>
 <script>window.onload=function(){setTimeout(function(){window.print()},200)}</script>
 </body></html>`;
-  const w = window.open("", "_blank");
-  if (!w) { alert("프린트 창이 막혔어요. 팝업 허용 후 다시 눌러주세요."); return; }
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  // 새 창 대신 화면 안의 숨은 프레임으로 인쇄 (앱/휴대폰에서 창이 닫히는 문제 방지)
+  const old = document.getElementById("print-property-frame");
+  if (old) old.remove();
+  const f = document.createElement("iframe");
+  f.id = "print-property-frame";
+  f.setAttribute("aria-hidden", "true");
+  f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0";
+  f.srcdoc = html.replace(/<script>[\s\S]*?<\/script>/, "");
+  f.onload = () => {
+    const cw = f.contentWindow;
+    if (!cw) return;
+    try { cw.focus(); cw.print(); } catch { alert("프린트 창을 열 수 없어요."); }
+  };
+  document.body.appendChild(f);
 }
