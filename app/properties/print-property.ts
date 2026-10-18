@@ -1,4 +1,4 @@
-/** 매물 1건 프린트 — 새 창에 한 장짜리 소개서를 띄우고 인쇄 창을 연다 */
+/** 매물 1건 프린트 — 화면 안에 한 장짜리 소개서 미리보기를 띄우고 '인쇄' 버튼으로 인쇄한다 */
 
 import type { Property } from "@/lib/properties-db";
 import { getAgencyDisplayName } from "@/app/expiry/contracts";
@@ -25,10 +25,10 @@ export function printProperty(p: Property) {
     ["메모", p.memo || "—"],
   ];
   const agency = getAgencyDisplayName();
-  const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8">
+  const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(addressStr(p))}</title>
 <style>
-  body{font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#000;margin:0;padding:32px}
+  body{box-sizing:border-box;font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#000;margin:0;padding:20px}
   h1{font-size:26px;margin:0 0 6px;word-break:keep-all}
   .sub{font-size:13px;color:#666;margin-bottom:20px;border-bottom:3px solid #000;padding-bottom:10px}
   table{width:100%;border-collapse:collapse;font-size:17px}
@@ -41,18 +41,31 @@ export function printProperty(p: Property) {
 <table>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${esc(v)}</td></tr>`).join("")}</table>
 <script>window.onload=function(){setTimeout(function(){window.print()},200)}</script>
 </body></html>`;
-  // 새 창 대신 화면 안의 숨은 프레임으로 인쇄 (앱/휴대폰에서 창이 닫히는 문제 방지)
-  const old = document.getElementById("print-property-frame");
+  // 새 창 대신 화면 안에 미리보기를 띄우고, 위의 '인쇄' 버튼으로 인쇄 (휴대폰에서도 미리보기 가능)
+  const old = document.getElementById("print-property-preview");
   if (old) old.remove();
+  const wrap = document.createElement("div");
+  wrap.id = "print-property-preview";
+  wrap.style.cssText = "position:fixed;inset:0;z-index:99999;background:#e5e7eb;display:flex;flex-direction:column";
+  const bar = document.createElement("div");
+  bar.style.cssText = "display:flex;gap:8px;padding:10px;background:#111;justify-content:flex-end";
+  const btnCss = "padding:10px 18px;border-radius:8px;font-size:16px;font-weight:700;border:0;white-space:nowrap";
+  const close = document.createElement("button");
+  close.textContent = "닫기";
+  close.style.cssText = btnCss + ";background:#e5e7eb;color:#111";
+  close.onclick = () => wrap.remove();
+  const doPrint = document.createElement("button");
+  doPrint.textContent = "🖨️ 인쇄";
+  doPrint.style.cssText = btnCss + ";background:#facc15;color:#111";
   const f = document.createElement("iframe");
-  f.id = "print-property-frame";
-  f.setAttribute("aria-hidden", "true");
-  f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0";
+  f.style.cssText = "flex:1;width:100%;border:0;background:#fff";
   f.srcdoc = html.replace(/<script>[\s\S]*?<\/script>/, "");
-  f.onload = () => {
+  doPrint.onclick = () => {
     const cw = f.contentWindow;
     if (!cw) return;
     try { cw.focus(); cw.print(); } catch { alert("프린트 창을 열 수 없어요."); }
   };
-  document.body.appendChild(f);
+  bar.append(close, doPrint);
+  wrap.append(bar, f);
+  document.body.appendChild(wrap);
 }
