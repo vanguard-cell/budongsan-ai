@@ -199,6 +199,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                   {c.name && <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{c.name}</span>}
                   <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(c.phone)}</span>
                   <a href={`tel:${c.phone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
+                  <a href={smsHref(c.phone, c.name, "매물")} onClick={() => logSms(c.relation || "연락처")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                 </div>
               ))}
               {hasTenant && (
