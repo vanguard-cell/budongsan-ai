@@ -331,7 +331,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-sm font-medium text-gray-700">추가 연락처 <span className="text-[10px] text-gray-400">(상담·배우자 등)</span></label>
-              <button type="button" onClick={() => set("extraContacts", [...(form.extraContacts ?? []), { relation: "상담", name: "", phone: "" }])}
+              <button type="button" onClick={() => set("extraContacts", [...(form.extraContacts ?? []), { relation: "기타", name: "", phone: "" }])}
                 className="text-xs font-semibold text-blue-600 whitespace-nowrap">+ 추가</button>
             </div>
             <div className="space-y-2">
@@ -339,12 +339,8 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                 const upd = (patch: Partial<ExtraContact>) => set("extraContacts", (form.extraContacts ?? []).map((x, j) => j === i ? { ...x, ...patch } : x));
                 return (
                   <div key={i} className="flex items-center gap-1.5">
-                    <select value={c.relation} onChange={e => upd({ relation: e.target.value })}
-                      className="w-20 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50">
-                      {CONTACT_RELATIONS.map(r => <option key={r} value={r}>{r}</option>)}
-                    </select>
                     <input value={c.name} onChange={e => upd({ name: e.target.value })} placeholder="이름"
-                      className="w-20 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
+                      className="w-28 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
                     <input type="tel" value={formatPhone(c.phone || "")} onChange={e => upd({ phone: formatPhoneInput(e.target.value) })} placeholder="010-0000-0000"
                       className="min-w-0 flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
                     <button type="button" onClick={() => set("extraContacts", (form.extraContacts ?? []).filter((_, j) => j !== i))}
