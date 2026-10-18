@@ -1,6 +1,6 @@
 /** 매물 1건 프린트 — 화면 안에 한 장짜리 소개서 미리보기를 띄우고 '인쇄' 버튼으로 인쇄한다 */
 
-import type { Property } from "@/lib/properties-db";
+import type { Property, ComplexInfo } from "@/lib/properties-db";
 import { getAgencyDisplayName } from "@/app/expiry/contracts";
 import { kstDateStr } from "@/lib/kst";
 import { addressStr, fmtNum, m2ToPyeong } from "./helpers";
@@ -9,7 +9,7 @@ function esc(s: string): string {
   return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-export function printProperty(p: Property) {
+export function printProperty(p: Property, info?: ComplexInfo) {
   const price = p.dealType === "월세"
     ? `${p.price ? fmtNum(p.price) : "0"} / ${p.monthly ? fmtNum(p.monthly) : "0"} 만원`
     : p.price ? `${fmtNum(p.price)} 만원` : "—";
@@ -35,6 +35,9 @@ export function printProperty(p: Property) {
     cell("현재 보증금 / 월세", p.tenantDeposit || p.tenantMonthly ? `${man(p.tenantDeposit) || "0"} / ${man(p.tenantMonthly) || "0"} 만원` : "", 2),
     cell("임대차 만기", p.leaseEndDate),
     cell("옵션", p.options, 3),
+    ...(info?.approvalDate || info?.households
+      ? [cell("사용승인일", info.approvalDate || ""), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : ""), cell("", "")]
+      : []),
   ].join("");
   const people = [
     cell("집주인", phone(p.ownerName, p.ownerPhone, p.ownerCarrier), 3),

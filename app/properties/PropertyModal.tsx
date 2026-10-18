@@ -5,7 +5,7 @@
 import { stripUnit } from "@/lib/address";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { useState, useEffect } from "react";
-import { CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex } from "@/lib/properties-db";
+import { CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, subscribeComplexInfo, saveComplexInfo, complexInfoKey, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex, type ComplexInfo } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
 import DatedMemo from "@/app/components/DatedMemo";
 import { CONTACT_RELATIONS, type ExtraContact } from "@/lib/properties-db";
@@ -38,6 +38,22 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
     return subscribeMyComplexes(user.agencyId, setMyComplexes);
   }, [user?.agencyId]);
   const typedName = baseAddress.trim();
+  // 단지 기본 정보 (사용승인일·세대수) — 단지마다 한 번만 저장
+  const [infoMap, setInfoMap] = useState<Record<string, ComplexInfo>>({});
+  useEffect(() => {
+    if (!user?.agencyId) return;
+    return subscribeComplexInfo(user.agencyId, setInfoMap);
+  }, [user?.agencyId]);
+  const infoKey = complexInfoKey(form.propertyType, typedName);
+  const savedInfo = infoMap[infoKey];
+  const [infoDraft, setInfoDraft] = useState<ComplexInfo>({});
+  useEffect(() => { setInfoDraft({ approvalDate: savedInfo?.approvalDate || "", households: savedInfo?.households || "" }); },
+    [infoKey, savedInfo?.approvalDate, savedInfo?.households]);
+  const saveInfo = async () => {
+    if (!user?.agencyId) { alert("사무실 정보를 불러오는 중이에요. 잠시 후 다시 눌러주세요."); return; }
+    try { await saveComplexInfo(user.agencyId, infoKey, infoDraft); alert("단지 정보를 저장했어요. 이 단지 프린트에 자동으로 나와요."); }
+    catch { alert("저장 중 오류가 났어요. 다시 해주세요."); }
+  };
   const alreadyMine = myComplexes.some(c => c.propertyType === form.propertyType && c.name === typedName);
   const saveMine = async () => {
     if (!typedName) return;
@@ -175,6 +191,18 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             )}
             {(typedName && alreadyMine) && (
               <p className="mt-2 text-xs font-medium text-teal-700">✅ ‘{typedName}’ 내 단지 목록에 저장되어 있어요</p>
+            )}
+            {typedName && (
+              <div className="mt-2 rounded-xl border border-gray-200 bg-white p-2.5">
+                <p className="text-[11px] font-semibold text-gray-600 mb-1.5">🏢 단지 정보 <span className="font-normal text-gray-400">(한 번만 저장하면 이 단지 프린트에 자동으로 나와요)</span></p>
+                <div className="flex gap-2">
+                  <input value={infoDraft.approvalDate || ""} onChange={e => setInfoDraft(d => ({ ...d, approvalDate: e.target.value }))}
+                    placeholder="사용승인일 (예: 2023.05.10)" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
+                  <input value={infoDraft.households || ""} onChange={e => setInfoDraft(d => ({ ...d, households: e.target.value }))}
+                    placeholder="세대수" inputMode="numeric" className="w-24 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
+                  <button type="button" onClick={saveInfo} className="whitespace-nowrap px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700">저장</button>
+                </div>
+              </div>
             )}
             {(showSaved || savedMatches.some(c => c.mine)) && savedMatches.length > 0 && (
               <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50/60 p-2">

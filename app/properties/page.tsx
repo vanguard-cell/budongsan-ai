@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
 import { confirmBulkDelete } from "@/lib/backup";
 import {
-  subscribeProperties, saveProperty, deleteProperty, emptyProperty,
+  subscribeProperties, subscribeComplexInfo, complexInfoKey, type ComplexInfo, saveProperty, deleteProperty, emptyProperty,
   sampleProperties, savePropertiesBatch, logPropertyEvent,
   type Property, type PropertyType, type DealType,
 } from "@/lib/properties-db";
@@ -98,6 +98,7 @@ export default function PropertiesPage() {
   // 정렬: 등록순 / 금액 / 만기일 / 잔금일 / 동·호순
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho" | "area_asc" | "area_desc">("newest");
   // 단지→동→호 조회 (선방 스타일): 단지(베이스주소) / 동 / 호
+  const [complexInfoMap, setComplexInfoMap] = useState<Record<string, ComplexInfo>>({});
   const [selectedComplex, setSelectedComplex] = useState<string>("");
   const [selectedDong, setSelectedDong] = useState<string>("");
   const [selectedHo, setSelectedHo] = useState<string>("");
@@ -153,7 +154,8 @@ export default function PropertiesPage() {
     const u2 = subscribeSchedules(user.agencyId, setSchedules);
     const u3 = subscribeCustomers(user.agencyId, setCustomers);
     const u4 = subscribeContracts(user.agencyId, setContracts);  // 만기 계약 — 매출 집계에 포함
-    return () => { u1(); u2(); u3(); u4(); };
+    const u5 = subscribeComplexInfo(user.agencyId, setComplexInfoMap);  // 단지 사용승인일·세대수 (프린트용)
+    return () => { u1(); u2(); u3(); u4(); u5(); };
   }, [user]);
 
   // 필터·정렬·검색·탭 변경 시 1페이지로 리셋
@@ -1056,6 +1058,7 @@ export default function PropertiesPage() {
                     <PropertyCard
                       key={p.id}
                       property={p}
+                      complexInfo={complexInfoMap[complexInfoKey(p.propertyType || "", baseAddr(p))]}
                       schedules={schedules.filter(s => s.propertyId === p.id)}
                       isPinned={pinnedIds.has(p.id)}
                       onPin={() => togglePin(p.id)}

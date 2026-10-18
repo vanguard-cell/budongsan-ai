@@ -4,7 +4,7 @@
  */
 
 import {
-  collection, doc, setDoc, deleteDoc, getDoc, getDocs, writeBatch, updateDoc, arrayUnion, arrayRemove,
+  collection, doc, setDoc, deleteDoc, getDoc, getDocs, writeBatch, updateDoc, arrayUnion, arrayRemove, FieldPath,
   query, orderBy, onSnapshot, serverTimestamp, Timestamp,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -509,4 +509,21 @@ export async function addMyComplex(agencyId: string, c: MyComplex): Promise<void
 
 export async function removeMyComplex(agencyId: string, c: MyComplex): Promise<void> {
   await updateDoc(doc(db, "agencies", agencyId), { myComplexes: arrayRemove({ name: c.name, propertyType: c.propertyType }) });
+}
+
+/* ── 단지 기본 정보 (사용승인일·세대수 — 한 번 저장해 두면 그 단지 프린트에 자동 표시) ──
+ * 경로: /agencies/{agencyId} 문서의 complexInfo 필드 { "유형|단지명": {approvalDate, households} } (없으면 빈 값) */
+export interface ComplexInfo { approvalDate?: string; households?: string }
+export const complexInfoKey = (propertyType: string, name: string) => `${propertyType || ""}|${name}`;
+
+export function subscribeComplexInfo(agencyId: string, cb: (map: Record<string, ComplexInfo>) => void): Unsubscribe {
+  return onSnapshot(doc(db, "agencies", agencyId), snap => {
+    const raw = snap.exists() ? snap.data().complexInfo : null;
+    cb(raw && typeof raw === "object" ? raw as Record<string, ComplexInfo> : {});
+  }, () => cb({}));
+}
+
+export async function saveComplexInfo(agencyId: string, key: string, info: ComplexInfo): Promise<void> {
+  await updateDoc(doc(db, "agencies", agencyId), new FieldPath("complexInfo", key),
+    { approvalDate: info.approvalDate || "", households: info.households || "" });
 }
