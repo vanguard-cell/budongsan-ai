@@ -739,7 +739,10 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
       <span className="w-11 shrink-0 text-center text-[12px] font-bold tabular-nums text-gray-700 dark:text-gray-200">{lead || "—"}</span>
       <span className="w-[3px] h-4 rounded-sm shrink-0" style={{ background: bar }} />
       <span className={`w-12 shrink-0 text-center text-[11px] leading-tight font-light px-0.5 py-0.5 rounded-full whitespace-nowrap ${SOURCE_CELL_CLASSES[item.schedule?.scheduleType === "기타" ? "etc" : item.source]}`}>{label}</span>
-      <span className="flex-1 min-w-0 line-clamp-2 break-words text-[13px] leading-snug text-gray-800 dark:text-gray-100">{title}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block line-clamp-2 break-words text-[13px] leading-snug text-gray-800 dark:text-gray-100">{title}</span>
+        {item.schedule?.memo?.trim() && <span className="block line-clamp-2 break-words text-[12px] leading-snug text-gray-500 dark:text-gray-400 mt-0.5">💬 {item.schedule.memo.trim()}</span>}
+      </span>
       {linked && onOpenProperty && (
         <button type="button" onClick={e => { e.stopPropagation(); onOpenProperty(linked); }} className="shrink-0 inline-flex items-center gap-0.5 px-2 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold whitespace-nowrap hover:bg-emerald-700">
           <span className="material-symbols-outlined text-[13px]">domain</span>매물
