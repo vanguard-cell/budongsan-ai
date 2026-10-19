@@ -9,6 +9,13 @@ function esc(s: string): string {
   return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+/** 20200730 · 2020.07.30 · 2020/7/30 → 2020-07-30 (읽을 수 없는 형태는 그대로) */
+function fmtApprovalDate(v?: string): string {
+  const t = (v || "").trim();
+  const m = t.match(/^(\d{4})\D?(\d{1,2})\D?(\d{1,2})\D*$/);
+  return m ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : t;
+}
+
 export function printProperty(p: Property, info?: ComplexInfo) {
   const price = p.dealType === "월세"
     ? `${p.price ? fmtNum(p.price) : "0"} / ${p.monthly ? fmtNum(p.monthly) : "0"} 만원`
@@ -36,7 +43,7 @@ export function printProperty(p: Property, info?: ComplexInfo) {
     cell("임대차 만기", p.leaseEndDate),
     cell("옵션", p.options, 3),
     ...(info?.approvalDate || info?.households
-      ? [cell("사용승인일", info.approvalDate || ""), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : ""), cell("", "")]
+      ? [cell("사용승인일", fmtApprovalDate(info.approvalDate)), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : ""), cell("", "")]
       : []),
   ].join("");
   const people = [

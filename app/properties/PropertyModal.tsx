@@ -197,7 +197,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                 <p className="text-[11px] font-semibold text-gray-600 mb-1.5">🏢 단지 정보 <span className="font-normal text-gray-400">(한 번만 저장하면 이 단지 프린트에 자동으로 나와요)</span></p>
                 <div className="flex gap-2">
                   <input value={infoDraft.approvalDate || ""} onChange={e => setInfoDraft(d => ({ ...d, approvalDate: e.target.value }))}
-                    placeholder="사용승인일 (예: 2023.05.10)" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
+                    placeholder="사용승인일 (예: 2023-05-10)" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                   <input value={infoDraft.households || ""} onChange={e => setInfoDraft(d => ({ ...d, households: e.target.value }))}
                     placeholder="세대수" inputMode="numeric" className="w-24 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                   <button type="button" onClick={saveInfo} className="whitespace-nowrap px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700">저장</button>
