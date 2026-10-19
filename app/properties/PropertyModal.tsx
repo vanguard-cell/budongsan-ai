@@ -201,14 +201,14 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                   <input value={infoDraft.households || ""} onChange={e => setInfoDraft(d => ({ ...d, households: e.target.value }))}
                     placeholder="세대수" inputMode="numeric" className="w-24 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                 </div>
+                <input value={infoDraft.address || ""} onChange={e => setInfoDraft(d => ({ ...d, address: e.target.value }))}
+                  placeholder="주소" className="mt-2 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                 <div className="mt-2 flex gap-2">
                   <input value={infoDraft.minFloor || ""} onChange={e => setInfoDraft(d => ({ ...d, minFloor: e.target.value }))}
                     placeholder="최저층" inputMode="numeric" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                   <input value={infoDraft.maxFloor || ""} onChange={e => setInfoDraft(d => ({ ...d, maxFloor: e.target.value }))}
                     placeholder="최고층" inputMode="numeric" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                 </div>
-                <input value={infoDraft.address || ""} onChange={e => setInfoDraft(d => ({ ...d, address: e.target.value }))}
-                  placeholder="주소" className="mt-2 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                 <div className="mt-2 flex gap-2">
                   <input value={infoDraft.mgmtPhone || ""} onChange={e => setInfoDraft(d => ({ ...d, mgmtPhone: e.target.value }))}
                     placeholder="관리소 전화번호" inputMode="tel" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
