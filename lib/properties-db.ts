@@ -513,7 +513,7 @@ export async function removeMyComplex(agencyId: string, c: MyComplex): Promise<v
 
 /* ── 단지 기본 정보 (사용승인일·세대수 — 한 번 저장해 두면 그 단지 프린트에 자동 표시) ──
  * 경로: /agencies/{agencyId} 문서의 complexInfo 필드 { "유형|단지명": {approvalDate, households} } (없으면 빈 값) */
-export interface ComplexInfo { approvalDate?: string; households?: string }
+export interface ComplexInfo { approvalDate?: string; households?: string; address?: string; mgmtPhone?: string; commonPassword?: string }
 export const complexInfoKey = (propertyType: string, name: string) => `${propertyType || ""}|${name}`;
 
 export function subscribeComplexInfo(agencyId: string, cb: (map: Record<string, ComplexInfo>) => void): Unsubscribe {
@@ -525,5 +525,5 @@ export function subscribeComplexInfo(agencyId: string, cb: (map: Record<string, 
 
 export async function saveComplexInfo(agencyId: string, key: string, info: ComplexInfo): Promise<void> {
   await updateDoc(doc(db, "agencies", agencyId), new FieldPath("complexInfo", key),
-    { approvalDate: info.approvalDate || "", households: info.households || "" });
+    { approvalDate: info.approvalDate || "", households: info.households || "", address: info.address || "", mgmtPhone: info.mgmtPhone || "", commonPassword: info.commonPassword || "" });
 }
