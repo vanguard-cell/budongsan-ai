@@ -57,15 +57,14 @@ export function printProperty(p: Property, info?: ComplexInfo) {
     cell("옵션", p.options, 3),
   ].join("");
   const complexCells = [
-    ...(info?.approvalDate || info?.households
-      ? [cell("사용승인일", fmtApprovalDate(info.approvalDate), 1, true), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : "", 1, true), cell("", "")]
+    ...(info?.approvalDate || info?.households || info?.commonPassword
+      ? [cell("사용승인일", fmtApprovalDate(info.approvalDate), 1, true), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : "", 1, true), cell("공동비번", info.commonPassword || "", 1, true)]
       : []),
-    ...(info?.address ? [cell("주소", info.address, 3, true)] : []),
-    ...(info?.minFloor || info?.maxFloor
-      ? [cell("최저층", info.minFloor ? `${info.minFloor}층` : "", 1, true), cell("최고층", info.maxFloor ? `${info.maxFloor}층` : "", 1, true), cell("", "")]
+    ...(info?.address || info?.minFloor || info?.maxFloor
+      ? [cell("주소", info.address || "", 1, true), cell("최저층", info.minFloor ? `${info.minFloor}층` : "", 1, true), cell("최고층", info.maxFloor ? `${info.maxFloor}층` : "", 1, true)]
       : []),
-    ...(info?.mgmtPhone || info?.commonPassword
-      ? [cell("관리소 전화", fmtPhone(info.mgmtPhone), 2, true), cell("공동비번", info.commonPassword || "", 1, true)]
+    ...(info?.mgmtPhone || info?.mgmtFax
+      ? [cell("관리사무소 전화", fmtPhone(info.mgmtPhone), 2, true), cell("팩스", fmtPhone(info.mgmtFax), 1, true)]
       : []),
   ].join("");
   const people = [
