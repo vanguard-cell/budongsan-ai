@@ -16,6 +16,18 @@ function fmtApprovalDate(v?: string): string {
   return m ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : t;
 }
 
+/** 0317963031 → 031-796-3031 (숫자만 있을 때만 하이픈을 넣고, 이미 구분된 건 그대로) */
+function fmtPhone(v?: string): string {
+  const t = (v || "").trim();
+  if (!/^[\d\s]+$/.test(t)) return t;
+  const d = t.replace(/\s/g, "");
+  if (d.startsWith("02")) return d.length === 9 ? d.replace(/^(02)(\d{3})(\d{4})$/, "$1-$2-$3") : d.replace(/^(02)(\d{4})(\d{4})$/, "$1-$2-$3");
+  if (d.length === 8) return d.replace(/^(\d{4})(\d{4})$/, "$1-$2");
+  if (d.length === 10) return d.replace(/^(\d{3})(\d{3})(\d{4})$/, "$1-$2-$3");
+  if (d.length === 11) return d.replace(/^(\d{3})(\d{4})(\d{4})$/, "$1-$2-$3");
+  return t;
+}
+
 export function printProperty(p: Property, info?: ComplexInfo) {
   const price = p.dealType === "월세"
     ? `${p.price ? fmtNum(p.price) : "0"} / ${p.monthly ? fmtNum(p.monthly) : "0"} 만원`
@@ -42,6 +54,8 @@ export function printProperty(p: Property, info?: ComplexInfo) {
     cell("현재 보증금 / 월세", p.tenantDeposit || p.tenantMonthly ? `${man(p.tenantDeposit) || "0"} / ${man(p.tenantMonthly) || "0"} 만원` : "", 2),
     cell("임대차 만기", p.leaseEndDate),
     cell("옵션", p.options, 3),
+  ].join("");
+  const complexCells = [
     ...(info?.approvalDate || info?.households
       ? [cell("사용승인일", fmtApprovalDate(info.approvalDate), 1, true), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : "", 1, true), cell("", "")]
       : []),
@@ -50,7 +64,7 @@ export function printProperty(p: Property, info?: ComplexInfo) {
       ? [cell("최저층", info.minFloor ? `${info.minFloor}층` : "", 1, true), cell("최고층", info.maxFloor ? `${info.maxFloor}층` : "", 1, true), cell("", "")]
       : []),
     ...(info?.mgmtPhone || info?.commonPassword
-      ? [cell("관리소 전화", info.mgmtPhone || "", 2, true), cell("공동비번", info.commonPassword || "", 1, true)]
+      ? [cell("관리소 전화", fmtPhone(info.mgmtPhone), 2, true), cell("공동비번", info.commonPassword || "", 1, true)]
       : []),
   ].join("");
   const people = [
@@ -81,6 +95,7 @@ export function printProperty(p: Property, info?: ComplexInfo) {
 <h1>${esc(addressStr(p))}</h1>
 <div class="sub">${agency ? `${esc(agency)} · ` : ""}출력일 ${kstDateStr()}</div>
 ${box("매물 정보", cells)}
+${complexCells ? box("단지 공통 정보", complexCells) : ""}
 ${box("연락처", people)}
 <div class="box"><div class="bt">메모 / 상담 내용</div><div class="memo">${esc(p.memo)}</div></div>
 <script>window.onload=function(){setTimeout(function(){window.print()},200)}</script>
