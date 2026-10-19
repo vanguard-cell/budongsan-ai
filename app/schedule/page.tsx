@@ -734,8 +734,10 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
     lead = dd === Infinity ? "" : dd < 0 ? `${-dd}일전` : dd === 0 ? "오늘" : `D-${dd}`;
   }
   const bar = SOURCE_BAR[item.source];
+  const memo = item.schedule?.memo?.trim();
   return (
-    <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${done ? "opacity-50" : ""}`}>
+    <div className={`px-3 py-2 rounded-xl border bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${done ? "opacity-50" : ""}`}>
+    <div className="flex items-center gap-2.5">
       <span className="w-11 shrink-0 text-center text-[12px] font-bold tabular-nums text-gray-700 dark:text-gray-200">{lead || "—"}</span>
       <span className="w-[3px] h-4 rounded-sm shrink-0" style={{ background: bar }} />
       <span className={`w-12 shrink-0 text-center text-[11px] leading-tight font-light px-0.5 py-0.5 rounded-full whitespace-nowrap ${SOURCE_CELL_CLASSES[item.schedule?.scheduleType === "기타" ? "etc" : item.source]}`}>{label}</span>
@@ -747,6 +749,8 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
       )}
       {done && <span className="shrink-0 text-[10px] text-green-600 font-medium">완료</span>}
       <span className="material-symbols-outlined text-gray-300 dark:text-slate-600 text-[18px] shrink-0">chevron_right</span>
+    </div>
+    {memo && <p className="mt-1 ml-[3.4rem] text-[12px] leading-snug text-gray-500 dark:text-gray-400 line-clamp-3 break-words whitespace-pre-line">💬 {memo}</p>}
     </div>
   );
 }
