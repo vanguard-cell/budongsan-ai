@@ -53,6 +53,7 @@ export function printProperty(p: Property, info?: ComplexInfo) {
     cell(dealLabel, p.dealType === "월세" ? `${man(p.price) || "0"} / ${man(p.monthly) || "0"} 만원` : man(p.price) ? `${man(p.price)} 만원` : "", 2),
     cell("현재 보증금 / 월세", p.tenantDeposit || p.tenantMonthly ? `${man(p.tenantDeposit) || "0"} / ${man(p.tenantMonthly) || "0"} 만원` : "", 2),
     cell("임대차 만기", p.leaseEndDate),
+    ...(p.occupancy ? [cell("입주 상태", ({ owner: "주인거주", vacant: "공실", tenant: "임차인 (임대중)", jeonse: "임차인 (전세)", wolse: "임차인 (월세)" } as Record<string, string>)[p.occupancy] || "", 3)] : []),
     cell("옵션", p.options, 3),
   ].join("");
   const complexCells = [
