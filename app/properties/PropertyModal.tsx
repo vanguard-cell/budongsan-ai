@@ -47,8 +47,8 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
   const infoKey = complexInfoKey(form.propertyType, typedName);
   const savedInfo = infoMap[infoKey];
   const [infoDraft, setInfoDraft] = useState<ComplexInfo>({});
-  useEffect(() => { setInfoDraft({ approvalDate: savedInfo?.approvalDate || "", households: savedInfo?.households || "", address: savedInfo?.address || "", mgmtPhone: savedInfo?.mgmtPhone || "", commonPassword: savedInfo?.commonPassword || "" }); },
-    [infoKey, savedInfo?.approvalDate, savedInfo?.households, savedInfo?.address, savedInfo?.mgmtPhone, savedInfo?.commonPassword]);
+  useEffect(() => { setInfoDraft({ approvalDate: savedInfo?.approvalDate || "", households: savedInfo?.households || "", address: savedInfo?.address || "", mgmtPhone: savedInfo?.mgmtPhone || "", commonPassword: savedInfo?.commonPassword || "", minFloor: savedInfo?.minFloor || "", maxFloor: savedInfo?.maxFloor || "" }); },
+    [infoKey, savedInfo?.approvalDate, savedInfo?.households, savedInfo?.address, savedInfo?.mgmtPhone, savedInfo?.commonPassword, savedInfo?.minFloor, savedInfo?.maxFloor]);
   const saveInfo = async () => {
     if (!user?.agencyId) { alert("사무실 정보를 불러오는 중이에요. 잠시 후 다시 눌러주세요."); return; }
     try { await saveComplexInfo(user.agencyId, infoKey, infoDraft); alert("단지 정보를 저장했어요. 이 단지 프린트에 자동으로 나와요."); }
@@ -200,6 +200,12 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                     placeholder="사용승인일 (예: 2023-05-10)" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                   <input value={infoDraft.households || ""} onChange={e => setInfoDraft(d => ({ ...d, households: e.target.value }))}
                     placeholder="세대수" inputMode="numeric" className="w-24 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <input value={infoDraft.minFloor || ""} onChange={e => setInfoDraft(d => ({ ...d, minFloor: e.target.value }))}
+                    placeholder="최저층" inputMode="numeric" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
+                  <input value={infoDraft.maxFloor || ""} onChange={e => setInfoDraft(d => ({ ...d, maxFloor: e.target.value }))}
+                    placeholder="최고층" inputMode="numeric" className="min-w-0 flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />
                 </div>
                 <input value={infoDraft.address || ""} onChange={e => setInfoDraft(d => ({ ...d, address: e.target.value }))}
                   placeholder="주소" className="mt-2 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-xs bg-gray-50" />

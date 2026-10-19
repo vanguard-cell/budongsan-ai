@@ -45,6 +45,9 @@ export function printProperty(p: Property, info?: ComplexInfo) {
     ...(info?.approvalDate || info?.households
       ? [cell("사용승인일", fmtApprovalDate(info.approvalDate)), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : ""), cell("", "")]
       : []),
+    ...(info?.minFloor || info?.maxFloor
+      ? [cell("최저층", info.minFloor ? `${info.minFloor}층` : ""), cell("최고층", info.maxFloor ? `${info.maxFloor}층` : ""), cell("", "")]
+      : []),
     ...(info?.address ? [cell("주소", info.address, 3)] : []),
     ...(info?.mgmtPhone || info?.commonPassword
       ? [cell("관리소 전화", info.mgmtPhone || "", 2), cell("공동비번", info.commonPassword || "")]
