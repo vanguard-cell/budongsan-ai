@@ -28,8 +28,8 @@ export function printProperty(p: Property, info?: ComplexInfo) {
     [dash(name), dash(tel), dash(carrier) ? `(${carrier})` : ""].filter(Boolean).join(" ");
   const extras = (p.extraContacts || []).filter(c => c.name || c.phone);
   // 칸 하나: [이름표, 값] — 옛날 프로그램 화면처럼 칸칸이 나누어 한 장에 담는다
-  const cell = (k: string, v: string, span = 1) =>
-    `<div class="c" style="grid-column:span ${span}"><span class="k">${esc(k)}</span><span class="v">${esc(v) || "&nbsp;"}</span></div>`;
+  const cell = (k: string, v: string, span = 1, small = false) =>
+    `<div class="c${small ? " s" : ""}" style="grid-column:span ${span}"><span class="k">${esc(k)}</span><span class="v">${esc(v) || "&nbsp;"}</span></div>`;
   const box = (title: string, body: string) =>
     `<div class="box"><div class="bt">${esc(title)}</div><div class="bb">${body}</div></div>`;
   const cells = [
@@ -43,14 +43,14 @@ export function printProperty(p: Property, info?: ComplexInfo) {
     cell("임대차 만기", p.leaseEndDate),
     cell("옵션", p.options, 3),
     ...(info?.approvalDate || info?.households
-      ? [cell("사용승인일", fmtApprovalDate(info.approvalDate)), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : ""), cell("", "")]
+      ? [cell("사용승인일", fmtApprovalDate(info.approvalDate), 1, true), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : "", 1, true), cell("", "")]
       : []),
-    ...(info?.address ? [cell("주소", info.address, 3)] : []),
+    ...(info?.address ? [cell("주소", info.address, 3, true)] : []),
     ...(info?.minFloor || info?.maxFloor
-      ? [cell("최저층", info.minFloor ? `${info.minFloor}층` : ""), cell("최고층", info.maxFloor ? `${info.maxFloor}층` : ""), cell("", "")]
+      ? [cell("최저층", info.minFloor ? `${info.minFloor}층` : "", 1, true), cell("최고층", info.maxFloor ? `${info.maxFloor}층` : "", 1, true), cell("", "")]
       : []),
     ...(info?.mgmtPhone || info?.commonPassword
-      ? [cell("관리소 전화", info.mgmtPhone || "", 2), cell("공동비번", info.commonPassword || "")]
+      ? [cell("관리소 전화", info.mgmtPhone || "", 2, true), cell("공동비번", info.commonPassword || "", 1, true)]
       : []),
   ].join("");
   const people = [
@@ -63,17 +63,20 @@ export function printProperty(p: Property, info?: ComplexInfo) {
 <title>${esc(addressStr(p))}</title>
 <style>
   *{box-sizing:border-box}
-  body{font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#000;margin:0;padding:16px}
-  h1{font-size:22px;margin:0 0 4px;word-break:keep-all}
-  .sub{font-size:12px;color:#666;margin-bottom:12px}
-  .box{border:2px solid #7a1f4d;margin-bottom:10px}
-  .bt{background:#7a1f4d;color:#fff;font-size:13px;font-weight:700;padding:3px 8px}
+  body{font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#000;margin:0;padding:8px}
+  h1{font-size:17px;margin:0 0 2px;word-break:keep-all}
+  .sub{font-size:10px;color:#666;margin-bottom:6px}
+  .box{border:2px solid #7a1f4d;margin-bottom:5px}
+  .bt{background:#7a1f4d;color:#fff;font-size:11px;font-weight:700;padding:2px 6px}
   .bb{display:grid;grid-template-columns:repeat(3,1fr)}
-  .c{display:flex;flex-direction:column;border:1px solid #d9b8c9;padding:4px 8px;min-height:44px;min-width:0}
-  .k{font-size:11px;color:#7a1f4d;font-weight:700;white-space:nowrap}
-  .v{font-size:16px;font-weight:600;white-space:pre-wrap;word-break:break-all}
-  .memo{min-height:160px;padding:8px;font-size:15px;white-space:pre-wrap;word-break:break-all}
-  @media print{body{padding:0}@page{margin:10mm}}
+  .c{display:flex;flex-direction:column;border:1px solid #d9b8c9;padding:2px 6px;min-height:32px;min-width:0}
+  .k{font-size:9px;color:#7a1f4d;font-weight:700;white-space:nowrap}
+  .v{font-size:13px;font-weight:600;white-space:pre-wrap;word-break:break-all}
+  .s .k{font-size:8px}
+  .s .v{font-size:10px;font-weight:500}
+  .s{min-height:24px}
+  .memo{min-height:50px;padding:6px;font-size:12px;white-space:pre-wrap;word-break:break-all}
+  @media print{body{padding:0}@page{margin:6mm}}
 </style></head><body>
 <h1>${esc(addressStr(p))}</h1>
 <div class="sub">${agency ? `${esc(agency)} · ` : ""}출력일 ${kstDateStr()}</div>
