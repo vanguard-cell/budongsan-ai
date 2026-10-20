@@ -356,9 +356,14 @@ export default function PropertiesPage() {
     // 날짜 정렬용 — 빈 값은 맨 뒤로
     const dateKey = (v: string) => v && v.length >= 10 ? v.slice(0, 10) : "9999-99-99";
     // 정렬 (즐겨찾기는 항상 상단)
+    // 월세만 보고 있을 때는 보증금이 아니라 월세 금액 기준(같으면 보증금 순)
+    const rentOnly = result.length > 0 && result.every(p => p.dealType === "월세");
+    const rentNum = (p: Property) => parseInt((p.monthly || "0").replace(/\D/g, ""), 10) || 0;
+    const priceCmp = (a: Property, b: Property) =>
+      rentOnly ? (rentNum(a) - rentNum(b)) || (priceNum(a) - priceNum(b)) : priceNum(a) - priceNum(b);
     const sorted =
-      sortBy === "price_asc"  ? [...result].sort((a, b) => priceNum(a) - priceNum(b))
-    : sortBy === "price_desc" ? [...result].sort((a, b) => priceNum(b) - priceNum(a))
+      sortBy === "price_asc"  ? [...result].sort((a, b) => priceCmp(a, b))
+    : sortBy === "price_desc" ? [...result].sort((a, b) => priceCmp(b, a))
     : sortBy === "lease_end"  ? [...result].sort((a, b) => dateKey(a.leaseEndDate).localeCompare(dateKey(b.leaseEndDate)))
     : sortBy === "balance"    ? [...result].sort((a, b) => dateKey(a.balanceDate).localeCompare(dateKey(b.balanceDate)))
     : sortBy === "area_asc" || sortBy === "area_desc" ? (() => {
