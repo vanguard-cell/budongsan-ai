@@ -15,7 +15,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Property, PropertyType, DealType } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
-import { fmtNum, PROPERTY_TYPES, DEAL_TYPES, addressStr, splitAddress } from "./helpers";
+import { fmtNum, PROPERTY_TYPES, DEAL_TYPES, addressStr, splitAddress, highlightUnit } from "./helpers";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { kstDateStr } from "@/lib/kst";
 
@@ -380,7 +380,7 @@ export default function PropertyTable({
                 >
                   {show("address") && (
                     <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>
-                      {reg.complex}
+                      {highlightUnit(reg.complex)}
                     </td>
                   )}
                   {show("deal") && (

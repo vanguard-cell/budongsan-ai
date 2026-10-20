@@ -96,4 +96,15 @@ export function splitAddress(full: string): { region: string; complex: string } 
   if (cut === -1 || cut === tokens.length - 1) return { region: "", complex: full };
   return { region: tokens.slice(0, cut + 1).join(" "), complex: tokens.slice(cut + 1).join(" ") };
 }
-
+
+/** 주소 글 중 "101동", "1902호" 부분만 하늘색 바탕으로 표시 (목록에서 동·호수가 잘 보이게) */
+export function highlightUnit(text: string): React.ReactNode {
+  if (!text) return text;
+  const parts = text.split(/(\S+[동호])(?=\s|$)/g);
+  if (parts.length === 1) return text;
+  return parts.map((s, i) =>
+    i % 2 === 1 && /^[\d-]+[동호]$|^지하\d+호$/.test(s)
+      ? <span key={i} className="rounded bg-sky-100 px-1 text-sky-900 dark:bg-sky-900/40 dark:text-sky-100 whitespace-nowrap">{s}</span>
+      : s
+  );
+}

@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Schedule } from "@/lib/schedules-db";
 import { dDay, severityOf, severityClasses, severityLabel, dDayLabel, getAgencyDisplayName } from "@/app/expiry/contracts";
-import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr } from "./helpers";
+import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, highlightUnit } from "./helpers";
 import MemoText from "@/app/components/MemoText";
 import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
 import { kstDateStr } from "@/lib/kst";
@@ -152,7 +152,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           {/* 2째줄: 주소(단지·동호) — 주소가 길면 주소 끝만 ...으로 */}
           <div className="mt-0.5 flex items-baseline gap-x-2 min-w-0">
             <span className="min-w-0 truncate text-[12px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
-              {addressStr(p) || "—"}
+              {highlightUnit(addressStr(p)) || "—"}
             </span>
           </div>
 
