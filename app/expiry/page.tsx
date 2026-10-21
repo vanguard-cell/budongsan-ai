@@ -514,7 +514,7 @@ export default function ExpiryPage() {
               <button
                 onClick={exportContacts}
                 title="전화번호를 폰 연락처로 가져올 수 있는 파일(.vcf)을 받습니다"
-                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                className="hidden px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors items-center gap-1.5 whitespace-nowrap"
               >
                 <span className="material-symbols-outlined text-base">contacts</span>
                 <span className="hidden sm:inline">연락처 내보내기</span>
