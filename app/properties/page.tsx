@@ -116,7 +116,7 @@ export default function PropertiesPage() {
   // 입주상태 필터: "" 전체 / owner 집주인 / vacant 공실
   const [occFilter, setOccFilter] = useState<"" | "owner" | "vacant">("");
   // 정렬: 등록순 / 금액 / 만기일 / 잔금일 / 동·호순
-  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho" | "area_asc" | "area_desc">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho" | "area_asc" | "area_desc" | "floor">("newest");
   // 단지→동→호 조회 (선방 스타일): 단지(베이스주소) / 동 / 호
   const [complexInfoMap, setComplexInfoMap] = useState<Record<string, ComplexInfo>>({});
   const [selectedComplex, setSelectedComplex] = useState<string>("");
@@ -441,6 +441,14 @@ export default function PropertiesPage() {
           return (x - y) * dir;
         });
       })()
+    : sortBy === "floor"      ? [...result].sort((a, b) => {
+        // 층 낮은 순(지하 → 1층 → …) — 층을 모르는 매물은 맨 뒤, 같은 층은 호수순
+        const x = floorOf(a), y = floorOf(b);
+        if (x === null && y === null) return numOf(a.ho) - numOf(b.ho);
+        if (x === null) return 1;
+        if (y === null) return -1;
+        return (x - y) || (numOf(a.ho) - numOf(b.ho));
+      })
     : sortBy === "dongho"     ? [...result].sort((a, b) => {
         // 단지명 → 동(숫자) → 호(숫자) 오름차순
         const baseA = baseAddr(a), baseB = baseAddr(b);
@@ -1023,7 +1031,7 @@ export default function PropertiesPage() {
               { key: "f3", label: "3층" },
               { key: "f4", label: "4층↑" },
             ] as const).map(r => (
-              <button key={r.key} onClick={() => setFloorFilter(r.key)}
+              <button key={r.key} onClick={() => { setFloorFilter(r.key); if (r.key === "f4") setSortBy("floor"); }}
                 className={`text-[13px] px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
                   floorFilter === r.key
                     ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
@@ -1047,6 +1055,7 @@ export default function PropertiesPage() {
               { key: "dongho",     label: "🏢 동·호순" },
               { key: "area_asc",   label: "📐 면적 작은순" },
               { key: "area_desc",  label: "📐 면적 큰순" },
+              { key: "floor",      label: "🏬 층순" },
             ] as const).map(s => (
               <button key={s.key} onClick={() => setSortBy(s.key)}
                 className={`text-[13px] px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
