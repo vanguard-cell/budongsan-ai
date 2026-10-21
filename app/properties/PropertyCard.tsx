@@ -170,8 +170,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </div>
           )}
 
-          {/* 등록일 + 등록 후 경과일 (만기 배지가 없을 때만 본문에 표시) */}
-          {!sevCls && regInfo && (
+          {/* 등록일 + 등록 후 경과일 (큰 등록일 배지와 중복이라 화면에서 숨김 — 건의 #168) */}
+          {false && !sevCls && regInfo && (
             <div className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">
               등록일 {short2(regInfo.ds)} · <span className="font-semibold text-gray-700 dark:text-gray-300">{regInfo.label}</span>
             </div>
