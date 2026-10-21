@@ -20,6 +20,7 @@ import { computeSalesStats } from "@/lib/sales";
 import Link from "next/link";
 import PropertiesUploadModal, { type PropMergeStrategy } from "./PropertiesUploadModal";
 import ExportModal from "../ExportModal";
+import { downloadVcf, type VcardContact } from "@/lib/vcard";
 import { exportProperties } from "@/lib/export";
 import SparklineChart from "@/app/dashboard/components/SparklineChart";
 import { fmtNum, formatDateKo, PROPERTY_TYPES } from "./helpers";
@@ -297,6 +298,27 @@ export default function PropertiesPage() {
   const matchView = (p: Property) =>
     viewMode === "contracted" ? isContracted(p) : !isContracted(p);
 
+  /* 매물장 전화번호 → 폰 연락처용 .vcf (같은 번호는 1번만) */
+  const exportContacts = () => {
+    const seen = new Set<string>();
+    const list: VcardContact[] = [];
+    const add = (name: string, phone: string, role: string, p: Property) => {
+      const digits = (phone || "").replace(/\D/g, "");
+      if (digits.length < 8 || seen.has(digits)) return;
+      seen.add(digits);
+      const where = [p.dong && `${p.dong}동`, p.ho && `${p.ho}호`].filter(Boolean).join(" ");
+      list.push({ name: [name || role, where].filter(Boolean).join(" "), phone: phone.trim(), note: role });
+    };
+    for (const p of properties) {
+      add(p.ownerName, p.ownerPhone, "집주인", p);
+      add(p.tenantName, p.tenantPhone, "임차인", p);
+      for (const x of p.extraContacts || []) add(x.name, x.phone, x.relation || "연락처", p);
+    }
+    if (list.length === 0) { alert("내보낼 전화번호가 없습니다."); return; }
+    downloadVcf(list, "딜던_연락처.vcf");
+    recordFeatureUse(user?.uid, "prop_vcf");
+  };
+
   const filtered = useMemo(() => {
     if (onlyPid) return properties.filter(p => p.id === onlyPid);
     // 검색어가 있으면 탭(계약진행중/그 외)과 상관없이 전체에서 찾음
@@ -542,6 +564,14 @@ export default function PropertiesPage() {
               >
                 <span className="material-symbols-outlined text-base">download</span>
                 <span className="hidden sm:inline">내보내기</span>
+              </button>
+              <button
+                onClick={exportContacts}
+                title="매물장 전화번호를 폰 연락처로 가져올 수 있는 파일(.vcf)을 받습니다"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <span className="material-symbols-outlined text-base">contacts</span>
+                <span className="hidden sm:inline">연락처 내보내기</span>
               </button>
               <button
                 data-owner-only onClick={loadSamples}
