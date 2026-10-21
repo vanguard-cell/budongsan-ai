@@ -254,12 +254,12 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               <div>
                 <label className="block text-xs text-gray-500 mb-1">호수</label>
                 <input type="text" value={form.ho} onChange={e => handleHoChange(e.target.value)}
-                  placeholder="1902 (지하는 지하1 처럼)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  placeholder="1902 (지하는 지하1 처럼, 층 칸에 -1)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">층 (선택)</label>
                 <input type="text" value={form.floor || ""} onChange={e => setForm(p => ({ ...p, floor: e.target.value }))}
-                  placeholder="13 (지하는 지하1)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                  placeholder="13 (지하는 -1)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
             </div>
             {form.address && (

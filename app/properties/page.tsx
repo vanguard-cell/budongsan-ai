@@ -35,7 +35,7 @@ import { kstDateStr } from "@/lib/kst";
 // 층 숫자 추정: 층 칸 → 주소의 'n층' → 호수(예: 613호=6층). 지하는 음수. 알 수 없으면 null
 function floorOf(p: Property): number | null {
   const fl = String(p.floor || "").trim();
-  if (/^(b|B|지하|비)/.test(fl)) return -1;
+  if (/^(b|B|지하|비|-)/.test(fl)) return -1;
   const fn = parseInt(fl.replace(/\D/g, ""), 10);
   if (fn > 0) return fn;
   const addr = String(p.address || "");
@@ -1017,7 +1017,7 @@ export default function PropertiesPage() {
             <span className="text-[13px] font-semibold text-gray-600 shrink-0 whitespace-nowrap">층</span>
             {([
               { key: "all", label: "전체" },
-              { key: "b", label: "지하" },
+              { key: "b", label: "-1(지하)" },
               { key: "f1", label: "1층" },
               { key: "f2", label: "2층" },
               { key: "f3", label: "3층" },
