@@ -22,6 +22,7 @@ import QuickMemoBox from "@/app/components/QuickMemoBox";
 import NotifyBell from "../NotifyBell";
 import { subscribeMyComplexes, addMyComplex, removeMyComplex, type MyComplex } from "@/lib/properties-db";
 import ExportModal from "../ExportModal";
+import { downloadVcf, type VcardContact } from "@/lib/vcard";
 import { subscribeCustomers } from "@/lib/customers-db";
 import { saveProperty, contractBackToProperty, CONTACT_RELATIONS, CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption } from "@/lib/properties-db";
 import { exportContracts } from "@/lib/export";
@@ -438,6 +439,27 @@ export default function ExpiryPage() {
     return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
   }
 
+  /* 만기관리 전화번호 → 폰 연락처용 .vcf (같은 번호는 1번만) */
+  const exportContacts = () => {
+    const seen = new Set<string>();
+    const list: VcardContact[] = [];
+    const add = (name: string | undefined, phone: string | undefined, role: string, c: Contract) => {
+      const digits = (phone || "").replace(/\D/g, "");
+      if (digits.length < 8 || seen.has(digits)) return;
+      seen.add(digits);
+      const where = [c.dong && `${c.dong}동`, c.ho && `${c.ho}호`].filter(Boolean).join(" ");
+      list.push({ name: [name || role, where].filter(Boolean).join(" "), phone: (phone || "").trim(), note: role });
+    };
+    for (const c of contracts) {
+      add(c.landlordName, c.landlordPhone, "집주인", c);
+      add(c.tenantName, c.tenantPhone, "임차인", c);
+      for (const x of c.extraContacts ?? []) add(x.name, x.phone, x.relation || "연락처", c);
+    }
+    if (list.length === 0) { alert("내보낼 전화번호가 없습니다."); return; }
+    downloadVcf(list, "딜던_연락처.vcf");
+    recordFeatureUse(user?.uid, "expiry_vcf");
+  };
+
   return (
     <div className={`transition-[padding] duration-300 ease-out ${panelId ? "xl:pr-[400px]" : ""}`}>
       <div className="w-full">
@@ -488,6 +510,14 @@ export default function ExpiryPage() {
               >
                 <span className="material-symbols-outlined text-base">download</span>
                 <span className="hidden sm:inline">내보내기</span>
+              </button>
+              <button
+                onClick={exportContacts}
+                title="전화번호를 폰 연락처로 가져올 수 있는 파일(.vcf)을 받습니다"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <span className="material-symbols-outlined text-base">contacts</span>
+                <span className="hidden sm:inline">연락처 내보내기</span>
               </button>
               <button
                 data-owner-only onClick={loadSampleData}
