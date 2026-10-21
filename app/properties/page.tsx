@@ -45,6 +45,7 @@ function floorOf(p: Property): number | null {
   const ho = String(p.ho || "").trim();
   if (/^(b|B|지하)/.test(ho)) return -1;
   const hd = ho.replace(/\D/g, "");
+  if (hd.length === 4) return parseInt(hd[0], 10) || null; // 상가 4자리 호수: 1020호=1층, 2xxx=2층
   if (hd.length >= 3) return parseInt(hd.slice(0, hd.length - 2), 10) || null;
   if (hd.length > 0) return 1;
   return null;
