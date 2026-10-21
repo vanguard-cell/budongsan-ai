@@ -130,7 +130,7 @@ export default function PropertiesPage() {
   const [priceRange, setPriceRange] = useState<"all" | "u1" | "1to2" | "2to3" | "3to5" | "o5">("all");
   const [roomFilter, setRoomFilter] = useState<"all" | "r1" | "r2" | "r3" | "r4">("all");
   // 상가·사무실 전용 필터: 면적(㎡) / 층
-  const [areaFilter, setAreaFilter] = useState<"all" | "a1" | "a2" | "a3" | "a4" | "a5">("all");
+  const [areaFilter, setAreaFilter] = useState<"all" | "a1" | "a2" | "a2b" | "a3" | "a4" | "a5">("all");
   const [floorFilter, setFloorFilter] = useState<"all" | "b" | "f1" | "f2" | "f3" | "f4">("all");
   const isCommercialView = filterPropType === "상가" || filterPropType === "사무실";
   // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
@@ -399,7 +399,8 @@ export default function PropertiesPage() {
         const a = parseFloat(String(p.area || "").replace(/[^0-9.]/g, ""));
         if (!a) return false; // 면적 미입력 매물은 면적 필터 시 제외
         if (areaFilter === "a1") return a < 33;
-        if (areaFilter === "a2") return a >= 33 && a < 66;
+        if (areaFilter === "a2") return a >= 33 && a < 49.5;
+        if (areaFilter === "a2b") return a >= 49.5 && a < 66;
         if (areaFilter === "a3") return a >= 66 && a < 99;
         if (areaFilter === "a4") return a >= 99 && a < 165;
         return a >= 165;
@@ -1006,7 +1007,8 @@ export default function PropertiesPage() {
             {([
               { key: "all", label: "전체" },
               { key: "a1", label: "10평↓" },
-              { key: "a2", label: "10~20평" },
+              { key: "a2", label: "10~15평" },
+              { key: "a2b", label: "15~20평" },
               { key: "a3", label: "20~30평" },
               { key: "a4", label: "30~50평" },
               { key: "a5", label: "50평↑" },
