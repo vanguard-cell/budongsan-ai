@@ -32,6 +32,24 @@ import PropertyTable from "./PropertyTable";
 import PropertyPanel from "./PropertyPanel";
 import { kstDateStr } from "@/lib/kst";
 
+// 층 숫자 추정: 층 칸 → 주소의 'n층' → 호수(예: 613호=6층). 지하는 음수. 알 수 없으면 null
+function floorOf(p: Property): number | null {
+  const fl = String(p.floor || "").trim();
+  if (/^(b|B|지하)/.test(fl)) return -1;
+  const fn = parseInt(fl.replace(/\D/g, ""), 10);
+  if (fn > 0) return fn;
+  const addr = String(p.address || "");
+  if (/지하|(^|\s)B\d/.test(addr) && !/\d+층/.test(addr)) return -1;
+  const m = addr.match(/(\d+)층/);
+  if (m) return parseInt(m[1], 10);
+  const ho = String(p.ho || "").trim();
+  if (/^(b|B|지하)/.test(ho)) return -1;
+  const hd = ho.replace(/\D/g, "");
+  if (hd.length >= 3) return parseInt(hd.slice(0, hd.length - 2), 10) || null;
+  if (hd.length > 0) return 1;
+  return null;
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -110,6 +128,10 @@ export default function PropertiesPage() {
   // 가격대 빠른 필터 (만원 기준)
   const [priceRange, setPriceRange] = useState<"all" | "u1" | "1to2" | "2to3" | "3to5" | "o5">("all");
   const [roomFilter, setRoomFilter] = useState<"all" | "r1" | "r2" | "r3" | "r4">("all");
+  // 상가·사무실 전용 필터: 면적(㎡) / 층
+  const [areaFilter, setAreaFilter] = useState<"all" | "a1" | "a2" | "a3" | "a4" | "a5">("all");
+  const [floorFilter, setFloorFilter] = useState<"all" | "b" | "f1" | "f2" | "f3" | "f4">("all");
+  const isCommercialView = filterPropType === "상가" || filterPropType === "사무실";
   // 뷰: 카드(기존) / 표(엑셀형) — 마지막 선택 기억
   const [viewStyle, setViewStyleState] = useState<"card" | "table">(() => {
     try { return localStorage.getItem("dealdone_properties_view") === "table" ? "table" : "card"; } catch { return "card"; }
@@ -162,7 +184,7 @@ export default function PropertiesPage() {
   // 필터·정렬·검색·탭 변경 시 1페이지로 리셋
   useEffect(() => {
     setPage(1);
-  }, [query, filterType, filterPropType, priceRange, roomFilter, sortBy, viewMode, showClosed, occFilter, colSearch]);
+  }, [query, filterType, filterPropType, priceRange, roomFilter, areaFilter, floorFilter, sortBy, viewMode, showClosed, occFilter, colSearch]);
 
   const upsert = async (p: Property): Promise<boolean> => {
     if (!user) return false;
@@ -371,6 +393,24 @@ export default function PropertiesPage() {
         return r === Number(roomFilter.slice(1));
       })
       // 단지→동→호 조회
+      .filter(p => {
+        if (areaFilter === "all") return true;
+        const a = parseFloat(String(p.area || "").replace(/[^0-9.]/g, ""));
+        if (!a) return false; // 면적 미입력 매물은 면적 필터 시 제외
+        if (areaFilter === "a1") return a < 33;
+        if (areaFilter === "a2") return a >= 33 && a < 66;
+        if (areaFilter === "a3") return a >= 66 && a < 100;
+        if (areaFilter === "a4") return a >= 100 && a < 165;
+        return a >= 165;
+      })
+      .filter(p => {
+        if (floorFilter === "all") return true;
+        const f = floorOf(p);
+        if (f === null) return false; // 층을 알 수 없는 매물은 층 필터 시 제외
+        if (floorFilter === "b") return f < 0;
+        if (floorFilter === "f4") return f >= 4;
+        return f === Number(floorFilter.slice(1));
+      })
       .filter(p => !selectedComplex || complexKey(p) === selectedComplex)
       .filter(p => !selectedDong || p.dong === selectedDong)
       .filter(p => !selectedHo.trim() || (p.ho || "").includes(selectedHo.trim()));
@@ -416,7 +456,7 @@ export default function PropertiesPage() {
     });
     // complexKey·matchView 는 viewMode 등 이미 의존성에 있는 값으로만 결과가 바뀌는 함수라 뺌
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, roomFilter, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo, colSearch, onlyPid]);
+  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, roomFilter, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo, colSearch, onlyPid, areaFilter, floorFilter]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -817,7 +857,7 @@ export default function PropertiesPage() {
               const cnt = propTypeCounts[t] ?? 0;
               const label = t === "all" ? "전체" : t === "빌라/다세대" ? "빌라" : t === "원룸/투룸" ? "원룸" : t;
               return (
-                <button key={t} onClick={() => { setFilterPropType(t); setFilterType("all"); setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
+                <button key={t} onClick={() => { setFilterPropType(t); setFilterType("all"); setRoomFilter("all"); setAreaFilter("all"); setFloorFilter("all"); setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
                   className={`text-xs px-3 py-1 rounded-full border transition-colors whitespace-nowrap shrink-0 ${
                     filterPropType === t
                       ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
@@ -924,6 +964,7 @@ export default function PropertiesPage() {
             ))}
           </div>
 
+          {!isCommercialView && (<>
           {/* 방 개수 빠른 필터 */}
           <div className="flex items-center gap-1 mt-2 flex-wrap">
             <span className="text-[13px] font-semibold text-gray-600 shrink-0 whitespace-nowrap">방</span>
@@ -944,6 +985,52 @@ export default function PropertiesPage() {
               </button>
             ))}
           </div>
+
+          </>)}
+
+          {/* 상가·사무실: 면적 / 층 빠른 필터 */}
+          {isCommercialView && (<>
+          <div className="flex items-center gap-1 mt-2 flex-wrap">
+            <span className="text-[13px] font-semibold text-gray-600 shrink-0 whitespace-nowrap">면적</span>
+            {([
+              { key: "all", label: "전체" },
+              { key: "a1", label: "33㎡↓" },
+              { key: "a2", label: "33~66㎡" },
+              { key: "a3", label: "66~100㎡" },
+              { key: "a4", label: "100~165㎡" },
+              { key: "a5", label: "165㎡↑" },
+            ] as const).map(r => (
+              <button key={r.key} onClick={() => setAreaFilter(r.key)}
+                className={`text-[13px] px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
+                  areaFilter === r.key
+                    ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
+                }`}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 mt-2 flex-wrap">
+            <span className="text-[13px] font-semibold text-gray-600 shrink-0 whitespace-nowrap">층</span>
+            {([
+              { key: "all", label: "전체" },
+              { key: "b", label: "지하" },
+              { key: "f1", label: "1층" },
+              { key: "f2", label: "2층" },
+              { key: "f3", label: "3층" },
+              { key: "f4", label: "4층↑" },
+            ] as const).map(r => (
+              <button key={r.key} onClick={() => setFloorFilter(r.key)}
+                className={`text-[13px] px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
+                  floorFilter === r.key
+                    ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-emerald-400"
+                }`}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+          </>)}
 
           {/* 정렬 */}
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
@@ -998,7 +1085,7 @@ export default function PropertiesPage() {
         ) : filtered.length === 0 ? (
           (() => {
             const hasActive = properties.filter(p => p.status === "active").length > 0;
-            const filtersOn = filterPropType !== "all" || filterType !== "all" || priceRange !== "all" || roomFilter !== "all" || query.trim() !== "";
+            const filtersOn = filterPropType !== "all" || filterType !== "all" || priceRange !== "all" || roomFilter !== "all" || areaFilter !== "all" || floorFilter !== "all" || query.trim() !== "";
             // 매물은 있는데 필터 때문에 0건 → 초기화 안내
             if (hasActive && filtersOn) {
               return (
@@ -1013,7 +1100,7 @@ export default function PropertiesPage() {
                     {" "}조건이 겹쳐서 결과가 없어요
                   </div>
                   <button
-                    onClick={() => { setFilterPropType("all"); setFilterType("all"); setPriceRange("all"); setRoomFilter("all"); setQuery(""); }}
+                    onClick={() => { setFilterPropType("all"); setFilterType("all"); setPriceRange("all"); setRoomFilter("all"); setAreaFilter("all"); setFloorFilter("all"); setQuery(""); }}
                     className="text-sm px-4 py-2 rounded-full border-2 border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold">
                     ↺ 필터 초기화
                   </button>
