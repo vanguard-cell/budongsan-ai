@@ -399,8 +399,8 @@ export default function PropertiesPage() {
         if (!a) return false; // 면적 미입력 매물은 면적 필터 시 제외
         if (areaFilter === "a1") return a < 33;
         if (areaFilter === "a2") return a >= 33 && a < 66;
-        if (areaFilter === "a3") return a >= 66 && a < 100;
-        if (areaFilter === "a4") return a >= 100 && a < 165;
+        if (areaFilter === "a3") return a >= 66 && a < 99;
+        if (areaFilter === "a4") return a >= 99 && a < 165;
         return a >= 165;
       })
       .filter(p => {
@@ -857,7 +857,7 @@ export default function PropertiesPage() {
               const cnt = propTypeCounts[t] ?? 0;
               const label = t === "all" ? "전체" : t === "빌라/다세대" ? "빌라" : t === "원룸/투룸" ? "원룸" : t;
               return (
-                <button key={t} onClick={() => { setFilterPropType(t); setFilterType("all"); setRoomFilter("all"); setAreaFilter("all"); setFloorFilter("all"); setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
+                <button key={t} onClick={() => { setFilterPropType(t); setFilterType("all"); setRoomFilter("all"); setPriceRange("all"); setAreaFilter("all"); setFloorFilter("all"); setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); }}
                   className={`text-xs px-3 py-1 rounded-full border transition-colors whitespace-nowrap shrink-0 ${
                     filterPropType === t
                       ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)] font-semibold"
@@ -942,7 +942,8 @@ export default function PropertiesPage() {
             </div>
           )}
 
-          {/* 가격대 빠른 필터 */}
+          {/* 가격대 빠른 필터 (상가·사무실은 숨김) */}
+          {!isCommercialView && (
           <div className="flex items-center gap-1 mt-2 flex-wrap">
             <span className="text-[13px] font-semibold text-gray-600 shrink-0">가격대</span>
             {([
@@ -963,6 +964,7 @@ export default function PropertiesPage() {
               </button>
             ))}
           </div>
+          )}
 
           {!isCommercialView && (<>
           {/* 방 개수 빠른 필터 */}
@@ -994,11 +996,11 @@ export default function PropertiesPage() {
             <span className="text-[13px] font-semibold text-gray-600 shrink-0 whitespace-nowrap">면적</span>
             {([
               { key: "all", label: "전체" },
-              { key: "a1", label: "33㎡↓" },
-              { key: "a2", label: "33~66㎡" },
-              { key: "a3", label: "66~100㎡" },
-              { key: "a4", label: "100~165㎡" },
-              { key: "a5", label: "165㎡↑" },
+              { key: "a1", label: "10평↓" },
+              { key: "a2", label: "10~20평" },
+              { key: "a3", label: "20~30평" },
+              { key: "a4", label: "30~50평" },
+              { key: "a5", label: "50평↑" },
             ] as const).map(r => (
               <button key={r.key} onClick={() => setAreaFilter(r.key)}
                 className={`text-[13px] px-3 py-1 rounded-full border whitespace-nowrap transition-colors ${
