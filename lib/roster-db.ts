@@ -104,6 +104,11 @@ export async function updateRosterField(agencyId: string, id: string, field: Ros
   await setDoc(doc(col(agencyId), id), { [field]: value, updatedAt: serverTimestamp() }, { merge: true });
 }
 
+/** 이미 있는 세대에 고유번호만 채우기 */
+export async function setRosterUniqueNo(agencyId: string, id: string, uniqueNo: string): Promise<void> {
+  await setDoc(doc(col(agencyId), id), { uniqueNo, updatedAt: serverTimestamp() }, { merge: true });
+}
+
 /** 여러 세대 한꺼번에 추가 (엑셀 올리기) — 400개씩 나눠 저장 */
 export async function addRosterUnits(agencyId: string, list: Omit<RosterUnit, "id">[]): Promise<number> {
   for (let i = 0; i < list.length; i += 400) {

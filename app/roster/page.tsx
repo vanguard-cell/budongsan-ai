@@ -19,7 +19,7 @@ import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
 import {
-  subscribeRoster, updateRosterField, addRosterUnits, deleteRosterUnit,
+  subscribeRoster, updateRosterField, addRosterUnits, deleteRosterUnit, setRosterUniqueNo,
   complexKey, complexOf, unitKey, dongHoOf,
   type RosterUnit, type RosterEditField,
 } from "@/lib/roster-db";
@@ -111,7 +111,7 @@ export default function RosterPage() {
   };
   const [query, setQuery] = useState("");
 
-  const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number } | null>(null);
+  const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -217,19 +217,32 @@ export default function RosterPage() {
       const inPC = new Set<string>();
       for (const p of properties) { const dh = dongHoOf(p.address, p.dong, p.ho); inPC.add(unitKey(complexOf(p.address, p.dong, p.ho), dh.dong, dh.ho)); }
       for (const c of contracts) { const dh = dongHoOf(c.address, c.dong, c.ho); inPC.add(unitKey(complexOf(c.address, c.dong, c.ho), dh.dong, dh.ho)); }
-      const inR = new Set(roster.map(u => unitKey(u.complex, u.dong, u.ho)));
+      const inR = new Map(roster.map(u => [unitKey(u.complex, u.dong, u.ho), u]));
       const seen = new Set<string>();
       let inPropOrContract = 0, inRoster = 0, dupInFile = 0;
       const fresh: ParsedRoster["units"] = [];
+      // 이미 있는 세대라도 엑셀의 고유번호는 저장해 둠 (매물·만기 프린트에서 찾아 쓰기 위해)
+      const uniqueOnly: ParsedRoster["units"] = [];
+      const uniqueFill: { id: string; uniqueNo: string }[] = [];
       for (const u of parsed.units) {
         const k = unitKey(u.complex, u.dong, u.ho);
         if (seen.has(k)) { dupInFile++; continue; }
         seen.add(k);
-        if (inPC.has(k)) { inPropOrContract++; continue; }
-        if (inR.has(k)) { inRoster++; continue; }
+        const old = inR.get(k);
+        if (inPC.has(k)) {
+          inPropOrContract++;
+          if (u.uniqueNo && !old) uniqueOnly.push(u);
+          else if (u.uniqueNo && old && !old.uniqueNo) uniqueFill.push({ id: old.id, uniqueNo: u.uniqueNo });
+          continue;
+        }
+        if (old) {
+          inRoster++;
+          if (u.uniqueNo && !old.uniqueNo) uniqueFill.push({ id: old.id, uniqueNo: u.uniqueNo });
+          continue;
+        }
         fresh.push(u);
       }
-      setPreview({ parsed, fresh, inPropOrContract, inRoster, dupInFile });
+      setPreview({ parsed, fresh, inPropOrContract, inRoster, dupInFile, uniqueOnly, uniqueFill });
     } catch (e) {
       console.error("[roster] 엑셀 읽기 실패:", e);
       setMsg("❌ 엑셀 파일을 읽지 못했어요. .xlsx 파일인지 확인해 주세요.");
@@ -240,10 +253,11 @@ export default function RosterPage() {
     if (!user || !preview) return;
     setBusy(true);
     try {
-      const n = await addRosterUnits(user.agencyId, preview.fresh.map(u => ({ ...u, createdAt: Date.now() })));
+      const n = await addRosterUnits(user.agencyId, [...preview.fresh, ...preview.uniqueOnly].map(u => ({ ...u, createdAt: Date.now() })));
+      for (const f of preview.uniqueFill) await setRosterUniqueNo(user.agencyId, f.id, f.uniqueNo);
       const first = preview.fresh[0];
       if (first) setComplex(complexKey(first.complex));
-      setMsg(`✅ ${n}세대를 고객명단에 추가했어요.`);
+      setMsg(`✅ ${preview.fresh.length}세대를 고객명단에 추가했어요.${n - preview.fresh.length + preview.uniqueFill.length > 0 ? ` (고유번호 ${n - preview.fresh.length + preview.uniqueFill.length}세대 저장)` : ""}`);
       setPreview(null);
     } catch (e) {
       console.error("[roster] 저장 실패:", e);
@@ -537,12 +551,13 @@ function EditCell({ value, onSave, phone, date }: { value: string; onSave: (v: s
 }
 
 function UploadPreview({ preview, busy, onCancel, onConfirm }: {
-  preview: { parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number };
+  preview: { parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[] };
   busy: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const { parsed, fresh, inPropOrContract, inRoster, dupInFile } = preview;
+  const { parsed, fresh, inPropOrContract, inRoster, dupInFile, uniqueOnly, uniqueFill } = preview;
+  const uniqueCount = uniqueOnly.length + uniqueFill.length;
   const complexes = [...new Set(parsed.units.map(u => u.complex))];
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={onCancel}>
@@ -555,6 +570,7 @@ function UploadPreview({ preview, busy, onCancel, onConfirm }: {
           <Stat label="새로 추가" value={fresh.length} strong />
           <Stat label="이미 매물·만기에 있음" value={inPropOrContract} />
           <Stat label="이미 명단에 있음" value={inRoster} />
+          {uniqueCount > 0 && <Stat label="고유번호만 저장" value={uniqueCount} strong />}
         </div>
         {(dupInFile > 0 || parsed.skipped > 0) && (
           <p className="text-[11px] text-gray-500 mt-2">
@@ -572,9 +588,9 @@ function UploadPreview({ preview, busy, onCancel, onConfirm }: {
 
         <div className="flex gap-2 mt-5">
           <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300">취소</button>
-          <button onClick={onConfirm} disabled={busy || fresh.length === 0}
+          <button onClick={onConfirm} disabled={busy || fresh.length + uniqueCount === 0}
             className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--brand-blue,#2383E2)] disabled:opacity-40">
-            {busy ? "저장 중…" : fresh.length ? `${fresh.length}세대 추가` : "추가할 세대 없음"}
+            {busy ? "저장 중…" : fresh.length ? `${fresh.length}세대 추가${uniqueCount ? " + 고유번호 저장" : ""}` : uniqueCount ? "고유번호 저장" : "추가할 세대 없음"}
           </button>
         </div>
       </div>
