@@ -99,6 +99,16 @@ export default function RosterPage() {
   };
   const [dong, setDong] = useState<string>("all");
   const [source, setSource] = useState<SourceFilter>("all");
+  // 표 크기(폰에서 한눈에 보기): 1 = 보통, 0.7 = 작게, 0.5 = 더 작게
+  const [tableZoom, setTableZoom] = useState(1);
+  useEffect(() => {
+    try { const z = Number(localStorage.getItem("rosterTableZoom")); if (z === 0.7 || z === 0.5) setTableZoom(z); } catch {}
+  }, []);
+  const cycleZoom = () => {
+    const next = tableZoom === 1 ? 0.7 : tableZoom === 0.7 ? 0.5 : 1;
+    setTableZoom(next);
+    try { localStorage.setItem("rosterTableZoom", String(next)); } catch {}
+  };
   const [query, setQuery] = useState("");
 
   const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number } | null>(null);
@@ -370,7 +380,13 @@ export default function RosterPage() {
       </div>
 
       {/* 표 */}
-      <div className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
+      <div className="flex justify-end mb-1.5">
+        <button onClick={cycleZoom}
+          className="px-2.5 py-1 rounded-full text-xs border whitespace-nowrap border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300">
+          🔍 표 크기: {tableZoom === 1 ? "보통" : tableZoom === 0.7 ? "작게" : "더 작게"}
+        </button>
+      </div>
+      <div style={{ zoom: tableZoom }} className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
         <table className="w-full min-w-[1140px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
