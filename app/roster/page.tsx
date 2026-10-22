@@ -374,8 +374,8 @@ export default function RosterPage() {
         <table className="w-full min-w-[1140px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
-              <th className="font-medium px-2 py-2.5 w-[70px]">동</th>
-              <th className="font-medium px-2 py-2.5 w-[70px]">호수</th>
+              <th className="font-medium px-2 py-2.5 w-[70px] sticky left-0 z-10 bg-white dark:bg-slate-900">동</th>
+              <th className="font-medium px-2 py-2.5 w-[70px] sticky left-[70px] z-10 bg-white dark:bg-slate-900 border-r border-[var(--sidebar-bd)]">호수</th>
               <th className="font-medium px-2 py-2.5 w-[44px]">층</th>
               <th className="font-medium px-2 py-2.5 w-[56px]">타입</th>
               <th className="font-medium px-2 py-2.5 w-[70px]">면적㎡</th>
@@ -418,8 +418,8 @@ export default function RosterPage() {
               };
               return (
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
-                  <td className={`px-2 py-1.5 tabular-nums ${idTint ? idTint + " font-semibold" : "text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
-                  <td className={`px-2 py-1.5 tabular-nums font-semibold ${idTint || "text-gray-900 dark:text-gray-100"}`}>{r.ho}</td>
+                  <td className={`px-2 py-1.5 tabular-nums sticky left-0 z-10 ${idTint ? idTint + " font-semibold" : "bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
+                  <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>{r.ho}</td>
                   <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho)}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", v.area)}</td>
