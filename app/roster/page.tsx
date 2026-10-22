@@ -400,7 +400,8 @@ export default function RosterPage() {
           🔍 표 크기: {tableZoom === 1 ? "보통" : tableZoom === 0.7 ? "작게" : "더 작게"}
         </button>
       </div>
-      <div style={{ zoom: tableZoom }} className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
+      <div className="overflow-x-auto -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
+       <div style={{ zoom: tableZoom }}>
         <table className="w-max min-w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
@@ -495,6 +496,7 @@ export default function RosterPage() {
             )}
           </tbody>
         </table>
+       </div>
       </div>
       <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
         매물·만기에 있는 세대는 각 화면에서 고쳐 주세요 (여기서는 보기만). 세대 표시는 매물 → 만기 → 명단 순으로 먼저 있는 정보를 보여줘요.
