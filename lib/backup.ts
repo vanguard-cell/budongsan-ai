@@ -1,7 +1,7 @@
 /**
  * 사무소 데이터 백업·복원 (JSON 파일)
  *
- * - 백업: 만기 계약·매물·매수자·스케줄·실거래 + 사무소 설정(내 단지 목록·부동산 이름)을 원본 그대로 파일로 내려받기
+ * - 백업: 만기 계약·매물·매수자·스케줄·실거래·고객명단 + 사무소 설정(내 단지 목록·부동산 이름)을 원본 그대로 파일로 내려받기
  * - 복원: 백업 파일의 문서를 같은 id 로 다시 저장 (지금 있는 데이터는 지우지 않음 — 지워진 것·바뀐 것만 되살아남)
  * - 날짜(Timestamp)는 {"__ts": 밀리초} 로 바꿔 저장했다가 복원 때 되돌림
  */
@@ -17,7 +17,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-export const BACKUP_COLLECTIONS = ["contracts", "properties", "customers", "schedules", "marketPrices", "propertyTrash"] as const;
+export const BACKUP_COLLECTIONS = ["contracts", "properties", "customers", "schedules", "marketPrices", "propertyTrash", "roster"] as const;
 export const BACKUP_LABELS: Record<(typeof BACKUP_COLLECTIONS)[number], string> = {
   contracts: "만기 계약",
   properties: "매물",
@@ -25,6 +25,7 @@ export const BACKUP_LABELS: Record<(typeof BACKUP_COLLECTIONS)[number], string> 
   schedules: "스케줄",
   marketPrices: "실거래",
   propertyTrash: "지운 매물 보관함",
+  roster: "고객명단",
 };
 /** 사무소 문서에서 백업·복원하는 설정 필드 (owner·members 같은 권한 필드는 건드리지 않음) */
 const AGENCY_FIELDS = ["myComplexes", "officeName"] as const;
@@ -61,8 +62,12 @@ function decode(v: unknown): unknown {
 export async function buildBackup(agencyId: string): Promise<BackupFile> {
   const collections: BackupFile["collections"] = {};
   for (const name of BACKUP_COLLECTIONS) {
-    const snap = await getDocs(collection(db, "agencies", agencyId, name));
-    collections[name] = Object.fromEntries(snap.docs.map(d => [d.id, encode(d.data())]));
+    // 고객명단은 새로 생긴 곳이라 보안 규칙 반영 전이면 읽기가 막힘 → 그때는 빼고 백업 (나머지 백업은 그대로)
+    const snap = await getDocs(collection(db, "agencies", agencyId, name)).catch(e => {
+      if (name === "roster") { console.warn("[backup] 고객명단 읽기 실패 — 빼고 백업:", e); return null; }
+      throw e;
+    });
+    collections[name] = snap ? Object.fromEntries(snap.docs.map(d => [d.id, encode(d.data())])) : {};
   }
   const agencySnap = await getDoc(doc(db, "agencies", agencyId));
   const a = agencySnap.data() || {};

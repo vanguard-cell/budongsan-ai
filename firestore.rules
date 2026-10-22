@@ -114,6 +114,13 @@ service cloud.firestore {
         allow create, update, delete: if isAgencyOwner();
       }
 
+      // ── 고객명단 (매물·만기에 없는 세대 명부, 건의 #143) ──
+      match /roster/{unitId} {
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update: if isMember();                 // 직원도 명단 입력
+        allow delete: if isAgencyOwner();
+      }
+
       // ── 스케줄 ──────────────────────────────
       match /schedules/{scheduleId} {
         allow read: if isMember() || isGlobalAdmin();
