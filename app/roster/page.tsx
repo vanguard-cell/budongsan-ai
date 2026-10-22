@@ -104,6 +104,18 @@ export default function RosterPage() {
   useEffect(() => {
     try { const z = Number(localStorage.getItem("rosterTableZoom")); if (z === 0.7 || z === 0.5) setTableZoom(z); } catch {}
   }, []);
+  // 브라우저마다 zoom 안의 % 너비를 다르게 계산해서, 화면 폭을 px로 재서 직접 지정
+  const tableWrapRef = useRef<HTMLDivElement>(null);
+  const [wrapW, setWrapW] = useState(0);
+  useEffect(() => {
+    const el = tableWrapRef.current;
+    if (!el) return;
+    const update = () => setWrapW(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const cycleZoom = () => {
     const next = tableZoom === 1 ? 0.7 : tableZoom === 0.7 ? 0.5 : 1;
     setTableZoom(next);
@@ -400,8 +412,8 @@ export default function RosterPage() {
           🔍 표 크기: {tableZoom === 1 ? "보통" : tableZoom === 0.7 ? "작게" : "더 작게"}
         </button>
       </div>
-      <div className="overflow-x-auto -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
-       <div style={{ zoom: tableZoom, width: `${100 / tableZoom}%` }}>
+      <div ref={tableWrapRef} className="overflow-x-auto -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
+       <div style={{ zoom: tableZoom, width: wrapW ? `${wrapW / tableZoom}px` : undefined }}>
         <table className="w-max min-w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
