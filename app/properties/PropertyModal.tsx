@@ -4,10 +4,10 @@
 
 import { stripUnit } from "@/lib/address";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, subscribeComplexInfo, saveComplexInfo, complexInfoKey, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex, type ComplexInfo } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
-import { useRosterUniqueNo } from "@/lib/use-roster-unique";
+import { useRosterUniqueNo, useRosterUnitInfo } from "@/lib/use-roster-unique";
 import DatedMemo from "@/app/components/DatedMemo";
 import { CONTACT_RELATIONS, type ExtraContact } from "@/lib/properties-db";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong } from "./helpers";
@@ -28,6 +28,22 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
     const found = rosterUniqueNo(form.address, form.dong, form.ho);
     if (found) setForm(p => (p.uniqueNo ? p : { ...p, uniqueNo: found }));
   }, [form.address, form.dong, form.ho, form.uniqueNo, rosterUniqueNo]);
+  // 고객명단(엑셀)에 같은 단지·동·호수가 있으면 비어 있는 타입·전용면적·향·방수를 자동으로 채움 (같은 호실은 한 번만)
+  const rosterInfo = useRosterUnitInfo();
+  const filledKey = useRef("");
+  useEffect(() => {
+    const info = rosterInfo(form.address, form.dong, form.ho);
+    const key = `${form.address}|${form.dong}|${form.ho}`;
+    if (!info || filledKey.current === key) return;
+    filledKey.current = key;
+    setForm(p => ({
+      ...p,
+      unitType: p.unitType || info.unitType,
+      area: p.area || info.area,
+      direction: p.direction || info.direction,
+      rooms: p.rooms || info.rooms,
+    }));
+  }, [form.address, form.dong, form.ho, rosterInfo]);
   const isNew = !property.address;
   // 단지 선택 후 기본 주소 (동/호수 자동합산용)
   const [baseAddress, setBaseAddress] = useState(() => {

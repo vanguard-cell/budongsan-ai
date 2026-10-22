@@ -40,3 +40,26 @@ export function useRosterUniqueNo(): (address?: string, dong?: string, ho?: stri
     return near.length === 1 ? near[0].no : "";
   };
 }
+
+/** 고객명단에서 같은 단지·동·호수의 타입·전용면적·향·방수를 찾아주는 도우미 (칸이 비었을 때 채워 넣는 용도) */
+export function useRosterUnitInfo(): (address?: string, dong?: string, ho?: string) => Pick<RosterUnit, "unitType" | "area" | "direction" | "rooms"> | null {
+  const { user } = useAuth();
+  const [roster, setRoster] = useState<RosterUnit[]>([]);
+  useEffect(() => {
+    if (!user?.agencyId) return;
+    return subscribeRoster(user.agencyId, setRoster);
+  }, [user?.agencyId]);
+  const map = useMemo(() => {
+    const m = new Map<string, RosterUnit>();
+    for (const u of roster) m.set(unitKey(u.complex, u.dong, u.ho), u);
+    return m;
+  }, [roster]);
+  return (address, dong, ho) => {
+    if (!map.size) return null;
+    const dh = dongHoOf(address || "", dong, ho);
+    if (!dh.ho) return null;
+    const u = map.get(unitKey(complexOf(address || "", dong, ho), dh.dong, dh.ho));
+    if (!u || !(u.unitType || u.area || u.direction || u.rooms)) return null;
+    return { unitType: u.unitType || "", area: u.area || "", direction: u.direction || "", rooms: u.rooms || "" };
+  };
+}

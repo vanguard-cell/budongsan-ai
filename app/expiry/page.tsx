@@ -1,6 +1,7 @@
 "use client";
 
 import { stripUnit } from "@/lib/address";
+import { useRosterUnitInfo } from "@/lib/use-roster-unique";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -1236,6 +1237,23 @@ function EditModal({
       return next;
     });
   };
+
+  // 고객명단(엑셀)에 같은 단지·동·호수가 있으면 비어 있는 타입·전용면적·향·방수를 자동으로 채움 (같은 호실은 한 번만)
+  const rosterInfo = useRosterUnitInfo();
+  const filledKey = useRef("");
+  useEffect(() => {
+    const info = rosterInfo(form.address, form.dong, form.ho);
+    const key = `${form.address}|${form.dong}|${form.ho}`;
+    if (!info || filledKey.current === key) return;
+    filledKey.current = key;
+    setForm(p => ({
+      ...p,
+      unitType: p.unitType || info.unitType,
+      area: p.area || info.area,
+      direction: p.direction || info.direction,
+      rooms: p.rooms || info.rooms,
+    }));
+  }, [form.address, form.dong, form.ho, rosterInfo]);
 
   const { user: modalUser } = useAuth();
   const [showSaved, setShowSaved] = useState(true);
