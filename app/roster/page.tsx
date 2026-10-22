@@ -40,10 +40,12 @@ interface Row {
 type SourceFilter = "all" | "roster" | "prop" | "contract";
 
 /** 호수 → 층 ("1201" → 12, "401" → 4, "비1022" → 지하) */
-function floorOf(ho: string): string {
+function floorOf(ho: string, isShop = false): string {
   if (/^(비|B|지하)/.test(ho)) return "지하";
   const n = parseInt(ho.replace(/\D/g, ""), 10);
   if (!isFinite(n) || n < 100) return "";
+  // 상가는 1033호 = 1층 033호처럼 끝 세 자리가 호수
+  if (isShop && n >= 1000) return String(Math.floor(n / 1000));
   return String(Math.floor(n / 100));
 }
 const hoNum = (ho: string) => {
@@ -302,7 +304,7 @@ export default function RosterPage() {
     const data = rows.map(r => {
       const v = view(r);
       return {
-        "동": r.dong, "호수": r.ho, "층": floorOf(r.ho), "타입": v.unitType, "전용면적(㎡)": v.area, "향": v.direction,
+        "동": r.dong, "호수": r.ho, "층": floorOf(r.ho, complexName.includes("상가")), "타입": v.unitType, "전용면적(㎡)": v.area, "향": v.direction,
         "임대인": v.ownerName, "임대인 전화": v.ownerPhone, "임차인": v.tenantName, "임차인 전화": v.tenantPhone,
         "만기일": v.leaseEndDate, "등록 위치": [r.prop && "매물", r.contract && "만기", !r.prop && !r.contract && "명단"].filter(Boolean).join("·"),
         "메모": v.memo,
@@ -470,7 +472,7 @@ export default function RosterPage() {
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
                   <td className={`px-2 py-1.5 tabular-nums sticky left-0 z-10 ${idTint ? idTint + " font-semibold" : "bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
                   <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>{r.ho}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho)}</td>
+                  <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho, complexName.includes("상가"))}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", v.area)}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("direction", v.direction)}</td>
