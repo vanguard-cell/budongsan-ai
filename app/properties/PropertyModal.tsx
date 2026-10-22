@@ -7,6 +7,7 @@ import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { useState, useEffect } from "react";
 import { CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption, subscribeMyComplexes, subscribeComplexInfo, saveComplexInfo, complexInfoKey, addMyComplex, removeMyComplex, type Property, type Occupancy, type MyComplex, type ComplexInfo } from "@/lib/properties-db";
 import { useAuth } from "@/lib/auth-context";
+import { useRosterUniqueNo } from "@/lib/use-roster-unique";
 import DatedMemo from "@/app/components/DatedMemo";
 import { CONTACT_RELATIONS, type ExtraContact } from "@/lib/properties-db";
 import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong } from "./helpers";
@@ -20,6 +21,13 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
   const { user } = useAuth();
   const [form, setForm] = useState<Property>(property);
   const [saving, setSaving] = useState(false);
+  // 고객명단(엑셀)에 고유번호가 있으면 칸이 비어 있을 때 자동으로 채움
+  const rosterUniqueNo = useRosterUniqueNo();
+  useEffect(() => {
+    if (form.uniqueNo) return;
+    const found = rosterUniqueNo(form.address, form.dong, form.ho);
+    if (found) setForm(p => (p.uniqueNo ? p : { ...p, uniqueNo: found }));
+  }, [form.address, form.dong, form.ho, form.uniqueNo, rosterUniqueNo]);
   const isNew = !property.address;
   // 단지 선택 후 기본 주소 (동/호수 자동합산용)
   const [baseAddress, setBaseAddress] = useState(() => {

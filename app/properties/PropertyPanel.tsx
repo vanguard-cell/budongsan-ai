@@ -16,6 +16,7 @@ import { stageOf } from "./PropertyTable";
 import { dDay } from "@/app/expiry/contracts";
 import { kstDateStr } from "@/lib/kst";
 import MemoText from "@/app/components/MemoText";
+import { useRosterUniqueNo } from "@/lib/use-roster-unique";
 
 const EVENT_DOT: Record<PropertyEvent["kind"], string> = {
   create: "bg-gray-400", stage: "bg-blue-400", progress: "bg-amber-500",
@@ -91,7 +92,9 @@ interface Props {
 export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSameComplex, onProgress, onComplete, onAddNote }: Props) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const rosterUniqueNo = useRosterUniqueNo();
   if (!p) return null;
+  const uniqueNo = p.uniqueNo || rosterUniqueNo(p.address, p.dong, p.ho);
   const timeline = mergedTimeline(p);
   const addNote = async () => {
     if (!note.trim() || saving) return;
@@ -139,7 +142,7 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
             )}
             {p.ownerCarrier && <Row label="통신사">{p.ownerCarrier}</Row>}
             {p.options && <Row label="옵션">{p.options}</Row>}
-            {p.uniqueNo && <Row label="고유번호">{p.uniqueNo}</Row>}
+            {uniqueNo && <Row label="고유번호">{uniqueNo}</Row>}
             {p.memo && <Row label="메모"><MemoText memo={p.memo} collapsible /></Row>}
           </tbody>
         </table>

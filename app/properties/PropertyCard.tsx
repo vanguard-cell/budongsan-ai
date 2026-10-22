@@ -11,6 +11,7 @@ import MemoText from "@/app/components/MemoText";
 import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
 import { kstDateStr } from "@/lib/kst";
 import { printProperty } from "./print-property";
+import { useRosterUniqueNo } from "@/lib/use-roster-unique";
 
 const STYPE_COLORS: Record<string, string> = {
   "집보기": "bg-blue-100 text-blue-700",
@@ -36,6 +37,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   onSaveMemo?: (memo: string) => void;
   onToggleCp?: (key: "cpIlsil" | "cpSunbang") => void;
 }) {
+  const rosterUniqueNo = useRosterUniqueNo();
+  const uniqueNo = p.uniqueNo || rosterUniqueNo(p.address, p.dong, p.ho);
   const [memoEditing, setMemoEditing] = useState(false);
   const [memoDraft, setMemoDraft] = useState("");
   const [showHistory, setShowHistory] = useState(false);
@@ -252,10 +255,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           )}
 
           {/* 고유번호(등기번호) */}
-          {p.uniqueNo && (
+          {uniqueNo && (
             <div className="mt-2 flex flex-wrap items-center gap-1">
               <span className="text-[11px] text-gray-400 dark:text-gray-500 mr-0.5">고유번호</span>
-              <span className="text-[11px] text-gray-700 dark:text-gray-300 break-all">{p.uniqueNo}</span>
+              <span className="text-[11px] text-gray-700 dark:text-gray-300 break-all">{uniqueNo}</span>
             </div>
           )}
 

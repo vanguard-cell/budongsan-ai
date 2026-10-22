@@ -10,6 +10,7 @@ import SideDrawer from "@/app/components/SideDrawer";
 import MemoText from "@/app/components/MemoText";
 import QuickMemoBox from "@/app/components/QuickMemoBox";
 import { useState } from "react";
+import { useRosterUniqueNo } from "@/lib/use-roster-unique";
 
 function num(s: string) { if (!s) return s; const n = parseInt(s.replace(/[^\d]/g, ""), 10); return isNaN(n) ? s : n.toLocaleString(); }
 
@@ -68,6 +69,7 @@ interface Props {
 
 export default function ContractPanel({ contract: c, onClose, onEdit, onAddMemo, onSms, onCloneSameComplex, onReopenAsProperty, onCloseContract, onRenew, onJumpCustomer }: Props) {
   const [memoOpen, setMemoOpen] = useState(false);
+  const rosterUniqueNo = useRosterUniqueNo();
   if (!c) return null;
   const dd = c.endDate ? dDay(c.endDate) : null;
   const sev = dd !== null ? severityOf(dd) : "safe";
@@ -92,6 +94,7 @@ export default function ContractPanel({ contract: c, onClose, onEdit, onAddMemo,
           <tbody>
             {(c.propertyType || c.area) && <Row label="유형">{[c.propertyType, c.area && `${c.area}㎡`, c.unitType && `(${c.unitType})`, c.rooms && `방${c.rooms}`, c.direction].filter(Boolean).join(" · ")}</Row>}
             {c.options && <Row label="옵션">{c.options}</Row>}
+            {rosterUniqueNo(c.address, c.dong, c.ho) && <Row label="고유번호">{rosterUniqueNo(c.address, c.dong, c.ho)}</Row>}
             {c.startDate && <Row label="시작일">{c.startDate}</Row>}
             {c.endDate && <Row label="만기일">{c.endDate}</Row>}
             {c.memo && <Row label="메모"><MemoText memo={c.memo} collapsible /></Row>}
