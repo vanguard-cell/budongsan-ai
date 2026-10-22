@@ -251,6 +251,14 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </div>
           )}
 
+          {/* 고유번호(등기번호) */}
+          {p.uniqueNo && (
+            <div className="mt-2 flex flex-wrap items-center gap-1">
+              <span className="text-[11px] text-gray-400 dark:text-gray-500 mr-0.5">고유번호</span>
+              <span className="text-[11px] text-gray-700 dark:text-gray-300 break-all">{p.uniqueNo}</span>
+            </div>
+          )}
+
           {/* 옵션 */}
           {p.options && (
             <div className="mt-2 flex flex-wrap items-center gap-1">

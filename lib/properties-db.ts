@@ -66,6 +66,7 @@ export interface Property {
   manageCycle: ManageCycle;    // 반복 주기 — 완료 시 다음 날짜 자동 계산
   manageTags: string[];        // 관리 태그 (매도의향/임대전환검토 등)
   options: string;             // 집 옵션 — 쉼표 구분 (AI 광고문구의 옵션칸과 같은 형식)
+  uniqueNo?: string;           // 고유번호(등기번호) — 없는 기존 매물도 OK
   memo: string;
   status: PropertyStatus;
   createdAt: number;
@@ -326,6 +327,7 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     manageCycle:     (d.manageCycle     as ManageCycle) || "",
     manageTags:      Array.isArray(d.manageTags) ? (d.manageTags as string[]) : [],
     options:         (d.options        as string) || "",
+    uniqueNo:        (d.uniqueNo        as string) || undefined,
     memo:         (d.memo         as string) || "",
     status:       (d.status       as PropertyStatus) || "active",
     history:      Array.isArray(d.history) ? (d.history as PropertyEvent[]) : [],

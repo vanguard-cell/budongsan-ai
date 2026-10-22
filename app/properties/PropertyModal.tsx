@@ -468,6 +468,16 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             <p className="text-[10px] text-indigo-600 mt-2">📌 주인거주·공실로 지정하면 목록에서 [🏠 주인거주/공실] 필터로 모아볼 수 있어요</p>
           </div>
 
+          {/* 고유번호(등기번호) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              고유번호 <span className="text-[10px] text-gray-400">(등기번호, 선택)</span>
+            </label>
+            <input value={form.uniqueNo ?? ""} onChange={e => set("uniqueNo", e.target.value)}
+              placeholder="예: 1234-5678-901234"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+
           {/* 집 옵션 — 칩을 누르면 아래 칸에 들어가고, 직접 타이핑해도 됨 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
