@@ -1502,7 +1502,7 @@ function EditModal({
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">선택</option>
-              {CONTRACT_DIRECTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+              {CONTRACT_DIRECTIONS.map(d => <option key={d} value={d}>{d.replace(/향$/, "")}</option>)}
             </select>
           </Field>
           <Field label="방수">

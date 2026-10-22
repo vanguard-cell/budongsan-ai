@@ -353,7 +353,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               <select value={form.direction} onChange={e => set("direction", e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
                 <option value="">선택</option>
-                {DIRECTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                {DIRECTIONS.map(d => <option key={d} value={d}>{d.replace(/향$/, "")}</option>)}
               </select>
             </div>
             <div>
