@@ -461,7 +461,7 @@ function EditCell({ value, onSave, phone, date }: { value: string; onSave: (v: s
   if (!editing) {
     return (
       <button type="button" onClick={() => { setDraft(value); setEditing(true); }}
-        className="block w-full text-left truncate px-1.5 py-0.5 rounded hover:bg-[var(--tint-blue-bg)] min-h-[1.5rem]" title={value || "눌러서 입력"}>
+        className="block w-full text-left truncate px-1.5 py-0.5 rounded border border-dashed border-[var(--sidebar-bd)] hover:bg-[var(--tint-blue-bg)] min-h-[1.5rem]" title={value || "눌러서 입력"}>
         {value || <span className="text-gray-300 dark:text-gray-600">+</span>}
       </button>
     );
