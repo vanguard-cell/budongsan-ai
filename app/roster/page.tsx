@@ -401,7 +401,7 @@ export default function RosterPage() {
         </button>
       </div>
       <div style={{ zoom: tableZoom }} className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
-        <table className="w-full min-w-[1140px] border-collapse text-[13px]">
+        <table className="w-max min-w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
               <th className="font-medium px-2 py-2.5 w-[70px] sticky left-0 z-10 bg-white dark:bg-slate-900">동</th>
@@ -410,13 +410,13 @@ export default function RosterPage() {
               <th className="font-medium px-2 py-2.5 w-[56px]">타입</th>
               <th className="font-medium px-2 py-2.5 w-[70px]">면적㎡</th>
               <th className="font-medium px-2 py-2.5 w-[56px]">향</th>
-              <th className="font-medium px-2 py-2.5 w-[90px]">임대인</th>
-              <th className="font-medium px-2 py-2.5 w-[150px]">임대인 전화</th>
-              <th className="font-medium px-2 py-2.5 w-[90px]">임차인</th>
-              <th className="font-medium px-2 py-2.5 w-[150px]">임차인 전화</th>
+              <th className="font-medium px-2 py-2.5 w-[76px]">임대인</th>
+              <th className="font-medium px-2 py-2.5 w-[128px]">임대인 전화</th>
+              <th className="font-medium px-2 py-2.5 w-[76px]">임차인</th>
+              <th className="font-medium px-2 py-2.5 w-[128px]">임차인 전화</th>
               <th className="font-medium px-2 py-2.5 w-[104px]">만기일</th>
-              <th className="font-medium px-2 py-2.5 w-[150px]">등록 위치</th>
-              <th className="font-medium px-2 py-2.5">메모</th>
+              <th className="font-medium px-2 py-2.5 w-[110px]">등록 위치</th>
+              <th className="font-medium px-2 py-2.5 w-[130px]">메모</th>
             </tr>
           </thead>
           <tbody>
