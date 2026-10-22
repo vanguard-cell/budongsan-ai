@@ -361,7 +361,7 @@ export default function RosterPage() {
               <th className="font-medium px-2 py-2.5 w-[90px]">임차인</th>
               <th className="font-medium px-2 py-2.5 w-[120px]">임차인 전화</th>
               <th className="font-medium px-2 py-2.5 w-[104px]">만기일</th>
-              <th className="font-medium px-2 py-2.5 w-[96px]">등록 위치</th>
+              <th className="font-medium px-2 py-2.5 w-[150px]">등록 위치</th>
               <th className="font-medium px-2 py-2.5">메모</th>
             </tr>
           </thead>
@@ -370,14 +370,18 @@ export default function RosterPage() {
               const v = view(r);
               const u = r.roster;
               const editable = !!u && !r.prop && !r.contract;   // 명부에만 있는 세대만 표에서 바로 고침
+              // 동·호수 칸 색: 매물관리 = 파랑, 만기관리 = 주황 (둘 다 있으면 파랑)
+              const idTint = r.prop
+                ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]"
+                : r.contract ? "bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)]" : "";
               const cell = (field: RosterEditField, value: string, opts?: { phone?: boolean; date?: boolean }) =>
                 editable && u
                   ? <EditCell value={u[field] || ""} onSave={val => saveCell(u, field, val)} phone={opts?.phone} date={opts?.date} />
                   : <span className="block truncate px-1.5">{value || <span className="text-gray-300 dark:text-gray-600">—</span>}</span>;
               return (
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
-                  <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{r.dong || "—"}</td>
-                  <td className="px-2 py-1.5 tabular-nums font-semibold text-gray-900 dark:text-gray-100">{r.ho}</td>
+                  <td className={`px-2 py-1.5 tabular-nums ${idTint ? idTint + " font-semibold" : "text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
+                  <td className={`px-2 py-1.5 tabular-nums font-semibold ${idTint || "text-gray-900 dark:text-gray-100"}`}>{r.ho}</td>
                   <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho)}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", v.area)}</td>
@@ -391,11 +395,11 @@ export default function RosterPage() {
                     <div className="flex flex-wrap gap-1 items-center">
                       {r.prop && (
                         <button onClick={() => router.push(`/properties?pid=${r.prop!.id}&open=1`)} title="매물관리에서 보기"
-                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)] border border-[var(--tint-blue-bd)]">매물</button>
+                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)] border border-[var(--tint-blue-bd)] whitespace-nowrap">매물관리</button>
                       )}
                       {r.contract && (
                         <button onClick={() => router.push(`/expiry?focus=${r.contract!.id}`)} title="만기관리에서 보기"
-                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)] border border-[var(--tint-amber-bd)]">만기</button>
+                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)] border border-[var(--tint-amber-bd)] whitespace-nowrap">만기관리</button>
                       )}
                       {!r.prop && !r.contract && (
                         <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-green-bg)] text-[var(--tint-green-tx)] border border-[var(--tint-green-bd)]">명단</span>
