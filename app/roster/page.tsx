@@ -106,15 +106,20 @@ export default function RosterPage() {
   }, []);
   // 브라우저마다 zoom 안의 % 너비를 다르게 계산해서, 화면 폭을 px로 재서 직접 지정
   const tableWrapRef = useRef<HTMLDivElement>(null);
+  const tableInnerRef = useRef<HTMLDivElement>(null);
   const [wrapW, setWrapW] = useState(0);
+  const [innerH, setInnerH] = useState(0);
   useEffect(() => {
     const el = tableWrapRef.current;
-    if (!el) return;
-    const update = () => setWrapW(el.clientWidth);
+    const inner = tableInnerRef.current;
+    if (!el || !inner) return;
+    const update = () => { setWrapW(el.clientWidth); setInnerH(inner.offsetHeight); };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    ro.observe(inner);
+    window.addEventListener("resize", update);
+    return () => { ro.disconnect(); window.removeEventListener("resize", update); };
   }, []);
   const cycleZoom = () => {
     const next = tableZoom === 1 ? 0.7 : tableZoom === 0.7 ? 0.5 : 1;
@@ -413,7 +418,9 @@ export default function RosterPage() {
         </button>
       </div>
       <div ref={tableWrapRef} className="overflow-x-auto -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
-       <div style={{ zoom: tableZoom, width: wrapW ? `${wrapW / tableZoom}px` : undefined }}>
+       {/* zoom은 갤럭시 멀티뷰 등에서 폭이 틀어져서 transform으로 축소 */}
+       <div style={tableZoom === 1 ? undefined : { height: innerH ? innerH * tableZoom : undefined }}>
+       <div ref={tableInnerRef} style={tableZoom === 1 ? undefined : { transform: `scale(${tableZoom})`, transformOrigin: "top left", width: wrapW ? wrapW / tableZoom : undefined }}>
         <table className="w-max min-w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
@@ -508,6 +515,7 @@ export default function RosterPage() {
             )}
           </tbody>
         </table>
+       </div>
        </div>
       </div>
       <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
