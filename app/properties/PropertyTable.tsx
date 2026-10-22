@@ -17,7 +17,6 @@ import type { Property, PropertyType, DealType } from "@/lib/properties-db";
 import { dDay } from "@/app/expiry/contracts";
 import { fmtNum, PROPERTY_TYPES, DEAL_TYPES, addressStr, splitAddress, highlightUnit } from "./helpers";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
-import { useRosterUniqueNo } from "@/lib/use-roster-unique";
 import { kstDateStr } from "@/lib/kst";
 
 type SortKey = "newest" | "price_asc" | "price_desc" | "lease_end" | "balance" | "dongho" | "area_asc" | "area_desc" | "floor";
@@ -117,7 +116,6 @@ export default function PropertyTable({
   colSearch, onColSearch,
   onPatch,
 }: Props) {
-  const rosterUniqueNo = useRosterUniqueNo();
   const [openMenu, setOpenMenu] = useState<ColKey | null>(null);
   const [hidden, setHidden] = useState<Set<ColKey>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem("dealdone_properties_hidden_cols") || "[]")); } catch { return new Set(); }
@@ -370,7 +368,6 @@ export default function PropertyTable({
               const stage = stageOf(p);
               const selected = p.id === selectedId;
               const reg = splitAddress(addressStr(p));
-              const uniqueNo = p.uniqueNo || rosterUniqueNo(p.address, p.dong, p.ho);
               return (
                 <tr
                   key={p.id}
@@ -384,7 +381,6 @@ export default function PropertyTable({
                   {show("address") && (
                     <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>
                       {highlightUnit(reg.complex)}
-                      {uniqueNo && <div className="text-[10px] font-normal text-gray-400 dark:text-gray-500 truncate">고유번호 {uniqueNo}</div>}
                     </td>
                   )}
                   {show("deal") && (
