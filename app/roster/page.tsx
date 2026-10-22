@@ -319,35 +319,6 @@ export default function RosterPage() {
 
   const isOwner = user.role === "owner";
 
-  const rowCtx = (r: typeof rows[number]) => {
-              const v = view(r);
-              const u = r.roster;
-              const editable = !!u && !r.prop && !r.contract;   // 명부에만 있는 세대만 표에서 바로 고침
-              // 동·호수 칸 색: 매물관리 = 파랑, 만기관리 = 주황 (둘 다 있으면 파랑)
-              const idTint = r.prop
-                ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]"
-                : r.contract ? "bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)]" : "";
-              const cell = (field: RosterEditField, value: string, opts?: { phone?: boolean; date?: boolean }) => {
-                const inner = editable && u
-                  ? <EditCell value={u[field] || ""} onSave={val => saveCell(u, field, val)} phone={opts?.phone} date={opts?.date} />
-                  : <span className="block truncate px-1.5">{value || <span className="text-gray-300 dark:text-gray-600">—</span>}</span>;
-                const tel = opts?.phone ? value.replace(/[^\d+]/g, "") : "";
-                if (tel.length < 8) return inner;
-                return (
-                  <div className="flex items-center gap-0.5">
-                    <div className="min-w-0 flex-1">{inner}</div>
-                    <a href={`tel:${tel}`} title="전화 걸기" aria-label="전화 걸기" className="shrink-0 leading-none text-[var(--tint-blue-tx)]">
-                      <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>call</span>
-                    </a>
-                    <a href={`sms:${tel}`} title="문자 보내기" aria-label="문자 보내기" className="shrink-0 leading-none text-[var(--tint-green-tx)]">
-                      <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>sms</span>
-                    </a>
-                  </div>
-                );
-              };
-    return { v, u, editable, idTint, cell };
-  };
-
   return (
     <div className="w-full">
       <section className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-5">
@@ -423,13 +394,13 @@ export default function RosterPage() {
       </div>
 
       {/* 표 */}
-      <div className="hidden md:flex justify-end mb-1.5">
+      <div className="flex justify-end mb-1.5">
         <button onClick={cycleZoom}
           className="px-2.5 py-1 rounded-full text-xs border whitespace-nowrap border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300">
           🔍 표 크기: {tableZoom === 1 ? "보통" : tableZoom === 0.7 ? "작게" : "더 작게"}
         </button>
       </div>
-      <div style={{ zoom: tableZoom }} className="hidden md:block overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
+      <div style={{ zoom: tableZoom }} className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
         <table className="w-max min-w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
@@ -450,7 +421,31 @@ export default function RosterPage() {
           </thead>
           <tbody>
             {rows.map(r => {
-              const { v, u, editable, idTint, cell } = rowCtx(r);
+              const v = view(r);
+              const u = r.roster;
+              const editable = !!u && !r.prop && !r.contract;   // 명부에만 있는 세대만 표에서 바로 고침
+              // 동·호수 칸 색: 매물관리 = 파랑, 만기관리 = 주황 (둘 다 있으면 파랑)
+              const idTint = r.prop
+                ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]"
+                : r.contract ? "bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)]" : "";
+              const cell = (field: RosterEditField, value: string, opts?: { phone?: boolean; date?: boolean }) => {
+                const inner = editable && u
+                  ? <EditCell value={u[field] || ""} onSave={val => saveCell(u, field, val)} phone={opts?.phone} date={opts?.date} />
+                  : <span className="block truncate px-1.5">{value || <span className="text-gray-300 dark:text-gray-600">—</span>}</span>;
+                const tel = opts?.phone ? value.replace(/[^\d+]/g, "") : "";
+                if (tel.length < 8) return inner;
+                return (
+                  <div className="flex items-center gap-0.5">
+                    <div className="min-w-0 flex-1">{inner}</div>
+                    <a href={`tel:${tel}`} title="전화 걸기" aria-label="전화 걸기" className="shrink-0 leading-none text-[var(--tint-blue-tx)]">
+                      <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>call</span>
+                    </a>
+                    <a href={`sms:${tel}`} title="문자 보내기" aria-label="문자 보내기" className="shrink-0 leading-none text-[var(--tint-green-tx)]">
+                      <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>sms</span>
+                    </a>
+                  </div>
+                );
+              };
               return (
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
                   <td className={`px-2 py-1.5 tabular-nums sticky left-0 z-10 ${idTint ? idTint + " font-semibold" : "bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
@@ -500,47 +495,6 @@ export default function RosterPage() {
             )}
           </tbody>
         </table>
-      </div>
-      {/* 폰: 한 세대씩 카드로 접어서 (가로 스크롤 없이 화면 폭에 맞춤) */}
-      <div className="md:hidden flex flex-col gap-2">
-        {rows.map(r => {
-          const { v, u, editable, idTint, cell } = rowCtx(r);
-          const item = (label: string, node: React.ReactNode) => (
-            <div className="min-w-0">
-              <div className="text-[10px] text-gray-400 dark:text-gray-500">{label}</div>
-              <div className="text-[13px] text-gray-800 dark:text-gray-200 min-w-0">{node}</div>
-            </div>
-          );
-          return (
-            <div key={r.key} className="rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900 p-2.5">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className={`px-2 py-0.5 rounded-md text-sm font-bold tabular-nums whitespace-nowrap ${idTint || "bg-[var(--tint-gray-bg)] text-gray-900 dark:text-gray-100"}`}>
-                  {r.dong ? `${r.dong}동 ` : ""}{r.ho}호
-                </span>
-                <span className="text-xs text-gray-400 whitespace-nowrap">{[v.unitType, v.area && `${v.area}㎡`, v.direction].filter(Boolean).join(" · ")}</span>
-                <div className="ml-auto flex items-center gap-1">
-                  {r.prop && <button onClick={() => router.push(`/properties?pid=${r.prop!.id}&open=1`)} className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)] border border-[var(--tint-blue-bd)] whitespace-nowrap">매물관리</button>}
-                  {r.contract && <button onClick={() => router.push(`/expiry?focus=${r.contract!.id}`)} className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)] border border-[var(--tint-amber-bd)] whitespace-nowrap">만기관리</button>}
-                  {!r.prop && !r.contract && <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-green-bg)] text-[var(--tint-green-tx)] border border-[var(--tint-green-bd)] whitespace-nowrap">명단</span>}
-                  {u && isOwner && <button onClick={() => removeUnit(u)} aria-label="고객명단에서 지우기" className="text-gray-300 hover:text-red-500 dark:text-gray-600 text-xs px-0.5">✕</button>}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                {item("임대인", cell("ownerName", v.ownerName))}
-                {item("임대인 전화", cell("ownerPhone", v.ownerPhone, { phone: true }))}
-                {item("임차인", cell("tenantName", v.tenantName))}
-                {item("임차인 전화", cell("tenantPhone", v.tenantPhone, { phone: true }))}
-                {item("만기일", cell("leaseEndDate", v.leaseEndDate, { date: true }))}
-                {editable && u ? item("메모", <EditCell value={u.memo} onSave={val => saveCell(u, "memo", val)} />) : item("메모", <span className="block truncate px-1.5 text-gray-400">{v.memo || ""}</span>)}
-              </div>
-            </div>
-          );
-        })}
-        {rows.length === 0 && (
-          <div className="px-3 py-10 text-center text-sm text-gray-400">
-            {!rosterLoaded ? "불러오는 중…" : allRows.length === 0 ? "이 단지에 동·호수가 있는 세대가 없어요. 명부 엑셀을 올려 보세요." : "조건에 맞는 세대가 없어요."}
-          </div>
-        )}
       </div>
       <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
         매물·만기에 있는 세대는 각 화면에서 고쳐 주세요 (여기서는 보기만). 세대 표시는 매물 → 만기 → 명단 순으로 먼저 있는 정보를 보여줘요.
