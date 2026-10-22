@@ -109,6 +109,16 @@ export default function RosterPage() {
     setTableZoom(next);
     try { localStorage.setItem("rosterTableZoom", String(next)); } catch {}
   };
+  // 값이 하나도 없는 칸은 접어서 표를 좁게 (기본 켜짐) — 끄면 전부 보여요
+  const [hideEmpty, setHideEmpty] = useState(true);
+  useEffect(() => {
+    try { if (localStorage.getItem("rosterHideEmpty") === "0") setHideEmpty(false); } catch {}
+  }, []);
+  const toggleHideEmpty = () => {
+    const next = !hideEmpty;
+    setHideEmpty(next);
+    try { localStorage.setItem("rosterHideEmpty", next ? "1" : "0"); } catch {}
+  };
   const [query, setQuery] = useState("");
 
   const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[] } | null>(null);
@@ -196,6 +206,15 @@ export default function RosterPage() {
       return true;
     });
   }, [allRows, dong, source, query]);
+
+  // 표 칸 번호(4~11)와 폭 — 보이는 줄 전부에서 비어 있는 칸은 숨김 후보
+  const COLS: { n: number; key: "unitType" | "area" | "direction" | "ownerName" | "ownerPhone" | "tenantName" | "tenantPhone" | "leaseEndDate"; w: number }[] = [
+    { n: 4, key: "unitType", w: 56 }, { n: 5, key: "area", w: 70 }, { n: 6, key: "direction", w: 56 },
+    { n: 7, key: "ownerName", w: 90 }, { n: 8, key: "ownerPhone", w: 150 }, { n: 9, key: "tenantName", w: 90 },
+    { n: 10, key: "tenantPhone", w: 150 }, { n: 11, key: "leaseEndDate", w: 104 },
+  ];
+  const hiddenCols = hideEmpty && rows.length > 0 ? COLS.filter(c => rows.every(r => !view(r)[c.key])) : [];
+  const tableMinW = 1140 - hiddenCols.reduce((sum, c) => sum + c.w, 0);
 
   const counts = useMemo(() => {
     const inDong = allRows.filter(r => dong === "all" || r.dong === dong);
@@ -394,14 +413,22 @@ export default function RosterPage() {
       </div>
 
       {/* 표 */}
-      <div className="flex justify-end mb-1.5">
+      <div className="flex justify-end gap-1.5 mb-1.5">
+        <button onClick={toggleHideEmpty}
+          title="값이 하나도 없는 칸을 접어서 표를 좁게 보여줘요"
+          className="px-2.5 py-1 rounded-full text-xs border whitespace-nowrap border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300">
+          빈 칸 접기: {hideEmpty ? "켜짐" : "꺼짐"}
+        </button>
         <button onClick={cycleZoom}
           className="px-2.5 py-1 rounded-full text-xs border whitespace-nowrap border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300">
           🔍 표 크기: {tableZoom === 1 ? "보통" : tableZoom === 0.7 ? "작게" : "더 작게"}
         </button>
       </div>
       <div style={{ zoom: tableZoom }} className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
-        <table className="w-full min-w-[1140px] border-collapse text-[13px]">
+        {hiddenCols.length > 0 && (
+          <style>{`.roster-table :is(th,td):is(${hiddenCols.map(c => `:nth-child(${c.n})`).join(",")}){display:none}`}</style>
+        )}
+        <table style={{ minWidth: tableMinW }} className="roster-table w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
               <th className="font-medium px-2 py-2.5 w-[70px] sticky left-0 z-10 bg-white dark:bg-slate-900">동</th>
