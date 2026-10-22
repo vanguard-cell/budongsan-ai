@@ -401,7 +401,7 @@ export default function RosterPage() {
         </button>
       </div>
       <div className="overflow-x-auto -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
-       <div style={{ zoom: tableZoom }}>
+       <div style={{ zoom: tableZoom, width: `${100 / tableZoom}%` }}>
         <table className="w-max min-w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
