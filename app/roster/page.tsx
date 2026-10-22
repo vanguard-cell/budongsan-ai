@@ -24,6 +24,7 @@ import {
   type RosterUnit, type RosterEditField,
 } from "@/lib/roster-db";
 import { parseRosterFile, type ParsedRoster } from "./roster-import";
+import { downloadVcf, type VcardContact } from "@/lib/vcard";
 
 const COMPLEX_STORAGE = "roster_complex";
 
@@ -272,6 +273,24 @@ export default function RosterPage() {
     XLSX.writeFile(wb, `고객명단_${complexName.replace(/[\\/:*?"<>|]/g, "")}${dong !== "all" ? `_${dong}동` : ""}.xlsx`);
   };
 
+  /* 지금 보이는 표의 전화번호 → 폰 연락처 파일 (같은 번호는 1번만) */
+  const exportContacts = () => {
+    const seen = new Set<string>();
+    const list: VcardContact[] = [];
+    for (const r of rows) {
+      const v = view(r);
+      const where = [r.dong && `${r.dong}동`, r.ho && `${r.ho}호`].filter(Boolean).join(" ");
+      for (const [name, phone, role] of [[v.ownerName, v.ownerPhone, "임대인"], [v.tenantName, v.tenantPhone, "임차인"]]) {
+        const digits = (phone || "").replace(/\D/g, "");
+        if (digits.length < 8 || seen.has(digits)) continue;
+        seen.add(digits);
+        list.push({ name: [name || role, where].filter(Boolean).join(" "), phone: phone.trim(), note: role });
+      }
+    }
+    if (list.length === 0) { setMsg("내보낼 전화번호가 없어요."); return; }
+    downloadVcf(list, "고객명단_연락처.vcf");
+  };
+
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
 
   const isOwner = user.role === "owner";
@@ -292,6 +311,11 @@ export default function RosterPage() {
           <button onClick={exportExcel} disabled={!rows.length}
             className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center gap-1.5 disabled:opacity-40">
             <span className="material-symbols-outlined text-base">download</span>엑셀로 받기
+          </button>
+          <button onClick={exportContacts} disabled={!rows.length}
+            title="지금 보이는 명단의 전화번호를 폰 연락처로 가져올 수 있는 파일을 받아요"
+            className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center gap-1.5 whitespace-nowrap disabled:opacity-40">
+            <span className="material-symbols-outlined text-base">contacts</span>연락처 내보내기
           </button>
           <button onClick={() => fileRef.current?.click()}
             className="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-[var(--brand-blue,#2383E2)] hover:opacity-90 flex items-center gap-1.5">
@@ -347,7 +371,7 @@ export default function RosterPage() {
 
       {/* 표 */}
       <div className="overflow-x-auto rounded-xl border border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
-        <table className="w-full min-w-[1080px] border-collapse text-[13px]">
+        <table className="w-full min-w-[1140px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
               <th className="font-medium px-2 py-2.5 w-[70px]">동</th>
@@ -357,9 +381,9 @@ export default function RosterPage() {
               <th className="font-medium px-2 py-2.5 w-[70px]">면적㎡</th>
               <th className="font-medium px-2 py-2.5 w-[56px]">향</th>
               <th className="font-medium px-2 py-2.5 w-[90px]">임대인</th>
-              <th className="font-medium px-2 py-2.5 w-[120px]">임대인 전화</th>
+              <th className="font-medium px-2 py-2.5 w-[150px]">임대인 전화</th>
               <th className="font-medium px-2 py-2.5 w-[90px]">임차인</th>
-              <th className="font-medium px-2 py-2.5 w-[120px]">임차인 전화</th>
+              <th className="font-medium px-2 py-2.5 w-[150px]">임차인 전화</th>
               <th className="font-medium px-2 py-2.5 w-[104px]">만기일</th>
               <th className="font-medium px-2 py-2.5 w-[150px]">등록 위치</th>
               <th className="font-medium px-2 py-2.5">메모</th>
@@ -374,10 +398,24 @@ export default function RosterPage() {
               const idTint = r.prop
                 ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]"
                 : r.contract ? "bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)]" : "";
-              const cell = (field: RosterEditField, value: string, opts?: { phone?: boolean; date?: boolean }) =>
-                editable && u
+              const cell = (field: RosterEditField, value: string, opts?: { phone?: boolean; date?: boolean }) => {
+                const inner = editable && u
                   ? <EditCell value={u[field] || ""} onSave={val => saveCell(u, field, val)} phone={opts?.phone} date={opts?.date} />
                   : <span className="block truncate px-1.5">{value || <span className="text-gray-300 dark:text-gray-600">—</span>}</span>;
+                const tel = opts?.phone ? value.replace(/[^\d+]/g, "") : "";
+                if (tel.length < 8) return inner;
+                return (
+                  <div className="flex items-center gap-0.5">
+                    <div className="min-w-0 flex-1">{inner}</div>
+                    <a href={`tel:${tel}`} title="전화 걸기" aria-label="전화 걸기" className="shrink-0 leading-none text-[var(--tint-blue-tx)]">
+                      <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>call</span>
+                    </a>
+                    <a href={`sms:${tel}`} title="문자 보내기" aria-label="문자 보내기" className="shrink-0 leading-none text-[var(--tint-green-tx)]">
+                      <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>sms</span>
+                    </a>
+                  </div>
+                );
+              };
               return (
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
                   <td className={`px-2 py-1.5 tabular-nums ${idTint ? idTint + " font-semibold" : "text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
