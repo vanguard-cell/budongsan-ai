@@ -346,7 +346,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
           ✏️ 수정
         </button>
-        <button onClick={() => printProperty(p, complexInfo)} title="이 호실 정보를 한 장으로 프린트"
+        <button onClick={() => printProperty(p, complexInfo, uniqueNo)} title="이 호실 정보를 한 장으로 프린트"
           className="whitespace-nowrap text-[11px] px-2.5 py-1 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
           🖨️ 프린트
         </button>

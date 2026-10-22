@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { type Contract, type ContractType, type Severity, dDay, severityOf } from "./contracts";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
+import { useRosterUniqueNo } from "@/lib/use-roster-unique";
 
 type ColKey = "address" | "type" | "price" | "tenant" | "landlord" | "start" | "end" | "sev" | "region";
 type EditField = "price" | "tenant" | "landlord" | "start" | "end" | "type";
@@ -94,6 +95,7 @@ interface Props {
 }
 
 export default function ContractTable({ list, selectedId, onRowClick, sortBy, onSortChange, filter, onFilterChange, colSearch, onColSearch, onPatch }: Props) {
+  const rosterUniqueNo = useRosterUniqueNo();
   const [openMenu, setOpenMenu] = useState<ColKey | null>(null);
   const [hidden, setHidden] = useState<Set<ColKey>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem("dealdone_contracts_hidden_cols") || "[]")); } catch { return new Set(); }
@@ -304,12 +306,16 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
             {list.map(({ c, s }) => {
               const selected = c.id === selectedId;
               const reg = splitAddress(addressStr(c));
+              const uniqueNo = rosterUniqueNo(c.address, c.dong, c.ho);
               return (
                 <tr key={c.id} onClick={() => handleRowClick(c)}
                   className={`border-b border-gray-100 dark:border-slate-800 last:border-0 cursor-pointer transition-colors ${
                     selected ? "bg-[var(--tint-blue-bg)] outline outline-1 -outline-offset-1 outline-[var(--brand-blue)]" : "hover:bg-gray-50/80 dark:hover:bg-slate-800/60"}`}>
                   {show("address") && (
-                    <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>{reg.complex}</td>
+                    <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>
+                      {reg.complex}
+                      {uniqueNo && <div className="text-[10px] font-normal text-gray-400 dark:text-gray-500 truncate">고유번호 {uniqueNo}</div>}
+                    </td>
                   )}
                   {show("type") && (
                     <td className="px-2 py-2.5" onDoubleClick={e => startEdit(c, "type", e)}>
