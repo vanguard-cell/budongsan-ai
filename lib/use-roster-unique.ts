@@ -41,6 +41,15 @@ export function useRosterUniqueNo(): (address?: string, dong?: string, ho?: stri
   };
 }
 
+/** 엑셀의 "남", "정남향", "남동" 같은 표기를 방향 선택칸의 값(남향·남동향…)으로 맞춤 — 못 맞추면 빈 값 */
+function normalizeDirection(raw: string): string {
+  const t = (raw || "").replace(/\s+/g, "").replace(/정|쪽|측|방향/g, "").replace(/향$/, "");
+  const m = t.match(/^(동남|남동|서남|남서|동북|북동|서북|북서|동|서|남|북)/);
+  if (!m) return "";
+  const alias: Record<string, string> = { 동남: "남동", 서남: "남서", 동북: "북동", 서북: "북서" };
+  return `${alias[m[1]] || m[1]}향`;
+}
+
 /** 고객명단에서 같은 단지·동·호수의 타입·전용면적·향·방수를 찾아주는 도우미 (칸이 비었을 때 채워 넣는 용도) */
 export function useRosterUnitInfo(): (address?: string, dong?: string, ho?: string) => Pick<RosterUnit, "unitType" | "area" | "direction" | "rooms"> | null {
   const { user } = useAuth();
@@ -59,7 +68,7 @@ export function useRosterUnitInfo(): (address?: string, dong?: string, ho?: stri
     const dh = dongHoOf(address || "", dong, ho);
     if (!dh.ho) return null;
     const u = map.get(unitKey(complexOf(address || "", dong, ho), dh.dong, dh.ho));
-    if (!u || !(u.unitType || u.area || u.direction || u.rooms)) return null;
-    return { unitType: u.unitType || "", area: u.area || "", direction: u.direction || "", rooms: u.rooms || "" };
+    if (!u || !(u.unitType || u.area || normalizeDirection(u.direction || "") || u.rooms)) return null;
+    return { unitType: u.unitType || "", area: u.area || "", direction: normalizeDirection(u.direction || ""), rooms: u.rooms || "" };
   };
 }
