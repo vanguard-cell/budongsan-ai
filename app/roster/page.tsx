@@ -26,6 +26,7 @@ import {
 import { parseRosterFile, type ParsedRoster } from "./roster-import";
 import { downloadVcf, type VcardContact } from "@/lib/vcard";
 
+const SHOW_FLOOR_COL = false;
 const COMPLEX_STORAGE = "roster_complex";
 
 interface Row {
@@ -428,7 +429,8 @@ export default function RosterPage() {
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
               <th className="font-medium px-2 py-2.5 w-[70px] sticky left-0 z-10 bg-white dark:bg-slate-900">동</th>
               <th className="font-medium px-2 py-2.5 w-[70px] sticky left-[70px] z-10 bg-white dark:bg-slate-900 border-r border-[var(--sidebar-bd)]">호수</th>
-              <th className="font-medium px-2 py-2.5 w-[44px]">층</th>
+              {/* 층 칸은 화면에서 숨김 (건의 #174) — 필요하면 SHOW_FLOOR_COL 을 true 로 */}
+              {SHOW_FLOOR_COL && <th className="font-medium px-2 py-2.5 w-[44px]">층</th>}
               <th className="font-medium px-2 py-2.5 w-[56px]">타입</th>
               <th className="font-medium px-2 py-2.5 w-[70px]">면적㎡</th>
               <th className="font-medium px-2 py-2.5 w-[56px]">향</th>
@@ -472,7 +474,7 @@ export default function RosterPage() {
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
                   <td className={`px-2 py-1.5 tabular-nums sticky left-0 z-10 ${idTint ? idTint + " font-semibold" : "bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
                   <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>{r.ho}</td>
-                  <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho, complexName.includes("상가"))}</td>
+                  {SHOW_FLOOR_COL && <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho, complexName.includes("상가"))}</td>}
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", v.area)}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("direction", v.direction)}</td>
@@ -509,7 +511,7 @@ export default function RosterPage() {
               );
             })}
             {rows.length === 0 && (
-              <tr><td colSpan={13} className="px-3 py-10 text-center text-sm text-gray-400">
+              <tr><td colSpan={SHOW_FLOOR_COL ? 13 : 12} className="px-3 py-10 text-center text-sm text-gray-400">
                 {!rosterLoaded ? "불러오는 중…" : allRows.length === 0
                   ? "이 단지에 동·호수가 있는 세대가 없어요. 명부 엑셀을 올려 보세요."
                   : "조건에 맞는 세대가 없어요."}
