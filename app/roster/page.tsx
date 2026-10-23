@@ -420,10 +420,10 @@ export default function RosterPage() {
           🔍 표 크기: {tableZoom === 1 ? "보통" : tableZoom === 0.7 ? "작게" : "더 작게"}
         </button>
       </div>
-      <div ref={tableWrapRef} className="overflow-x-auto -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
+      <div ref={tableWrapRef} className="relative max-w-none overflow-x-auto -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
        {/* zoom은 갤럭시 멀티뷰 등에서 폭이 틀어져서 transform으로 축소 */}
        <div style={tableZoom === 1 ? undefined : { height: innerH ? innerH * tableZoom : undefined }}>
-       <div ref={tableInnerRef} style={tableZoom === 1 ? undefined : { transform: `scale(${tableZoom})`, transformOrigin: "top left", width: wrapW ? wrapW / tableZoom : undefined }}>
+       <div ref={tableInnerRef} className={tableZoom === 1 ? undefined : "absolute top-0 left-0"} style={tableZoom === 1 ? undefined : { transform: `scale(${tableZoom})`, transformOrigin: "top left", width: wrapW ? wrapW / tableZoom : undefined }}>
         <table className="w-max min-w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
