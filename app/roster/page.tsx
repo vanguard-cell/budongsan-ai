@@ -89,6 +89,8 @@ function view(r: Row) {
   };
 }
 
+const KINDS = ["상가", "오피스텔", "아파트"];
+
 export default function RosterPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -110,6 +112,7 @@ export default function RosterPage() {
   const [dong, setDong] = useState<string>("all");
   const [floor, setFloor] = useState<string>("all");
   const [source, setSource] = useState<SourceFilter>("all");
+  const [kind, setKind] = useState<string>("all");
   // 표 크기(폰에서 한눈에 보기): 1 = 보통, 0.7 = 작게, 0.5 = 더 작게
   const [tableZoom, setTableZoom] = useState(1);
   useEffect(() => {
@@ -158,28 +161,37 @@ export default function RosterPage() {
 
   /* 단지 목록 — 동·호수가 있는 단지만 (세대 표를 만들 수 있는 곳) */
   const complexes = useMemo(() => {
-    const m = new Map<string, { name: string; units: Set<string> }>();
-    const add = (name: string, dong: string, ho: string) => {
+    const m = new Map<string, { name: string; units: Set<string>; types: Map<string, number> }>();
+    const add = (name: string, dong: string, ho: string, type?: string) => {
       if (!name || !ho) return;
       const k = complexKey(name);
-      if (!m.has(k)) m.set(k, { name, units: new Set() });
-      m.get(k)!.units.add(`${dong}|${ho}`);
+      if (!m.has(k)) m.set(k, { name, units: new Set(), types: new Map() });
+      const e = m.get(k)!;
+      e.units.add(`${dong}|${ho}`);
+      if (type) e.types.set(type, (e.types.get(type) || 0) + 1);
     };
-    for (const p of properties) { const dh = dongHoOf(p.address, p.dong, p.ho); add(complexOf(p.address, p.dong, p.ho), dh.dong, dh.ho); }
-    for (const c of contracts) { const dh = dongHoOf(c.address, c.dong, c.ho); add(complexOf(c.address, c.dong, c.ho), dh.dong, dh.ho); }
+    for (const p of properties) { const dh = dongHoOf(p.address, p.dong, p.ho); add(complexOf(p.address, p.dong, p.ho), dh.dong, dh.ho, p.propertyType); }
+    for (const c of contracts) { const dh = dongHoOf(c.address, c.dong, c.ho); add(complexOf(c.address, c.dong, c.ho), dh.dong, dh.ho, c.propertyType); }
     for (const u of roster) add(u.complex, u.dong, u.ho);
+    // 단지 종류 — 등록된 매물·만기의 유형 중 가장 많은 것, 없으면 단지 이름으로 짐작
+    const kindOf = (name: string, types: Map<string, number>) => {
+      const best = [...types.entries()].filter(([t]) => KINDS.includes(t)).sort((a, b) => b[1] - a[1])[0]?.[0];
+      if (best) return best;
+      return name.includes("상가") ? "상가" : name.includes("오피스텔") ? "오피스텔" : "아파트";
+    };
     return [...m.entries()]
-      .map(([key, v]) => ({ key, name: v.name, count: v.units.size }))
+      .map(([key, v]) => ({ key, name: v.name, count: v.units.size, kind: kindOf(v.name, v.types) }))
       .sort((a, b) => b.count - a.count);
   }, [properties, contracts, roster]);
 
   // 고른 단지가 없으면 건의 #143 단지(12블럭 오피스텔), 그것도 없으면 세대가 가장 많은 단지
+  const shownComplexes = useMemo(() => kind === "all" ? complexes : complexes.filter(c => c.kind === kind), [complexes, kind]);
   const complex = useMemo(() => {
-    if (complexPref && complexes.some(c => c.key === complexPref)) return complexPref;
-    return (complexes.find(c => c.key.includes("그랑파사쥬12블럭(오피스텔)")) || complexes[0])?.key || "";
-  }, [complexes, complexPref]);
+    if (complexPref && shownComplexes.some(c => c.key === complexPref)) return complexPref;
+    return (shownComplexes.find(c => c.key.includes("그랑파사쥬12블럭(오피스텔)")) || shownComplexes[0])?.key || "";
+  }, [shownComplexes, complexPref]);
 
-  const complexName = complexes.find(c => c.key === complex)?.name || "";
+  const complexName = shownComplexes.find(c => c.key === complex)?.name || "";
 
   /* 선택한 단지의 세대 줄 */
   const allRows = useMemo(() => {
@@ -402,11 +414,19 @@ export default function RosterPage() {
 
       {/* 단지 · 동 · 보기 */}
       <div className="flex flex-col gap-2 mb-3">
+        <div className="flex flex-wrap gap-1">
+          {["all", ...KINDS].map(k => (
+            <button key={k} onClick={() => { setKind(k); setDong("all"); setFloor("all"); }}
+              className={`px-3 py-1 rounded-full text-xs border whitespace-nowrap ${kind === k ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900" : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300"}`}>
+              {k === "all" ? "전체" : k}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-2 items-center">
           <select value={complex} onChange={e => setComplex(e.target.value)}
             className="max-w-full border border-gray-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100">
-            {complexes.length === 0 && <option value="">단지 없음</option>}
-            {complexes.map(c => <option key={c.key} value={c.key}>{c.name} ({c.count}세대)</option>)}
+            {shownComplexes.length === 0 && <option value="">단지 없음</option>}
+            {shownComplexes.map(c => <option key={c.key} value={c.key}>{c.name} ({c.count}세대)</option>)}
           </select>
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="호수·이름·전화 검색"
             className="flex-1 min-w-[10rem] border border-gray-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
