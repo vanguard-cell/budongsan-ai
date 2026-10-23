@@ -481,10 +481,10 @@ export default function RosterPage() {
               const v = view(r);
               const u = r.roster;
               const editable = !!u && !r.prop && !r.contract;   // 명부에만 있는 세대만 표에서 바로 고침
-              // 동·호수 칸 색: 매물관리 = 파랑, 만기관리 = 주황 (둘 다 있으면 파랑)
+              // 동·호수 칸 색: 매물관리 = 초록, 만기관리 = 분홍 (둘 다 있으면 파랑)
               const idTint = r.prop
-                ? "bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)]"
-                : r.contract ? "bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)]" : "";
+                ? "bg-green-200 text-green-900 dark:bg-green-800/60 dark:text-green-100"
+                : r.contract ? "bg-pink-200 text-pink-900 dark:bg-pink-500/30 dark:text-pink-100" : "";
               const cell = (field: RosterEditField, value: string, opts?: { phone?: boolean; date?: boolean }) => {
                 const inner = editable && u
                   ? <EditCell value={u[field] || ""} onSave={val => saveCell(u, field, val)} phone={opts?.phone} date={opts?.date} />
@@ -522,14 +522,14 @@ export default function RosterPage() {
                     <div className="flex flex-wrap gap-1 items-center">
                       {r.prop && (
                         <button onClick={() => router.push(`/properties?pid=${r.prop!.id}&open=1`)} title="매물관리에서 보기"
-                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-blue-bg)] text-[var(--tint-blue-tx)] border border-[var(--tint-blue-bd)] whitespace-nowrap">매물관리</button>
+                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-green-200 text-green-900 dark:bg-green-800/60 dark:text-green-100 border border-green-400 dark:border-green-600 whitespace-nowrap">매물관리</button>
                       )}
                       {r.contract && (
                         <button onClick={() => router.push(`/expiry?focus=${r.contract!.id}`)} title="만기관리에서 보기"
-                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-amber-bg)] text-[var(--tint-amber-tx)] border border-[var(--tint-amber-bd)] whitespace-nowrap">만기관리</button>
+                          className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-pink-200 text-pink-900 dark:bg-pink-500/30 dark:text-pink-100 border border-pink-400 dark:border-pink-500 whitespace-nowrap">만기관리</button>
                       )}
                       {!r.prop && !r.contract && (
-                        <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-green-bg)] text-[var(--tint-green-tx)] border border-[var(--tint-green-bd)]">명단</span>
+                        <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-gray-bg)] text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-slate-600 whitespace-nowrap">명단</span>
                       )}
                       {u && isOwner && (
                         <button onClick={() => removeUnit(u)} title="고객명단에서 지우기" aria-label="고객명단에서 지우기"
