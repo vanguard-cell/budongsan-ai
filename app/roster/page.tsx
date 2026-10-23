@@ -46,7 +46,11 @@ function floorOf(ho: string, isShop = false): string {
   const n = parseInt(ho.replace(/\D/g, ""), 10);
   if (!isFinite(n) || n < 100) return "";
   // 상가는 1033호 = 1층 033호처럼 끝 세 자리가 호수
-  if (isShop && n >= 1000) return String(Math.floor(n / 1000));
+  // 상가는 지하·1·2·3층이 전부 — 그 밖의 호수는 '기타'로 모음
+  if (isShop) {
+    const f = n >= 1000 ? Math.floor(n / 1000) : 0;
+    return f >= 1 && f <= 3 ? String(f) : "";
+  }
   return String(Math.floor(n / 100));
 }
 const hoNum = (ho: string) => {
@@ -415,7 +419,7 @@ export default function RosterPage() {
             {["all", ...floors].map(f => (
               <button key={f} onClick={() => setFloor(f)}
                 className={`px-2.5 py-1 rounded-full text-xs border whitespace-nowrap ${floor === f ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900" : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300"}`}>
-                {f === "all" ? "전체 층" : f === "" ? "층 없음" : f === "지하" ? "지하" : `${f}층`}
+                {f === "all" ? "전체 층" : f === "" ? "기타" : f === "지하" ? "지하" : `${f}층`}
               </button>
             ))}
           </div>
