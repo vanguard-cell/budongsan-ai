@@ -42,6 +42,10 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
       area: p.area || info.area,
       direction: p.direction || info.direction,
       rooms: p.rooms || info.rooms,
+      ownerName: p.ownerName || info.ownerName,
+      ownerPhone: p.ownerPhone || info.ownerPhone,
+      tenantName: p.tenantName || info.tenantName,
+      tenantPhone: p.tenantPhone || info.tenantPhone,
     }));
   }, [form.address, form.dong, form.ho, rosterInfo]);
   const isNew = !property.address;

@@ -51,7 +51,7 @@ function normalizeDirection(raw: string): string {
 }
 
 /** 고객명단에서 같은 단지·동·호수의 타입·전용면적·향·방수를 찾아주는 도우미 (칸이 비었을 때 채워 넣는 용도) */
-export function useRosterUnitInfo(): (address?: string, dong?: string, ho?: string) => Pick<RosterUnit, "unitType" | "area" | "direction" | "rooms"> | null {
+export function useRosterUnitInfo(): (address?: string, dong?: string, ho?: string) => Pick<RosterUnit, "unitType" | "area" | "direction" | "rooms" | "ownerName" | "ownerPhone" | "tenantName" | "tenantPhone"> | null {
   const { user } = useAuth();
   const [roster, setRoster] = useState<RosterUnit[]>([]);
   useEffect(() => {
@@ -68,7 +68,7 @@ export function useRosterUnitInfo(): (address?: string, dong?: string, ho?: stri
     const dh = dongHoOf(address || "", dong, ho);
     if (!dh.ho) return null;
     const u = map.get(unitKey(complexOf(address || "", dong, ho), dh.dong, dh.ho));
-    if (!u || !(u.unitType || u.area || normalizeDirection(u.direction || "") || u.rooms)) return null;
-    return { unitType: u.unitType || "", area: u.area || "", direction: normalizeDirection(u.direction || ""), rooms: u.rooms || "" };
+    if (!u || !(u.unitType || u.area || normalizeDirection(u.direction || "") || u.rooms || u.ownerName || u.ownerPhone || u.tenantName || u.tenantPhone)) return null;
+    return { unitType: u.unitType || "", area: u.area || "", direction: normalizeDirection(u.direction || ""), rooms: u.rooms || "", ownerName: u.ownerName || "", ownerPhone: u.ownerPhone || "", tenantName: u.tenantName || "", tenantPhone: u.tenantPhone || "" };
   };
 }

@@ -1252,6 +1252,10 @@ function EditModal({
       area: p.area || info.area,
       direction: p.direction || info.direction,
       rooms: p.rooms || info.rooms,
+      landlordName: p.landlordName || info.ownerName,
+      landlordPhone: p.landlordPhone || info.ownerPhone,
+      tenantName: p.tenantName || info.tenantName,
+      tenantPhone: p.tenantPhone || info.tenantPhone,
     }));
   }, [form.address, form.dong, form.ho, rosterInfo]);
 
