@@ -43,7 +43,8 @@ type SourceFilter = "all" | "roster" | "prop" | "contract";
 /** 호수 → 층 ("1201" → 12, "401" → 4, "비1022" → 지하) */
 function floorOf(ho: string, isShop = false): string {
   if (/^(비|B|지하)/.test(ho)) return "지하";
-  const n = parseInt(ho.replace(/\D/g, ""), 10);
+  // "1024-1" 처럼 가지번호가 있으면 앞 번호만 기준
+  const n = parseInt(ho.split("-")[0].replace(/\D/g, ""), 10);
   if (!isFinite(n) || n < 100) return "";
   // 상가는 1033호 = 1층 033호처럼 끝 세 자리가 호수
   // 상가는 지하·1·2·3층이 전부 — 그 밖의 호수는 '기타'로 모음
