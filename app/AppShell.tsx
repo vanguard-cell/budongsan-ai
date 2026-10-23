@@ -50,6 +50,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     pathname.startsWith("/insights") ||
     pathname.startsWith("/ai-content") ||
     pathname.startsWith("/market-price") ||
+    pathname.startsWith("/roster") ||
+    pathname.startsWith("/search") ||
     pathname.startsWith("/team");
 
   if (isLogin) {

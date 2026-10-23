@@ -51,6 +51,8 @@ export default function AppNav() {
     pathname.startsWith("/insights") ||
     pathname.startsWith("/ai-content") ||
     pathname.startsWith("/market-price") ||
+    pathname.startsWith("/roster") ||
+    pathname.startsWith("/search") ||
     pathname.startsWith("/team");
 
   return (
