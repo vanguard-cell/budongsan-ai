@@ -99,9 +99,11 @@ export default function RosterPage() {
   const setComplex = (k: string) => {
     setComplexState(k);
     setDong("all");
+    setFloor("all");
     try { localStorage.setItem(COMPLEX_STORAGE, k); } catch { /* 저장 불가 환경은 무시 */ }
   };
   const [dong, setDong] = useState<string>("all");
+  const [floor, setFloor] = useState<string>("all");
   const [source, setSource] = useState<SourceFilter>("all");
   // 표 크기(폰에서 한눈에 보기): 1 = 보통, 0.7 = 작게, 0.5 = 더 작게
   const [tableZoom, setTableZoom] = useState(1);
@@ -202,10 +204,19 @@ export default function RosterPage() {
 
   const dongs = useMemo(() => [...new Set(allRows.map(r => r.dong))].sort((a, b) => (Number(a) || 0) - (Number(b) || 0)), [allRows]);
 
+  // 상가 단지는 층별(지하·1층·2층…)로 나눠 보기
+  const isShopComplex = complexName.includes("상가");
+  const floors = useMemo(() => {
+    if (!isShopComplex) return [] as string[];
+    const fl = (n: string) => (n === "지하" ? -1 : Number(n) || 0);
+    return [...new Set(allRows.map(r => floorOf(r.ho, true)))].sort((a, b) => fl(a) - fl(b));
+  }, [allRows, isShopComplex]);
+
   const rows = useMemo(() => {
     const q = query.trim().replace(/\s+/g, "");
     return allRows.filter(r => {
       if (dong !== "all" && r.dong !== dong) return false;
+      if (floor !== "all" && floorOf(r.ho, true) !== floor) return false;
       if (source === "roster" && (r.prop || r.contract)) return false;
       if (source === "prop" && !r.prop) return false;
       if (source === "contract" && !r.contract) return false;
@@ -216,7 +227,7 @@ export default function RosterPage() {
       }
       return true;
     });
-  }, [allRows, dong, source, query]);
+  }, [allRows, dong, floor, source, query]);
 
   const counts = useMemo(() => {
     const inDong = allRows.filter(r => dong === "all" || r.dong === dong);
@@ -395,6 +406,16 @@ export default function RosterPage() {
               <button key={d} onClick={() => setDong(d)}
                 className={`px-2.5 py-1 rounded-full text-xs border ${dong === d ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900" : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300"}`}>
                 {d === "all" ? "전체 동" : d ? `${d}동` : "동 없음"}
+              </button>
+            ))}
+          </div>
+        )}
+        {floors.length > 1 && (
+          <div className="flex flex-wrap gap-1">
+            {["all", ...floors].map(f => (
+              <button key={f} onClick={() => setFloor(f)}
+                className={`px-2.5 py-1 rounded-full text-xs border whitespace-nowrap ${floor === f ? "bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900" : "border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300"}`}>
+                {f === "all" ? "전체 층" : f === "" ? "층 없음" : f === "지하" ? "지하" : `${f}층`}
               </button>
             ))}
           </div>
