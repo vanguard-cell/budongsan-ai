@@ -42,7 +42,7 @@ export interface RosterUnit {
 }
 
 /** 표에서 바로 고칠 수 있는 칸 */
-export type RosterEditField = "unitType" | "area" | "direction" | "ownerName" | "ownerPhone" | "tenantName" | "tenantPhone" | "leaseEndDate" | "memo";
+export type RosterEditField = "ho" | "unitType" | "area" | "direction" | "ownerName" | "ownerPhone" | "tenantName" | "tenantPhone" | "leaseEndDate" | "memo";
 
 export function emptyRosterUnit(): RosterUnit {
   return {

@@ -306,6 +306,12 @@ export default function RosterPage() {
 
   const saveCell = async (u: RosterUnit, field: RosterEditField, value: string) => {
     if (!user || (u[field] || "") === value) return;
+    if (field === "ho") {
+      value = value.trim().replace(/호$/, "");
+      if (!value) { setMsg("❌ 호수는 비워둘 수 없어요."); return; }
+      if (value === u.ho) return;
+      if (allRows.some(r => r.key === unitKey(u.complex, u.dong, value))) { setMsg(`❌ ${value}호는 이미 있는 호수예요.`); return; }
+    }
     try { await updateRosterField(user.agencyId, u.id, field, value); }
     catch (e) { console.error("[roster] 수정 실패:", e); setMsg("❌ 저장하지 못했어요. 다시 해 주세요."); }
   };
@@ -500,7 +506,9 @@ export default function RosterPage() {
               return (
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
                   <td className={`px-2 py-1.5 tabular-nums sticky left-0 z-10 ${idTint ? idTint + " font-semibold" : "bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
-                  <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>{r.ho}</td>
+                  <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>
+                    {editable && u ? <EditCell value={u.ho} onSave={val => saveCell(u, "ho", val)} /> : r.ho}
+                  </td>
                   {SHOW_FLOOR_COL && <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho, complexName.includes("상가"))}</td>}
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", v.area)}</td>
