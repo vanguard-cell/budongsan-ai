@@ -29,14 +29,6 @@ import { downloadVcf, type VcardContact } from "@/lib/vcard";
 const SHOW_FLOOR_COL = false;
 const COMPLEX_STORAGE = "roster_complex";
 
-/** "11블럭" 단지인데 동이 12xx처럼 다른 블럭 번호로 시작하면 이 단지 명단에서 뺀다 (화면에서만 숨김) */
-function otherBlockDong(complexName: string, dong: string): boolean {
-  const b = (complexName || "").match(/(\d+)\s*블[럭록]/);
-  const d = (dong || "").replace(/\D/g, "");
-  if (!b || d.length < 4) return false;
-  return d.slice(0, d.length - 2) !== b[1];
-}
-
 interface Row {
   key: string;
   dong: string;
@@ -160,7 +152,7 @@ export default function RosterPage() {
   const complexes = useMemo(() => {
     const m = new Map<string, { name: string; units: Set<string> }>();
     const add = (name: string, dong: string, ho: string) => {
-      if (!name || !ho || otherBlockDong(name, dong)) return;
+      if (!name || !ho) return;
       const k = complexKey(name);
       if (!m.has(k)) m.set(k, { name, units: new Set() });
       m.get(k)!.units.add(`${dong}|${ho}`);
@@ -191,21 +183,21 @@ export default function RosterPage() {
     };
     for (const p of properties) {
       if (complexKey(complexOf(p.address, p.dong, p.ho)) !== complex) continue;
-      const dh = dongHoOf(p.address, p.dong, p.ho); if (!dh.ho || otherBlockDong(complexName, dh.dong)) continue;
+      const dh = dongHoOf(p.address, p.dong, p.ho); if (!dh.ho) continue;
       const r = row(dh.dong, dh.ho); r.prop = pickProp(r.prop, p);
     }
     for (const c of contracts) {
       if (complexKey(complexOf(c.address, c.dong, c.ho)) !== complex) continue;
-      const dh = dongHoOf(c.address, c.dong, c.ho); if (!dh.ho || otherBlockDong(complexName, dh.dong)) continue;
+      const dh = dongHoOf(c.address, c.dong, c.ho); if (!dh.ho) continue;
       const r = row(dh.dong, dh.ho); r.contract = pickContract(r.contract, c);
     }
     for (const u of roster) {
-      if (complexKey(u.complex) !== complex || otherBlockDong(complexName, u.dong)) continue;
+      if (complexKey(u.complex) !== complex) continue;
       const r = row(u.dong, u.ho); if (!r.roster) r.roster = u;
     }
     return [...m.values()].sort((a, b) =>
       (Number(a.dong) || 0) - (Number(b.dong) || 0) || hoNum(a.ho) - hoNum(b.ho));
-  }, [properties, contracts, roster, complex, complexName]);
+  }, [properties, contracts, roster, complex]);
 
   const dongs = useMemo(() => [...new Set(allRows.map(r => r.dong))].sort((a, b) => (Number(a) || 0) - (Number(b) || 0)), [allRows]);
 
