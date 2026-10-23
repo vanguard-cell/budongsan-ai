@@ -51,7 +51,8 @@ function floorOf(ho: string, isShop = false): string {
 }
 const hoNum = (ho: string) => {
   const n = parseInt(ho.replace(/\D/g, ""), 10);
-  return /^(비|B|지하)/.test(ho) ? -n : (isFinite(n) ? n : 0);
+  // 지하는 일반 호수보다 앞, 지하끼리는 숫자 작은 순
+  return /^(비|B|지하)/.test(ho) ? (isFinite(n) ? n : 0) - 1e7 : (isFinite(n) ? n : 0);
 };
 
 /** 같은 세대에 여러 건이면 진행 중인 것, 그중 최신 */
