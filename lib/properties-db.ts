@@ -48,6 +48,8 @@ export interface Property {
   extraContacts?: ExtraContact[]; // 소유자 외 추가 연락처 (상담·배우자 등 — 여러 명)
   tenantName: string;    // 임차인 이름
   tenantPhone: string;   // 임차인 연락처
+  buyerName?: string;    // 매수인 이름 (매매 계약 진행에서 입력, 건의 #182)
+  buyerPhone?: string;   // 매수인 연락처
   tenantDeposit: string; // 현재 임차인 보증금 (만원)
   tenantMonthly: string; // 현재 임차인 월세 (만원)
   leaseEndDate: string;  // 현재 임대차 만기일 (YYYY-MM-DD)
@@ -311,6 +313,8 @@ function fromDoc(id: string, d: Record<string, unknown>): Property {
     extraContacts: Array.isArray(d.extraContacts) ? (d.extraContacts as ExtraContact[]) : undefined,
     tenantName:   (d.tenantName   as string) || "",
     tenantPhone:  (d.tenantPhone  as string) || "",
+    buyerName:    (d.buyerName    as string) || undefined,
+    buyerPhone:   (d.buyerPhone   as string) || undefined,
     tenantDeposit:(d.tenantDeposit as string) || "",
     tenantMonthly:(d.tenantMonthly as string) || "",
     leaseEndDate: (d.leaseEndDate as string) || "",

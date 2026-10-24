@@ -132,24 +132,41 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
           {(() => {
             const isSale = form.dealType === "매매";
             const partyLabel = isSale ? "매수인" : "임차인";
-            const nameKey = isSale ? "ownerName" : "tenantName";
-            const phoneKey = isSale ? "ownerPhone" : "tenantPhone";
+            const nameKey = isSale ? "buyerName" : "tenantName";
+            const phoneKey = isSale ? "buyerPhone" : "tenantPhone";
             return (
             <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-2">
-              <div className="text-xs font-semibold text-orange-700">🤝 {partyLabel}</div>
+              <div className="text-xs font-semibold text-orange-700">🤝 {isSale ? "매도인 · 매수인" : partyLabel}</div>
+
+              {isSale && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">매도인 이름</label>
+                    <input value={form.ownerName} onChange={e => set("ownerName", e.target.value)}
+                      placeholder="홍길동"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">매도인 연락처</label>
+                    <input type="tel" value={form.ownerPhone} onChange={e => set("ownerPhone", e.target.value)}
+                      placeholder="010-0000-0000"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                  </div>
+                </div>
+              )}
 
               {/* 직접 입력 */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">{partyLabel} 이름</label>
-                  <input value={form[nameKey]}
+                  <input value={form[nameKey] ?? ""}
                     onChange={e => { set(nameKey, e.target.value); if (!isSale) set("linkedTenantId", "") }}
                     placeholder="홍길동"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">연락처</label>
-                  <input type="tel" value={form[phoneKey]}
+                  <input type="tel" value={form[phoneKey] ?? ""}
                     onChange={e => { set(phoneKey, e.target.value); if (!isSale) set("linkedTenantId", ""); }}
                     placeholder="010-0000-0000"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
@@ -170,7 +187,7 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
                     placeholder="70 (전세는 0)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
               </div>}
-              {isSale && <p className="text-[10px] text-orange-600">💡 매수인은 새 집주인(매도인 칸)으로 바뀌고, 기존 임차인 정보는 그대로 유지됩니다</p>}
+              {isSale && <p className="text-[10px] text-orange-600">💡 매도인은 기존 집주인 칸 그대로이고, 매수인은 따로 저장됩니다</p>}
             </div>
             );
           })()}
