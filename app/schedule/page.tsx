@@ -96,6 +96,8 @@ function contractToDisplayProp(ct: Contract): Property {
   };
 }
 
+// 일정 패널의 '매물 상세 보기' 버튼은 숨김 (건의 #184)
+const SHOW_DETAIL_BUTTON: boolean = false;
 function formatPhone(raw: string): string {
   const d = raw.replace(/\D/g, "");
   if (d.length === 11) return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`;
@@ -612,7 +614,7 @@ export default function SchedulePage() {
                 </div>
                 {it.contract ? (
                   <button onClick={() => router.push(`/expiry?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">event_repeat</span>만기 계약 보기</button>
-                ) : (
+                ) : SHOW_DETAIL_BUTTON && (
                   <button onClick={() => router.push(p.id ? `/properties?pid=${encodeURIComponent(p.id)}&open=1` : `/properties?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">domain</span>매물 상세 보기</button>
                 )}
               </div>
@@ -752,6 +754,14 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
   }
   const bar = SOURCE_BAR[item.source];
   const memo = item.schedule?.memo?.trim();
+  // 계약·중도금·잔금 일정은 목록에서 바로 두 분 이름·전화번호가 보이게 (건의 #184)
+  const isDealStep = !!item.propertyKind || (!!item.schedule && ["계약일", "중도금일", "잔금일"].includes(item.schedule.scheduleType));
+  const dp = isDealStep ? (item.property ?? linked) : undefined;
+  const sale = dp?.dealType === "매매";
+  const people = dp ? [
+    { tag: sale ? "매도" : "임대", name: dp.ownerName, phone: dp.ownerPhone },
+    { tag: sale ? "매수" : "임차", name: dp.tenantName, phone: dp.tenantPhone },
+  ].filter(x => x.name || x.phone) : [];
   return (
     <div className={`px-3 py-2 rounded-xl border bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${done ? "opacity-50" : ""}`}>
     <div className="flex items-center gap-2.5">
@@ -767,6 +777,13 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
       {done && <span className="shrink-0 text-[10px] text-green-600 font-medium">완료</span>}
       <span className="material-symbols-outlined text-gray-300 dark:text-slate-600 text-[18px] shrink-0">chevron_right</span>
     </div>
+    {people.length > 0 && (
+      <div className="mt-1 ml-[3.4rem] flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-gray-700 dark:text-gray-300">
+        {people.map(x => (
+          <span key={x.tag} className="whitespace-nowrap"><span className="font-bold">{x.tag}</span> {x.name}{x.phone ? ` ${formatPhone(x.phone)}` : ""}</span>
+        ))}
+      </div>
+    )}
     {memo && <p className="mt-1 ml-[3.4rem] text-[12px] leading-snug text-gray-500 dark:text-gray-400 line-clamp-3 break-words whitespace-pre-line">💬 {memo}</p>}
     </div>
   );
