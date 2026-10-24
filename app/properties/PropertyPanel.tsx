@@ -102,6 +102,7 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
   const stage = stageOf(p);
   const accent = STAGE_ACCENT[stage.label] || "#2383E2";
   const address = [p.address, p.dong && `${p.dong}동`, p.ho && `${p.ho}호`].filter(Boolean).join(" ");
+  const ownerLabel = p.dealType === "매매" ? "매도인" : "임대인";
   const price = p.dealType === "월세" ? `${fmtNum(p.price)}/${fmtNum(p.monthly)}만` : `${fmtNum(p.price)}만`;
   const leaseDd = p.leaseEndDate ? dDay(p.leaseEndDate) : null;
 
@@ -132,7 +133,7 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
             {p.downPaymentDate && <Row label="중도금">{p.downPaymentDate}</Row>}
             {p.balanceDate && <Row label="잔금일">{p.balanceDate}</Row>}
             {p.leaseEndDate && <Row label="만기일">{p.leaseEndDate}</Row>}
-            {p.ownerName && !p.ownerPhone && <Row label="집주인">{p.ownerName}</Row>}
+            {p.ownerName && !p.ownerPhone && <Row label={ownerLabel}>{p.ownerName}</Row>}
             {p.tenantName && !p.tenantPhone && <Row label="임차인">{p.tenantName}</Row>}
             {(p.tenantDeposit || p.tenantMonthly) && (
               <Row label="현임차">{[p.tenantDeposit && `보증금 ${fmtNum(p.tenantDeposit)}만`, p.tenantMonthly && `월 ${fmtNum(p.tenantMonthly)}만`].filter(Boolean).join(" / ")}</Row>
@@ -147,13 +148,13 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
       {/* 연락 칩 */}
       {(p.ownerPhone || p.tenantPhone) && (
         <div className="px-1 flex flex-wrap gap-1.5 mt-1">
-          <ContactChip role="집주인" name={p.ownerName} phone={p.ownerPhone} kind="owner" />
+          <ContactChip role={ownerLabel} name={p.ownerName} phone={p.ownerPhone} kind="owner" />
           <ContactChip role="임차인" name={p.tenantName} phone={p.tenantPhone} kind="tenant" />
         </div>
       )}
       {(p.ownerPhone || p.tenantPhone) && (
         <p className="px-1 text-[10px] text-gray-400 dark:text-gray-500">
-          {[p.ownerPhone && `집주인 ${formatPhone(p.ownerPhone)}`, p.tenantPhone && `임차인 ${formatPhone(p.tenantPhone)}`].filter(Boolean).join(" · ")}
+          {[p.ownerPhone && `${ownerLabel} ${formatPhone(p.ownerPhone)}`, p.tenantPhone && `임차인 ${formatPhone(p.tenantPhone)}`].filter(Boolean).join(" · ")}
         </p>
       )}
 

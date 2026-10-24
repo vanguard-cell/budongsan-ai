@@ -373,12 +373,12 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           {/* 집주인 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">소유자 이름</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{form.dealType === "매매" ? "매도인" : "임대인"} 이름</label>
               <input value={form.ownerName} onChange={e => set("ownerName", e.target.value)}
                 placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">소유자 연락처</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{form.dealType === "매매" ? "매도인" : "임대인"} 연락처</label>
               <input type="tel" value={formatPhone(form.ownerPhone || "")} onChange={e => set("ownerPhone", formatPhoneInput(e.target.value))}
                 placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
@@ -387,7 +387,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           {/* 집주인 통신사 — 같은 걸 다시 누르면 해제 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              집주인 통신사 <span className="text-[10px] text-gray-400">(선택)</span>
+              {form.dealType === "매매" ? "매도인" : "임대인"} 통신사 <span className="text-[10px] text-gray-400">(선택)</span>
             </label>
             <div className="grid grid-cols-4 gap-1.5">
               {CARRIERS.map(c => {
