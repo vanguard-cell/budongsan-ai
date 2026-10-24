@@ -607,13 +607,13 @@ export default function SchedulePage() {
                   <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{p.address}</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {phoneChip("집주인", p.ownerName, p.ownerPhone, "owner")}
-                  {phoneChip("임차인", p.tenantName, p.tenantPhone, "tenant")}
+                  {phoneChip(p.dealType === "매매" ? "매도자" : "집주인", p.ownerName, p.ownerPhone, "owner")}
+                  {phoneChip(p.dealType === "매매" ? "매수자" : "임차인", p.tenantName, p.tenantPhone, "tenant")}
                 </div>
                 {it.contract ? (
                   <button onClick={() => router.push(`/expiry?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">event_repeat</span>만기 계약 보기</button>
                 ) : (
-                  <button onClick={() => router.push(`/properties?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">domain</span>매물 상세 보기</button>
+                  <button onClick={() => router.push(p.id ? `/properties?pid=${encodeURIComponent(p.id)}&open=1` : `/properties?q=${encodeURIComponent(p.address)}`)} className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-[var(--brand-blue)] text-white text-[12px] font-bold hover:bg-[var(--brand-blue-dark)]"><span className="material-symbols-outlined text-[15px]">domain</span>매물 상세 보기</button>
                 )}
               </div>
             )}
