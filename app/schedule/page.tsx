@@ -651,8 +651,8 @@ function visitSmsHref(phone: string, name: string, date: string, list: Schedule[
   const [, m, d] = date.split("-");
   const when = `${Number(m)}월 ${Number(d)}일`;
   const agency = getAgencyDisplayName();
-  const times = visits.map(v => v.time).filter(Boolean).map(t => `- ${t}`);
-  const text = `안녕하세요. ${agency ? agency + "입니다. " : ""}${when} 방문 예약 안내드립니다.\n${times.length ? times.join("\n") + "\n" : ""}시간 맞춰 와주세요. 변경되시면 연락 부탁드립니다.`;
+  const times = visits.map(v => v.time).filter(Boolean).join(", ");
+  const text = `안녕하세요?\n${agency ? agency + " 입니다.\n" : ""}고객님의 방문 예약을 알려 드립니다.\n${when}${times ? " " + times : ""} 입니다.\n혹시 방문 일정에 변경이 있다면 알려 주세요^^\n즐거운 마음으로 뵙겠습니다.`;
   const sep = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?";
   return `sms:${digits}${sep}body=${encodeURIComponent(text)}`;
 }
