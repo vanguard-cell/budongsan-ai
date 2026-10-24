@@ -84,7 +84,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
     const line = `${Number(mm)}/${Number(dd)}-매물 확인 문자 전송(${who})`;
     onSaveMemo(p.memo ? `${p.memo}\n${line}` : line);
   };
-  const hasTenant = !!(p.tenantName || p.tenantPhone);
+  const isSale = p.dealType === "매매";
+  const partyName = (isSale ? p.buyerName : undefined) || p.tenantName;
+  const partyPhone = (isSale ? p.buyerPhone : undefined) || p.tenantPhone;
+  const hasTenant = !!(partyName || partyPhone);
   const regInfo = p.createdAt > 0 ? (() => {
     const ds = kstDateStr(new Date(p.createdAt));
     const days = Math.max(0, Math.round((Date.parse(today) - Date.parse(ds)) / 86400000));
@@ -210,12 +213,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               {hasTenant && (
                 <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
                   <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">{p.dealType === "매매" ? "매수인" : "임차인"}</span>
-                  <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{p.tenantName || "—"}</span>
-                  {p.tenantPhone && (
+                  <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{partyName || "—"}</span>
+                  {partyPhone && (
                     <>
-                      <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.tenantPhone)}</span>
-                      <a href={`tel:${p.tenantPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                      <a href={smsHref(p.tenantPhone, p.tenantName, "임대차 만기")} onClick={() => logSms(p.dealType === "매매" ? "매수인" : "임차인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(partyPhone)}</span>
+                      <a href={`tel:${partyPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
+                      <a href={smsHref(partyPhone, partyName, "임대차 만기")} onClick={() => logSms(p.dealType === "매매" ? "매수인" : "임차인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                       
                     </>
                   )}
