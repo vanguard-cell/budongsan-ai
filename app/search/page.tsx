@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import { subscribeCustomers } from "@/lib/customers-db";
-import { matchAllTokens } from "@/lib/search-match";
+import { matchAllTokens, isDigitQuery } from "@/lib/search-match";
 import type { Contract } from "../expiry/contracts";
 import type { Customer } from "../customers/customer-types";
 
@@ -53,7 +53,7 @@ export default function SearchPage() {
     vals.some(v => {
       if (!v) return false;
       if (v.toLowerCase().includes(term)) return true;
-      return digits.length >= 3 && v.replace(/\D/g, "").includes(digits);
+      return isDigitQuery(term) && digits.length >= 3 && v.replace(/\D/g, "").includes(digits);
     });
 
   const pRes = useMemo(() => !term ? [] : properties.filter(p =>

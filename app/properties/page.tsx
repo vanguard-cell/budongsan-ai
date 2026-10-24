@@ -1,7 +1,7 @@
 "use client";
 
 import { stripUnit, complexShortName } from "@/lib/address";
-import { matchAllTokens } from "@/lib/search-match";
+import { matchAllTokens, isDigitQuery } from "@/lib/search-match";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -367,7 +367,7 @@ export default function PropertiesPage() {
         if (!query.trim()) return true;
         const q = query.trim().toLowerCase();
         const qd = q.replace(/\D/g, "");
-        const phoneHit = (ph?: string) => !!ph && (ph.includes(q) || (qd.length >= 3 && ph.replace(/\D/g, "").includes(qd)));
+        const phoneHit = (ph?: string) => !!ph && (ph.includes(q) || (isDigitQuery(q) && qd.length >= 3 && ph.replace(/\D/g, "").includes(qd)));
         return (p.address || "").toLowerCase().includes(q)
             || (p.ownerName || "").toLowerCase().includes(q)
             || phoneHit(p.ownerPhone) || phoneHit(p.tenantPhone)
