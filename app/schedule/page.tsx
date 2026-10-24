@@ -760,7 +760,7 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
   const sale = dp?.dealType === "매매";
   const people = dp ? [
     { tag: sale ? "매도" : "임대", name: dp.ownerName, phone: dp.ownerPhone },
-    { tag: sale ? "매수" : "임차", name: dp.tenantName, phone: dp.tenantPhone },
+    { tag: sale ? "매수" : "임차", name: (sale ? dp.buyerName : undefined) || dp.tenantName, phone: (sale ? dp.buyerPhone : undefined) || dp.tenantPhone },
   ].filter(x => x.name || x.phone) : [];
   return (
     <div className={`px-3 py-2 rounded-xl border bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${done ? "opacity-50" : ""}`}>
