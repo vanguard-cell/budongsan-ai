@@ -12,7 +12,7 @@ import {
 import { subscribeProperties, emptyProperty, type Property } from "@/lib/properties-db";
 import { subscribeCustomers } from "@/lib/customers-db";
 import { subscribeContracts } from "@/lib/contracts-db";
-import { dDay, type Contract } from "@/app/expiry/contracts";
+import { dDay, getAgencyDisplayName, type Contract } from "@/app/expiry/contracts";
 import type { Customer } from "@/app/customers/customer-types";
 import MonthCalendar, { SOURCE_CELL_CLASSES, type CalendarItem } from "./MonthCalendar";
 import SideDrawer from "@/app/components/SideDrawer";
@@ -511,7 +511,7 @@ export default function SchedulePage() {
                         {g.phone && (
                           <>
                             <a href={`tel:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                            <a href={`sms:${g.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                            <a href={visitSmsHref(g.phone, g.name, date, g.items.map(i => i.schedule).filter((x): x is Schedule => !!x))} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="방문 안내 문자" title="방문 안내 문자 보내기"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                           </>
                         )}
                         {SHOW_SHARE_BUTTON && g.items.some(i => i.schedule) && (
@@ -548,6 +548,9 @@ export default function SchedulePage() {
         const accent = SOURCE_BAR[it.source];
         const phoneChip = (label: string, name: string | undefined, phone: string | undefined, kind: "owner" | "tenant" | "visitor") => {
           if (!phone) return null;
+          const smsHref = kind === "visitor" && s && (s.scheduleType === "방문" || s.scheduleType === "집보기")
+            ? visitSmsHref(phone, name || "", s.date, [s])
+            : `sms:${phone.replace(/\D/g, "")}`;
           const cls = kind === "owner" ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
             : kind === "tenant" ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
             : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100";
@@ -557,7 +560,7 @@ export default function SchedulePage() {
               <a href={`tel:${phone.replace(/\D/g, "")}`} className={`inline-flex items-center gap-1 pl-2 pr-1.5 py-1 text-[11px] font-bold transition-colors ${cls}`}>
                 <span className="material-symbols-outlined text-[13px]">call</span><span className="whitespace-nowrap">{tag}</span><span className="whitespace-nowrap font-semibold">{formatPhone(phone)}</span>
               </a>
-              <a href={`sms:${phone.replace(/\D/g, "")}`} className={`inline-flex items-center px-1.5 py-1 border-l border-gray-200 dark:border-slate-600 transition-colors ${cls}`}>
+              <a href={smsHref} className={`inline-flex items-center px-1.5 py-1 border-l border-gray-200 dark:border-slate-600 transition-colors ${cls}`}>
                 <span className="material-symbols-outlined text-[13px]">sms</span>
               </a>
             </span>
@@ -638,6 +641,20 @@ export default function SchedulePage() {
       )}
     </div>
   );
+}
+
+/** 방문 예약 안내 문자 — 번호와 내용이 미리 들어간 문자 작성창 주소 */
+function visitSmsHref(phone: string, name: string, date: string, list: Schedule[]): string {
+  const digits = phone.replace(/\D/g, "");
+  const visits = list.filter(x => x.scheduleType === "방문" || x.scheduleType === "집보기").sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  if (visits.length === 0) return `sms:${digits}`;
+  const [, m, d] = date.split("-");
+  const when = `${Number(m)}월 ${Number(d)}일`;
+  const agency = getAgencyDisplayName();
+  const lines = visits.map(v => `${v.time ? v.time + " " : ""}${v.propertyAddress || ""}`.trim()).filter(Boolean).map(t => `- ${t}`);
+  const text = `${name ? name + "님, " : ""}안녕하세요. ${agency ? agency + "입니다. " : ""}${when} 방문 예약 안내드립니다.\n${lines.join("\n")}\n시간 맞춰 와주세요. 변경되시면 연락 부탁드립니다.`;
+  const sep = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?";
+  return `sms:${digits}${sep}body=${encodeURIComponent(text)}`;
 }
 
 /** 보내기 버튼 숨김 (건의 #132 — 나중에 다시 켤 수 있게 코드는 보관) */
