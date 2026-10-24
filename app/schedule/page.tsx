@@ -780,7 +780,12 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
     {people.length > 0 && (
       <div className="mt-1 ml-[3.4rem] flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-gray-700 dark:text-gray-300">
         {people.map(x => (
-          <span key={x.tag} className="whitespace-nowrap"><span className="font-bold">{x.tag}</span> {x.name}{x.phone ? ` ${formatPhone(x.phone)}` : ""}</span>
+          <span key={x.tag} className="whitespace-nowrap"><span className="font-bold">{x.tag}</span> {x.name}{x.phone ? ` ${formatPhone(x.phone)}` : ""}{x.phone && (
+            <>
+              <a href={`tel:${x.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 mx-1 align-middle rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
+              <a href={`sms:${x.phone.replace(/\D/g, "")}`} onClick={e => e.stopPropagation()} className="inline-flex items-center justify-center w-8 h-6 align-middle rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+            </>
+          )}</span>
         ))}
       </div>
     )}
