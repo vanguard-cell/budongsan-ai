@@ -461,7 +461,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
 
           {/* 임차인 (전세/월세 세입자) */}
           <div className="border-2 border-orange-400 rounded-2xl p-3 bg-orange-50/40">
-            <div className="text-xs font-semibold text-orange-700 mb-2">🏠 4. 임차인</div>
+            <div className="text-xs font-semibold text-orange-700 mb-2">🏠 {form.dealType === "매매" ? 4 : 3}. 임차인</div>
             <div className="grid grid-cols-2 gap-3 mb-2">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">임차인 이름</label>
