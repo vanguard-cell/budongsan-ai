@@ -5,6 +5,7 @@
  * - 행 클릭 → 우측 패널 / 헤더 클릭 → 정렬·필터·열숨기기 / 셀 더블클릭 → 인라인 편집(✓ 확인)
  */
 
+import { highlightUnit } from "../properties/helpers";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { type Contract, type ContractType, type Severity, dDay, severityOf } from "./contracts";
@@ -309,7 +310,7 @@ export default function ContractTable({ list, selectedId, onRowClick, sortBy, on
                   className={`border-b border-gray-100 dark:border-slate-800 last:border-0 cursor-pointer transition-colors ${
                     selected ? "bg-[var(--tint-blue-bg)] outline outline-1 -outline-offset-1 outline-[var(--brand-blue)]" : "hover:bg-gray-50/80 dark:hover:bg-slate-800/60"}`}>
                   {show("address") && (
-                    <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>{reg.complex}</td>
+                    <td className={`px-2 py-2.5 font-semibold truncate max-w-0 ${selected ? "text-[var(--tint-blue-tx)]" : "text-gray-900 dark:text-gray-100"}`} title={reg.complex}>{highlightUnit(reg.complex)}</td>
                   )}
                   {show("type") && (
                     <td className="px-2 py-2.5" onDoubleClick={e => startEdit(c, "type", e)}>

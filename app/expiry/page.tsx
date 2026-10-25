@@ -1,5 +1,6 @@
 "use client";
 
+import { highlightUnit } from "../properties/helpers";
 import { stripUnit } from "@/lib/address";
 import { useRosterUnitInfo } from "@/lib/use-roster-unique";
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -905,7 +906,7 @@ function ContractRow({
             )}
           </div>
           <div className="mt-0.5 min-w-0 truncate text-[12px] font-semibold text-gray-900" title={c.address}>
-              {[c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" ")}
+              {highlightUnit([c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" "))}
             </div>
           {(c.rooms || c.direction || c.options) && (
             <div className="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2 min-w-0">

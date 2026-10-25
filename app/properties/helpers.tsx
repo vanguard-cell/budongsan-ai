@@ -105,7 +105,7 @@ export function highlightUnit(text: string): React.ReactNode {
   if (parts.length === 1) return text;
   return parts.map((s, i) =>
     i % 2 === 1
-      ? <span key={i} className="rounded bg-sky-100 px-1 text-sky-900 dark:bg-sky-900/40 dark:text-sky-100 whitespace-nowrap">{s}</span>
+      ? <span key={i} className="rounded bg-sky-200 px-1 font-extrabold text-sky-950 dark:bg-sky-800/60 dark:text-sky-50 whitespace-nowrap">{s}</span>
       : s
   );
 }
