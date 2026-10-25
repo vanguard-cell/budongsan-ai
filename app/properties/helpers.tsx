@@ -109,3 +109,18 @@ export function highlightUnit(text: string): React.ReactNode {
       : s
   );
 }
+
+/** 주소 줄: 단지 이름은 길면 ...으로 줄이고, 동·호수는 항상 끝까지 보이게 (건의 #194) */
+export function AddressWithUnit({ text }: { text: string }) {
+  if (!text) return <>—</>;
+  const parts = text.split(/(?<=^|\s)((?:\d+(?:-\d+)?동\s*)?(?:지하\d+|\d+(?:-\d+)?)호|\d+(?:-\d+)?동)(?=\s|$)/g);
+  if (parts.length === 1) return <span className="block truncate">{text}</span>;
+  const name = parts.filter((_, i) => i % 2 === 0).join(" ").replace(/\s+/g, " ").trim();
+  const unit = parts.filter((_, i) => i % 2 === 1).join(" ");
+  return (
+    <span className="flex min-w-0 items-baseline gap-1.5" title={text}>
+      <span className="min-w-0 truncate">{name}</span>
+      <span className="shrink-0 whitespace-nowrap rounded bg-sky-200 px-1 font-extrabold text-sky-950 dark:bg-sky-800/60 dark:text-sky-50">{unit}</span>
+    </span>
+  );
+}
