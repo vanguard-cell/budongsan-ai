@@ -204,7 +204,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               <input value={baseAddress} onChange={e => { handleAddressChange(e.target.value); setShowSaved(true); }}
                 onFocus={() => setShowSaved(true)}
                 placeholder="단지명 입력 (예: 미사강변골든센트로)"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" autoComplete="off" />
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" autoComplete="off" />
             </div>
             <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
               💡 아래 <b className="text-gray-500">내 단지 목록</b>에서 고르거나, 단지·건물명을 직접 입력하세요.
@@ -332,7 +332,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                   set("area", cleaned);
                 }}
                 placeholder="84"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               {m2ToPyeong(form.area) && <div className="mt-1 text-[10px] text-gray-500">≈ {m2ToPyeong(form.area)}평</div>}
             </div>
@@ -345,7 +345,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                 value={form.unitType}
                 onChange={e => set("unitType", e.target.value)}
                 placeholder="예: 84A, C-3타입"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
               <div className="mt-1 text-[10px] text-gray-400">A/B/C타입 등 평면 구분</div>
             </div>
@@ -355,7 +355,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">방향</label>
               <select value={form.direction} onChange={e => set("direction", e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
                 <option value="">선택</option>
                 {DIRECTIONS.map(d => <option key={d} value={d}>{d.replace(/향$/, "")}</option>)}
               </select>
@@ -365,7 +365,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               <input type="text" inputMode="decimal" value={form.rooms}
                 onChange={e => set("rooms", e.target.value.replace(/[^\d.]/g, "").replace(/^(\d*\.?\d*).*$/, "$1"))}
                 placeholder="3 (1.5룸은 1.5)"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
           </div>
 {/* 방수는 위 방향/방수 그리드로 통합됨 */}
@@ -522,7 +522,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </label>
             <input value={form.uniqueNo ?? ""} onChange={e => set("uniqueNo", e.target.value)}
               placeholder="예: 1234-5678-901234"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
 
           {/* 집 옵션 — 칩을 누르면 아래 칸에 들어가고, 직접 타이핑해도 됨 */}
