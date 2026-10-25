@@ -471,6 +471,7 @@ export function contractBackToProperty(c: {
   propertyType?: string;
   area?: string;
   unitType?: string;
+  uniqueNo?: string;
   direction?: string;
   rooms?: string;
   options?: string;
@@ -489,6 +490,7 @@ export function contractBackToProperty(c: {
     ownerName: c.landlordName,
     ownerPhone: c.landlordPhone,
     ownerCarrier: c.landlordCarrier || "",
+    uniqueNo: c.uniqueNo || undefined,
     extraContacts: c.extraContacts?.length ? c.extraContacts : undefined,
     tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "", tenantDeposit: c.deposit || "", tenantMonthly: c.monthly || "", leaseEndDate: c.endDate || "",
     contractDate: "", downPaymentDate: "", balanceDate: "", commission: "",

@@ -384,7 +384,7 @@ export default function ExpiryPage() {
         address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
         landlordName: c.landlordName, landlordPhone: c.landlordPhone, landlordCarrier: c.landlordCarrier, extraContacts: c.extraContacts, memo: c.memo,
         dong: c.dong, ho: c.ho, propertyType: c.propertyType,
-        area: c.area, unitType: c.unitType, direction: c.direction, rooms: c.rooms, options: c.options,
+        area: c.area, unitType: c.unitType, uniqueNo: c.uniqueNo, direction: c.direction, rooms: c.rooms, options: c.options,
         tenantName: c.tenantName, tenantPhone: c.tenantPhone, endDate: c.endDate,
       });
       // 1. 새 매물 저장

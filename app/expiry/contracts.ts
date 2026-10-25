@@ -28,6 +28,7 @@ export interface Contract {
   propertyType?: string;    // 아파트/오피스텔/빌라 등
   area?: string;            // 전용면적 (㎡) — 숫자만
   unitType?: string;        // 평면도 타입 (예: 84A, C-3타입)
+  uniqueNo?: string;        // 고유번호 — 매물↔만기 이동 때 그대로 보존
   direction?: string;       // 방향
   rooms?: string;           // 방수
   options?: string;         // 집 옵션 — 쉼표 구분 (내 매물의 옵션과 같은 형식)
