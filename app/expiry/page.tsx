@@ -1530,6 +1530,44 @@ function EditModal({
           </Field>
         </div>
 
+        <Field label="임대인 통신사 (선택)">
+          <div className="grid grid-cols-4 gap-1.5">
+            {CARRIERS.map(cr => {
+              const cur = form.landlordCarrier || "";
+              const { base, mvno } = parseCarrier(cur);
+              const on = cr === "알뜰폰" ? mvno : base === cr;
+              return (
+                <button key={cr} type="button"
+                  onClick={() => setField("landlordCarrier", cr === "알뜰폰" ? joinCarrier(base, !mvno) : joinCarrier(base === cr ? "" : cr, mvno))}
+                  className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${on ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
+                  {cr}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        <Field label="추가 연락처 (상담·배우자 등)">
+          <div className="space-y-2">
+            {(form.extraContacts ?? []).map((x, i) => {
+              const upd = (patch: Partial<{ relation: string; name: string; phone: string }>) =>
+                setField("extraContacts", (form.extraContacts ?? []).map((y, j) => (j === i ? { ...y, ...patch } : y)));
+              return (
+                <div key={i} className="flex items-center gap-1.5">
+                  <input value={x.name} onChange={e => upd({ name: e.target.value })} placeholder="이름"
+                    className="w-28 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
+                  <input type="tel" value={x.phone} onChange={e => upd({ phone: e.target.value })} placeholder="010-0000-0000"
+                    className="min-w-0 flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
+                  <button type="button" onClick={() => setField("extraContacts", (form.extraContacts ?? []).filter((_, j) => j !== i))}
+                    className="flex-shrink-0 text-gray-400 px-1 whitespace-nowrap" aria-label="삭제">✕</button>
+                </div>
+              );
+            })}
+            <button type="button" onClick={() => setField("extraContacts", [...(form.extraContacts ?? []), { relation: "기타", name: "", phone: "" }])}
+              className="text-xs font-semibold text-blue-600 whitespace-nowrap">+ 추가</button>
+          </div>
+        </Field>
+
         </div>
 
         <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-3">
@@ -1612,43 +1650,6 @@ function EditModal({
         </div>
 
 
-        <Field label="임대인 통신사 (선택)">
-          <div className="grid grid-cols-4 gap-1.5">
-            {CARRIERS.map(cr => {
-              const cur = form.landlordCarrier || "";
-              const { base, mvno } = parseCarrier(cur);
-              const on = cr === "알뜰폰" ? mvno : base === cr;
-              return (
-                <button key={cr} type="button"
-                  onClick={() => setField("landlordCarrier", cr === "알뜰폰" ? joinCarrier(base, !mvno) : joinCarrier(base === cr ? "" : cr, mvno))}
-                  className={`py-2 rounded-xl text-xs font-medium border transition-colors whitespace-nowrap ${on ? "bg-[var(--brand-blue)] text-white border-[var(--brand-blue)]" : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300"}`}>
-                  {cr}
-                </button>
-              );
-            })}
-          </div>
-        </Field>
-
-        <Field label="추가 연락처 (상담·배우자 등)">
-          <div className="space-y-2">
-            {(form.extraContacts ?? []).map((x, i) => {
-              const upd = (patch: Partial<{ relation: string; name: string; phone: string }>) =>
-                setField("extraContacts", (form.extraContacts ?? []).map((y, j) => (j === i ? { ...y, ...patch } : y)));
-              return (
-                <div key={i} className="flex items-center gap-1.5">
-                  <input value={x.name} onChange={e => upd({ name: e.target.value })} placeholder="이름"
-                    className="w-28 flex-shrink-0 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
-                  <input type="tel" value={x.phone} onChange={e => upd({ phone: e.target.value })} placeholder="010-0000-0000"
-                    className="min-w-0 flex-1 border border-gray-200 rounded-xl px-2 py-2.5 text-sm bg-gray-50" />
-                  <button type="button" onClick={() => setField("extraContacts", (form.extraContacts ?? []).filter((_, j) => j !== i))}
-                    className="flex-shrink-0 text-gray-400 px-1 whitespace-nowrap" aria-label="삭제">✕</button>
-                </div>
-              );
-            })}
-            <button type="button" onClick={() => setField("extraContacts", [...(form.extraContacts ?? []), { relation: "기타", name: "", phone: "" }])}
-              className="text-xs font-semibold text-blue-600 whitespace-nowrap">+ 추가</button>
-          </div>
-        </Field>
 
         </div>
 
