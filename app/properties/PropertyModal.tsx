@@ -220,9 +220,6 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                 📌 ‘{typedName}’ 내 단지 목록에 저장
               </button>
             )}
-            {(typedName && alreadyMine) && (
-              <p className="mt-2 text-xs font-medium text-teal-700">✅ ‘{typedName}’ 내 단지 목록에 저장되어 있어요</p>
-            )}
             {typedName && (
               <div className="mt-2 rounded-xl border border-gray-200 bg-white p-2.5">
                 <p className="text-[11px] font-semibold text-gray-600 mb-1.5">🏢 단지 정보 <span className="font-normal text-gray-400">(한 번만 저장하면 이 단지 프린트에 자동으로 나와요)</span></p>
@@ -293,11 +290,6 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                   placeholder="13 (지하는 -1)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
             </div>
-            {form.address && (
-              <div className="mt-1.5 text-xs text-blue-700 bg-blue-50 rounded-xl px-3 py-2">
-                📍 저장 주소: <span className="font-medium">{form.address}</span>
-              </div>
-            )}
           </div>
 
           {/* 면적 / 평면도 타입 — 면적란엔 숫자만, 타입은 별도 (어머니 피드백) */}
