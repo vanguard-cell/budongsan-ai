@@ -1600,7 +1600,7 @@ function EditModal({
         </div>
 
         {/* 만기일 빠른 수정 버튼 (건의 #145) */}
-        <div className="flex flex-wrap items-center gap-1.5 -mt-1">
+        <div className="hidden flex-wrap items-center gap-1.5 -mt-1">
           <span className="whitespace-nowrap text-[11px] text-gray-500">빠른 입력</span>
           {form.startDate && [1, 2].map(y => (
             <button
