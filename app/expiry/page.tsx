@@ -1358,7 +1358,7 @@ function EditModal({
           </div>
         )}
 
-        <div className="border-2 border-sky-400 rounded-2xl p-2.5 bg-sky-100 space-y-2 [&_input]:!py-1.5 [&_select]:!py-1.5 [&_input]:!text-xs [&_select]:!text-xs [&_label]:!text-xs [&_label]:!mb-0.5">
+        <div className="border-2 border-sky-400 rounded-2xl p-2.5 bg-sky-50/60 space-y-2 [&_input]:!py-1.5 [&_select]:!py-1.5 [&_input]:!text-xs [&_select]:!text-xs [&_label]:!text-xs [&_label]:!mb-0.5">
           <div className="text-xs font-semibold text-sky-700">📌 1. 변하지 않는 정보_매물정보</div>
         <Field label="주소" required>
           <div className="relative">
@@ -1482,7 +1482,7 @@ function EditModal({
 
         </div>
 
-        <div className="border-2 border-gray-400 rounded-2xl p-3 bg-gray-100 space-y-3">
+        <div className="border-2 border-gray-400 rounded-2xl p-3 bg-gray-50/60 space-y-3">
           <div className="text-xs font-semibold text-gray-700">💰 2. 임대인</div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="보증금 (만원)">
@@ -1570,7 +1570,7 @@ function EditModal({
 
         </div>
 
-        <div className="border-2 border-orange-400 rounded-2xl p-3 bg-orange-100 space-y-3">
+        <div className="border-2 border-orange-400 rounded-2xl p-3 bg-orange-50/40 space-y-3">
           <div className="text-xs font-semibold text-orange-700">🏠 3. 임차인</div>
         <Field label="계약 종류">
           <div className="grid grid-cols-2 gap-1.5">

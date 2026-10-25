@@ -195,7 +195,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           </div>
 
           {/* 1. 변하지 않는 정보 (건의 #193) */}
-          <div className="border-2 border-sky-400 rounded-2xl p-2.5 bg-sky-100 space-y-2 [&_input]:!py-1.5 [&_select]:!py-1.5 [&_input]:!text-xs [&_select]:!text-xs [&_label]:!text-xs [&_label]:!mb-0.5">
+          <div className="border-2 border-sky-400 rounded-2xl p-2.5 bg-sky-50/60 space-y-2 [&_input]:!py-1.5 [&_select]:!py-1.5 [&_input]:!text-xs [&_select]:!text-xs [&_label]:!text-xs [&_label]:!mb-0.5">
             <div className="text-xs font-semibold text-sky-700">📌 1. 변하지 않는 정보_매물정보</div>
           {/* 주소 + 동/호수 */}
           <div>
@@ -367,7 +367,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           </div>
 
           {/* 2. 매매가·보증금 + 임대인 정보 */}
-          <div className="border-2 border-gray-400 rounded-2xl p-3 bg-gray-100 space-y-3">
+          <div className="border-2 border-gray-400 rounded-2xl p-3 bg-gray-50/60 space-y-3">
             <div className="text-xs font-semibold text-gray-700">💰 2. {form.dealType === "매매" ? "매매가 · 매도인" : "임대인"}</div>
           {/* 가격 */}
           <div className="grid grid-cols-2 gap-3">
@@ -450,7 +450,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
 
           {/* 매수인 (매매 매물 — 사려는 사람, 건의 #189) */}
           {form.dealType === "매매" && (
-            <div className="border-2 border-emerald-400 rounded-2xl p-3 bg-emerald-100">
+            <div className="border-2 border-emerald-400 rounded-2xl p-3 bg-emerald-50/40">
               <div className="text-xs font-semibold text-emerald-700 mb-2">🤝 3. 매수인</div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -468,7 +468,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           )}
 
           {/* 임차인 (전세/월세 세입자) */}
-          <div className="border-2 border-orange-400 rounded-2xl p-3 bg-orange-100">
+          <div className="border-2 border-orange-400 rounded-2xl p-3 bg-orange-50/40">
             <div className="text-xs font-semibold text-orange-700 mb-2">🏠 4. 임차인</div>
             <div className="grid grid-cols-2 gap-3 mb-2">
               <div>
