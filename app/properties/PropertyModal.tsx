@@ -428,6 +428,25 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
           </div>
 
+          {/* 매수인 (매매 매물 — 사려는 사람, 건의 #189) */}
+          {form.dealType === "매매" && (
+            <div className="border border-emerald-200 rounded-2xl p-3 bg-emerald-50/40">
+              <div className="text-xs font-semibold text-emerald-700 mb-2">🤝 매수인 (사려는 사람)</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">매수인 이름</label>
+                  <input value={form.buyerName ?? ""} onChange={e => set("buyerName", e.target.value)}
+                    placeholder="홍길동" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">매수인 연락처</label>
+                  <input type="tel" value={formatPhone(form.buyerPhone || "")} onChange={e => set("buyerPhone", formatPhoneInput(e.target.value))}
+                    placeholder="010-0000-0000" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 임차인 (전세/월세 세입자) */}
           <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40">
             <div className="text-xs font-semibold text-orange-700 mb-2">🏠 현재 임차인 (전세·월세 세입자)</div>

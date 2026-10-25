@@ -85,9 +85,11 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
     onSaveMemo(p.memo ? `${p.memo}\n${line}` : line);
   };
   const isSale = p.dealType === "매매";
-  const partyName = (isSale ? p.buyerName : undefined) || p.tenantName;
-  const partyPhone = (isSale ? p.buyerPhone : undefined) || p.tenantPhone;
+  // 매매는 임차인(현재 세입자)과 매수인(사려는 사람)을 따로 표시 (건의 #189)
+  const partyName = p.tenantName;
+  const partyPhone = p.tenantPhone;
   const hasTenant = !!(partyName || partyPhone);
+  const hasBuyer = isSale && !!(p.buyerName || p.buyerPhone);
   const regInfo = p.createdAt > 0 ? (() => {
     const ds = kstDateStr(new Date(p.createdAt));
     const days = Math.max(0, Math.round((Date.parse(today) - Date.parse(ds)) / 86400000));
@@ -184,7 +186,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           )}
 
           {/* 연락처 — 임대인 → 임차인 */}
-          {(p.ownerPhone || p.ownerName || hasTenant || p.extraContacts?.some(c => c.phone)) && (
+          {(p.ownerPhone || p.ownerName || hasTenant || hasBuyer || p.extraContacts?.some(c => c.phone)) && (
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
               {(p.ownerPhone || p.ownerName) && (
                 <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
@@ -212,14 +214,27 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
               ))}
               {hasTenant && (
                 <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-                  <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">{p.dealType === "매매" ? "매수인" : "임차인"}</span>
+                  <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">임차인</span>
                   <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{partyName || "—"}</span>
                   {partyPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(partyPhone)}</span>
                       <a href={`tel:${partyPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                      <a href={smsHref(partyPhone, partyName, "임대차 만기")} onClick={() => logSms(p.dealType === "매매" ? "매수인" : "임차인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <a href={smsHref(partyPhone, partyName, "임대차 만기")} onClick={() => logSms("임차인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                       
+                    </>
+                  )}
+                </div>
+              )}
+              {hasBuyer && (
+                <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                  <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">매수인</span>
+                  <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{p.buyerName || "—"}</span>
+                  {p.buyerPhone && (
+                    <>
+                      <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.buyerPhone)}</span>
+                      <a href={`tel:${p.buyerPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
+                      <a href={smsHref(p.buyerPhone, p.buyerName || "", "매물")} onClick={() => logSms("매수인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                     </>
                   )}
                 </div>

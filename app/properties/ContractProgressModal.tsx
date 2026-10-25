@@ -129,7 +129,8 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
           </div>
 
           {/* 계약 상대방 정보 — 매매=매수인 / 전월세=임차인, 고객관리 검색 연동 */}
-          {(() => {
+          {/* 매도인·매수인·임차인 입력은 매물 등록 화면으로 옮김 (건의 #189) — 계약진행은 날짜만 */}
+          {false && (() => {
             const isSale = form.dealType === "매매";
             const partyLabel = isSale ? "매수인" : "임차인";
             const nameKey = isSale ? "buyerName" : "tenantName";
