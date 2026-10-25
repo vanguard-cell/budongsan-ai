@@ -1359,7 +1359,7 @@ function EditModal({
         )}
 
         <div className="border border-sky-200 rounded-2xl p-2.5 bg-sky-50/60 space-y-2 [&_input]:!py-1.5 [&_select]:!py-1.5 [&_input]:!text-xs [&_select]:!text-xs [&_label]:!text-xs [&_label]:!mb-0.5">
-          <div className="text-xs font-semibold text-sky-700">📌 1. 변하지 않는 정보</div>
+          <div className="text-xs font-semibold text-sky-700">📌 1. 변하지 않는 정보_매물정보</div>
         <Field label="주소" required>
           <div className="relative">
             <input
@@ -1483,7 +1483,7 @@ function EditModal({
         </div>
 
         <div className="border border-gray-300 rounded-2xl p-3 bg-gray-50/60 space-y-3">
-          <div className="text-xs font-semibold text-gray-700">💰 2. 보증금 · 임대인 정보</div>
+          <div className="text-xs font-semibold text-gray-700">💰 2. 임대인</div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="보증금 (만원)">
             <input
@@ -1571,7 +1571,7 @@ function EditModal({
         </div>
 
         <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-3">
-          <div className="text-xs font-semibold text-orange-700">🏠 3. 임차인 정보</div>
+          <div className="text-xs font-semibold text-orange-700">🏠 3. 임차인</div>
         <Field label="계약 종류">
           <div className="grid grid-cols-2 gap-1.5">
             {(["전세", "월세"] as ContractType[]).map(t => (
