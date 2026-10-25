@@ -1358,7 +1358,7 @@ function EditModal({
           </div>
         )}
 
-        <div className="border border-sky-200 rounded-2xl p-3 bg-sky-50/60 space-y-3">
+        <div className="border border-sky-200 rounded-2xl p-2.5 bg-sky-50/60 space-y-2 [&_input]:!py-1.5 [&_select]:!py-1.5 [&_input]:!text-xs [&_select]:!text-xs [&_label]:!text-xs [&_label]:!mb-0.5">
           <div className="text-xs font-semibold text-sky-700">📌 1. 변하지 않는 정보</div>
         <Field label="주소" required>
           <div className="relative">
@@ -1527,45 +1527,6 @@ function EditModal({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="계약 시작일">
-            <KoreanDatePicker value={form.startDate} onChange={handleStartDate} accent="blue" />
-          </Field>
-          <Field label="만기일" required>
-            <KoreanDatePicker value={form.endDate} onChange={v => setField("endDate", v)} accent="blue" />
-          </Field>
-        </div>
-
-        {/* 만기일 빠른 수정 버튼 (건의 #145) */}
-        <div className="flex flex-wrap items-center gap-1.5 -mt-1">
-          <span className="whitespace-nowrap text-[11px] text-gray-500">빠른 입력</span>
-          {form.startDate && [1, 2].map(y => (
-            <button
-              key={`s${y}`}
-              type="button"
-              onClick={() => setField("endDate", defaultEndDate(form.startDate, y))}
-              className="whitespace-nowrap text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200"
-            >
-              시작일+{y}년
-            </button>
-          ))}
-          {form.endDate && ([[0.5, "+6개월"], [1, "+1년"], [2, "+2년"]] as const).map(([y, label]) => (
-            <button
-              key={`e${y}`}
-              type="button"
-              onClick={() => {
-                const d = new Date(form.endDate);
-                if (isNaN(d.getTime())) return;
-                if (y === 0.5) d.setMonth(d.getMonth() + 6); else d.setFullYear(d.getFullYear() + y);
-                setField("endDate", localDateStr(d));
-              }}
-              className="whitespace-nowrap text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"
-            >
-              만기일{label}
-            </button>
-          ))}
-        </div>
-
         {/* 임대인 먼저 (집주인) → 임차인 (세입자) — 한국 부동산 관행 */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="임대인 이름">
@@ -1629,6 +1590,45 @@ function EditModal({
 
         <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-3">
           <div className="text-xs font-semibold text-orange-700">🏠 3. 임차인 정보</div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="계약 시작일">
+            <KoreanDatePicker value={form.startDate} onChange={handleStartDate} accent="blue" />
+          </Field>
+          <Field label="만기일" required>
+            <KoreanDatePicker value={form.endDate} onChange={v => setField("endDate", v)} accent="blue" />
+          </Field>
+        </div>
+
+        {/* 만기일 빠른 수정 버튼 (건의 #145) */}
+        <div className="flex flex-wrap items-center gap-1.5 -mt-1">
+          <span className="whitespace-nowrap text-[11px] text-gray-500">빠른 입력</span>
+          {form.startDate && [1, 2].map(y => (
+            <button
+              key={`s${y}`}
+              type="button"
+              onClick={() => setField("endDate", defaultEndDate(form.startDate, y))}
+              className="whitespace-nowrap text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200"
+            >
+              시작일+{y}년
+            </button>
+          ))}
+          {form.endDate && ([[0.5, "+6개월"], [1, "+1년"], [2, "+2년"]] as const).map(([y, label]) => (
+            <button
+              key={`e${y}`}
+              type="button"
+              onClick={() => {
+                const d = new Date(form.endDate);
+                if (isNaN(d.getTime())) return;
+                if (y === 0.5) d.setMonth(d.getMonth() + 6); else d.setFullYear(d.getFullYear() + y);
+                setField("endDate", localDateStr(d));
+              }}
+              className="whitespace-nowrap text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"
+            >
+              만기일{label}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <Field label="임차인 이름">
             <input
