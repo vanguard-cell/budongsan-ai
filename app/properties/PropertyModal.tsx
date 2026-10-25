@@ -431,7 +431,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           {/* 매수인 (매매 매물 — 사려는 사람, 건의 #189) */}
           {form.dealType === "매매" && (
             <div className="border border-emerald-200 rounded-2xl p-3 bg-emerald-50/40">
-              <div className="text-xs font-semibold text-emerald-700 mb-2">🤝 매수인 (사려는 사람)</div>
+              <div className="text-xs font-semibold text-emerald-700 mb-2">🤝 매수인</div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">매수인 이름</label>
