@@ -210,12 +210,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
 
             {/* 내 단지 목록 — 눌러서 같은 이름으로 등록 / 현재 입력한 이름을 목록에 저장 */}
-            {(typedName && !alreadyMine) && (
-              <button type="button" onClick={saveMine}
-                className="mt-2 whitespace-nowrap px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 max-w-full truncate">
-                📌 ‘{typedName}’ 내 단지 목록에 저장
-              </button>
-            )}
+            {/* 단지명 아래 "내 단지 목록에 저장" 버튼은 화면에서 숨김 (건의 #194) */}
             {typedName && (
               <div className="mt-2 rounded-xl border border-gray-200 bg-white p-2.5">
                 <p className="text-[11px] font-semibold text-gray-600 mb-1.5">🏢 단지 정보 <span className="font-normal text-gray-400">(한 번만 저장하면 이 단지 프린트에 자동으로 나와요)</span></p>
