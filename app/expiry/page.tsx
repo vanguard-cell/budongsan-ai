@@ -1358,6 +1358,8 @@ function EditModal({
           </div>
         )}
 
+        <div className="border border-sky-200 rounded-2xl p-3 bg-sky-50/60 space-y-3">
+          <div className="text-xs font-semibold text-sky-700">📌 1. 변하지 않는 정보</div>
         <Field label="주소" required>
           <div className="relative">
             <input
@@ -1426,49 +1428,6 @@ function EditModal({
           </Field>
         </div>
 
-        <Field label="계약 종류">
-          <div className="grid grid-cols-2 gap-1.5">
-            {(["전세", "월세"] as ContractType[]).map(t => (
-              <button
-                key={t}
-                onClick={() => handleType(t)}
-                className={`py-2 rounded-xl text-xs font-medium border transition-colors ${
-                  form.type === t
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </Field>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="보증금 (만원)">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={form.deposit}
-              onChange={e => setField("deposit", e.target.value.replace(/\D/g, ""))}
-              placeholder="29600"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </Field>
-          {form.type === "월세" && (
-            <Field label="월세 (만원)">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={form.monthly}
-                onChange={e => setField("monthly", e.target.value.replace(/\D/g, ""))}
-                placeholder="25"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </Field>
-          )}
-        </div>
-
         {/* 면적 / 평면도 타입 — 내 매물 등록과 동일 */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="전용면적 (㎡)">
@@ -1519,6 +1478,53 @@ function EditModal({
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>
+        </div>
+
+        </div>
+
+        <div className="border border-gray-300 rounded-2xl p-3 bg-gray-50/60 space-y-3">
+          <div className="text-xs font-semibold text-gray-700">💰 2. 보증금 · 임대인 정보</div>
+        <Field label="계약 종류">
+          <div className="grid grid-cols-2 gap-1.5">
+            {(["전세", "월세"] as ContractType[]).map(t => (
+              <button
+                key={t}
+                onClick={() => handleType(t)}
+                className={`py-2 rounded-xl text-xs font-medium border transition-colors ${
+                  form.type === t
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-400"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="보증금 (만원)">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={form.deposit}
+              onChange={e => setField("deposit", e.target.value.replace(/\D/g, ""))}
+              placeholder="29600"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </Field>
+          {form.type === "월세" && (
+            <Field label="월세 (만원)">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.monthly}
+                onChange={e => setField("monthly", e.target.value.replace(/\D/g, ""))}
+                placeholder="25"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </Field>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -1619,6 +1625,10 @@ function EditModal({
           </div>
         </Field>
 
+        </div>
+
+        <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40 space-y-3">
+          <div className="text-xs font-semibold text-orange-700">🏠 3. 임차인 정보</div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="임차인 이름">
             <input
@@ -1637,6 +1647,8 @@ function EditModal({
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>
+        </div>
+
         </div>
 
         <Field label="옵션 (선택)">
