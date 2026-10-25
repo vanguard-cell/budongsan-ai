@@ -318,6 +318,11 @@ export default function RosterPage() {
 
   const saveCell = async (u: RosterUnit, field: RosterEditField, value: string) => {
     if (!user || (u[field] || "") === value) return;
+    if (field === "dong") {
+      value = value.trim().replace(/동$/, "");
+      if (value === u.dong) return;
+      if (value && allRows.some(r => r.key === unitKey(u.complex, value, u.ho))) { setMsg(`❌ ${value}동 ${u.ho}호는 이미 있어요.`); return; }
+    }
     if (field === "ho") {
       value = value.trim().replace(/호$/, "");
       if (!value) { setMsg("❌ 호수는 비워둘 수 없어요."); return; }
@@ -525,7 +530,7 @@ export default function RosterPage() {
               };
               return (
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
-                  <td className={`px-2 py-1.5 tabular-nums sticky left-0 z-10 ${idTint ? idTint + " font-semibold" : "bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400"}`}>{r.dong || "—"}</td>
+                  <td className={`px-2 py-1.5 tabular-nums sticky left-0 z-10 ${idTint ? idTint + " font-semibold" : "bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400"}`}>{editable && u ? <EditCell value={u.dong} onSave={val => saveCell(u, "dong", val)} /> : (r.dong || "—")}</td>
                   <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>
                     {editable && u ? <EditCell value={u.ho} onSave={val => saveCell(u, "ho", val)} /> : r.ho}
                   </td>
