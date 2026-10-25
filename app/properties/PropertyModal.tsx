@@ -194,6 +194,9 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
           </div>
 
+          {/* 1. 변하지 않는 정보 (건의 #193) */}
+          <div className="border border-sky-200 rounded-2xl p-3 bg-sky-50/60 space-y-3">
+            <div className="text-xs font-semibold text-sky-700">📌 1. 변하지 않는 정보</div>
           {/* 주소 + 동/호수 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -297,23 +300,6 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             )}
           </div>
 
-          {/* 가격 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{form.dealType === "매매" ? "매매가" : "보증금"} (만원)</label>
-              <input type="text" inputMode="numeric" value={form.price ? fmtNum(form.price) : ""} onChange={e => set("price", e.target.value.replace(/\D/g,""))}
-                placeholder="29,600" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              {form.price && <div className="mt-1 text-[10px] text-gray-500">≈ {fmtKoreanNum(form.price)}만원</div>}
-            </div>
-            {form.dealType === "월세" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">월세 (만원)</label>
-                <input type="text" inputMode="numeric" value={form.monthly ? fmtNum(form.monthly) : ""} onChange={e => set("monthly", e.target.value.replace(/\D/g,""))}
-                  placeholder="70" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-            )}
-          </div>
-
           {/* 면적 / 평면도 타입 — 면적란엔 숫자만, 타입은 별도 (어머니 피드백) */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -368,7 +354,37 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
             </div>
           </div>
-{/* 방수는 위 방향/방수 그리드로 통합됨 */}
+          {/* 고유번호(등기번호) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              고유번호 <span className="text-[10px] text-gray-400">(등기번호, 선택)</span>
+            </label>
+            <input value={form.uniqueNo ?? ""} onChange={e => set("uniqueNo", e.target.value)}
+              placeholder="예: 1234-5678-901234"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+
+          </div>
+
+          {/* 2. 매매가·보증금 + 임대인 정보 */}
+          <div className="border border-gray-300 rounded-2xl p-3 bg-gray-50/60 space-y-3">
+            <div className="text-xs font-semibold text-gray-700">💰 2. {form.dealType === "매매" ? "매매가 · 매도인 정보" : "보증금 · 임대인 정보"}</div>
+          {/* 가격 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{form.dealType === "매매" ? "매매가" : "보증금"} (만원)</label>
+              <input type="text" inputMode="numeric" value={form.price ? fmtNum(form.price) : ""} onChange={e => set("price", e.target.value.replace(/\D/g,""))}
+                placeholder="29,600" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              {form.price && <div className="mt-1 text-[10px] text-gray-500">≈ {fmtKoreanNum(form.price)}만원</div>}
+            </div>
+            {form.dealType === "월세" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">월세 (만원)</label>
+                <input type="text" inputMode="numeric" value={form.monthly ? fmtNum(form.monthly) : ""} onChange={e => set("monthly", e.target.value.replace(/\D/g,""))}
+                  placeholder="70" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              </div>
+            )}
+          </div>
 
           {/* 집주인 */}
           <div className="grid grid-cols-2 gap-3">
@@ -428,10 +444,14 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
           </div>
 
+          </div>
+
+{/* 방수는 위 방향/방수 그리드로 통합됨 */}
+
           {/* 매수인 (매매 매물 — 사려는 사람, 건의 #189) */}
           {form.dealType === "매매" && (
             <div className="border border-emerald-200 rounded-2xl p-3 bg-emerald-50/40">
-              <div className="text-xs font-semibold text-emerald-700 mb-2">🤝 매수인</div>
+              <div className="text-xs font-semibold text-emerald-700 mb-2">🤝 3. 매수인</div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">매수인 이름</label>
@@ -449,7 +469,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
 
           {/* 임차인 (전세/월세 세입자) */}
           <div className="border border-orange-200 rounded-2xl p-3 bg-orange-50/40">
-            <div className="text-xs font-semibold text-orange-700 mb-2">🏠 현재 임차인 (전세·월세 세입자)</div>
+            <div className="text-xs font-semibold text-orange-700 mb-2">🏠 4. 임차인 정보 (전세·월세 세입자)</div>
             <div className="grid grid-cols-2 gap-3 mb-2">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">임차인 이름</label>
@@ -513,16 +533,6 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               ))}
             </div>
             <p className="text-[10px] text-indigo-600 mt-2">📌 주인거주·공실로 지정하면 목록에서 [🏠 주인거주/공실] 필터로 모아볼 수 있어요</p>
-          </div>
-
-          {/* 고유번호(등기번호) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              고유번호 <span className="text-[10px] text-gray-400">(등기번호, 선택)</span>
-            </label>
-            <input value={form.uniqueNo ?? ""} onChange={e => set("uniqueNo", e.target.value)}
-              placeholder="예: 1234-5678-901234"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
 
           {/* 집 옵션 — 칩을 누르면 아래 칸에 들어가고, 직접 타이핑해도 됨 */}
