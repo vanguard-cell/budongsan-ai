@@ -201,7 +201,6 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               단지명 <span className="text-red-400">*</span>
-              <span className="text-[11px] text-gray-400 font-normal ml-1">· 내 {form.propertyType} 단지</span>
             </label>
             <div className="relative">
               <input value={baseAddress} onChange={e => { handleAddressChange(e.target.value); setShowSaved(true); }}
@@ -209,9 +208,6 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                 placeholder="단지명 입력 (예: 미사강변골든센트로)"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-400" autoComplete="off" />
             </div>
-            <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
-              💡 아래 <b className="text-gray-500">내 단지 목록</b>에서 고르거나, 단지·건물명을 직접 입력하세요.
-            </p>
 
             {/* 내 단지 목록 — 눌러서 같은 이름으로 등록 / 현재 입력한 이름을 목록에 저장 */}
             {(typedName && !alreadyMine) && (
