@@ -7,6 +7,7 @@ import type { Property } from "@/lib/properties-db";
 import type { Customer } from "@/app/customers/customer-types";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { kstDateStr } from "@/lib/kst";
+import { calcLegalCommission } from "@/lib/commission-calc";
 
 export default function ContractProgressModal({ property, onClose, onSave }: {
   property: Property;
@@ -124,6 +125,21 @@ export default function ContractProgressModal({ property, onClose, onSave }: {
                 onChange={e => set("commission", e.target.value.replace(/\D/g, ""))}
                 placeholder="300"
                 className="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+              {(() => {
+                const r = calcLegalCommission(form);
+                if (!r) return <p className="text-[10px] text-gray-500 mt-1">매물 가격을 입력하면 법정 수수료를 계산해 드려요</p>;
+                const fee = Math.round(r.fee * 10) / 10;
+                const vat = Math.round(r.fee * 0.1 * 10) / 10;
+                return (
+                  <div className="mt-2 rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800 space-y-1">
+                    <div className="font-semibold">🧮 경기도 법정 수수료 (최대)</div>
+                    <div>{r.baseAmount.toLocaleString()}만원 × {r.rateText} = <b>{fee.toLocaleString()}만원</b> <span className="text-emerald-600">(부가세 별도 {vat.toLocaleString()}만원)</span></div>
+                    {r.note && <div className="text-[11px] text-emerald-600">{r.note}</div>}
+                    <button type="button" onClick={() => set("commission", String(Math.round(r.fee)))}
+                      className="whitespace-nowrap mt-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium">이 금액 넣기</button>
+                  </div>
+                );
+              })()}
               <p className="text-[10px] text-emerald-600 mt-1">📊 잔금일 기준으로 월별 매출에 합산됩니다</p>
             </div>
           </div>
