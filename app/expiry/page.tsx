@@ -1406,7 +1406,7 @@ function EditModal({
               value={form.dong || ""}
               onChange={e => setField("dong", e.target.value)}
               placeholder="101"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold bg-sky-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-[15px] font-bold bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>
           <Field label="호수">
@@ -1415,7 +1415,7 @@ function EditModal({
               value={form.ho || ""}
               onChange={e => setField("ho", e.target.value)}
               placeholder="1902"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold bg-sky-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-[15px] font-bold bg-sky-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>
         </div>
