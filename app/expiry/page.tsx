@@ -1365,35 +1365,26 @@ function EditModal({
           <div className="relative">
             <input
               value={form.address}
-              onChange={e => handleAddressChange(e.target.value)}
+              onChange={e => { handleAddressChange(e.target.value); setShowSaved(true); }}
+              onFocus={() => setShowSaved(true)}
               placeholder="단지명 입력 (예: 힐스테이트 미사역)"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoComplete="off"
             />
           </div>
-          <p className="text-[11px] text-gray-400 mt-1">단지명을 직접 입력하하거나 아래 내 단지 목록에서 골라주세요</p>
-
-          {/* 내 단지 목록 — 유형별로 저장해 두고 눌러서 선택 */}
-          {alreadyMine ? (
-            <p className="mt-2 text-xs font-medium text-teal-700">✅ ‘{typedName}’ 내 단지 목록에 저장되어 있어요</p>
-          ) : (
-            <button type="button" onClick={typedName ? saveMine : () => alert("위 주소 칸에 단지 이름을 먼저 적어 주세요.")}
-              className="mt-2 whitespace-nowrap px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-medium hover:bg-teal-700 max-w-full truncate">
-              📌 {typedName ? `‘${typedName}’ ` : ""}내 단지 목록에 저장
-            </button>
-          )}
-          {savedMatches.length > 0 && (
+          {/* 단지명 아래 안내 문구·"내 단지 목록에 저장" 버튼은 화면에서 숨김 (건의 #195) */}
+          {showSaved && savedMatches.length > 0 && (
             <div className="mt-2 rounded-xl border border-teal-200 bg-teal-50/60 p-2">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[11px] font-semibold text-teal-700">📌 내 {curType || "단지"} 목록 (눌러서 선택)</span>
-                <button type="button" onClick={() => setShowSaved(v => !v)} className="text-[11px] text-gray-400 whitespace-nowrap">{showSaved ? "접기" : "펼치기"}</button>
+                <button type="button" onClick={() => setShowSaved(false)} className="text-[11px] text-gray-400 whitespace-nowrap">닫기</button>
               </div>
               {showSaved && (
                 <div className="flex flex-col gap-1 max-h-56 overflow-y-auto">
                   {savedMatches.map(c => (
                     <span key={`${c.propertyType}|${c.name}`} className="flex w-full items-center rounded-lg bg-white border border-teal-200 text-xs text-gray-800">
                       <button type="button"
-                        onClick={() => { setForm(p => ({ ...p, address: c.name, propertyType: (c.propertyType || p.propertyType) as Contract["propertyType"] })); }}
+                        onClick={() => { setForm(p => ({ ...p, address: c.name, propertyType: (c.propertyType || p.propertyType) as Contract["propertyType"] })); setShowSaved(false); }}
                         className="min-w-0 flex-1 truncate whitespace-nowrap text-left px-2.5 py-1.5 hover:bg-teal-100 rounded-lg">
                         {!curType && c.propertyType && <span className="text-gray-400 mr-1">[{c.propertyType}]</span>}{c.name}
                       </button>
@@ -1415,7 +1406,7 @@ function EditModal({
               value={form.dong || ""}
               onChange={e => setField("dong", e.target.value)}
               placeholder="101"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold bg-sky-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>
           <Field label="호수">
@@ -1424,7 +1415,7 @@ function EditModal({
               value={form.ho || ""}
               onChange={e => setField("ho", e.target.value)}
               placeholder="1902"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold bg-sky-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </Field>
         </div>
