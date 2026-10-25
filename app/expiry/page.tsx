@@ -1360,7 +1360,7 @@ function EditModal({
         )}
 
         <div className="border-2 border-sky-400 rounded-2xl p-2.5 bg-sky-50/60 space-y-2 [&_input]:!py-1.5 [&_select]:!py-1.5 [&_input]:!text-xs [&_select]:!text-xs [&_label]:!text-xs [&_label]:!mb-0.5">
-          <div className="text-xs font-semibold text-sky-700">📌 1. 변하지 않는 정보_매물정보</div>
+          <div className="text-xs font-semibold text-sky-700">📌 1. 매물정보</div>
         <Field label="주소" required>
           <div className="relative">
             <input
