@@ -10,7 +10,7 @@
     {
       "name": "mockup",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["http-server", "public", "-p", "3333", "--cors"],
+      "runtimeArgs": ["-y", "http-server", "public", "-p", "3333", "--cors"],
       "port": 3333
     }
   ]
