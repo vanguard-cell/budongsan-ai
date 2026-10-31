@@ -489,27 +489,27 @@ export default function RosterPage() {
           🔍 표 크기: {tableZoom === 1 ? "보통" : tableZoom === 0.7 ? "작게" : "더 작게"}
         </button>
       </div>
-      <div ref={tableWrapRef} className="relative max-w-none overflow-x-auto -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
+      <div ref={tableWrapRef} className="relative max-w-none overflow-auto max-h-[calc(100dvh-9rem)] -mx-6 sm:-mx-10 lg:-mx-24 border-y border-[var(--sidebar-bd)] bg-white dark:bg-slate-900">
        {/* zoom은 갤럭시 멀티뷰 등에서 폭이 틀어져서 transform으로 축소 */}
        <div style={tableZoom === 1 ? undefined : { height: innerH ? innerH * tableZoom : undefined }}>
        <div ref={tableInnerRef} className={tableZoom === 1 ? undefined : "absolute top-0 left-0"} style={tableZoom === 1 ? undefined : { transform: `scale(${tableZoom})`, transformOrigin: "top left", width: wrapW ? wrapW / tableZoom : undefined }}>
         <table className="w-max min-w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
-              <th className="font-medium px-2 py-2.5 w-[70px] sticky left-0 z-10 bg-white dark:bg-slate-900">동</th>
-              <th className="font-medium px-2 py-2.5 w-[70px] sticky left-[70px] z-10 bg-white dark:bg-slate-900 border-r border-[var(--sidebar-bd)]">호수</th>
+              <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 left-0 z-30 bg-white dark:bg-slate-900">동</th>
+              <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 left-[70px] z-30 bg-white dark:bg-slate-900 border-r border-[var(--sidebar-bd)]">호수</th>
               {/* 층 칸은 화면에서 숨김 (건의 #174) — 필요하면 SHOW_FLOOR_COL 을 true 로 */}
-              {SHOW_FLOOR_COL && <th className="font-medium px-2 py-2.5 w-[44px]">층</th>}
-              <th className="font-medium px-2 py-2.5 w-[56px]">타입</th>
-              <th className="font-medium px-2 py-2.5 w-[70px]">면적㎡</th>
-              <th className="font-medium px-2 py-2.5 w-[56px]">향</th>
-              <th className="font-medium px-2 py-2.5 w-[76px]">임대인</th>
-              <th className="font-medium px-2 py-2.5 w-[128px]">임대인 전화</th>
-              <th className="font-medium px-2 py-2.5 w-[76px]">임차인</th>
-              <th className="font-medium px-2 py-2.5 w-[128px]">임차인 전화</th>
-              <th className="font-medium px-2 py-2.5 w-[104px]">만기일</th>
-              <th className="font-medium px-2 py-2.5 w-[110px]">등록 위치</th>
-              <th className="font-medium px-2 py-2.5 w-[130px]">메모</th>
+              {SHOW_FLOOR_COL && <th className="font-medium px-2 py-2.5 w-[44px] sticky top-0 z-20 bg-white dark:bg-slate-900">층</th>}
+              <th className="font-medium px-2 py-2.5 w-[56px] sticky top-0 z-20 bg-white dark:bg-slate-900">타입</th>
+              <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 z-20 bg-white dark:bg-slate-900">면적㎡</th>
+              <th className="font-medium px-2 py-2.5 w-[56px] sticky top-0 z-20 bg-white dark:bg-slate-900">향</th>
+              <th className="font-medium px-2 py-2.5 w-[76px] sticky top-0 z-20 bg-white dark:bg-slate-900">임대인</th>
+              <th className="font-medium px-2 py-2.5 w-[128px] sticky top-0 z-20 bg-white dark:bg-slate-900">임대인 전화</th>
+              <th className="font-medium px-2 py-2.5 w-[76px] sticky top-0 z-20 bg-white dark:bg-slate-900">임차인</th>
+              <th className="font-medium px-2 py-2.5 w-[128px] sticky top-0 z-20 bg-white dark:bg-slate-900">임차인 전화</th>
+              <th className="font-medium px-2 py-2.5 w-[104px] sticky top-0 z-20 bg-white dark:bg-slate-900">만기일</th>
+              <th className="font-medium px-2 py-2.5 w-[110px] sticky top-0 z-20 bg-white dark:bg-slate-900">등록 위치</th>
+              <th className="font-medium px-2 py-2.5 w-[130px] sticky top-0 z-20 bg-white dark:bg-slate-900">메모</th>
             </tr>
           </thead>
           <tbody>
