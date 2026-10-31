@@ -25,6 +25,7 @@ import {
 } from "@/lib/roster-db";
 import { parseRosterFile, type ParsedRoster } from "./roster-import";
 import { downloadVcf, type VcardContact } from "@/lib/vcard";
+import { defaultRosterSms, loadRosterSms, saveRosterSms, rosterSmsHref } from "./roster-sms";
 
 const SHOW_FLOOR_COL = false;
 const COMPLEX_STORAGE = "roster_complex";
@@ -145,6 +146,8 @@ export default function RosterPage() {
   const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [smsEdit, setSmsEdit] = useState(false);   // 문자 문구 고치기 창 (건의 #196)
+  const [, setSmsVer] = useState(0);              // 문구 저장 후 다시 그리기용
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -192,6 +195,7 @@ export default function RosterPage() {
   }, [shownComplexes, complexPref]);
 
   const complexName = shownComplexes.find(c => c.key === complex)?.name || "";
+  const complexKind = shownComplexes.find(c => c.key === complex)?.kind || "";
 
   /* 선택한 단지의 세대 줄 */
   const allRows = useMemo(() => {
@@ -378,6 +382,7 @@ export default function RosterPage() {
   if (authLoading || !user) return <div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">불러오는 중…</div>;
 
   const isOwner = user.role === "owner";
+  const smsBody = loadRosterSms(complexKind);   // 문자 버튼에 미리 넣을 문구 (단지 종류별)
 
   return (
     <div className="w-full">
@@ -472,7 +477,13 @@ export default function RosterPage() {
       </div>
 
       {/* 표 */}
-      <div className="flex justify-end mb-1.5">
+      <div className="flex justify-end gap-1.5 mb-1.5">
+        {complexKind && (
+          <button onClick={() => setSmsEdit(true)} title={`${complexKind} 명단에서 문자 보낼 때 미리 들어갈 문구`}
+            className="px-2.5 py-1 rounded-full text-xs border whitespace-nowrap border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 flex items-center gap-1">
+            <span className="material-symbols-outlined" style={{ fontSize: "0.95rem" }}>sms</span>문자 문구
+          </button>
+        )}
         <button onClick={cycleZoom}
           className="px-2.5 py-1 rounded-full text-xs border whitespace-nowrap border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300">
           🔍 표 크기: {tableZoom === 1 ? "보통" : tableZoom === 0.7 ? "작게" : "더 작게"}
@@ -522,7 +533,7 @@ export default function RosterPage() {
                     <a href={`tel:${tel}`} title="전화 걸기" aria-label="전화 걸기" className="shrink-0 leading-none text-[var(--tint-blue-tx)]">
                       <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>call</span>
                     </a>
-                    <a href={`sms:${tel}`} title="문자 보내기" aria-label="문자 보내기" className="shrink-0 leading-none text-[var(--tint-green-tx)]">
+                    <a href={rosterSmsHref(tel, smsBody)} title="문자 보내기" aria-label="문자 보내기" className="shrink-0 leading-none text-[var(--tint-green-tx)]">
                       <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>sms</span>
                     </a>
                   </div>
@@ -593,6 +604,10 @@ export default function RosterPage() {
           onCancel={() => setPreview(null)}
           onConfirm={confirmUpload}
         />
+      )}
+
+      {smsEdit && complexKind && (
+        <SmsTemplateEditor kind={complexKind} onClose={() => setSmsEdit(false)} onSaved={() => setSmsVer(v => v + 1)} />
       )}
     </div>
   );
@@ -678,6 +693,32 @@ function UploadPreview({ preview, busy, onCancel, onConfirm }: {
             className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--brand-blue,#2383E2)] disabled:opacity-40">
             {busy ? "저장 중…" : fresh.length ? `${fresh.length}세대 추가${uniqueCount ? " + 고유번호 저장" : ""}` : uniqueCount ? "고유번호 저장" : "추가할 세대 없음"}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 고객명단 문자 문구 고치기 (건의 #196) — 이 기기에 저장 */
+function SmsTemplateEditor({ kind, onClose, onSaved }: { kind: string; onClose: () => void; onSaved: () => void }) {
+  const [text, setText] = useState(() => loadRosterSms(kind));
+  const def = defaultRosterSms(kind);
+  const save = () => { saveRosterSms(kind, text); onSaved(); onClose(); };
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-900 w-full sm:max-w-md rounded-t-2xl sm:rounded-xl shadow-2xl max-h-[calc(100dvh-3rem)] sm:max-h-[90vh] overflow-y-auto p-5" onClick={e => e.stopPropagation()}>
+        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">{kind} 문자 문구</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 break-keep">
+          {kind} 명단에서 문자 버튼을 누르면 이 문구가 미리 들어가요. 고쳐서 저장하면 다음부터 그대로 들어가요.
+        </p>
+        <textarea value={text} onChange={e => setText(e.target.value)} rows={8} placeholder="보낼 문구를 적어 주세요 (비워 두면 문구 없이 문자창만 열려요)"
+          className="mt-3 w-full border border-gray-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-sm leading-relaxed bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
+        {def && text !== def && (
+          <button onClick={() => setText(def)} className="mt-1 text-xs text-gray-500 dark:text-gray-400 underline whitespace-nowrap">처음 문구로 되돌리기</button>
+        )}
+        <div className="flex gap-2 mt-4">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 whitespace-nowrap">취소</button>
+          <button onClick={save} className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--brand-blue,#2383E2)] whitespace-nowrap">저장</button>
         </div>
       </div>
     </div>
