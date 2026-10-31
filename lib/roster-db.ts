@@ -126,62 +126,49 @@ export async function deleteRosterUnit(agencyId: string, id: string): Promise<vo
   await deleteDoc(doc(col(agencyId), id));
 }
 
+type KeepSrc = { address: string; dong?: string; ho?: string; unitType?: string; area?: string; direction?: string; rooms?: string; uniqueNo?: string; landlordName?: string; landlordPhone?: string; ownerName?: string; ownerPhone?: string; tenantName?: string; tenantPhone?: string; endDate?: string; leaseEndDate?: string };
+
 /**
  * 만기·매물에서 지우는 세대를 고객명단에 남겨 둔다 (건의 #198).
- * 이미 명단에 같은 단지·동·호수가 있으면 아무것도 하지 않는다.
+ * 명단에 같은 단지·동·호수가 이미 있으면 새로 만들지 않고, 비어 있는 칸(이름·연락처·만기일 등)만 채워 넣는다.
  */
-export async function keepUnitInRoster(
-  agencyId: string,
-  c: { address: string; dong?: string; ho?: string; propertyType?: string; unitType?: string; area?: string; direction?: string; rooms?: string; uniqueNo?: string; landlordName?: string; landlordPhone?: string; ownerName?: string; ownerPhone?: string; leaseEndDate?: string; tenantName?: string; tenantPhone?: string; endDate?: string },
-): Promise<void> {
-  const complex = complexOf(c.address, c.dong, c.ho);
-  const dh = dongHoOf(c.address, c.dong, c.ho);
-  if (!complex || !dh.ho) return;
-  const key = unitKey(complex, dh.dong, dh.ho);
+export async function keepUnitsInRoster(agencyId: string, list: KeepSrc[]): Promise<void> {
   const snap = await getDocs(col(agencyId));
-  const exists = snap.docs.some(d => {
+  const have = new Map<string, { id: string; v: Partial<RosterUnit> }>();
+  for (const d of snap.docs) {
     const v = d.data() as Partial<RosterUnit>;
-    return unitKey(String(v.complex || ""), String(v.dong || ""), String(v.ho || "")) === key;
-  });
-  if (exists) return;
-  await addRosterUnits(agencyId, [{
-    ...emptyRosterUnit(),
-    complex, dong: dh.dong, ho: dh.ho,
-    unitType: c.unitType || "", area: c.area || "", direction: c.direction || "", rooms: c.rooms || "", uniqueNo: c.uniqueNo || "",
-    ownerName: c.landlordName || c.ownerName || "", ownerPhone: c.landlordPhone || c.ownerPhone || "",
-    tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "",
-    leaseEndDate: c.endDate || c.leaseEndDate || "",
-    createdAt: Date.now(),
-  }]);
-}
-
-/** 여러 건을 한꺼번에 지우기 전에 명단에 남겨 둔다 (전체 삭제·엑셀 덮어쓰기용, 건의 #198) */
-export async function keepUnitsInRoster(
-  agencyId: string,
-  list: Parameters<typeof keepUnitInRoster>[1][],
-): Promise<void> {
-  const snap = await getDocs(col(agencyId));
-  const have = new Set(snap.docs.map(d => {
-    const v = d.data() as Partial<RosterUnit>;
-    return unitKey(String(v.complex || ""), String(v.dong || ""), String(v.ho || ""));
-  }));
+    have.set(unitKey(String(v.complex || ""), String(v.dong || ""), String(v.ho || "")), { id: d.id, v });
+  }
   const add: Omit<RosterUnit, "id">[] = [];
+  const fills: { id: string; data: Record<string, string> }[] = [];
   for (const c of list) {
     const complex = complexOf(c.address, c.dong, c.ho);
     const dh = dongHoOf(c.address, c.dong, c.ho);
     if (!complex || !dh.ho) continue;
     const key = unitKey(complex, dh.dong, dh.ho);
-    if (have.has(key)) continue;
-    have.add(key);
-    add.push({
-      ...emptyRosterUnit(),
-      complex, dong: dh.dong, ho: dh.ho,
+    const src: Record<string, string> = {
       unitType: c.unitType || "", area: c.area || "", direction: c.direction || "", rooms: c.rooms || "", uniqueNo: c.uniqueNo || "",
       ownerName: c.landlordName || c.ownerName || "", ownerPhone: c.landlordPhone || c.ownerPhone || "",
       tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "",
       leaseEndDate: c.endDate || c.leaseEndDate || "",
-      createdAt: Date.now(),
-    });
+    };
+    const ex = have.get(key);
+    if (ex) {
+      const data: Record<string, string> = {};
+      for (const [k, val] of Object.entries(src)) {
+        const cur = (ex.v as Record<string, unknown>)[k];
+        if (val && !(typeof cur === "string" && cur.trim())) { data[k] = val; (ex.v as Record<string, unknown>)[k] = val; }
+      }
+      if (ex.id && Object.keys(data).length) fills.push({ id: ex.id, data });
+      continue;
+    }
+    have.set(key, { id: "", v: { ...src } as Partial<RosterUnit> });
+    add.push({ ...emptyRosterUnit(), complex, dong: dh.dong, ho: dh.ho, ...src, createdAt: Date.now() } as Omit<RosterUnit, "id">);
   }
+  for (const f of fills) await setDoc(doc(col(agencyId), f.id), { ...f.data, updatedAt: serverTimestamp() }, { merge: true });
   if (add.length) await addRosterUnits(agencyId, add);
+}
+
+export async function keepUnitInRoster(agencyId: string, c: KeepSrc): Promise<void> {
+  await keepUnitsInRoster(agencyId, [c]);
 }
