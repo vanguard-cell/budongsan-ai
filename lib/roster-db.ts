@@ -154,3 +154,34 @@ export async function keepUnitInRoster(
     createdAt: Date.now(),
   }]);
 }
+
+/** 여러 건을 한꺼번에 지우기 전에 명단에 남겨 둔다 (전체 삭제·엑셀 덮어쓰기용, 건의 #198) */
+export async function keepUnitsInRoster(
+  agencyId: string,
+  list: Parameters<typeof keepUnitInRoster>[1][],
+): Promise<void> {
+  const snap = await getDocs(col(agencyId));
+  const have = new Set(snap.docs.map(d => {
+    const v = d.data() as Partial<RosterUnit>;
+    return unitKey(String(v.complex || ""), String(v.dong || ""), String(v.ho || ""));
+  }));
+  const add: Omit<RosterUnit, "id">[] = [];
+  for (const c of list) {
+    const complex = complexOf(c.address, c.dong, c.ho);
+    const dh = dongHoOf(c.address, c.dong, c.ho);
+    if (!complex || !dh.ho) continue;
+    const key = unitKey(complex, dh.dong, dh.ho);
+    if (have.has(key)) continue;
+    have.add(key);
+    add.push({
+      ...emptyRosterUnit(),
+      complex, dong: dh.dong, ho: dh.ho,
+      unitType: c.unitType || "", area: c.area || "", direction: c.direction || "", rooms: c.rooms || "", uniqueNo: c.uniqueNo || "",
+      ownerName: c.landlordName || c.ownerName || "", ownerPhone: c.landlordPhone || c.ownerPhone || "",
+      tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "",
+      leaseEndDate: c.endDate || c.leaseEndDate || "",
+      createdAt: Date.now(),
+    });
+  }
+  if (add.length) await addRosterUnits(agencyId, add);
+}

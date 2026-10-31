@@ -3,7 +3,7 @@
 import { AddressWithUnit } from "../properties/helpers";
 import { stripUnit } from "@/lib/address";
 import { useRosterUnitInfo } from "@/lib/use-roster-unique";
-import { keepUnitInRoster } from "@/lib/roster-db";
+import { keepUnitInRoster, keepUnitsInRoster } from "@/lib/roster-db";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -422,6 +422,7 @@ export default function ExpiryPage() {
   const clearAllData = async () => {
     if (!user) return;
     if (!(await confirmBulkDelete(user.agencyId, "만기 계약", contracts.length))) return;
+    try { await keepUnitsInRoster(user.agencyId, contracts); } catch (e) { console.warn("[expiry] 명단 보존 실패:", e); }
     // 직렬 삭제 (한 사용자 범위라 일반 사용량에서 충분)
     for (const c of contracts) {
       await fsDeleteContract(user.agencyId, c.id);
@@ -433,6 +434,7 @@ export default function ExpiryPage() {
     if (strategy === "replace") {
       // 기존 데이터 전부 삭제 후 일괄 저장 — 지우기 전 백업·확인
       if (contracts.length > 0 && !(await confirmBulkDelete(user.agencyId, "기존 만기 계약", contracts.length))) return;
+      try { await keepUnitsInRoster(user.agencyId, contracts); } catch (e) { console.warn("[expiry] 명단 보존 실패:", e); }
       for (const c of contracts) {
         await fsDeleteContract(user.agencyId, c.id);
       }

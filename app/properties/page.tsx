@@ -1,6 +1,6 @@
 "use client";
 
-import { keepUnitInRoster } from "@/lib/roster-db";
+import { keepUnitInRoster, keepUnitsInRoster } from "@/lib/roster-db";
 import { stripUnit, complexShortName } from "@/lib/address";
 import { matchAllTokens, isDigitQuery } from "@/lib/search-match";
 import { useState, useEffect, useMemo } from "react";
@@ -273,6 +273,7 @@ export default function PropertiesPage() {
     if (!user) return;
     if (strategy === "replace") {
       if (properties.length > 0 && !(await confirmBulkDelete(user.agencyId, "기존 매물", properties.length))) return;
+      try { await keepUnitsInRoster(user.agencyId, properties); } catch (e) { console.warn("[properties] 명단 보존 실패:", e); }
       for (const p of properties) {
         await deleteProperty(user.agencyId, p.id);
       }
@@ -294,6 +295,7 @@ export default function PropertiesPage() {
   const clearAll = async () => {
     if (!user) return;
     if (!(await confirmBulkDelete(user.agencyId, "매물", properties.length))) return;
+    try { await keepUnitsInRoster(user.agencyId, properties); } catch (e) { console.warn("[properties] 명단 보존 실패:", e); }
     for (const p of properties) await deleteProperty(user.agencyId, p.id);
   };
 
