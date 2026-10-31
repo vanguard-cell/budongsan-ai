@@ -11,6 +11,7 @@ import {
   collection,
   doc,
   setDoc,
+  getDocs,
   deleteDoc,
   onSnapshot,
   writeBatch,
@@ -123,4 +124,33 @@ export async function addRosterUnits(agencyId: string, list: Omit<RosterUnit, "i
 
 export async function deleteRosterUnit(agencyId: string, id: string): Promise<void> {
   await deleteDoc(doc(col(agencyId), id));
+}
+
+/**
+ * 만기·매물에서 지우는 세대를 고객명단에 남겨 둔다 (건의 #198).
+ * 이미 명단에 같은 단지·동·호수가 있으면 아무것도 하지 않는다.
+ */
+export async function keepUnitInRoster(
+  agencyId: string,
+  c: { address: string; dong?: string; ho?: string; propertyType?: string; unitType?: string; area?: string; direction?: string; rooms?: string; uniqueNo?: string; landlordName?: string; landlordPhone?: string; tenantName?: string; tenantPhone?: string; endDate?: string },
+): Promise<void> {
+  const complex = complexOf(c.address, c.dong, c.ho);
+  const dh = dongHoOf(c.address, c.dong, c.ho);
+  if (!complex || !dh.ho) return;
+  const key = unitKey(complex, dh.dong, dh.ho);
+  const snap = await getDocs(col(agencyId));
+  const exists = snap.docs.some(d => {
+    const v = d.data() as Partial<RosterUnit>;
+    return unitKey(String(v.complex || ""), String(v.dong || ""), String(v.ho || "")) === key;
+  });
+  if (exists) return;
+  await addRosterUnits(agencyId, [{
+    ...emptyRosterUnit(),
+    complex, dong: dh.dong, ho: dh.ho,
+    unitType: c.unitType || "", area: c.area || "", direction: c.direction || "", rooms: c.rooms || "", uniqueNo: c.uniqueNo || "",
+    ownerName: c.landlordName || "", ownerPhone: c.landlordPhone || "",
+    tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "",
+    leaseEndDate: c.endDate || "",
+    createdAt: Date.now(),
+  }]);
 }

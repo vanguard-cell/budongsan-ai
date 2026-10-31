@@ -3,6 +3,7 @@
 import { AddressWithUnit } from "../properties/helpers";
 import { stripUnit } from "@/lib/address";
 import { useRosterUnitInfo } from "@/lib/use-roster-unique";
+import { keepUnitInRoster } from "@/lib/roster-db";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -342,6 +343,9 @@ export default function ExpiryPage() {
   const deleteContract = async (id: string) => {
     if (!user) return;
     if (!confirm("이 계약을 영구 삭제할까요? 되돌릴 수 없습니다.")) return;
+    // 고객명단에서는 없어지면 안 되므로, 지우기 전에 명단에 세대를 남겨 둔다 (건의 #198)
+    const target = contracts.find(x => x.id === id);
+    if (target) { try { await keepUnitInRoster(user.agencyId, target); } catch (e) { console.warn("[expiry] 명단 보존 실패:", e); } }
     await fsDeleteContract(user.agencyId, id);
   };
 
