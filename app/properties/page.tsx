@@ -1,5 +1,6 @@
 "use client";
 
+import { keepUnitInRoster } from "@/lib/roster-db";
 import { stripUnit, complexShortName } from "@/lib/address";
 import { matchAllTokens, isDigitQuery } from "@/lib/search-match";
 import { useState, useEffect, useMemo } from "react";
@@ -213,6 +214,9 @@ export default function PropertiesPage() {
 
   const remove = async (id: string) => {
     if (!user || !confirm("이 매물을 삭제할까요?\n(지운 매물은 위쪽 [보관함]에서 다시 되살릴 수 있어요)")) return;
+    // 고객명단에서는 없어지면 안 되므로, 지우기 전에 명단에 세대를 남겨 둔다 (건의 #198)
+    const target = properties.find(x => x.id === id);
+    if (target) { try { await keepUnitInRoster(user.agencyId, target); } catch (e) { console.warn("[properties] 명단 보존 실패:", e); } }
     await deleteProperty(user.agencyId, id);
   };
 

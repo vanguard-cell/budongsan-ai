@@ -132,7 +132,7 @@ export async function deleteRosterUnit(agencyId: string, id: string): Promise<vo
  */
 export async function keepUnitInRoster(
   agencyId: string,
-  c: { address: string; dong?: string; ho?: string; propertyType?: string; unitType?: string; area?: string; direction?: string; rooms?: string; uniqueNo?: string; landlordName?: string; landlordPhone?: string; tenantName?: string; tenantPhone?: string; endDate?: string },
+  c: { address: string; dong?: string; ho?: string; propertyType?: string; unitType?: string; area?: string; direction?: string; rooms?: string; uniqueNo?: string; landlordName?: string; landlordPhone?: string; ownerName?: string; ownerPhone?: string; leaseEndDate?: string; tenantName?: string; tenantPhone?: string; endDate?: string },
 ): Promise<void> {
   const complex = complexOf(c.address, c.dong, c.ho);
   const dh = dongHoOf(c.address, c.dong, c.ho);
@@ -148,9 +148,9 @@ export async function keepUnitInRoster(
     ...emptyRosterUnit(),
     complex, dong: dh.dong, ho: dh.ho,
     unitType: c.unitType || "", area: c.area || "", direction: c.direction || "", rooms: c.rooms || "", uniqueNo: c.uniqueNo || "",
-    ownerName: c.landlordName || "", ownerPhone: c.landlordPhone || "",
+    ownerName: c.landlordName || c.ownerName || "", ownerPhone: c.landlordPhone || c.ownerPhone || "",
     tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "",
-    leaseEndDate: c.endDate || "",
+    leaseEndDate: c.endDate || c.leaseEndDate || "",
     createdAt: Date.now(),
   }]);
 }
