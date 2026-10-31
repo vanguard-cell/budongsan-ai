@@ -455,7 +455,7 @@ export default function ExpiryPage() {
     for (const c of contracts) {
       add(c.landlordName, c.landlordPhone, "집주인", c);
       add(c.tenantName, c.tenantPhone, "임차인", c);
-      for (const x of c.extraContacts ?? []) add(x.name, x.phone, x.relation || "연락처", c);
+      for (const x of c.extraContacts ?? []) add(x.name, x.phone, (!x.relation || x.relation === "기타") ? "집주인" : x.relation, c);
     }
     if (list.length === 0) { alert("내보낼 전화번호가 없습니다."); return; }
     downloadVcf(list, "딜던_연락처.vcf");
@@ -937,6 +937,15 @@ function ContractRow({
               onSms={() => onSms("landlord")}
               disabled={isClosed}
             />
+            {(c.extraContacts ?? []).filter(x => x.phone).map((x, i) => (
+              <ContactLine
+                key={i}
+                label={!x.relation || x.relation === "기타" ? "임대인" : x.relation}
+                name={x.name}
+                phone={x.phone}
+                disabled={isClosed}
+              />
+            ))}
             <ContactLine
               label="임차인"
               name={c.tenantName}
@@ -944,15 +953,6 @@ function ContractRow({
               onSms={() => onSms("tenant")}
               disabled={isClosed}
             />
-            {(c.extraContacts ?? []).filter(x => x.phone).map((x, i) => (
-              <ContactLine
-                key={i}
-                label={x.relation || "연락처"}
-                name={x.name}
-                phone={x.phone}
-                disabled={isClosed}
-              />
-            ))}
           </div>
 
           {c.memo && (
@@ -1539,7 +1539,7 @@ function EditModal({
           </div>
         </Field>
 
-        <Field label="추가 연락처 (상담·배우자 등)">
+        <Field label="임대인 추가 연락처 (배우자 등)">
           <div className="space-y-2">
             {(form.extraContacts ?? []).map((x, i) => {
               const upd = (patch: Partial<{ relation: string; name: string; phone: string }>) =>
@@ -1555,7 +1555,7 @@ function EditModal({
                 </div>
               );
             })}
-            <button type="button" onClick={() => setField("extraContacts", [...(form.extraContacts ?? []), { relation: "기타", name: "", phone: "" }])}
+            <button type="button" onClick={() => setField("extraContacts", [...(form.extraContacts ?? []), { relation: "임대인", name: "", phone: "" }])}
               className="text-xs font-semibold text-blue-600 whitespace-nowrap">+ 추가</button>
           </div>
         </Field>
