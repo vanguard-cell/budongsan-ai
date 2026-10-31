@@ -406,8 +406,8 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           {/* 추가 연락처 — 상담 전화·배우자 등 2명 이상 */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">추가 연락처 <span className="text-[10px] text-gray-400">(상담·배우자 등)</span></label>
-              <button type="button" onClick={() => set("extraContacts", [...(form.extraContacts ?? []), { relation: "기타", name: "", phone: "" }])}
+              <label className="block text-sm font-medium text-gray-700">추가 연락처 <span className="text-[10px] text-gray-400">(임대인 배우자 등)</span></label>
+              <button type="button" onClick={() => set("extraContacts", [...(form.extraContacts ?? []), { relation: "임대인", name: "", phone: "" }])}
                 className="text-xs font-semibold text-blue-600 whitespace-nowrap">+ 추가</button>
             </div>
             <div className="space-y-2">

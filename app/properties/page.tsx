@@ -341,7 +341,7 @@ export default function PropertiesPage() {
     for (const p of properties) {
       add(p.ownerName, p.ownerPhone, "집주인", p);
       add(p.tenantName, p.tenantPhone, "임차인", p);
-      for (const x of p.extraContacts || []) add(x.name, x.phone, x.relation || "연락처", p);
+      for (const x of p.extraContacts || []) add(x.name, x.phone, (!x.relation || x.relation === "기타") ? "임대인" : x.relation, p);
     }
     if (list.length === 0) { alert("내보낼 전화번호가 없습니다."); return; }
     downloadVcf(list, "딜던_연락처.vcf");
