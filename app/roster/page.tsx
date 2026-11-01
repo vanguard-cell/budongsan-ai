@@ -157,7 +157,7 @@ export default function RosterPage() {
   useEffect(() => {
     if (!user) return;
     const u1 = subscribeProperties(user.agencyId, setProperties);
-    const u2 = subscribeContracts(user.agencyId, setContracts);
+    const u2 = subscribeContracts(user.agencyId, list => setContracts(list.filter(c => c.status === "active")));
     const u3 = subscribeRoster(user.agencyId, list => { setRoster(list); setRosterLoaded(true); });
     return () => { u1(); u2(); u3(); };
   }, [user]);
