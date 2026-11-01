@@ -206,6 +206,7 @@ export default function RosterPage() {
       return m.get(k)!;
     };
     for (const p of properties) {
+      if (p.status !== "active") continue;   // 거래 끝난 매물은 '매물관리'로 표시하지 않음
       if (complexKey(complexOf(p.address, p.dong, p.ho)) !== complex) continue;
       const dh = dongHoOf(p.address, p.dong, p.ho); if (!dh.ho) continue;
       const r = row(dh.dong, dh.ho); r.prop = pickProp(r.prop, p);
