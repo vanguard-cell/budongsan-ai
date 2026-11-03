@@ -92,6 +92,12 @@ function view(r: Row) {
   };
 }
 
+/** 면적은 숫자면 소수점 2자리까지 (예: 84 → 84.00) */
+const fmtArea = (v: string) => {
+  const t = (v || "").trim();
+  return /^\d+(\.\d+)?$/.test(t) ? Number(t).toFixed(2) : v;
+};
+
 const KINDS = ["상가", "오피스텔", "아파트"];
 
 export default function RosterPage() {
@@ -535,9 +541,9 @@ export default function RosterPage() {
               const idTint = r.prop
                 ? "bg-green-200 text-green-900 dark:bg-green-800/60 dark:text-green-100"
                 : r.contract ? "bg-pink-200 text-pink-900 dark:bg-pink-500/30 dark:text-pink-100" : "";
-              const cell = (field: RosterEditField, value: string, opts?: { phone?: boolean; date?: boolean }) => {
+              const cell = (field: RosterEditField, value: string, opts?: { phone?: boolean; date?: boolean; area?: boolean }) => {
                 const inner = editable && u
-                  ? <EditCell value={u[field] || ""} onSave={val => saveCell(u, field, val)} phone={opts?.phone} date={opts?.date} />
+                  ? <EditCell value={opts?.area ? fmtArea(u[field] || "") : (u[field] || "")} onSave={val => saveCell(u, field, val)} phone={opts?.phone} date={opts?.date} />
                   : <span className="block truncate px-1.5">{value || <span className="text-gray-300 dark:text-gray-600">—</span>}</span>;
                 const tel = opts?.phone ? value.replace(/[^\d+]/g, "") : "";
                 if (tel.length < 8) return inner;
@@ -574,7 +580,7 @@ export default function RosterPage() {
                   </td>
                   {SHOW_FLOOR_COL && <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho, complexName.includes("상가"))}</td>}
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
-                  <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", v.area)}</td>
+                  <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", fmtArea(v.area), { area: true })}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("direction", v.direction)}</td>
                   <td className="px-1 py-1.5 text-gray-900 dark:text-gray-100 max-w-0">{cell("ownerName", v.ownerName)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("ownerPhone", v.ownerPhone, { phone: true })}</td>
