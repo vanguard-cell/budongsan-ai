@@ -20,7 +20,7 @@ import { subscribeContracts } from "@/lib/contracts-db";
 import type { Contract } from "@/app/expiry/contracts";
 import {
   subscribeRoster, updateRosterField, addRosterUnits, deleteRosterUnit, setRosterUniqueNo,
-  complexKey, complexOf, unitKey, dongHoOf,
+  complexKey, complexOf, unitKey, dongHoOf, emptyRosterUnit,
   type RosterUnit, type RosterEditField,
 } from "@/lib/roster-db";
 import { parseRosterFile, type ParsedRoster } from "./roster-import";
@@ -83,6 +83,8 @@ function view(r: Row) {
     direction: first(p?.direction, c?.direction, u?.direction),
     ownerName: first(p?.ownerName, c?.landlordName, u?.ownerName),
     ownerPhone: first(p?.ownerPhone, c?.landlordPhone, u?.ownerPhone),
+    owner2Name: u?.owner2Name || "",
+    owner2Phone: u?.owner2Phone || "",
     tenantName: first(p?.tenantName, c?.tenantName, u?.tenantName),
     tenantPhone: first(p?.tenantPhone, c?.tenantPhone, u?.tenantPhone),
     leaseEndDate: first(p?.leaseEndDate, c?.endDate, u?.leaseEndDate).slice(0, 10),
@@ -244,7 +246,7 @@ export default function RosterPage() {
       if (source === "contract" && !r.contract) return false;
       if (q) {
         const v = view(r);
-        const hay = [r.ho, `${r.dong}-${r.ho}`, v.ownerName, v.ownerPhone, v.tenantName, v.tenantPhone, v.memo, v.unitType].join(" ").replace(/\s+/g, "");
+        const hay = [r.ho, `${r.dong}-${r.ho}`, v.ownerName, v.ownerPhone, v.owner2Name, v.owner2Phone, v.tenantName, v.tenantPhone, v.memo, v.unitType].join(" ").replace(/\s+/g, "");
         if (!hay.includes(q) && !hay.replace(/-/g, "").includes(q.replace(/-/g, ""))) return false;
       }
       return true;
@@ -338,6 +340,15 @@ export default function RosterPage() {
     catch (e) { console.error("[roster] 수정 실패:", e); setMsg("❌ 저장하지 못했어요. 다시 해 주세요."); }
   };
 
+  const saveCo = async (r: Row, field: "owner2Name" | "owner2Phone", value: string) => {
+    if (!user) return;
+    try {
+      if (r.roster) { await saveCell(r.roster, field, value); return; }
+      if (!value.trim()) return;
+      await addRosterUnits(user.agencyId, [{ ...emptyRosterUnit(), complex: complexName, dong: r.dong, ho: r.ho, [field]: value, createdAt: Date.now() }]);
+    } catch (e) { console.error("[roster] 공동명의 저장 실패:", e); setMsg("❌ 저장하지 못했어요. 다시 해 주세요."); }
+  };
+
   const removeUnit = async (u: RosterUnit) => {
     if (!user) return;
     if (!confirm(`${u.dong ? `${u.dong}동 ` : ""}${u.ho}호를 고객명단에서 지울까요?`)) return;
@@ -351,7 +362,7 @@ export default function RosterPage() {
       const v = view(r);
       return {
         "동": r.dong, "호수": r.ho, "층": floorOf(r.ho, complexName.includes("상가")), "타입": v.unitType, "전용면적(㎡)": v.area, "향": v.direction,
-        "임대인": v.ownerName, "임대인 전화": v.ownerPhone, "임차인": v.tenantName, "임차인 전화": v.tenantPhone,
+        "임대인": v.ownerName, "임대인 전화": v.ownerPhone, "공동명의": v.owner2Name, "공동명의 전화": v.owner2Phone, "임차인": v.tenantName, "임차인 전화": v.tenantPhone,
         "만기일": v.leaseEndDate, "등록 위치": [r.prop && "매물", r.contract && "만기", !r.prop && !r.contract && "명단"].filter(Boolean).join("·"),
         "메모": v.memo,
       };
@@ -369,7 +380,7 @@ export default function RosterPage() {
     for (const r of rows) {
       const v = view(r);
       const where = [r.dong && `${r.dong}동`, r.ho && `${r.ho}호`].filter(Boolean).join(" ");
-      for (const [name, phone, role] of [[v.ownerName, v.ownerPhone, "임대인"], [v.tenantName, v.tenantPhone, "임차인"]]) {
+      for (const [name, phone, role] of [[v.ownerName, v.ownerPhone, "임대인"], [v.owner2Name, v.owner2Phone, "공동명의"], [v.tenantName, v.tenantPhone, "임차인"]]) {
         const digits = (phone || "").replace(/\D/g, "");
         if (digits.length < 8 || seen.has(digits)) continue;
         seen.add(digits);
@@ -506,6 +517,8 @@ export default function RosterPage() {
               <th className="font-medium px-2 py-2.5 w-[56px] sticky top-0 z-20 bg-white dark:bg-slate-900">향</th>
               <th className="font-medium px-2 py-2.5 w-[76px] sticky top-0 z-20 bg-white dark:bg-slate-900">임대인</th>
               <th className="font-medium px-2 py-2.5 w-[128px] sticky top-0 z-20 bg-white dark:bg-slate-900">임대인 전화</th>
+              <th className="font-medium px-2 py-2.5 w-[76px] whitespace-nowrap sticky top-0 z-20 bg-white dark:bg-slate-900">공동명의</th>
+              <th className="font-medium px-2 py-2.5 w-[128px] whitespace-nowrap sticky top-0 z-20 bg-white dark:bg-slate-900">공동명의 전화</th>
               <th className="font-medium px-2 py-2.5 w-[76px] sticky top-0 z-20 bg-white dark:bg-slate-900">임차인</th>
               <th className="font-medium px-2 py-2.5 w-[128px] sticky top-0 z-20 bg-white dark:bg-slate-900">임차인 전화</th>
               <th className="font-medium px-2 py-2.5 w-[104px] sticky top-0 z-20 bg-white dark:bg-slate-900">만기일</th>
@@ -540,6 +553,19 @@ export default function RosterPage() {
                   </div>
                 );
               };
+              // 공동명의 칸: 매물·만기에 있는 세대도 여기서 바로 적을 수 있음 (명단에 없으면 새로 만들어 저장)
+              const cell2 = (field: "owner2Name" | "owner2Phone", value: string, phone?: boolean) => (
+                <div className="flex items-center gap-0.5">
+                  <div className="min-w-0 flex-1">
+                    <EditCell value={value} onSave={val => saveCo(r, field, val)} phone={phone} />
+                  </div>
+                  {phone && value.replace(/[^\d+]/g, "").length >= 8 && (
+                    <a href={`tel:${value.replace(/[^\d+]/g, "")}`} title="전화 걸기" aria-label="전화 걸기" className="shrink-0 leading-none text-[var(--tint-blue-tx)]">
+                      <span className="material-symbols-outlined" style={{ fontSize: "1.1rem" }}>call</span>
+                    </a>
+                  )}
+                </div>
+              );
               return (
                 <tr key={r.key} className="border-b border-[var(--sidebar-bd)] last:border-0 hover:bg-[var(--tint-gray-bg)]">
                   <td className={`px-2 py-1.5 tabular-nums sticky left-0 z-10 ${idTint ? idTint + " font-semibold" : "bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400"}`}>{editable && u ? <EditCell value={u.dong} onSave={val => saveCell(u, "dong", val)} /> : (r.dong || "—")}</td>
@@ -552,6 +578,8 @@ export default function RosterPage() {
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("direction", v.direction)}</td>
                   <td className="px-1 py-1.5 text-gray-900 dark:text-gray-100 max-w-0">{cell("ownerName", v.ownerName)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("ownerPhone", v.ownerPhone, { phone: true })}</td>
+                  <td className="px-1 py-1.5 text-gray-900 dark:text-gray-100 max-w-0">{cell2("owner2Name", v.owner2Name)}</td>
+                  <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell2("owner2Phone", v.owner2Phone, true)}</td>
                   <td className="px-1 py-1.5 text-gray-900 dark:text-gray-100 max-w-0">{cell("tenantName", v.tenantName)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("tenantPhone", v.tenantPhone, { phone: true })}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("leaseEndDate", v.leaseEndDate, { date: true })}</td>
@@ -583,7 +611,7 @@ export default function RosterPage() {
               );
             })}
             {rows.length === 0 && (
-              <tr><td colSpan={SHOW_FLOOR_COL ? 13 : 12} className="px-3 py-10 text-center text-sm text-gray-400">
+              <tr><td colSpan={SHOW_FLOOR_COL ? 15 : 14} className="px-3 py-10 text-center text-sm text-gray-400">
                 {!rosterLoaded ? "불러오는 중…" : allRows.length === 0
                   ? "이 단지에 동·호수가 있는 세대가 없어요. 명부 엑셀을 올려 보세요."
                   : "조건에 맞는 세대가 없어요."}

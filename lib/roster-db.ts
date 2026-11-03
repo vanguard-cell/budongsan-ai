@@ -35,6 +35,8 @@ export interface RosterUnit {
   uniqueNo: string;     // 건축물대장 고유번호 (있으면)
   ownerName: string;
   ownerPhone: string;
+  owner2Name: string;   // 공동명의 (건의 #202)
+  owner2Phone: string;
   tenantName: string;
   tenantPhone: string;
   leaseEndDate: string; // YYYY-MM-DD
@@ -43,12 +45,12 @@ export interface RosterUnit {
 }
 
 /** 표에서 바로 고칠 수 있는 칸 */
-export type RosterEditField = "dong" | "ho" | "unitType" | "area" | "direction" | "ownerName" | "ownerPhone" | "tenantName" | "tenantPhone" | "leaseEndDate" | "memo";
+export type RosterEditField = "dong" | "ho" | "unitType" | "area" | "direction" | "ownerName" | "ownerPhone" | "owner2Name" | "owner2Phone" | "tenantName" | "tenantPhone" | "leaseEndDate" | "memo";
 
 export function emptyRosterUnit(): RosterUnit {
   return {
     id: "", complex: "", dong: "", ho: "", unitType: "", area: "", direction: "", rooms: "", uniqueNo: "",
-    ownerName: "", ownerPhone: "", tenantName: "", tenantPhone: "", leaseEndDate: "", memo: "", createdAt: 0,
+    ownerName: "", ownerPhone: "", owner2Name: "", owner2Phone: "", tenantName: "", tenantPhone: "", leaseEndDate: "", memo: "", createdAt: 0,
   };
 }
 
@@ -82,7 +84,7 @@ function fromDoc(id: string, d: Record<string, unknown>): RosterUnit {
     id, createdAt,
     complex: s("complex"), dong: s("dong"), ho: s("ho"), unitType: s("unitType"), area: s("area"),
     direction: s("direction"), rooms: s("rooms"), uniqueNo: s("uniqueNo"),
-    ownerName: s("ownerName"), ownerPhone: s("ownerPhone"), tenantName: s("tenantName"), tenantPhone: s("tenantPhone"),
+    ownerName: s("ownerName"), ownerPhone: s("ownerPhone"), owner2Name: s("owner2Name"), owner2Phone: s("owner2Phone"), tenantName: s("tenantName"), tenantPhone: s("tenantPhone"),
     leaseEndDate: s("leaseEndDate"), memo: s("memo"),
   };
 }

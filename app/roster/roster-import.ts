@@ -148,6 +148,7 @@ export async function parseRosterFile(file: File, fallbackComplex: string): Prom
       uniqueNo: str(get(r, "uniqueNo")),
       ownerName: str(get(r, "ownerName")),
       ownerPhone: cleanPhone(get(r, "ownerPhone")),
+      owner2Name: "", owner2Phone: "",
       tenantName: str(get(r, "tenantName")),
       tenantPhone: cleanPhone(get(r, "tenantPhone")),
       leaseEndDate: cleanDate(get(r, "leaseEndDate")),
