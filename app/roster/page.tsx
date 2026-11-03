@@ -25,7 +25,8 @@ import {
 } from "@/lib/roster-db";
 import { parseRosterFile, type ParsedRoster } from "./roster-import";
 import { downloadVcf, type VcardContact } from "@/lib/vcard";
-import { defaultRosterSms, loadRosterSms, saveRosterSms, rosterSmsHref } from "./roster-sms";
+import { defaultRosterSms, loadRosterSms, saveRosterSms, rosterSmsHref, applyRemoteRosterSms, allRosterSms } from "./roster-sms";
+import { subscribeRosterSms, saveRosterSmsRemote } from "@/lib/roster-sms-db";
 
 const SHOW_FLOOR_COL = false;
 const COMPLEX_STORAGE = "roster_complex";
@@ -159,7 +160,11 @@ export default function RosterPage() {
     const u1 = subscribeProperties(user.agencyId, setProperties);
     const u2 = subscribeContracts(user.agencyId, list => setContracts(list.filter(c => c.status === "active")));
     const u3 = subscribeRoster(user.agencyId, list => { setRoster(list); setRosterLoaded(true); });
-    return () => { u1(); u2(); u3(); };
+    const u4 = subscribeRosterSms(user.agencyId, remote => {
+      // 서버에 저장된 문구가 있을 때만 이 기기 저장분을 맞춤 (처음엔 이 기기 문구를 그대로 사용)
+      if (Object.keys(remote).length > 0) { applyRemoteRosterSms(remote); setSmsVer(v => v + 1); }
+    });
+    return () => { u1(); u2(); u3(); u4(); };
   }, [user]);
 
   /* 단지 목록 — 동·호수가 있는 단지만 (세대 표를 만들 수 있는 곳) */
@@ -608,7 +613,7 @@ export default function RosterPage() {
       )}
 
       {smsEdit && complexKind && (
-        <SmsTemplateEditor kind={complexKind} onClose={() => setSmsEdit(false)} onSaved={() => setSmsVer(v => v + 1)} />
+        <SmsTemplateEditor kind={complexKind} onClose={() => setSmsEdit(false)} onSaved={() => { setSmsVer(v => v + 1); if (user) saveRosterSmsRemote(user.agencyId, allRosterSms()).catch(() => {}); }} />
       )}
     </div>
   );
@@ -700,7 +705,7 @@ function UploadPreview({ preview, busy, onCancel, onConfirm }: {
   );
 }
 
-/** 고객명단 문자 문구 고치기 (건의 #196) — 이 기기에 저장 */
+/** 고객명단 문자 문구 고치기 (건의 #196) — 저장하면 사무소 모든 기기에 적용 (건의 #201) */
 function SmsTemplateEditor({ kind, onClose, onSaved }: { kind: string; onClose: () => void; onSaved: () => void }) {
   const [text, setText] = useState(() => loadRosterSms(kind));
   const def = defaultRosterSms(kind);

@@ -29,6 +29,14 @@ export function loadRosterSms(kind: string): string {
   return typeof saved === "string" ? saved : defaultRosterSms(kind);
 }
 
+/** 서버(사무소 공용)에서 받은 문구로 이 기기 저장분을 맞춤 — 다른 기기에서 고친 문구가 여기에도 적용됨 */
+export function applyRemoteRosterSms(remote: Record<string, string>): void {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(remote)); } catch { /* 무시 */ }
+}
+
+/** 지금 저장된 문구 전체 (서버에 올릴 때 사용) */
+export function allRosterSms(): Record<string, string> { return loadAll(); }
+
 /** 저장 — 기본 문구와 같으면 따로 저장하지 않음 (사무소 이름이 바뀌어도 따라가게) */
 export function saveRosterSms(kind: string, text: string): void {
   try {
