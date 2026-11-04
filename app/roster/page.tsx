@@ -165,7 +165,7 @@ export default function RosterPage() {
   useEffect(() => {
     if (!user) return;
     const u1 = subscribeProperties(user.agencyId, setProperties);
-    const u2 = subscribeContracts(user.agencyId, list => setContracts(list.filter(c => c.status === "active")));
+    const u2 = subscribeContracts(user.agencyId, list => setContracts(list));
     const u3 = subscribeRoster(user.agencyId, list => { setRoster(list); setRosterLoaded(true); });
     return () => { u1(); u2(); u3(); };
   }, [user]);
@@ -214,15 +214,16 @@ export default function RosterPage() {
       return m.get(k)!;
     };
     for (const p of properties) {
-      if (p.status !== "active") continue;   // 거래 끝난 매물은 '매물관리'로 표시하지 않음
       if (complexKey(complexOf(p.address, p.dong, p.ho)) !== complex) continue;
       const dh = dongHoOf(p.address, p.dong, p.ho); if (!dh.ho) continue;
-      const r = row(dh.dong, dh.ho); r.prop = pickProp(r.prop, p);
+      const r = row(dh.dong, dh.ho);   // 동·호수 줄은 항상 남김
+      if (p.status === "active") r.prop = pickProp(r.prop, p);   // 거래 끝난 매물은 '매물관리'로 표시하지 않음
     }
     for (const c of contracts) {
       if (complexKey(complexOf(c.address, c.dong, c.ho)) !== complex) continue;
       const dh = dongHoOf(c.address, c.dong, c.ho); if (!dh.ho) continue;
-      const r = row(dh.dong, dh.ho); r.contract = pickContract(r.contract, c);
+      const r = row(dh.dong, dh.ho);   // 동·호수 줄은 항상 남김
+      if (c.status === "active") r.contract = pickContract(r.contract, c);   // 종료된 계약은 '만기관리'로 표시하지 않음
     }
     for (const u of roster) {
       if (complexKey(u.complex) !== complex) continue;
