@@ -121,6 +121,12 @@ service cloud.firestore {
         allow delete: if isAgencyOwner();
       }
 
+      // ── 사무실 공용 설정 (고객명단 문자 문구 등, 건의 #201) ──
+      match /settings/{settingId} {
+        allow read: if isMember() || isGlobalAdmin();
+        allow create, update: if isMember();
+      }
+
       // ── 스케줄 ──────────────────────────────
       match /schedules/{scheduleId} {
         allow read: if isMember() || isGlobalAdmin();
