@@ -272,6 +272,11 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </div>
           )}
 
+          {/* 대출 */}
+          {p.loan && (
+            <div className="mt-1.5 text-[11px] text-gray-600 break-words min-w-0">🏦 대출: {p.loan}</div>
+          )}
+
           {/* 옵션 */}
           {p.options && (
             <div className="mt-2 flex flex-wrap items-center gap-1">

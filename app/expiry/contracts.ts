@@ -31,6 +31,7 @@ export interface Contract {
   uniqueNo?: string;        // 고유번호 — 매물↔만기 이동 때 그대로 보존
   direction?: string;       // 방향
   rooms?: string;           // 방수
+  loan?: string;            // 대출 — 자유 입력 (내 매물의 대출과 같은 형식)
   options?: string;         // 집 옵션 — 쉼표 구분 (내 매물의 옵션과 같은 형식)
   // 매물에서 이전된 경우 보존되는 계약 진행 정보
   contractDate?: string;    // 계약일
