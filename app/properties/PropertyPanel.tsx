@@ -140,6 +140,7 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
             )}
             {p.ownerCarrier && <Row label="통신사">{p.ownerCarrier}</Row>}
             {p.options && <Row label="옵션">{p.options}</Row>}
+            {p.loan && <Row label="대출">{p.loan}</Row>}
             {p.memo && <Row label="메모"><MemoText memo={p.memo} collapsible /></Row>}
           </tbody>
         </table>
