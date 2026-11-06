@@ -389,7 +389,7 @@ export default function ExpiryPage() {
         address: c.address, type: c.type, deposit: c.deposit, monthly: c.monthly,
         landlordName: c.landlordName, landlordPhone: c.landlordPhone, landlordCarrier: c.landlordCarrier, extraContacts: c.extraContacts, memo: c.memo,
         dong: c.dong, ho: c.ho, propertyType: c.propertyType,
-        area: c.area, unitType: c.unitType, uniqueNo: c.uniqueNo, direction: c.direction, rooms: c.rooms, options: c.options,
+        area: c.area, unitType: c.unitType, uniqueNo: c.uniqueNo, direction: c.direction, rooms: c.rooms, options: c.options, loan: c.loan,
         tenantName: c.tenantName, tenantPhone: c.tenantPhone, endDate: c.endDate,
       });
       // 1. 새 매물 저장
@@ -914,11 +914,12 @@ function ContractRow({
           <div className="mt-0.5 min-w-0 truncate text-[12px] font-semibold text-gray-900" title={c.address}>
               <AddressWithUnit text={[c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" ")} />
             </div>
-          {(c.rooms || c.direction || c.options) && (
+          {(c.rooms || c.direction || c.options || c.loan) && (
             <div className="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2 min-w-0">
               {c.rooms && <span className="whitespace-nowrap">방{c.rooms}개</span>}
               {c.direction && <span className="whitespace-nowrap">{c.direction}</span>}
               {c.options && <span className="text-gray-600 break-words min-w-0">🏠 옵션: {c.options}</span>}
+              {c.loan && <span className="text-gray-600 break-words min-w-0">🏦 대출: {c.loan}</span>}
             </div>
           )}
           <div className="text-xs text-gray-600 mt-1">
@@ -1316,7 +1317,14 @@ function EditModal({
       if (!confirm(`⚠️ '${typedName}'은(는) 내 단지 목록에 저장된 단지가 아니에요.\n\n그래도 등록할까요?`)) return;
     }
     // 동/호가 주소에 안 들어있으면 자동 합산 — "단지명 101동 1902호" 형태로 저장
+    // 수정 전 동·호가 주소에 들어 있으면 먼저 걷어내서, 바꾼 동·호가 목록에 그대로 반영되게 함 (건의 #206)
+    const origDong = contract.dong || contract.address.match(/(\d+(?:[-.,·~]\d+)*)동/)?.[1] || "";
+    const origHo = contract.ho || contract.address.match(/(\d+(?:[-.,·~]\d+)*)호/)?.[1] || "";
     let mergedAddress = form.address.trim();
+    if (!isNew && ((form.dong || "") !== origDong || (form.ho || "") !== origHo)) {
+      if (origDong) mergedAddress = mergedAddress.replace(` ${origDong}동`, "").replace(`${origDong}동`, "");
+      if (origHo) mergedAddress = mergedAddress.replace(` ${origHo}호`, "").replace(`${origHo}호`, "");
+    }
     const dongStr = form.dong ? `${form.dong}동` : "";
     const hoStr = form.ho ? `${form.ho}호` : "";
     if (dongStr && !mergedAddress.includes(dongStr)) mergedAddress += " " + dongStr;
@@ -1669,6 +1677,15 @@ function EditModal({
               );
             })}
           </div>
+        </Field>
+
+        <Field label="대출 (선택)">
+          <input
+            value={form.loan || ""}
+            onChange={e => setField("loan", e.target.value)}
+            placeholder="예: 국민은행 2억 / 대출 없음"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </Field>
 
         <Field label="메모 (선택 · 엔터 = 다음 줄 + 오늘 날짜 자동)">
