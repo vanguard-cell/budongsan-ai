@@ -403,6 +403,14 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             </div>
           </div>
 
+          {/* 대출 — 자유 입력 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{form.dealType === "매매" ? "매도인" : "임대인"} 대출 <span className="text-[10px] text-gray-400">(선택)</span></label>
+            <input value={form.loan || ""} onChange={e => set("loan", e.target.value)}
+              placeholder="예: 국민은행 2억 / 대출 없음"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          </div>
+
           {/* 추가 연락처 — 상담 전화·배우자 등 2명 이상 */}
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -538,14 +546,6 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
               })}
             </div>
             <p className="text-[11px] text-gray-400 mt-1.5">💡 자주 쓰는 건 눌러서 넣고, 그 외(커튼·주차 2대 등)는 칸에 직접 쓰세요</p>
-          </div>
-
-          {/* 대출 — 자유 입력 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">대출 <span className="text-[10px] text-gray-400">(선택)</span></label>
-            <input value={form.loan || ""} onChange={e => set("loan", e.target.value)}
-              placeholder="예: 국민은행 2억 / 대출 없음"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
 
           {/* 메모 */}

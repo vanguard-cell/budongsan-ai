@@ -1553,6 +1553,15 @@ function EditModal({
           </div>
         </Field>
 
+        <Field label="임대인 대출 (선택)">
+          <input
+            value={form.loan || ""}
+            onChange={e => setField("loan", e.target.value)}
+            placeholder="예: 국민은행 2억 / 대출 없음"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </Field>
+
         <Field label="임대인 추가 연락처 (배우자 등)">
           <div className="space-y-2">
             {(form.extraContacts ?? []).map((x, i) => {
@@ -1677,15 +1686,6 @@ function EditModal({
               );
             })}
           </div>
-        </Field>
-
-        <Field label="대출 (선택)">
-          <input
-            value={form.loan || ""}
-            onChange={e => setField("loan", e.target.value)}
-            placeholder="예: 국민은행 2억 / 대출 없음"
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
         </Field>
 
         <Field label="메모 (선택 · 엔터 = 다음 줄 + 오늘 날짜 자동)">
