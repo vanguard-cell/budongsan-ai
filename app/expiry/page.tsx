@@ -979,7 +979,7 @@ function ContractRow({
           </div>
 
           {holding && holding.others.length > 0 && (
-            <div className="mt-2"><span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-full truncate rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span></div>
+            <div className="mt-2"><span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-full truncate rounded-sm bg-purple-100 text-purple-700 px-2 py-0.5 text-[11px] font-semibold">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span></div>
           )}
 
           {c.memo && (
