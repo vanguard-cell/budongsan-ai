@@ -23,7 +23,7 @@ const STYPE_COLORS: Record<string, string> = {
 
 /* ── 매물 카드 ── */
 export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo, onToggleCp, complexInfo, holding }: {
-  holding?: { count: number; label: string; others: string[] };
+  holding?: { count: number; label: string; others: string[]; lines: string[] };
   complexInfo?: import("@/lib/properties-db").ComplexInfo;
   property: Property;
   schedules: Schedule[];
@@ -290,7 +290,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
           {/* 같은 전화번호 주인의 다른 보유 호실 — 메모 바로 위 (건의 #212) */}
           {holding && holding.others.length > 0 && (
-            <div className="mt-2"><span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-full truncate rounded-sm bg-purple-100 text-purple-700 px-2 py-0.5 text-[11px] font-semibold">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span></div>
+            <div className="mt-2 flex flex-col items-start gap-1" title={holding.label}>{holding.lines.map((ln, i) => <span key={i} className="inline-block max-w-full break-keep rounded-sm bg-purple-100 text-purple-700 px-2 py-0.5 text-[11px] font-semibold">{i === 0 ? "보유 " : ""}{ln}</span>)}</div>
           )}
 
           {/* 메모 — 카드에서 바로 추가 (건의 #76) */}

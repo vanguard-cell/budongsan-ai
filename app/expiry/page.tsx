@@ -881,7 +881,7 @@ function ContractRow({
   onCloneSameComplex,
   onAddMemo,
 }: {
-  holding?: { count: number; label: string; others: string[] };
+  holding?: { count: number; label: string; others: string[]; lines: string[] };
   contract: Contract;
   dday: number;
   severity: Severity;
@@ -979,7 +979,7 @@ function ContractRow({
           </div>
 
           {holding && holding.others.length > 0 && (
-            <div className="mt-2"><span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-full truncate rounded-sm bg-purple-100 text-purple-700 px-2 py-0.5 text-[11px] font-semibold">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span></div>
+            <div className="mt-2 flex flex-col items-start gap-1" title={holding.label}>{holding.lines.map((ln, i) => <span key={i} className="inline-block max-w-full break-keep rounded-sm bg-purple-100 text-purple-700 px-2 py-0.5 text-[11px] font-semibold">{i === 0 ? "보유 " : ""}{ln}</span>)}</div>
           )}
 
           {c.memo && (

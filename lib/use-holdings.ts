@@ -14,7 +14,7 @@ const digitsOf = (s?: string) => (s || "").replace(/\D/g, "");
 export function useHoldings(
   properties: (UnitLike & { ownerPhone?: string })[],
   contracts: (UnitLike & { landlordPhone?: string })[],
-): (phone?: string, address?: string, dong?: string, ho?: string) => { count: number; label: string; others: string[] } {
+): (phone?: string, address?: string, dong?: string, ho?: string) => { count: number; label: string; others: string[]; lines: string[] } {
   const { user } = useAuth();
   const [roster, setRoster] = useState<RosterUnit[]>([]);
   useEffect(() => {
@@ -46,7 +46,7 @@ export function useHoldings(
 
   return (phone, address, dong, ho) => {
     const units = map.get(digitsOf(phone));
-    if (!units) return { count: 0, label: "", others: [] };
+    if (!units) return { count: 0, label: "", others: [], lines: [] };
     const dh = dongHoOf(address || "", dong, ho);
     const complex = complexOf(address || "", dong, ho);
     const self = unitKey(complex, dh.dong, dh.ho);
@@ -57,6 +57,17 @@ export function useHoldings(
       const unit = [u.dong && `${u.dong}동`, u.ho && `${u.ho}호`].filter(Boolean).join(" ");
       return same && unit ? unit : u.name;
     });
-    return { count: others.length + 1, label: others.slice(0, 20).join("\n"), others };
+    // 줄 나누기: 같은 단지는 호실만 한 줄, 다른 단지는 단지별로 한 줄씩 (건의 #212)
+    const groups = new Map<string, { complex: string; same: boolean; units: string[] }>();
+    for (const [k, u] of units.entries()) {
+      if (k === self) continue;
+      const gk = complexKey(u.complex);
+      const unit = [u.dong && `${u.dong}동`, u.ho && `${u.ho}호`].filter(Boolean).join(" ") || u.name;
+      if (!groups.has(gk)) groups.set(gk, { complex: u.complex, same: gk === ck, units: [] });
+      groups.get(gk)!.units.push(unit);
+    }
+    const lines = [...groups.values()].sort((a, b) => Number(b.same) - Number(a.same))
+      .map((g) => g.same ? g.units.join(", ") : `${g.complex} ${g.units.join(", ")}`.trim());
+    return { count: others.length + 1, lines, label: others.slice(0, 20).join("\n"), others };
   };
 }
