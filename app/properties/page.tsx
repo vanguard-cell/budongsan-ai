@@ -26,6 +26,7 @@ import { exportProperties } from "@/lib/export";
 import SparklineChart from "@/app/dashboard/components/SparklineChart";
 import { fmtNum, formatDateKo, PROPERTY_TYPES } from "./helpers";
 import PropertyCard from "./PropertyCard";
+import { useHoldings } from "@/lib/use-holdings";
 import TrashModal from "./TrashModal";
 import PropertyModal from "./PropertyModal";
 import ContractProgressModal from "./ContractProgressModal";
@@ -59,6 +60,7 @@ export default function PropertiesPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);  // 만기로 이전된 계약 (매출 집계 보존용)
+  const holdingOf = useHoldings(properties, contracts);  // 같은 전화번호 주인의 보유 호실 수 (건의 #212)
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<Property | null>(null);
   const [progressing, setProgressing] = useState<Property | null>(null);   // 계약 진행 모달
@@ -1201,6 +1203,7 @@ export default function PropertiesPage() {
                     <PropertyCard
                       key={p.id}
                       property={p}
+                      holding={holdingOf(p.ownerPhone, p.address, p.dong, p.ho)}
                       complexInfo={complexInfoMap[complexInfoKey(p.propertyType || "", baseAddr(p))]}
                       schedules={schedules.filter(s => s.propertyId === p.id)}
                       isPinned={pinnedIds.has(p.id)}

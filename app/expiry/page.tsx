@@ -27,13 +27,14 @@ import { subscribeMyComplexes, addMyComplex, removeMyComplex, type MyComplex } f
 import ExportModal from "../ExportModal";
 import { downloadVcf, type VcardContact } from "@/lib/vcard";
 import { subscribeCustomers } from "@/lib/customers-db";
-import { saveProperty, contractBackToProperty, CONTACT_RELATIONS, CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption } from "@/lib/properties-db";
+import { subscribeProperties, type Property, saveProperty, contractBackToProperty, CONTACT_RELATIONS, CARRIERS, parseCarrier, joinCarrier, OPTION_PRESETS, toggleOption, hasOption } from "@/lib/properties-db";
 import { exportContracts } from "@/lib/export";
 import { printExpiryBoardHTML } from "@/lib/print-pdf";
 import type { Customer } from "../customers/customer-types";
 import MemoText from "@/app/components/MemoText";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { matchAllTokens } from "@/lib/search-match";
+import { useHoldings } from "@/lib/use-holdings";
 import {
   Contract,
   ContractType,
@@ -98,6 +99,8 @@ export default function ExpiryPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [allProps, setAllProps] = useState<Property[]>([]);
+  const holdingOf = useHoldings(allProps, contracts);  // 같은 전화번호 주인의 보유 호실 수 (건의 #212)
   const [loaded, setLoaded] = useState(false);
   const [migratedCount, setMigratedCount] = useState<number | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -191,6 +194,12 @@ export default function ExpiryPage() {
 
     return () => { if (unsub) unsub(); };
   }, [user]);
+
+  // 보유 건수 표시용 — 내 매물 목록도 함께 받아 둠 (건의 #212)
+  useEffect(() => {
+    if (!user?.agencyId) return;
+    return subscribeProperties(user.agencyId, setAllProps);
+  }, [user?.agencyId]);
 
   /* ── 정렬 + 필터 ── */
   const filtered = useMemo(() => {
@@ -703,6 +712,7 @@ export default function ExpiryPage() {
               <ContractRow
                 key={c.id}
                 contract={c}
+                holding={holdingOf(c.landlordPhone, c.address, c.dong, c.ho)}
                 dday={d}
                 severity={s}
                 onEdit={() => setEditing({ ...c })}
@@ -859,6 +869,7 @@ function FilterChip({
 /* ───────── 계약 행 ───────── */
 function ContractRow({
   contract: c,
+  holding,
   dday,
   severity,
   onEdit,
@@ -870,6 +881,7 @@ function ContractRow({
   onCloneSameComplex,
   onAddMemo,
 }: {
+  holding?: { count: number; label: string; others: string[] };
   contract: Contract;
   dday: number;
   severity: Severity;
@@ -948,6 +960,9 @@ function ContractRow({
               onSms={() => onSms("landlord")}
               disabled={isClosed}
             />
+            {holding && holding.others.length > 0 && (
+              <span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-[14rem] truncate rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold flex-shrink-0">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span>
+            )}
             {(c.extraContacts ?? []).filter(x => x.phone).map((x, i) => (
               <ContactLine
                 key={i}

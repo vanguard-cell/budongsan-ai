@@ -22,7 +22,8 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo, onToggleCp, complexInfo }: {
+export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo, onToggleCp, complexInfo, holding }: {
+  holding?: { count: number; label: string; others: string[] };
   complexInfo?: import("@/lib/properties-db").ComplexInfo;
   property: Property;
   schedules: Schedule[];
@@ -192,6 +193,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                 <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
                   <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">{p.dealType === "매매" ? "매도인" : "임대인"}</span>
                   <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{p.ownerName || "—"}</span>
+                  {holding && holding.others.length > 0 && (
+                    <span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-[14rem] truncate rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold flex-shrink-0">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span>
+                  )}
                   {p.ownerPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.ownerPhone)}</span>
