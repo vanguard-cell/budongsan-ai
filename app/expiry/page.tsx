@@ -2,7 +2,7 @@
 
 import { AddressWithUnit } from "../properties/helpers";
 import { stripUnit } from "@/lib/address";
-import { useRosterUnitInfo } from "@/lib/use-roster-unique";
+import { useRosterUnitInfo, useRosterUniqueNo } from "@/lib/use-roster-unique";
 import { keepUnitInRoster, keepUnitsInRoster } from "@/lib/roster-db";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -883,6 +883,8 @@ function ContractRow({
   onAddMemo: (text: string) => Promise<void>;   // 메모 한 줄 추가
 }) {
   const [memoOpen, setMemoOpen] = useState(false);
+  const rosterUniqueNo = useRosterUniqueNo();
+  const uniqueNo = c.uniqueNo || rosterUniqueNo(c.address, c.dong, c.ho);
   const cls = severityClasses(severity);
   const isClosed = c.status === "closed";
 
@@ -914,8 +916,9 @@ function ContractRow({
           <div className="mt-0.5 min-w-0 truncate text-[12px] font-semibold text-gray-900" title={c.address}>
               <AddressWithUnit text={[c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" ")} />
             </div>
-          {(c.rooms || c.direction || c.options || c.loan) && (
+          {(c.rooms || c.direction || c.options || c.loan || uniqueNo) && (
             <div className="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2 min-w-0">
+              {uniqueNo && <span className="whitespace-nowrap">고유번호 {uniqueNo}</span>}
               {c.rooms && <span className="whitespace-nowrap">방{c.rooms}개</span>}
               {c.direction && <span className="whitespace-nowrap">{c.direction}</span>}
               {c.options && <span className="text-gray-600 break-words min-w-0">🏠 옵션: {c.options}</span>}
