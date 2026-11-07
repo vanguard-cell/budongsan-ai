@@ -1,6 +1,6 @@
 "use client";
 
-import { keepUnitInRoster, keepUnitsInRoster } from "@/lib/roster-db";
+import { keepUnitInRoster, keepUnitsInRoster, complexOf, dongHoOf } from "@/lib/roster-db";
 import { stripUnit, complexShortName } from "@/lib/address";
 import { matchAllTokens, isDigitQuery } from "@/lib/search-match";
 import { useState, useEffect, useMemo } from "react";
@@ -335,7 +335,8 @@ export default function PropertiesPage() {
       const digits = (phone || "").replace(/\D/g, "");
       if (digits.length < 8 || seen.has(digits)) return;
       seen.add(digits);
-      const where = [p.dong && `${p.dong}동`, p.ho && `${p.ho}호`].filter(Boolean).join(" ");
+      const dh = dongHoOf(p.address, p.dong, p.ho);
+      const where = [complexOf(p.address, p.dong, p.ho), dh.dong && `${dh.dong}동`, dh.ho && `${dh.ho}호`].filter(Boolean).join(" ");
       list.push({ name: [name || role, where].filter(Boolean).join(" "), phone: phone.trim(), note: role });
     };
     for (const p of properties) {

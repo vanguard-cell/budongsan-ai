@@ -3,7 +3,7 @@
 import { AddressWithUnit } from "../properties/helpers";
 import { stripUnit } from "@/lib/address";
 import { useRosterUnitInfo, useRosterUniqueNo } from "@/lib/use-roster-unique";
-import { keepUnitInRoster, keepUnitsInRoster } from "@/lib/roster-db";
+import { keepUnitInRoster, keepUnitsInRoster, complexOf, dongHoOf } from "@/lib/roster-db";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -455,7 +455,8 @@ export default function ExpiryPage() {
       const digits = (phone || "").replace(/\D/g, "");
       if (digits.length < 8 || seen.has(digits)) return;
       seen.add(digits);
-      const where = [c.dong && `${c.dong}동`, c.ho && `${c.ho}호`].filter(Boolean).join(" ");
+      const dh = dongHoOf(c.address, c.dong, c.ho);
+      const where = [complexOf(c.address, c.dong, c.ho), dh.dong && `${dh.dong}동`, dh.ho && `${dh.ho}호`].filter(Boolean).join(" ");
       list.push({ name: [name || role, where].filter(Boolean).join(" "), phone: (phone || "").trim(), note: role });
     };
     for (const c of contracts) {

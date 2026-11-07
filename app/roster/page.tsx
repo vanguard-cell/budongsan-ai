@@ -391,7 +391,7 @@ export default function RosterPage() {
     const list: VcardContact[] = [];
     for (const r of rows) {
       const v = view(r);
-      const where = [r.dong && `${r.dong}동`, r.ho && `${r.ho}호`].filter(Boolean).join(" ");
+      const where = [complexName, r.dong && `${r.dong}동`, r.ho && `${r.ho}호`].filter(Boolean).join(" ");
       for (const [name, phone, role] of [[v.ownerName, v.ownerPhone, "임대인"], [v.owner2Name, v.owner2Phone, "공동명의"], [v.tenantName, v.tenantPhone, "임차인"]]) {
         const digits = (phone || "").replace(/\D/g, "");
         if (digits.length < 8 || seen.has(digits)) continue;
