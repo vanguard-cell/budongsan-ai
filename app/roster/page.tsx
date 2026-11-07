@@ -151,6 +151,13 @@ export default function RosterPage() {
     try { localStorage.setItem("rosterTableZoom", String(next)); } catch {}
   };
   const [query, setQuery] = useState("");
+  // 통합 검색에서 넘어오면 그 단지·세대를 바로 보여줌 (건의 #212)
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const c = sp.get("complex"), q = sp.get("q");
+    if (c) { setKind("all"); setComplex(c); }
+    if (q) setQuery(q);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[] } | null>(null);
   const [busy, setBusy] = useState(false);

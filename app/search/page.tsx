@@ -1,6 +1,6 @@
 "use client";
 
-/** 통합 검색 결과 — 내 매물 · 만기 관리 · 고객을 한 번에 찾아 보여줌 */
+/** 통합 검색 결과 — 내 매물 · 만기 관리 · 고객명단 · 고객을 한 번에 찾아 보여줌 (고객명단 추가: 건의 #212) */
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { subscribeProperties, type Property } from "@/lib/properties-db";
 import { subscribeContracts } from "@/lib/contracts-db";
 import { subscribeCustomers } from "@/lib/customers-db";
+import { subscribeRoster, complexKey, type RosterUnit } from "@/lib/roster-db";
 import { matchAllTokens, isDigitQuery } from "@/lib/search-match";
 import type { Contract } from "../expiry/contracts";
 import type { Customer } from "../customers/customer-types";
@@ -23,6 +24,7 @@ export default function SearchPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [roster, setRoster] = useState<RosterUnit[]>([]);
 
   useEffect(() => {
     const read = () => {
@@ -44,7 +46,8 @@ export default function SearchPage() {
     const u1 = subscribeProperties(user.agencyId, setProperties);
     const u2 = subscribeContracts(user.agencyId, setContracts);
     const u3 = subscribeCustomers(user.agencyId, setCustomers);
-    return () => { u1(); u2(); u3(); };
+    const u4 = subscribeRoster(user.agencyId, setRoster);
+    return () => { u1(); u2(); u3(); u4(); };
   }, [user]);
 
   const term = q.trim().toLowerCase();
@@ -66,15 +69,20 @@ export default function SearchPage() {
   const uRes = useMemo(() => !term ? [] : customers.filter(c =>
     hit(c.name, c.phone, c.preferredArea, c.memo)), // eslint-disable-line react-hooks/exhaustive-deps
   [customers, term]);
+  // 고객명단(매물·만기에 없는 세대) — 공동명의까지 함께 찾음
+  const rRes = useMemo(() => !term ? [] : roster.filter(u =>
+    hit(u.complex, u.ownerName, u.ownerPhone, u.owner2Name, u.owner2Phone, u.tenantName, u.tenantPhone, u.memo)
+    || matchAllTokens(term, [u.complex, u.dong, u.ho, u.ownerName, u.ownerPhone, u.owner2Name, u.owner2Phone, u.tenantName, u.tenantPhone])), // eslint-disable-line react-hooks/exhaustive-deps
+  [roster, term]);
 
   // 내 매물만 찾아졌으면 버튼 누를 필요 없이 바로 매물관리 목록으로 보여줌
-  const onlyProps = pRes.length > 0 && cRes.length === 0 && uRes.length === 0;
+  const onlyProps = pRes.length > 0 && cRes.length === 0 && uRes.length === 0 && rRes.length === 0;
   useEffect(() => {
     if (onlyProps) router.replace(`/properties?q=${encodeURIComponent(q.trim())}`);
   }, [onlyProps, q, router]);
 
   // 만기관리에만 찾아졌으면 바로 만기관리 목록으로
-  const onlyContracts = cRes.length > 0 && pRes.length === 0 && uRes.length === 0;
+  const onlyContracts = cRes.length > 0 && pRes.length === 0 && uRes.length === 0 && rRes.length === 0;
   useEffect(() => {
     if (onlyContracts) router.replace(`/expiry?q=${encodeURIComponent(q.trim())}`);
   }, [onlyContracts, q, router]);
@@ -86,7 +94,7 @@ export default function SearchPage() {
     setQ(v);
   };
 
-  const total = pRes.length + cRes.length + uRes.length;
+  const total = pRes.length + cRes.length + uRes.length + rRes.length;
 
   return (
     <div className="mx-auto max-w-6xl p-4 pb-24">
@@ -121,6 +129,13 @@ export default function SearchPage() {
                 main={withUnit(c.address, c.dong, c.ho) || "(주소 없음)"}
                 tag={c.status !== "active" ? "종료" : ""}
                 lines={[person("임대인", c.landlordName, c.landlordPhone), person("임차인", c.tenantName, c.tenantPhone), c.endDate ? `만기 ${c.endDate}` : ""]} />
+            ))}
+          </Section>
+          <Section title="고객명단" count={rRes.length}>
+            {rRes.slice(0, MAX_SHOW).map(u => (
+              <Row key={u.id} href={`/roster?complex=${encodeURIComponent(complexKey(u.complex))}&q=${encodeURIComponent(u.dong ? `${u.dong}-${u.ho}` : u.ho)}`}
+                main={withUnit(u.complex, u.dong, u.ho) || "(주소 없음)"}
+                lines={[person("소유자", u.ownerName, u.ownerPhone), person("공동명의", u.owner2Name, u.owner2Phone), person("임차인", u.tenantName, u.tenantPhone), u.leaseEndDate ? `만기 ${u.leaseEndDate}` : ""]} />
             ))}
           </Section>
           <Section title="고객" count={uRes.length}>
