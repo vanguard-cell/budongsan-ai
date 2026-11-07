@@ -35,7 +35,7 @@ export function buildVcf(contacts: VcardContact[]): string {
 }
 
 export function downloadVcf(contacts: VcardContact[], filename: string): void {
-  const blob = new Blob(["\uFEFF", buildVcf(contacts)], { type: "text/vcard;charset=utf-8" });
+  const blob = new Blob([buildVcf(contacts)], { type: "text/vcard;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

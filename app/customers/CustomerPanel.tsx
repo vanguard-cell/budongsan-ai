@@ -5,7 +5,7 @@
  * - SideDrawer 재사용 / 전화·문자 칩 + 수정 + 상태 빠른 변경
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, interestLabel, STATUS_LABELS, fmtMoveIn, followUpDDay, followUpDDayLabel, followUpSeverity, formatPhone, mergedCustomerTimeline, eventVisual, effectiveStage, STAGE_FLOW, STAGE_META } from "./customer-types";
 import type { Schedule } from "@/lib/schedules-db";
 import SideDrawer from "@/app/components/SideDrawer";
@@ -64,10 +64,12 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
   const dd = c.nextFollowUp ? followUpDDay(c.nextFollowUp) : null;
   const sev = dd !== null ? followUpSeverity(dd) : "none";
   const timeline = mergedCustomerTimeline(c);
+  const quickLock = useRef(false);
   const quickLog = async (ev: Omit<CustomerEvent, "at" | "by">) => {
-    if (saving) return;
+    if (saving || quickLock.current) return;
+    quickLock.current = true;
     setSaving(true);
-    try { await onAddEvent(c, ev); } finally { setSaving(false); }
+    try { await onAddEvent(c, ev); } finally { setSaving(false); setTimeout(() => { quickLock.current = false; }, 800); }
   };
   const addNote = async () => {
     if (!note.trim()) return;
