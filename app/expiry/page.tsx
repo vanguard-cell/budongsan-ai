@@ -1251,6 +1251,13 @@ function EditModal({
   };
 
   // 고객명단(엑셀)에 같은 단지·동·호수가 있으면 비어 있는 타입·전용면적·향·방수를 자동으로 채움 (같은 호실은 한 번만)
+  // 고유번호도 칸이 비어 있으면 고객명단에서 찾아 자동으로 채움
+  const rosterUniqueNoForm = useRosterUniqueNo();
+  useEffect(() => {
+    if (form.uniqueNo) return;
+    const found = rosterUniqueNoForm(form.address, form.dong, form.ho);
+    if (found) setForm(p => (p.uniqueNo ? p : { ...p, uniqueNo: found }));
+  }, [form.address, form.dong, form.ho, form.uniqueNo, rosterUniqueNoForm]);
   const rosterInfo = useRosterUnitInfo();
   const filledKey = useRef("");
   useEffect(() => {
