@@ -1465,6 +1465,15 @@ function EditModal({
           </Field>
         </div>
 
+        <Field label="고유번호 (선택)">
+          <input
+            value={form.uniqueNo || ""}
+            onChange={e => setField("uniqueNo", e.target.value)}
+            placeholder="예: 1234-5678-901234"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </Field>
+
         {/* 방향 / 방수 — 내 매물 등록과 동일 */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="방향">
