@@ -960,9 +960,6 @@ function ContractRow({
               onSms={() => onSms("landlord")}
               disabled={isClosed}
             />
-            {holding && holding.others.length > 0 && (
-              <span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-[14rem] truncate rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold flex-shrink-0">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span>
-            )}
             {(c.extraContacts ?? []).filter(x => x.phone).map((x, i) => (
               <ContactLine
                 key={i}
@@ -980,6 +977,10 @@ function ContractRow({
               disabled={isClosed}
             />
           </div>
+
+          {holding && holding.others.length > 0 && (
+            <div className="mt-2"><span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-full truncate rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span></div>
+          )}
 
           {c.memo && (
             <div className="mt-2 text-[11px] text-gray-500 bg-gray-50 rounded px-2 py-1 border border-gray-100">

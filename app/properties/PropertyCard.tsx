@@ -193,9 +193,6 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                 <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
                   <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">{p.dealType === "매매" ? "매도인" : "임대인"}</span>
                   <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{p.ownerName || "—"}</span>
-                  {holding && holding.others.length > 0 && (
-                    <span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-[14rem] truncate rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold flex-shrink-0">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span>
-                  )}
                   {p.ownerPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.ownerPhone)}</span>
@@ -289,6 +286,11 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                 <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">{o}</span>
               ))}
             </div>
+          )}
+
+          {/* 같은 전화번호 주인의 다른 보유 호실 — 메모 바로 위 (건의 #212) */}
+          {holding && holding.others.length > 0 && (
+            <div className="mt-2"><span title={holding.label} className="inline-flex items-center whitespace-nowrap max-w-full truncate rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 text-[11px] font-semibold">보유 {holding.others.slice(0, 3).join(", ")}{holding.others.length > 3 ? ` 외 ${holding.others.length - 3}건` : ""}</span></div>
           )}
 
           {/* 메모 — 카드에서 바로 추가 (건의 #76) */}
