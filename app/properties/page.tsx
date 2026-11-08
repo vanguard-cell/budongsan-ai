@@ -125,7 +125,7 @@ export default function PropertiesPage() {
   const [selectedComplex, setSelectedComplex] = useState<string>("");
   const [selectedDong, setSelectedDong] = useState<string>("");
   const [selectedHo, setSelectedHo] = useState<string>("");
-  const [selectedArea, setSelectedArea] = useState<string>(""); // 건의 #213: 단지 안 면적별 보기
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([]); // 건의 #213: 단지 안 면적별 보기
   // 페이지네이션 — 20건/페이지
   const PAGE_SIZE = 20;
   const [page, setPage] = useState(1);
@@ -428,7 +428,7 @@ export default function PropertiesPage() {
       .filter(p => !selectedComplex || complexKey(p) === selectedComplex)
       .filter(p => !selectedDong || p.dong === selectedDong)
       .filter(p => !selectedHo.trim() || (p.ho || "").includes(selectedHo.trim()))
-      .filter(p => !selectedArea || areaLabel(p) === selectedArea);
+      .filter(p => selectedAreas.length === 0 || selectedAreas.includes(areaLabel(p)));
 
     // 날짜 정렬용 — 빈 값은 맨 뒤로
     const dateKey = (v: string) => v && v.length >= 10 ? v.slice(0, 10) : "9999-99-99";
@@ -479,7 +479,7 @@ export default function PropertiesPage() {
     });
     // complexKey·matchView 는 viewMode 등 이미 의존성에 있는 값으로만 결과가 바뀌는 함수라 뺌
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, roomFilter, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo, colSearch, onlyPid, areaFilter, floorFilter, selectedArea]);
+  }, [properties, showClosed, filterType, filterPropType, query, viewMode, sortBy, priceRange, roomFilter, pinnedIds, occFilter, selectedComplex, selectedDong, selectedHo, colSearch, onlyPid, areaFilter, floorFilter, selectedAreas]);
 
   const counts = useMemo(() => {
     const active = properties.filter(p => p.status === "active");
@@ -942,14 +942,14 @@ export default function PropertiesPage() {
                 className="flex items-center gap-2 text-[17px] font-bold text-[var(--brand-blue)] dark:text-blue-400 hover:underline whitespace-nowrap">
                 <span className="material-symbols-outlined text-[24px] leading-none">{showComplexSearch ? "expand_less" : "manage_search"}</span>
                 단지·동·호로 찾기
-                {(selectedComplex || selectedDong || selectedHo || selectedArea) && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-[var(--brand-blue)]" />}
+                {(selectedComplex || selectedDong || selectedHo || selectedAreas.length > 0) && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-[var(--brand-blue)]" />}
               </button>
               {showComplexSearch && (
               <div className="border border-blue-100 rounded-xl bg-blue-50/40 p-3 mt-1.5">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {/* 단지 드롭다운 */}
                 <select value={selectedComplex}
-                  onChange={e => { setSelectedComplex(e.target.value); setSelectedDong(""); setSelectedHo(""); setSelectedArea(""); if (e.target.value) setSortBy("dongho"); }}
+                  onChange={e => { setSelectedComplex(e.target.value); setSelectedDong(""); setSelectedHo(""); setSelectedAreas([]); if (e.target.value) setSortBy("dongho"); }}
                   className="col-span-2 border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
                   <option value="">단지 전체</option>
                   {complexList.map(([c, n]) => (
@@ -958,7 +958,7 @@ export default function PropertiesPage() {
                 </select>
                 {/* 동 드롭다운 */}
                 <select value={selectedDong} disabled={!selectedComplex}
-                  onChange={e => { setSelectedDong(e.target.value); setSelectedArea(""); }}
+                  onChange={e => { setSelectedDong(e.target.value); setSelectedAreas([]); }}
                   className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-gray-100 disabled:text-gray-400">
                   <option value="">동 전체</option>
                   {dongList.map(([d, n]) => (
@@ -970,18 +970,24 @@ export default function PropertiesPage() {
                   onChange={e => setSelectedHo(e.target.value)}
                   placeholder="호수"
                   className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
-                {/* 면적 드롭다운 (건의 #213) */}
-                <select value={selectedArea} disabled={!selectedComplex}
-                  onChange={e => setSelectedArea(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-gray-100 disabled:text-gray-400">
-                  <option value="">면적 전체</option>
-                  {areaList.map(([a, n]) => (
-                    <option key={a} value={a}>{a}㎡ ({n})</option>
-                  ))}
-                </select>
               </div>
-              {(selectedComplex || selectedDong || selectedHo || selectedArea) && (
-                <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); setSelectedArea(""); }}
+              {selectedComplex && areaList.length > 0 && (
+                <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                  <span className="text-[12px] font-semibold text-gray-600 shrink-0">면적</span>
+                  {areaList.map(([a, n]) => {
+                    const on = selectedAreas.includes(a);
+                    return (
+                      <button key={a} type="button"
+                        onClick={() => setSelectedAreas(on ? selectedAreas.filter(x => x !== a) : [...selectedAreas, a])}
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${on ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-gray-600 border-gray-200"}`}>
+                        {a}㎡ ({n})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {(selectedComplex || selectedDong || selectedHo || selectedAreas.length > 0) && (
+                <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); setSelectedAreas([]); }}
                   className="mt-1.5 text-[11px] text-gray-500 hover:text-red-600">✕ 조회 초기화</button>
               )}
               </div>
