@@ -528,7 +528,8 @@ export default function PropertiesPage() {
     if (!selectedComplex) return [];
     const base = properties.filter(p => p.status === "active").filter(matchView).filter(p => complexKey(p) === selectedComplex)
       .filter(p => filterPropType === "all" || p.propertyType === filterPropType)
-      .filter(p => !selectedDong || p.dong === selectedDong);
+      .filter(p => !selectedDong || p.dong === selectedDong)
+      .filter(p => p.propertyType !== "상가" && p.propertyType !== "사무실"); // 상가·사무실은 면적이 제각각이라 버튼에서 제외
     const map = new Map<string, number>();
     for (const p of base) {
       const l = areaLabel(p);
