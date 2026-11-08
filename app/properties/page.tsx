@@ -1006,6 +1006,9 @@ export default function PropertiesPage() {
                   })}
                 </div>
               )}
+              {selectedComplex && areaList.length > 0 && dirList.length > 0 && (
+                <hr className="mt-2 border-t border-blue-200" />
+              )}
               {selectedComplex && dirList.length > 0 && (
                 <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                   <span className="text-[12px] font-semibold text-gray-600 shrink-0">향</span>
