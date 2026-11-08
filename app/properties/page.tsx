@@ -965,6 +965,11 @@ export default function PropertiesPage() {
                     <option key={d} value={d}>{d}동 ({n})</option>
                   ))}
                 </select>
+                {/* 호 입력 */}
+                <input type="text" value={selectedHo}
+                  onChange={e => setSelectedHo(e.target.value)}
+                  placeholder="호수"
+                  className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
                 {/* 면적 드롭다운 (건의 #213) */}
                 <select value={selectedArea} disabled={!selectedComplex}
                   onChange={e => setSelectedArea(e.target.value)}
@@ -974,11 +979,6 @@ export default function PropertiesPage() {
                     <option key={a} value={a}>{a}㎡ ({n})</option>
                   ))}
                 </select>
-                {/* 호 입력 */}
-                <input type="text" value={selectedHo}
-                  onChange={e => setSelectedHo(e.target.value)}
-                  placeholder="호수"
-                  className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
               </div>
               {(selectedComplex || selectedDong || selectedHo || selectedArea) && (
                 <button onClick={() => { setSelectedComplex(""); setSelectedDong(""); setSelectedHo(""); setSelectedArea(""); }}
