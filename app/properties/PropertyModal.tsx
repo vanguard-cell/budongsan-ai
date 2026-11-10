@@ -42,12 +42,15 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
       area: p.area || info.area,
       direction: p.direction || info.direction,
       rooms: p.rooms || info.rooms,
-      ownerName: p.ownerName || info.ownerName,
-      ownerPhone: p.ownerPhone || info.ownerPhone,
-      tenantName: p.tenantName || info.tenantName,
-      tenantPhone: p.tenantPhone || info.tenantPhone,
+      // 임대인·임차인은 새 매물일 때만 채움 — 기존 매물에서 일부러 지운 값이 되살아나지 않게 (건의 #221)
+      ...(!property.address ? {
+        ownerName: p.ownerName || info.ownerName,
+        ownerPhone: p.ownerPhone || info.ownerPhone,
+        tenantName: p.tenantName || info.tenantName,
+        tenantPhone: p.tenantPhone || info.tenantPhone,
+      } : {}),
     }));
-  }, [form.address, form.dong, form.ho, rosterInfo]);
+  }, [property.address, form.address, form.dong, form.ho, rosterInfo]);
   const isNew = !property.address;
   // 단지 선택 후 기본 주소 (동/호수 자동합산용)
   const [baseAddress, setBaseAddress] = useState(() => {
