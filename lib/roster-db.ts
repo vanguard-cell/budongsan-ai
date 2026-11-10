@@ -177,9 +177,9 @@ export async function keepUnitInRoster(agencyId: string, c: KeepSrc): Promise<vo
 
 /**
  * 만기·매물 수정 화면에서 임대인·임차인을 고쳐 저장하면 고객명단 같은 세대에도 반영한다 (건의 #221).
- * 입력된 값만 덮어쓰고, 비어 있는 칸은 명단을 건드리지 않는다. 명단에 세대가 없으면 새로 만든다.
+ * 입력된 값만 덮어쓰고, 비어 있는 칸은 명단을 건드리지 않는다(clearEmpty면 비운 칸은 명단도 비움). 명단에 세대가 없으면 새로 만든다.
  */
-export async function syncPeopleToRoster(agencyId: string, c: KeepSrc): Promise<void> {
+export async function syncPeopleToRoster(agencyId: string, c: KeepSrc, clearEmpty = false): Promise<void> {
   const complex = complexOf(c.address, c.dong, c.ho);
   const dh = dongHoOf(c.address, c.dong, c.ho);
   if (!complex || !dh.ho) return;
@@ -189,7 +189,15 @@ export async function syncPeopleToRoster(agencyId: string, c: KeepSrc): Promise<
     tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "",
   };
   const data: Record<string, string> = {};
-  for (const [k, v] of Object.entries(vals)) if (v.trim()) data[k] = v;
+  // clearEmpty(만기 관리): 수정 화면에서 일부러 비운 칸은 명단에서도 비운다 (건의 #221)
+  const explicit: Record<string, string | undefined> = {
+    ownerName: c.landlordName ?? c.ownerName, ownerPhone: c.landlordPhone ?? c.ownerPhone,
+    tenantName: c.tenantName, tenantPhone: c.tenantPhone,
+  };
+  for (const [k, v] of Object.entries(vals)) {
+    if (v.trim()) data[k] = v;
+    else if (clearEmpty && explicit[k] === "") data[k] = "";
+  }
   if (!Object.keys(data).length) return;
   const snap = await getDocs(col(agencyId));
   for (const d of snap.docs) {
