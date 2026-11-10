@@ -142,15 +142,13 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
         </>
 
         <div className="flex-1 min-w-0">
-          {/* 1째줄: 매물종류 · 거래종류 · 전용·평수 · 금액 */}
+          {/* 1째줄: 바뀌지 않는 정보(매물종류 · 전용·평수 · 타입 · 방향 · 방) 한곳에 (건의 #222) */}
           <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
             {p.propertyType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium">{p.propertyType}</span>}
-            <span className={`flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded font-medium ${DEAL_BADGE[p.dealType] || "bg-gray-100 text-gray-600"}`}>{p.dealType}</span>
             {area && <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">{area}</span>}
             {p.unitType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span>}
-            <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
-            {isClosed && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400">거래완료</span>}
-            {hasContractDate && !isClosed && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold">계약진행중</span>}
+            {p.direction && <span className="flex-shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
+            {p.rooms && <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">방{p.rooms}개</span>}
             <button onClick={onPin}
               className={`ml-auto flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full border transition-colors text-xs ${
                 isPinned ? "bg-amber-400 border-amber-400 text-white" : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400"
@@ -165,19 +163,27 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             </span>
           </div>
 
-          {/* 3째줄: 방향 · 타입 · 방 개수 · 입주상태 · 임차인 보증금/월세 — 한 줄에 */}
-          {(p.direction || p.rooms || (p.occupancy && p.occupancy !== "tenant" && p.occupancy !== "owner" && p.occupancy !== "vacant") || p.tenantDeposit || p.tenantMonthly) && (
-            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px]">
-              {p.direction && <span className="whitespace-nowrap font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
-              {p.rooms && <span className="whitespace-nowrap text-gray-600 dark:text-gray-400">방{p.rooms}개</span>}
-              {p.occupancy && p.occupancy !== "tenant" && p.occupancy !== "owner" && p.occupancy !== "vacant" && <span className="whitespace-nowrap text-gray-600 dark:text-gray-400">{OCC_LABEL[p.occupancy]}</span>}
-              {(p.tenantDeposit || p.tenantMonthly) && (
-                <span className="whitespace-nowrap text-gray-600 dark:text-gray-400 tabular-nums">
-                  <span className="font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
-                </span>
-              )}
+          {/* 옵션 */}
+          {p.options && (
+            <div className="mt-1 flex flex-wrap items-center gap-1">
+              <span className="text-[11px] text-gray-400 dark:text-gray-500 mr-0.5">옵션</span>
+              {p.options.split(",").map(s => s.trim()).filter(Boolean).map((o, i) => (
+                <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">{o}</span>
+              ))}
             </div>
           )}
+
+          {/* 3째줄: 자주 바뀌는 정보(거래종류 · 금액 · 상태 · 입주상태 · 임차인 보증금/월세) */}
+          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
+            <span className={`flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded font-medium ${DEAL_BADGE[p.dealType] || "bg-gray-100 text-gray-600"}`}>{p.dealType}</span>
+            <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
+            {isClosed && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400">거래완료</span>}
+            {hasContractDate && !isClosed && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold">계약진행중</span>}
+            {p.occupancy && p.occupancy !== "tenant" && p.occupancy !== "owner" && p.occupancy !== "vacant" && <span className="whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">{OCC_LABEL[p.occupancy]}</span>}
+            {(p.tenantDeposit || p.tenantMonthly) && (
+              <span className="whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400 tabular-nums font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
+            )}
+          </div>
 
           {/* 등록일 + 등록 후 경과일 (큰 등록일 배지와 중복이라 화면에서 숨김 — 건의 #168) */}
           {false && !sevCls && regInfo && (
@@ -276,16 +282,6 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           {/* 대출 */}
           {p.loan && (
             <div className="mt-1 text-[11px] text-gray-600 break-words min-w-0">🏦 대출: {p.loan}</div>
-          )}
-
-          {/* 옵션 */}
-          {p.options && (
-            <div className="mt-1 flex flex-wrap items-center gap-1">
-              <span className="text-[11px] text-gray-400 dark:text-gray-500 mr-0.5">옵션</span>
-              {p.options.split(",").map(s => s.trim()).filter(Boolean).map((o, i) => (
-                <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">{o}</span>
-              ))}
-            </div>
           )}
 
           {/* 같은 전화번호 주인의 다른 보유 호실 — 메모 바로 위 (건의 #212) */}
