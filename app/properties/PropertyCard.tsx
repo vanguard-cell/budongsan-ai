@@ -142,25 +142,25 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
         </>
 
         <div className="flex-1 min-w-0">
-          {/* 1째줄: 바뀌지 않는 정보(매물종류 · 전용·평수 · 타입 · 방향 · 방) 한곳에 (건의 #222) */}
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
-            {p.propertyType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium">{p.propertyType}</span>}
-            {area && <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">{area}</span>}
-            {p.unitType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span>}
-            {p.direction && <span className="flex-shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
-            {p.rooms && <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">방{p.rooms}개</span>}
+          {/* 1째줄: 주소(단지·동호) + 즐겨찾기 — 주소가 길면 끝만 ... (건의 #222) */}
+          <div className="flex items-center gap-x-2 min-w-0">
+            <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
+              <AddressWithUnit text={addressStr(p)} />
+            </span>
             <button onClick={onPin}
-              className={`ml-auto flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full border transition-colors text-xs ${
+              className={`ml-auto flex-shrink-0  w-6 h-6 flex items-center justify-center rounded-full border transition-colors text-xs ${
                 isPinned ? "bg-amber-400 border-amber-400 text-white" : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-400"
               }`}
               title={isPinned ? "즐겨찾기 해제" : "즐겨찾기 고정"}>⭐</button>
           </div>
 
-          {/* 2째줄: 주소(단지·동호) — 주소가 길면 주소 끝만 ...으로 */}
-          <div className="mt-0.5 flex items-baseline gap-x-2 min-w-0">
-            <span className="min-w-0 truncate text-[12px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
-              <AddressWithUnit text={addressStr(p)} />
-            </span>
+          {/* 2째줄: 바뀌지 않는 정보(매물종류 · 전용·평수 · 타입 · 방향 · 방) 한곳에 (건의 #222) */}
+          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
+            {p.propertyType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium">{p.propertyType}</span>}
+            {area && <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">{area}</span>}
+            {p.unitType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 font-semibold text-emerald-700 dark:text-emerald-400">{p.unitType}타입</span>}
+            {p.direction && <span className="flex-shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-700 dark:text-gray-300">{p.direction}</span>}
+            {p.rooms && <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">방{p.rooms}개</span>}
           </div>
 
           {/* 옵션 */}
