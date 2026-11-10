@@ -1,6 +1,6 @@
 "use client";
 
-import { keepUnitInRoster, keepUnitsInRoster, complexOf, dongHoOf } from "@/lib/roster-db";
+import { keepUnitInRoster, keepUnitsInRoster, syncPeopleToRoster, complexOf, dongHoOf } from "@/lib/roster-db";
 import { stripUnit, complexShortName } from "@/lib/address";
 import { matchAllTokens, isDigitQuery } from "@/lib/search-match";
 import { useState, useEffect, useMemo } from "react";
@@ -212,6 +212,7 @@ export default function PropertiesPage() {
     }
     const isEdit = properties.some(x => x.id === p.id);
     await saveProperty(user.agencyId, p);
+    try { await syncPeopleToRoster(user.agencyId, p); } catch (e) { console.warn("[properties] 명단 반영 실패:", e); }
     recordFeatureUse(user.uid, isEdit ? "prop_edit" : "prop_add");
     return true;
   };

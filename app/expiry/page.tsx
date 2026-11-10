@@ -3,7 +3,7 @@
 import { AddressWithUnit } from "../properties/helpers";
 import { stripUnit } from "@/lib/address";
 import { useRosterUnitInfo, useRosterUniqueNo } from "@/lib/use-roster-unique";
-import { keepUnitInRoster, keepUnitsInRoster, complexOf, dongHoOf } from "@/lib/roster-db";
+import { keepUnitInRoster, keepUnitsInRoster, syncPeopleToRoster, complexOf, dongHoOf } from "@/lib/roster-db";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, recordFeatureUse } from "@/lib/auth-context";
@@ -327,6 +327,7 @@ export default function ExpiryPage() {
       }
     }
     await fsSaveContract(user.agencyId, c);
+    try { await syncPeopleToRoster(user.agencyId, c); } catch (e) { console.warn("[expiry] 명단 반영 실패:", e); }
     // 실시간 구독이 자동 반영하지만, 즉시 반응 위해 낙관적 업데이트
     setContracts(prev => {
       const idx = prev.findIndex(x => x.id === c.id);

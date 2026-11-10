@@ -174,3 +174,30 @@ export async function keepUnitsInRoster(agencyId: string, list: KeepSrc[]): Prom
 export async function keepUnitInRoster(agencyId: string, c: KeepSrc): Promise<void> {
   await keepUnitsInRoster(agencyId, [c]);
 }
+
+/**
+ * 만기·매물 수정 화면에서 임대인·임차인을 고쳐 저장하면 고객명단 같은 세대에도 반영한다 (건의 #221).
+ * 입력된 값만 덮어쓰고, 비어 있는 칸은 명단을 건드리지 않는다. 명단에 세대가 없으면 새로 만든다.
+ */
+export async function syncPeopleToRoster(agencyId: string, c: KeepSrc): Promise<void> {
+  const complex = complexOf(c.address, c.dong, c.ho);
+  const dh = dongHoOf(c.address, c.dong, c.ho);
+  if (!complex || !dh.ho) return;
+  const key = unitKey(complex, dh.dong, dh.ho);
+  const vals: Record<string, string> = {
+    ownerName: c.landlordName || c.ownerName || "", ownerPhone: c.landlordPhone || c.ownerPhone || "",
+    tenantName: c.tenantName || "", tenantPhone: c.tenantPhone || "",
+  };
+  const data: Record<string, string> = {};
+  for (const [k, v] of Object.entries(vals)) if (v.trim()) data[k] = v;
+  if (!Object.keys(data).length) return;
+  const snap = await getDocs(col(agencyId));
+  for (const d of snap.docs) {
+    const v = d.data() as Partial<RosterUnit>;
+    if (unitKey(String(v.complex || ""), String(v.dong || ""), String(v.ho || "")) === key) {
+      await setDoc(doc(col(agencyId), d.id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
+      return;
+    }
+  }
+  await keepUnitsInRoster(agencyId, [c]);
+}
