@@ -954,8 +954,7 @@ function ContractRow({
           <div className="text-xs text-gray-600 mt-1">
             <span className="whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 mr-1.5">{c.type}</span>
             {isClosed && <span className="whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600 mr-1.5">종료</span>}
-            만기 <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{c.endDate || "—"}</span>
-            <span className="mx-1.5 text-gray-300">·</span>
+            {/* 만기일은 옆에 크게 표시되므로 카드 본문에서는 숨김 (건의 #222) */}
             보증금 <span className="font-medium text-gray-800">{c.deposit ? `${fmtNum(c.deposit)}만` : "—"}</span>
             {(c.type === "월세" || (c.type === "매매" && c.monthly)) && (
               <>
