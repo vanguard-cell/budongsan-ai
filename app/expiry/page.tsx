@@ -1300,10 +1300,13 @@ function EditModal({
       area: p.area || info.area,
       direction: p.direction || info.direction,
       rooms: p.rooms || info.rooms,
-      landlordName: p.landlordName || info.ownerName,
-      landlordPhone: p.landlordPhone || info.ownerPhone,
-      tenantName: p.tenantName || info.tenantName,
-      tenantPhone: p.tenantPhone || info.tenantPhone,
+      // 임대인·임차인은 새 계약일 때만 채움 — 기존 계약에서 일부러 지운 값이 되살아나지 않게 (건의 #221)
+      ...(isNew ? {
+        landlordName: p.landlordName || info.ownerName,
+        landlordPhone: p.landlordPhone || info.ownerPhone,
+        tenantName: p.tenantName || info.tenantName,
+        tenantPhone: p.tenantPhone || info.tenantPhone,
+      } : {}),
     }));
   }, [form.address, form.dong, form.ho, rosterInfo]);
 
