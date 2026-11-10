@@ -12,9 +12,9 @@ const digitsOf = (s?: string) => (s || "").replace(/\D/g, "");
 
 /** (전화번호) → { count: 보유 호실 수, label: 마우스 올리면 보이는 목록 }. 1건이면 count 1. */
 export function useHoldings(
-  properties: (UnitLike & { ownerPhone?: string })[],
+  properties: (UnitLike & { ownerPhone?: string; extraContacts?: { phone?: string }[] })[],
   contracts: (UnitLike & { landlordPhone?: string })[],
-): (phone?: string, address?: string, dong?: string, ho?: string) => { count: number; label: string; others: string[]; lines: string[] } {
+): (phone?: string, address?: string, dong?: string, ho?: string, phone2?: string) => { count: number; label: string; others: string[]; lines: string[] } {
   const { user } = useAuth();
   const [roster, setRoster] = useState<RosterUnit[]>([]);
   useEffect(() => {
@@ -35,7 +35,10 @@ export function useHoldings(
       if (!m.has(d)) m.set(d, new Map());
       m.get(d)!.set(key, info);
     };
-    for (const p of properties) if (p.status !== "closed") add(p.ownerPhone, p.address || "", p.dong, p.ho);
+    for (const p of properties) if (p.status !== "closed") {
+      add(p.ownerPhone, p.address || "", p.dong, p.ho);
+      for (const x of (p.extraContacts || []).slice(0, 2)) add(x?.phone, p.address || "", p.dong, p.ho); // 공동명의 등 추가 전화 (건의 #214)
+    }
     for (const c of contracts) if (c.status !== "closed") add(c.landlordPhone, c.address || "", c.dong, c.ho);
     for (const u of roster) {
       add(u.ownerPhone, u.complex, u.dong, u.ho);
@@ -44,8 +47,10 @@ export function useHoldings(
     return m;
   }, [properties, contracts, roster]);
 
-  return (phone, address, dong, ho) => {
-    const units = map.get(digitsOf(phone));
+  return (phone, address, dong, ho, phone2) => {
+    const m1 = map.get(digitsOf(phone));
+    const m2 = phone2 && digitsOf(phone2) !== digitsOf(phone) ? map.get(digitsOf(phone2)) : undefined;
+    const units = m1 && m2 ? new Map([...m1, ...m2]) : (m1 || m2);
     if (!units) return { count: 0, label: "", others: [], lines: [] };
     const dh = dongHoOf(address || "", dong, ho);
     const complex = complexOf(address || "", dong, ho);

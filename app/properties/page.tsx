@@ -383,7 +383,7 @@ export default function PropertiesPage() {
         const phoneHit = (ph?: string) => !!ph && (ph.includes(q) || (isDigitQuery(q) && qd.length >= 3 && ph.replace(/\D/g, "").includes(qd)));
         return (p.address || "").toLowerCase().includes(q)
             || (p.ownerName || "").toLowerCase().includes(q)
-            || phoneHit(p.ownerPhone) || phoneHit(p.tenantPhone)
+            || phoneHit(p.ownerPhone) || phoneHit(p.tenantPhone) || (p.extraContacts || []).some(x => phoneHit(x?.phone))
             || (p.dong || "").includes(q)
             || (p.ho || "").includes(q)
             || (p.tenantName || "").toLowerCase().includes(q)
@@ -1275,7 +1275,7 @@ export default function PropertiesPage() {
                     <PropertyCard
                       key={p.id}
                       property={p}
-                      holding={holdingOf(p.ownerPhone, p.address, p.dong, p.ho)}
+                      holding={holdingOf(p.ownerPhone, p.address, p.dong, p.ho, (p.extraContacts || [])[0]?.phone)}
                       complexInfo={complexInfoMap[complexInfoKey(p.propertyType || "", baseAddr(p))]}
                       schedules={schedules.filter(s => s.propertyId === p.id)}
                       isPinned={pinnedIds.has(p.id)}
