@@ -74,6 +74,19 @@ function m2ToPyeong(m2: string): string {
 type FilterKey = "all" | Severity;
 
 /** 천단위 콤마 — "5000" → "5,000" */
+// 대출 입력: 숫자는 3자리마다 쉼표 (글자가 섞여 있어도 숫자 덩어리만 처리)
+function fmtLoanInput(s: string): string {
+  return s.replace(/\d[\d,]*/g, m => {
+    const d = m.replace(/,/g, "");
+    return d.length >= 4 ? Number(d).toLocaleString() : d;
+  });
+}
+// 대출 표시: 숫자만 적혀 있으면 만원 단위로 표시
+function fmtLoanView(s: string): string {
+  const v = fmtLoanInput(s.trim());
+  return /^[\d,]+$/.test(v) ? `${v}만원` : v;
+}
+
 function fmtNum(s: string): string {
   if (!s) return s;
   const n = parseInt(s.replace(/[^\d]/g, ""), 10);
@@ -935,7 +948,7 @@ function ContractRow({
               {c.rooms && <span className="whitespace-nowrap">방{c.rooms}개</span>}
               {c.direction && <span className="whitespace-nowrap">{c.direction}</span>}
               {c.options && <span className="text-gray-600 break-words min-w-0">🏠 옵션: {c.options}</span>}
-              {c.loan && <span className="text-gray-600 break-words min-w-0">🏦 대출: {c.loan}</span>}
+              {c.loan && <span className="text-gray-600 break-words min-w-0">🏦 대출: {fmtLoanView(c.loan)}</span>}
             </div>
           )}
           <div className="text-xs text-gray-600 mt-1">
@@ -1592,8 +1605,8 @@ function EditModal({
         <Field label="임대인 대출 (선택)">
           <input
             value={form.loan || ""}
-            onChange={e => setField("loan", e.target.value)}
-            placeholder="예: 국민은행 2억 / 대출 없음"
+            onChange={e => setField("loan", fmtLoanInput(e.target.value))}
+            placeholder="예: 20,000 (만원 단위) / 국민은행 2억 / 대출 없음"
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </Field>
