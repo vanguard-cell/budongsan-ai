@@ -204,14 +204,14 @@ export default function RosterPage() {
     };
     return [...m.entries()]
       .map(([key, v]) => ({ key, name: v.name, count: v.units.size, kind: kindOf(v.name, v.types) }))
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) => a.name.localeCompare(b.name, "ko"));   // ㄱㄴㄷ 순 (건의 #215)
   }, [properties, contracts, roster]);
 
   // 고른 단지가 없으면 건의 #143 단지(12블럭 오피스텔), 그것도 없으면 세대가 가장 많은 단지
   const shownComplexes = useMemo(() => kind === "all" ? complexes : complexes.filter(c => c.kind === kind), [complexes, kind]);
   const complex = useMemo(() => {
     if (complexPref && shownComplexes.some(c => c.key === complexPref)) return complexPref;
-    return (shownComplexes.find(c => c.key.includes("그랑파사쥬12블럭(오피스텔)")) || shownComplexes[0])?.key || "";
+    return (shownComplexes.find(c => c.key.includes("그랑파사쥬12블럭(오피스텔)")) || [...shownComplexes].sort((x, y) => y.count - x.count)[0])?.key || "";
   }, [shownComplexes, complexPref]);
 
   const complexName = shownComplexes.find(c => c.key === complex)?.name || "";
