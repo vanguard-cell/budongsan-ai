@@ -162,6 +162,8 @@ export default function RosterPage() {
   const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [selMode, setSelMode] = useState(false);   // 여러 줄 골라 지우기 (건의 #216)
+  const [picked, setPicked] = useState<Set<string>>(new Set());
   const [smsEdit, setSmsEdit] = useState(false);   // 문자 문구 고치기 창 (건의 #196)
   const [, setSmsVer] = useState(0);              // 문구 저장 후 다시 그리기용
   const fileRef = useRef<HTMLInputElement>(null);
@@ -375,6 +377,15 @@ export default function RosterPage() {
     catch (e) { console.error("[roster] 삭제 실패:", e); setMsg("❌ 지우지 못했어요."); }
   };
 
+  const togglePick = (id: string) => setPicked(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const exitSel = () => { setSelMode(false); setPicked(new Set()); };
+  const removePicked = async () => {
+    if (!user || !picked.size) return;
+    if (!confirm(`고른 ${picked.size}줄을 고객명단에서 지울까요?`)) return;
+    try { for (const id of picked) await deleteRosterUnit(user.agencyId, id); setMsg(`✅ ${picked.size}줄을 지웠어요.`); exitSel(); }
+    catch (e) { console.error("[roster] 여러 줄 삭제 실패:", e); setMsg("❌ 지우지 못한 줄이 있어요. 다시 해 주세요."); }
+  };
+
   /* 지금 보이는 표를 엑셀로 받기 */
   const exportExcel = () => {
     const data = rows.map(r => {
@@ -428,6 +439,19 @@ export default function RosterPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
+          {isOwner && (selMode ? (
+            <>
+              <button onClick={removePicked} disabled={!picked.size}
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 whitespace-nowrap disabled:opacity-40">{picked.size}줄 지우기</button>
+              <button onClick={exitSel}
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 whitespace-nowrap">취소</button>
+            </>
+          ) : (
+            <button onClick={() => setSelMode(true)}
+              className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+              <span className="material-symbols-outlined text-base">delete</span>여러 개 지우기
+            </button>
+          ))}
           <button onClick={exportExcel} disabled={!rows.length}
             className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center gap-1.5 disabled:opacity-40">
             <span className="material-symbols-outlined text-base">download</span>엑셀로 받기
@@ -615,7 +639,10 @@ export default function RosterPage() {
                       {!r.prop && !r.contract && (
                         <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-[var(--tint-gray-bg)] text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-slate-600 whitespace-nowrap">명단</span>
                       )}
-                      {u && isOwner && (
+                      {u && isOwner && selMode && (
+                        <input type="checkbox" checked={picked.has(u.id)} onChange={() => togglePick(u.id)} aria-label="지울 줄 고르기" className="w-4 h-4 accent-red-500" />
+                      )}
+                      {u && isOwner && !selMode && (
                         <button onClick={() => removeUnit(u)} title="고객명단에서 지우기" aria-label="고객명단에서 지우기"
                           className="text-gray-300 hover:text-red-500 dark:text-gray-600 text-xs px-0.5">✕</button>
                       )}
