@@ -929,30 +929,31 @@ function ContractRow({
 
         {/* 메인 정보 */}
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
+          {/* 1째줄: 주소(단지·동호) — 길면 끝만 ... (건의 #222) */}
+          <div className="min-w-0 truncate text-[12px] font-semibold text-gray-900" title={c.address}>
+            <AddressWithUnit text={[c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" ")} />
+          </div>
+          {/* 2째줄: 안 바뀌는 정보(매물종류 · 전용·평수 · 타입 · 방향 · 방) */}
+          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
             {c.propertyType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-medium">{c.propertyType}</span>}
-            <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{c.type}</span>
             {c.area && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600">{(() => { const p = m2ToPyeong(c.area!); return p ? `전용 ${c.area}㎡ · ${p}평` : `전용 ${c.area}㎡`; })()}</span>
             )}
             {c.unitType && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 font-semibold text-emerald-700">{c.unitType}타입</span>}
-            {isClosed && (
-              <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">종료</span>
-            )}
+            {c.direction && <span className="flex-shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-700">{c.direction}</span>}
+            {c.rooms && <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-gray-600">방{c.rooms}개</span>}
           </div>
-          <div className="mt-0.5 min-w-0 truncate text-[12px] font-semibold text-gray-900" title={c.address}>
-              <AddressWithUnit text={[c.address, c.dong && !c.address.includes(`${c.dong}동`) ? `${c.dong}동` : "", c.ho && !c.address.includes(`${c.ho}호`) ? `${c.ho}호` : ""].filter(Boolean).join(" ")} />
-            </div>
-          {(c.rooms || c.direction || c.options || c.loan || uniqueNo) && (
+          {(c.options || c.loan || uniqueNo) && (
             <div className="text-[11px] text-gray-500 mt-0.5 flex flex-wrap gap-x-2 min-w-0">
               {uniqueNo && <span className="whitespace-nowrap">고유번호 {uniqueNo}</span>}
-              {c.rooms && <span className="whitespace-nowrap">방{c.rooms}개</span>}
-              {c.direction && <span className="whitespace-nowrap">{c.direction}</span>}
               {c.options && <span className="text-gray-600 break-words min-w-0">🏠 옵션: {c.options}</span>}
               {c.loan && <span className="text-gray-600 break-words min-w-0">🏦 대출: {fmtLoanView(c.loan)}</span>}
             </div>
           )}
+          {/* 3째줄: 자주 바뀌는 정보(거래종류 · 만기 · 보증금 · 월세 · 종료) */}
           <div className="text-xs text-gray-600 mt-1">
+            <span className="whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 mr-1.5">{c.type}</span>
+            {isClosed && <span className="whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600 mr-1.5">종료</span>}
             만기 <span className="whitespace-nowrap font-semibold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">{c.endDate || "—"}</span>
             <span className="mx-1.5 text-gray-300">·</span>
             보증금 <span className="font-medium text-gray-800">{c.deposit ? `${fmtNum(c.deposit)}만` : "—"}</span>
