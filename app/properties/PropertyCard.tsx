@@ -100,10 +100,10 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   const occBadge = p.occupancy === "owner" || p.occupancy === "vacant" ? OCC_LABEL[p.occupancy] : null;
 
   return (
-    <div className={`rounded-2xl border p-3 sm:p-4 transition-all ${cardClass}`}>
+    <div className={`rounded-2xl border p-2 sm:p-3 transition-all ${cardClass}`}>
       {/* ── 잔금일 경과 카드 내부 빨간 배너 ── */}
       {balanceOverdue && !isClosed && (
-        <div className="mb-3 -mt-1 -mx-1 px-3 py-2 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40 border border-red-200 dark:border-red-800/60 flex items-center gap-2 text-[11px]">
+        <div className="mb-2 -mt-1 -mx-1 px-3 py-2 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40 border border-red-200 dark:border-red-800/60 flex items-center gap-2 text-[11px]">
           <span className="material-symbols-outlined text-red-600 text-base" style={{ fontVariationSettings: "'FILL' 1" }}>notifications_active</span>
           <span className="text-red-700 dark:text-red-300 font-semibold">잔금일이 지났습니다 · {formatDateKo(p.balanceDate)}</span>
           <button onClick={onClose} className="ml-auto text-[10px] px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1 transition-colors">
@@ -188,16 +188,16 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
           {/* 연락처 — 임대인 → 임차인 */}
           {(p.ownerPhone || p.ownerName || hasTenant || hasBuyer || p.extraContacts?.some(c => c.phone)) && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
               {(p.ownerPhone || p.ownerName) && (
-                <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                <div className="flex items-center gap-1 text-xs whitespace-nowrap">
                   <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">{p.dealType === "매매" ? "매도인" : "임대인"}</span>
                   <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{p.ownerName || "—"}</span>
                   {p.ownerPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.ownerPhone)}</span>
-                      <a href={`tel:${p.ownerPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                      <a href={smsHref(p.ownerPhone, p.ownerName, "매물")} onClick={() => logSms(p.dealType === "매매" ? "매도인" : "임대인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <a href={`tel:${p.ownerPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-0.5 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
+                      <a href={smsHref(p.ownerPhone, p.ownerName, "매물")} onClick={() => logSms(p.dealType === "매매" ? "매도인" : "임대인")} className="inline-flex items-center justify-center w-8 h-6 mx-0.5 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                       {p.ownerCarrier && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-slate-700">{p.ownerCarrier}</span>}
                       
                     </>
@@ -205,37 +205,37 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                 </div>
               )}
               {(p.extraContacts ?? []).filter(c => c.phone).map((c, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                <div key={i} className="flex items-center gap-1 text-xs whitespace-nowrap">
                   <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">{(!c.relation || c.relation === "기타" || c.relation === "임대인") ? (p.dealType === "매매" ? "매도인" : "임대인") : c.relation}</span>
                   {c.name && <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{c.name}</span>}
                   <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(c.phone)}</span>
-                  <a href={`tel:${c.phone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                  <a href={smsHref(c.phone, c.name, "매물")} onClick={() => logSms(c.relation || "연락처")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                  <a href={`tel:${c.phone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-0.5 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
+                  <a href={smsHref(c.phone, c.name, "매물")} onClick={() => logSms(c.relation || "연락처")} className="inline-flex items-center justify-center w-8 h-6 mx-0.5 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                 </div>
               ))}
               {hasTenant && (
-                <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                <div className="flex items-center gap-1 text-xs whitespace-nowrap">
                   <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">임차인</span>
                   <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{partyName || "—"}</span>
                   {partyPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(partyPhone)}</span>
-                      <a href={`tel:${partyPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                      <a href={smsHref(partyPhone, partyName, "임대차 만기")} onClick={() => logSms("임차인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <a href={`tel:${partyPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-0.5 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
+                      <a href={smsHref(partyPhone, partyName, "임대차 만기")} onClick={() => logSms("임차인")} className="inline-flex items-center justify-center w-8 h-6 mx-0.5 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                       
                     </>
                   )}
                 </div>
               )}
               {hasBuyer && (
-                <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
+                <div className="flex items-center gap-1 text-xs whitespace-nowrap">
                   <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">매수인</span>
                   <span className="text-gray-800 dark:text-gray-200 truncate max-w-[6rem]">{p.buyerName || "—"}</span>
                   {p.buyerPhone && (
                     <>
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{formatPhone(p.buyerPhone)}</span>
-                      <a href={`tel:${p.buyerPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
-                      <a href={smsHref(p.buyerPhone, p.buyerName || "", "매물")} onClick={() => logSms("매수인")} className="inline-flex items-center justify-center w-8 h-6 mx-1 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
+                      <a href={`tel:${p.buyerPhone.replace(/\D/g, "")}`} className="inline-flex items-center justify-center w-8 h-6 mx-0.5 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="통화" title="통화"><span className="material-symbols-outlined thin-icon text-[16px]">call</span></a>
+                      <a href={smsHref(p.buyerPhone, p.buyerName || "", "매물")} onClick={() => logSms("매수인")} className="inline-flex items-center justify-center w-8 h-6 mx-0.5 rounded bg-sky-100 text-gray-700 whitespace-nowrap" aria-label="문자" title="문자"><span className="material-symbols-outlined thin-icon text-[16px]">chat</span></a>
                     </>
                   )}
                 </div>
@@ -245,19 +245,19 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
           {/* 계약 진행 날짜 */}
           {(p.contractDate || p.downPaymentDate || p.balanceDate) && !isClosed && (
-            <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+            <div className="mt-1 flex flex-wrap gap-1 items-center">
               {p.contractDate && (
-                <span className="text-[11px] font-bold px-2.5 py-1 whitespace-nowrap rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-800 flex items-center gap-0.5">
+                <span className="text-[11px] font-bold px-2 py-0.5 whitespace-nowrap rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-800 flex items-center gap-0.5">
                   계약일 {formatDateKo(p.contractDate)}
                 </span>
               )}
               {p.downPaymentDate && (
-                <span className="text-[11px] font-bold px-2.5 py-1 whitespace-nowrap rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/60 flex items-center gap-0.5">
+                <span className="text-[11px] font-bold px-2 py-0.5 whitespace-nowrap rounded-full bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-800/60 flex items-center gap-0.5">
                   중도금 {formatDateKo(p.downPaymentDate)}
                 </span>
               )}
               {p.balanceDate && (
-                <span className={`text-[11px] font-bold px-2.5 py-1 whitespace-nowrap rounded-full border flex items-center gap-0.5 ${
+                <span className={`text-[11px] font-bold px-2 py-0.5 whitespace-nowrap rounded-full border flex items-center gap-0.5 ${
                   balanceOverdue
                     ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800/60"
                     : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60"
@@ -266,7 +266,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
                 </span>
               )}
               {p.commission && (
-                <span className="text-[11px] font-bold px-2.5 py-1 whitespace-nowrap rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-0.5">
+                <span className="text-[11px] font-bold px-2 py-0.5 whitespace-nowrap rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-0.5">
                   수수료 {fmtNum(p.commission)}만
                 </span>
               )}
@@ -275,12 +275,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
           {/* 대출 */}
           {p.loan && (
-            <div className="mt-1.5 text-[11px] text-gray-600 break-words min-w-0">🏦 대출: {p.loan}</div>
+            <div className="mt-1 text-[11px] text-gray-600 break-words min-w-0">🏦 대출: {p.loan}</div>
           )}
 
           {/* 옵션 */}
           {p.options && (
-            <div className="mt-2 flex flex-wrap items-center gap-1">
+            <div className="mt-1 flex flex-wrap items-center gap-1">
               <span className="text-[11px] text-gray-400 dark:text-gray-500 mr-0.5">옵션</span>
               {p.options.split(",").map(s => s.trim()).filter(Boolean).map((o, i) => (
                 <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">{o}</span>
@@ -290,12 +290,12 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
           {/* 같은 전화번호 주인의 다른 보유 호실 — 메모 바로 위 (건의 #212) */}
           {holding && holding.others.length > 0 && (
-            <div className="mt-2 flex flex-col items-start gap-1" title={holding.label}>{holding.lines.map((ln, i) => <span key={i} className="inline-block max-w-full break-keep rounded-sm bg-purple-100 text-purple-700 px-2 py-0.5 text-[11px] font-semibold">{i === 0 ? "보유 " : ""}{ln}</span>)}</div>
+            <div className="mt-1 flex flex-col items-start gap-0.5" title={holding.label}>{holding.lines.map((ln, i) => <span key={i} className="inline-block max-w-full break-keep rounded-sm bg-purple-100 text-purple-700 px-2 py-0.5 text-[11px] font-semibold">{i === 0 ? "보유 " : ""}{ln}</span>)}</div>
           )}
 
           {/* 메모 — 카드에서 바로 추가 (건의 #76) */}
           {memoEditing ? (
-            <div className="mt-2" onClick={e => e.stopPropagation()}>
+            <div className="mt-1" onClick={e => e.stopPropagation()}>
               <DatedMemo
                 value={memoDraft}
                 onChange={setMemoDraft}
@@ -313,14 +313,14 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           ) : (
             <>
               {p.memo && (
-                <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded px-2 py-1 border border-gray-100 dark:border-slate-700 whitespace-pre-wrap">
+                <div className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-slate-800/60 rounded px-2 py-1 border border-gray-100 dark:border-slate-700 whitespace-pre-wrap">
                   <span className="flex gap-1"><span>💬</span><span className="flex-1 min-w-0"><MemoText memo={p.memo} collapsible /></span></span>
                 </div>
               )}
               {onSaveMemo && (
                 <button type="button"
                   onClick={e => { e.stopPropagation(); setMemoDraft((p.memo ? p.memo + "\n" : "") + memoStamp()); setMemoEditing(true); }}
-                  className="mt-2 whitespace-nowrap text-xs px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-semibold hover:bg-amber-100">
+                  className="mt-1 whitespace-nowrap text-xs px-3 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-semibold hover:bg-amber-100">
                   💬 메모 {p.memo ? "추가" : "쓰기"}
                 </button>
               )}
@@ -331,7 +331,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
       {/* ── 스케줄 이력 ── */}
       {schedules.length > 0 && (
-        <div className="mt-3">
+        <div className="mt-1.5">
           <button
             onClick={() => setShowHistory(v => !v)}
             className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
@@ -362,7 +362,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
       )}
 
       {/* 액션 버튼 — 만기 관리와 같은 모양 */}
-      <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+      <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-slate-700">
         <button onClick={onEdit}
           className="text-[11px] px-2.5 py-1 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
           ✏️ 수정
