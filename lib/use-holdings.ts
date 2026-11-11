@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "./auth-context";
 import { subscribeRoster, unitKey, complexKey, complexOf, dongHoOf, type RosterUnit } from "./roster-db";
+import { complexShortName } from "./address";
 
 interface UnitLike { address?: string; dong?: string; ho?: string; status?: string }
 
@@ -56,7 +57,15 @@ export function useHoldings(
     const complex = complexOf(address || "", dong, ho);
     const self = unitKey(complex, dh.dong, dh.ho);
     const ck = complexKey(complex);
-    const others = [...units.entries()].filter(([k]) => k !== self).map(([, u]) => {
+    // 같은 건물(주소 앞부분 차이 무시)이고 동·호수가 같거나 한쪽이 비어 있으면 같은 호실로 본다 — 같은 상가를 월세·매매로 따로 올려도 '보유'로 안 나오게 (건의 #226)
+    const bk = complexKey(complexShortName(complex));
+    const isSelf = (k: string, u: { complex: string; dong: string; ho: string }) => {
+      if (k === self) return true;
+      if (complexKey(complexShortName(u.complex)) !== bk) return false;
+      const fit = (a: string, b: string) => !a || !b || a === b;
+      return fit(u.dong, dh.dong) && fit(u.ho, dh.ho);
+    };
+    const others = [...units.entries()].filter(([k, u]) => !isSelf(k, u)).map(([, u]) => {
       // 같은 단지면 동·호수만, 다른 단지면 단지 이름도 함께
       const same = complexKey(u.complex) === ck;
       const unit = [u.dong && `${u.dong}동`, u.ho && `${u.ho}호`].filter(Boolean).join(" ");
@@ -65,7 +74,7 @@ export function useHoldings(
     // 줄 나누기: 같은 단지는 호실만 한 줄, 다른 단지는 단지별로 한 줄씩 (건의 #212)
     const groups = new Map<string, { complex: string; same: boolean; units: string[] }>();
     for (const [k, u] of units.entries()) {
-      if (k === self) continue;
+      if (isSelf(k, u)) continue;
       const gk = complexKey(u.complex);
       const unit = [u.dong && `${u.dong}동`, u.ho && `${u.ho}호`].filter(Boolean).join(" ") || u.name;
       if (!groups.has(gk)) groups.set(gk, { complex: u.complex, same: gk === ck, units: [] });
