@@ -89,7 +89,7 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
   const saveMine = async () => {
     if (!typedName) return;
     if (!user?.agencyId) { alert("사무실 정보를 불러오는 중이에요. 잠시 후 다시 눌러주세요."); return; }
-    try { await addMyComplex(user.agencyId, { name: typedName, propertyType: form.propertyType }); }
+    try { await addMyComplex(user.agencyId, { name: typedName, propertyType: form.propertyType }); alert(`'${typedName}'을(를) 내 단지 목록에 저장했어요.`); }
     catch { alert("단지 저장 중 오류가 났어요. 다시 해주세요."); }
   };
   const removeMine = async (c: MyComplex) => {
@@ -202,9 +202,16 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             <div className="text-xs font-semibold text-sky-700">📌 1. 매물정보</div>
           {/* 주소 + 동/호수 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              단지명 <span className="text-red-400">*</span>
-            </label>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                단지명 <span className="text-red-400">*</span>
+              </label>
+              {/* 입력한 단지명을 내 단지 목록에 저장 — 단지명 칸 아래가 아니라 제목 옆에 작게 (건의 #227) */}
+              {typedName && (alreadyMine
+                ? <span className="whitespace-nowrap text-[11px] text-teal-600">✓ 내 단지 목록에 있음</span>
+                : <button type="button" onClick={saveMine}
+                    className="whitespace-nowrap rounded-lg border border-teal-300 bg-white px-2 py-0.5 text-[11px] font-medium text-teal-700 hover:bg-teal-50">📌 내 단지 목록에 저장</button>)}
+            </div>
             <div className="relative">
               <input value={baseAddress} onChange={e => { handleAddressChange(e.target.value); setShowSaved(true); }}
                 onFocus={() => setShowSaved(true)}
