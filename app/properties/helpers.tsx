@@ -50,6 +50,39 @@ export function calcYield(dealType: string, price: string, tenantDeposit: string
   return (m * 12) / (p - d) * 100;
 }
 
+/** 취득세·중개수수료까지 뺀 실수익률 (건의 #224 후속)
+ *  실투자금 = 매매가 + 취득세 + 중개수수료 − 임차 보증금
+ *  - 취득세: 상가·사무실·오피스텔 4.6% / 아파트는 1주택 기준(6억 이하 1.1%, 9억 초과 3.3%, 그 사이 구간 계산)
+ *  - 중개수수료: 아파트는 매매 상한 요율, 그 외는 0.9% (최대 요율 기준) */
+export function acqTaxRate(propertyType: string, priceMan: number): number {
+  if (propertyType !== "아파트") return 4.6;
+  const eok = priceMan / 10000;
+  if (eok <= 6) return 1.1;
+  if (eok > 9) return 3.3;
+  return Math.round((eok * 2 / 3 - 3) * 1.1 * 100) / 100;
+}
+export function brokerFeeRate(propertyType: string, priceMan: number): number {
+  if (propertyType !== "아파트") return 0.9;
+  if (priceMan < 5000) return 0.6;
+  if (priceMan < 20000) return 0.5;
+  if (priceMan < 90000) return 0.4;
+  if (priceMan < 120000) return 0.5;
+  if (priceMan < 150000) return 0.6;
+  return 0.7;
+}
+export function calcNetYield(dealType: string, propertyType: string, price: string, tenantDeposit: string, tenantMonthly: string):
+  { yieldPct: number; tax: number; fee: number; taxRate: number; feeRate: number; invest: number } | null {
+  if (dealType !== "매매") return null;
+  const num = (v: string) => parseInt((v || "").replace(/[^\d]/g, ""), 10) || 0;
+  const p = num(price), d = num(tenantDeposit), m = num(tenantMonthly);
+  if (!p || !m) return null;
+  const taxRate = acqTaxRate(propertyType, p), feeRate = brokerFeeRate(propertyType, p);
+  const tax = Math.round(p * taxRate / 100), fee = Math.round(p * feeRate / 100);
+  const invest = p + tax + fee - d;
+  if (invest <= 0) return null;
+  return { yieldPct: (m * 12) / invest * 100, tax, fee, taxRate, feeRate, invest };
+}
+
 /** 날짜·시간 한국식 표시 — "2026-06-17" → "6/17(화)" / "2026-06-17T14:00" → "6/17(화) 14:00" */
 export function formatDateKo(v: string): string {
   if (!v) return "";

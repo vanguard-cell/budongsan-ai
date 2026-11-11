@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Schedule } from "@/lib/schedules-db";
 import { dDay, severityOf, severityClasses, severityLabel, dDayLabel, getAgencyDisplayName } from "@/app/expiry/contracts";
-import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, AddressWithUnit, fmtLoanView, calcYield } from "./helpers";
+import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, AddressWithUnit, fmtLoanView, calcYield, calcNetYield } from "./helpers";
 import MemoText from "@/app/components/MemoText";
 import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
 import { kstDateStr } from "@/lib/kst";
@@ -185,6 +185,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             )}
             {(() => { const y = calcYield(p.dealType, p.price, p.tenantDeposit, p.tenantMonthly); return y !== null && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold tabular-nums">수익률 {y.toFixed(1)}%</span>
+            ); })()}
+            {(() => { const n = calcNetYield(p.dealType, p.propertyType, p.price, p.tenantDeposit, p.tenantMonthly); return n !== null && (
+              <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold tabular-nums">실수익 {n.yieldPct.toFixed(1)}%</span>
             ); })()}
           </div>
 

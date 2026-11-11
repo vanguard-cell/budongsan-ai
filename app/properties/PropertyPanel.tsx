@@ -11,7 +11,7 @@
 import { useState } from "react";
 import { mergedTimeline, type Property, type PropertyEvent } from "@/lib/properties-db";
 import SideDrawer from "@/app/components/SideDrawer";
-import { fmtNum, formatPhone, fmtLoanView, calcYield } from "./helpers";
+import { fmtNum, formatPhone, fmtLoanView, calcYield, calcNetYield } from "./helpers";
 import { stageOf } from "./PropertyTable";
 import { dDay } from "@/app/expiry/contracts";
 import { kstDateStr } from "@/lib/kst";
@@ -140,6 +140,9 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
             )}
             {(() => { const y = calcYield(p.dealType, p.price, p.tenantDeposit, p.tenantMonthly); return y !== null && (
               <Row label="수익률">{`연 ${y.toFixed(2)}% (월세×12 ÷ (매매가−보증금))`}</Row>
+            ); })()}
+            {(() => { const n = calcNetYield(p.dealType, p.propertyType, p.price, p.tenantDeposit, p.tenantMonthly); return n !== null && (
+              <Row label="실수익률">{`연 ${n.yieldPct.toFixed(2)}% (취득세 ${n.taxRate}% ${fmtNum(String(n.tax))}만 · 중개수수료 ${n.feeRate}% ${fmtNum(String(n.fee))}만 포함, 실투자금 ${fmtNum(String(n.invest))}만)`}</Row>
             ); })()}
             {p.ownerCarrier && <Row label="통신사">{p.ownerCarrier}</Row>}
             {p.options && <Row label="옵션">{p.options}</Row>}

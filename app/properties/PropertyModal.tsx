@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRosterUniqueNo, useRosterUnitInfo } from "@/lib/use-roster-unique";
 import DatedMemo from "@/app/components/DatedMemo";
 import { CONTACT_RELATIONS, type ExtraContact } from "@/lib/properties-db";
-import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong, fmtLoanInput, calcYield } from "./helpers";
+import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong, fmtLoanInput, calcYield, calcNetYield } from "./helpers";
 
 export default function PropertyModal({ property, savedComplexes = [], onClose, onSave }: {
   property: Property;
@@ -494,11 +494,19 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
             {/* 매매 수익률 자동 계산 (건의 #224) — 매매가·월세가 있으면 표시 */}
             {form.dealType === "매매" && (() => {
               const y = calcYield(form.dealType, form.price, form.tenantDeposit, form.tenantMonthly);
+              const n = calcNetYield(form.dealType, form.propertyType, form.price, form.tenantDeposit, form.tenantMonthly);
               return (
                 <div className="mb-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
                   {y !== null
                     ? <><span className="font-bold text-sm">📈 수익률 연 {y.toFixed(2)}%</span><span className="block mt-0.5 text-amber-700">월세 {fmtNum(form.tenantMonthly)}만 × 12 ÷ (매매가 {fmtNum(form.price)}만 − 보증금 {fmtNum(form.tenantDeposit || "0")}만)</span></>
                     : <span>매매가와 월세를 넣으면 수익률이 자동으로 계산돼요</span>}
+                  {n !== null && (
+                    <div className="mt-1.5 pt-1.5 border-t border-amber-200">
+                      <span className="font-bold text-sm text-emerald-700">💰 실수익률 연 {n.yieldPct.toFixed(2)}%</span>
+                      <span className="block mt-0.5 text-amber-700">취득세 {n.taxRate}% {fmtNum(String(n.tax))}만 + 중개수수료 {n.feeRate}% {fmtNum(String(n.fee))}만 포함 · 실투자금 {fmtNum(String(n.invest))}만</span>
+                      <span className="block text-[11px] text-amber-600">{form.propertyType === "아파트" ? "아파트는 1주택 기준 취득세" : "상가·사무실·오피스텔 취득세 4.6%"}, 중개수수료는 최대 요율 기준</span>
+                    </div>
+                  )}
                 </div>
               );
             })()}
