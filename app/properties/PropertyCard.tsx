@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Schedule } from "@/lib/schedules-db";
 import { dDay, severityOf, severityClasses, severityLabel, dDayLabel, getAgencyDisplayName } from "@/app/expiry/contracts";
-import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, AddressWithUnit } from "./helpers";
+import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, AddressWithUnit, fmtLoanView } from "./helpers";
 import MemoText from "@/app/components/MemoText";
 import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
 import { kstDateStr } from "@/lib/kst";
@@ -281,7 +281,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
 
           {/* 대출 */}
           {p.loan && (
-            <div className="mt-1 text-[11px] text-gray-600 break-words min-w-0">🏦 대출: {p.loan}</div>
+            <div className="mt-1 text-[11px] text-gray-600 break-words min-w-0">🏦 대출: {fmtLoanView(p.loan)}</div>
           )}
 
           {/* 같은 전화번호 주인의 다른 보유 호실 — 메모 바로 위 (건의 #212) */}

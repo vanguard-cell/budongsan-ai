@@ -124,3 +124,17 @@ export function AddressWithUnit({ text }: { text: string }) {
     </span>
   );
 }
+
+/** 대출 입력: 숫자는 3자리마다 쉼표 (글자가 섞여 있어도 숫자 덩어리만 처리) */
+export function fmtLoanInput(s: string): string {
+  return s.replace(/\d[\d,]*/g, m => {
+    const d = m.replace(/,/g, "");
+    return d.length >= 4 ? Number(d).toLocaleString() : d;
+  });
+}
+
+/** 대출 표시: 쉼표를 넣고, 숫자만 적혀 있으면 만원 단위로 표시 */
+export function fmtLoanView(s: string): string {
+  const v = fmtLoanInput(s.trim());
+  return /^[\d,]+$/.test(v) ? `${v}만원` : v;
+}

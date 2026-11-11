@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRosterUniqueNo, useRosterUnitInfo } from "@/lib/use-roster-unique";
 import DatedMemo from "@/app/components/DatedMemo";
 import { CONTACT_RELATIONS, type ExtraContact } from "@/lib/properties-db";
-import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong } from "./helpers";
+import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong, fmtLoanInput } from "./helpers";
 
 export default function PropertyModal({ property, savedComplexes = [], onClose, onSave }: {
   property: Property;
@@ -409,8 +409,8 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
           {/* 대출 — 자유 입력 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{form.dealType === "매매" ? "매도인" : "임대인"} 대출 <span className="text-[10px] text-gray-400">(선택)</span></label>
-            <input value={form.loan || ""} onChange={e => set("loan", e.target.value)}
-              placeholder="예: 국민은행 2억 / 대출 없음"
+            <input value={form.loan || ""} onChange={e => set("loan", fmtLoanInput(e.target.value))}
+              placeholder="예: 20,000 (만원 단위) / 국민은행 2억 / 대출 없음"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
 

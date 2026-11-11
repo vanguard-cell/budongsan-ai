@@ -3,7 +3,7 @@
 import type { Property, ComplexInfo } from "@/lib/properties-db";
 import { getAgencyDisplayName } from "@/app/expiry/contracts";
 import { kstDateStr } from "@/lib/kst";
-import { addressStr, fmtNum, m2ToPyeong } from "./helpers";
+import { addressStr, fmtNum, m2ToPyeong, fmtLoanView } from "./helpers";
 
 function esc(s: string): string {
   return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -56,7 +56,7 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
     ...(p.occupancy ? [cell("입주 상태", ({ owner: "주인거주", vacant: "공실", tenant: "임차인 (임대중)", jeonse: "임차인 (전세)", wolse: "임차인 (월세)" } as Record<string, string>)[p.occupancy] || "", 3)] : []),
     cell("고유번호", p.uniqueNo || uniqueNo || "", 3),
     cell("옵션", p.options, 3),
-    cell("대출", p.loan || "", 3),
+    cell("대출", p.loan ? fmtLoanView(p.loan) : "", 3),
   ].join("");
   const complexCells = [
     ...(info?.approvalDate || info?.households || info?.commonPassword

@@ -11,7 +11,7 @@
 import { useState } from "react";
 import { mergedTimeline, type Property, type PropertyEvent } from "@/lib/properties-db";
 import SideDrawer from "@/app/components/SideDrawer";
-import { fmtNum, formatPhone } from "./helpers";
+import { fmtNum, formatPhone, fmtLoanView } from "./helpers";
 import { stageOf } from "./PropertyTable";
 import { dDay } from "@/app/expiry/contracts";
 import { kstDateStr } from "@/lib/kst";
@@ -140,7 +140,7 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
             )}
             {p.ownerCarrier && <Row label="통신사">{p.ownerCarrier}</Row>}
             {p.options && <Row label="옵션">{p.options}</Row>}
-            {p.loan && <Row label="대출">{p.loan}</Row>}
+            {p.loan && <Row label="대출">{fmtLoanView(p.loan)}</Row>}
             {p.memo && <Row label="메모"><MemoText memo={p.memo} collapsible /></Row>}
           </tbody>
         </table>
