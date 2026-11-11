@@ -1289,6 +1289,7 @@ export default function PropertiesPage() {
                       onCloneSameComplex={() => cloneSameComplex(p)}
                       onSaveMemo={memo => saveProperty(user.agencyId, { ...p, memo })}
                       onToggleCp={key => saveProperty(user.agencyId, { ...p, [key]: !p[key] })}
+                      onToggleHold={() => saveProperty(user.agencyId, { ...p, onHold: p.onHold ? undefined : true })}
                     />
                   ))}
                 </div>

@@ -22,7 +22,7 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo, onToggleCp, complexInfo, holding }: {
+export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo, onToggleCp, onToggleHold, complexInfo, holding }: {
   holding?: { count: number; label: string; others: string[]; lines: string[] };
   complexInfo?: import("@/lib/properties-db").ComplexInfo;
   property: Property;
@@ -37,6 +37,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   onCloneSameComplex: () => void;
   onSaveMemo?: (memo: string) => void;
   onToggleCp?: (key: "cpIlsil" | "cpSunbang") => void;
+  onToggleHold?: () => void;
 }) {
   const rosterUniqueNo = useRosterUniqueNo();
   const uniqueNo = p.uniqueNo || rosterUniqueNo(p.address, p.dong, p.ho);
@@ -44,6 +45,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
   const [memoDraft, setMemoDraft] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const isClosed = p.status === "closed";
+  const isHold = !!p.onHold && !isClosed; // 보류 표시 (건의 #225)
   const priceStr = p.dealType === "월세"
     ? (p.price || p.monthly)
         ? `${p.price ? fmtNum(p.price) : "0"}/${p.monthly ? fmtNum(p.monthly) : "0"}만`
@@ -69,6 +71,8 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
       ? "border-amber-300 dark:border-amber-700 ring-2 ring-amber-100 dark:ring-amber-900/40 bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-950/30 dark:to-slate-900"
       : isClosed
       ? "bg-gray-50/60 dark:bg-slate-900/40 border-gray-200 dark:border-slate-700 opacity-70"
+      : isHold
+      ? "bg-gray-50 dark:bg-slate-900/60 border-gray-300 dark:border-slate-600 border-dashed"
       : balanceOverdue
       ? "bg-white dark:bg-slate-900 border-red-300 dark:border-red-800 shadow-sm ring-2 ring-red-100 dark:ring-red-950/40"
       : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md";
@@ -144,6 +148,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
         <div className="flex-1 min-w-0">
           {/* 1째줄: 주소(단지·동호) + 즐겨찾기 — 주소가 길면 끝만 ... (건의 #222) */}
           <div className="flex items-center gap-x-2 min-w-0">
+            {isHold && (
+              <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-700 text-white font-bold" title="보류 중인 매물">⏸ 보류</span>
+            )}
             <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
               <AddressWithUnit text={addressStr(p)} />
             </span>
@@ -395,6 +402,16 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             {p[key] ? "✓ " : ""}{name}등록
           </button>
         ))}
+        {onToggleHold && !isClosed && (
+          <button onClick={onToggleHold} title={isHold ? "보류 풀기 (다시 진행)" : "이 매물을 잠시 보류로 표시 (누르면 켜지고, 다시 누르면 꺼져요)"}
+            className={`whitespace-nowrap text-[11px] px-2.5 py-1 rounded-full border font-semibold transition-colors ${
+              isHold
+                ? "border-gray-700 bg-gray-700 text-white"
+                : "border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300"
+            }`}>
+            {isHold ? "▶ 보류 풀기" : "⏸ 보류"}
+          </button>
+        )}
         {isClosed ? (
           <button onClick={onReopen}
             className="text-[11px] px-2.5 py-1 rounded-full border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold hover:bg-blue-100 transition-colors">
