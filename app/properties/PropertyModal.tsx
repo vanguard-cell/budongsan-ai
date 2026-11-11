@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useRosterUniqueNo, useRosterUnitInfo } from "@/lib/use-roster-unique";
 import DatedMemo from "@/app/components/DatedMemo";
 import { CONTACT_RELATIONS, type ExtraContact } from "@/lib/properties-db";
-import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong, fmtLoanInput } from "./helpers";
+import { PROPERTY_TYPES, DEAL_TYPES, DIRECTIONS, fmtNum, fmtKoreanNum, formatPhoneInput, formatPhone, m2ToPyeong, fmtLoanInput, calcYield } from "./helpers";
 
 export default function PropertyModal({ property, savedComplexes = [], onClose, onSave }: {
   property: Property;
@@ -491,6 +491,17 @@ export default function PropertyModal({ property, savedComplexes = [], onClose, 
                   placeholder="70 (전세는 0)" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
               </div>
             </div>
+            {/* 매매 수익률 자동 계산 (건의 #224) — 매매가·월세가 있으면 표시 */}
+            {form.dealType === "매매" && (() => {
+              const y = calcYield(form.dealType, form.price, form.tenantDeposit, form.tenantMonthly);
+              return (
+                <div className="mb-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                  {y !== null
+                    ? <><span className="font-bold text-sm">📈 수익률 연 {y.toFixed(2)}%</span><span className="block mt-0.5 text-amber-700">월세 {fmtNum(form.tenantMonthly)}만 × 12 ÷ (매매가 {fmtNum(form.price)}만 − 보증금 {fmtNum(form.tenantDeposit || "0")}만)</span></>
+                    : <span>매매가와 월세를 넣으면 수익률이 자동으로 계산돼요</span>}
+                </div>
+              );
+            })()}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium text-gray-700">전세·월세 만기일</label>

@@ -11,7 +11,7 @@
 import { useState } from "react";
 import { mergedTimeline, type Property, type PropertyEvent } from "@/lib/properties-db";
 import SideDrawer from "@/app/components/SideDrawer";
-import { fmtNum, formatPhone, fmtLoanView } from "./helpers";
+import { fmtNum, formatPhone, fmtLoanView, calcYield } from "./helpers";
 import { stageOf } from "./PropertyTable";
 import { dDay } from "@/app/expiry/contracts";
 import { kstDateStr } from "@/lib/kst";
@@ -138,6 +138,9 @@ export default function PropertyPanel({ property: p, onClose, onEdit, onCloneSam
             {(p.tenantDeposit || p.tenantMonthly) && (
               <Row label="현임차">{[p.tenantDeposit && `보증금 ${fmtNum(p.tenantDeposit)}만`, p.tenantMonthly && `월 ${fmtNum(p.tenantMonthly)}만`].filter(Boolean).join(" / ")}</Row>
             )}
+            {(() => { const y = calcYield(p.dealType, p.price, p.tenantDeposit, p.tenantMonthly); return y !== null && (
+              <Row label="수익률">{`연 ${y.toFixed(2)}% (월세×12 ÷ (매매가−보증금))`}</Row>
+            ); })()}
             {p.ownerCarrier && <Row label="통신사">{p.ownerCarrier}</Row>}
             {p.options && <Row label="옵션">{p.options}</Row>}
             {p.loan && <Row label="대출">{fmtLoanView(p.loan)}</Row>}

@@ -6,7 +6,7 @@ import { useState } from "react";
 import type { Property } from "@/lib/properties-db";
 import type { Schedule } from "@/lib/schedules-db";
 import { dDay, severityOf, severityClasses, severityLabel, dDayLabel, getAgencyDisplayName } from "@/app/expiry/contracts";
-import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, AddressWithUnit, fmtLoanView } from "./helpers";
+import { formatPhone, fmtNum, formatDateKo, m2ToPyeong, DEAL_BADGE, addressStr, AddressWithUnit, fmtLoanView, calcYield } from "./helpers";
 import MemoText from "@/app/components/MemoText";
 import DatedMemo, { memoStamp } from "@/app/components/DatedMemo";
 import { kstDateStr } from "@/lib/kst";
@@ -183,6 +183,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
             {(p.tenantDeposit || p.tenantMonthly) && (
               <span className="whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400 tabular-nums font-semibold">{p.tenantDeposit ? fmtNum(p.tenantDeposit) : "0"}/{p.tenantMonthly ? fmtNum(p.tenantMonthly) : "0"}만</span>
             )}
+            {(() => { const y = calcYield(p.dealType, p.price, p.tenantDeposit, p.tenantMonthly); return y !== null && (
+              <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold tabular-nums">수익률 {y.toFixed(1)}%</span>
+            ); })()}
           </div>
 
           {/* 등록일 + 등록 후 경과일 (큰 등록일 배지와 중복이라 화면에서 숨김 — 건의 #168) */}

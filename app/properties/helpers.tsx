@@ -40,6 +40,16 @@ export function fmtNum(s: string): string {
   return n.toLocaleString();
 }
 
+/** 매매 수익률(%) — 현 임차인 월세×12 ÷ (매매가 − 임차 보증금) × 100 (건의 #224)
+ *  매매가·월세가 없거나 실투자금이 0 이하면 null */
+export function calcYield(dealType: string, price: string, tenantDeposit: string, tenantMonthly: string): number | null {
+  if (dealType !== "매매") return null;
+  const num = (v: string) => parseInt((v || "").replace(/[^\d]/g, ""), 10) || 0;
+  const p = num(price), d = num(tenantDeposit), m = num(tenantMonthly);
+  if (!p || !m || p - d <= 0) return null;
+  return (m * 12) / (p - d) * 100;
+}
+
 /** 날짜·시간 한국식 표시 — "2026-06-17" → "6/17(화)" / "2026-06-17T14:00" → "6/17(화) 14:00" */
 export function formatDateKo(v: string): string {
   if (!v) return "";
