@@ -20,10 +20,31 @@ export const buildingKey = (c: string): string =>
 export const sameBuilding = (a: string, b: string): boolean =>
   a === b || (Math.min(a.length, b.length) >= 4 && (a.includes(b) || b.includes(a)));
 
+/** 호수 글자 속 숫자들 — "611~613"처럼 범위면 사이 호수까지 펼침 (건의 #228) */
+const unitNums = (s: string): string[] => {
+  const out: string[] = [...(s.match(/\d+/g) || [])];
+  for (const m of s.matchAll(/(\d+)\s*호?\s*[~∼-]\s*(\d+)/g)) {
+    const from = Number(m[1]), to = Number(m[2]);
+    if (to > from && to - from <= 50) for (let n = from + 1; n < to; n++) out.push(String(n));
+  }
+  return out;
+};
+
+/** 주소·호수 칸에서 묶음 호수 글자 — "611~613호", "611,612,613호", "611호~613호", "611.612호" (건의 #228) */
+const BUNDLE_IN_ADDRESS = /\d+\s*호?\s*(?:[~∼,./·]\s*\d+\s*호?\s*)*[~∼,./·]\s*\d+\s*호/;
+const bundleText = (address: string, ho?: string): string => {
+  const h = (ho || "").trim();
+  if (/\d\s*(?:호\s*)?[~∼,./·-]\s*\d/.test(h)) return h;
+  return (address || "").match(BUNDLE_IN_ADDRESS)?.[0] || "";
+};
+
+/** 여러 호실을 묶어 올린 매물인지 (건의 #228) */
+export const isBundleUnit = (address: string, ho?: string): boolean => !!bundleText(address, ho);
+
 /** 동·호수가 같은 호실로 볼 만한지 — 한쪽이 비었거나, 숫자가 겹치거나("101,102" / "101"), 층만 적은 경우 그 층의 호수 */
 export const unitFits = (a: string, b: string): boolean => {
   if (!a || !b || a === b) return true;
-  const na = a.match(/\d+/g) || [], nb = b.match(/\d+/g) || [];
+  const na = unitNums(a), nb = unitNums(b);
   if (na.some((x) => nb.some((y) => Number(x) === Number(y)))) return true;
   const floorOnly = (s: string, n: string[]) => /층/.test(s) && !/호/.test(s) && n.length === 1 ? Number(n[0]) : null;
   const fa = floorOnly(a, na), fb = floorOnly(b, nb);
@@ -45,7 +66,7 @@ export function useHoldings(
   }, [user?.agencyId]);
 
   const map = useMemo(() => {
-    const m = new Map<string, Map<string, { complex: string; dong: string; ho: string; name: string }>>(); // 전화 숫자 → (호실 키 → 호실 정보)
+    const m = new Map<string, Map<string, { complex: string; dong: string; ho: string; name: string; bundle: boolean }>>(); // 전화 숫자 → (호실 키 → 호실 정보)
     const add = (phone: string | undefined, address: string, dong?: string, ho?: string) => {
       const d = digitsOf(phone);
       if (d.length < 9) return;
@@ -53,7 +74,7 @@ export function useHoldings(
       const complex = complexOf(address, dong, ho);
       const key = unitKey(complex, dh.dong, dh.ho);
       const name = [complex, dh.dong && `${dh.dong}동`, dh.ho && `${dh.ho}호`].filter(Boolean).join(" ");
-      const info = { complex, dong: dh.dong, ho: dh.ho, name: name || address };
+      const info = { complex, dong: dh.dong, ho: dh.ho, name: name || address, bundle: isBundleUnit(address, ho) };
       if (!m.has(d)) m.set(d, new Map());
       m.get(d)!.set(key, info);
     };
@@ -80,9 +101,12 @@ export function useHoldings(
     const ck = complexKey(complex);
     // 같은 건물이고 동·호수가 겹치거나 한쪽이 비어 있으면 같은 호실로 본다 — 같은 상가를 월세·매매로 따로 올려도 '보유'로 안 나오게 (건의 #226)
     const bk = buildingKey(complex);
-    const isSelf = (k: string, u: { complex: string; dong: string; ho: string }) => {
+    // 지금 보는 매물이 묶음(611~613호)이면 그 안의 호수들도 자기 호실로 (건의 #228)
+    const selfHo = bundleText(address || "", ho) || dh.ho;
+    const isSelf = (k: string, u: { complex: string; dong: string; ho: string; bundle: boolean }) => {
       if (k === self) return true;
-      return sameBuilding(buildingKey(u.complex), bk) && unitFits(u.dong, dh.dong) && unitFits(u.ho, dh.ho);
+      if (u.bundle) return true; // 여러 호실 묶음 매물(611~613호)은 낱개 호실과 겹치므로 '보유'에 안 보임 (건의 #228)
+      return sameBuilding(buildingKey(u.complex), bk) && unitFits(u.dong, dh.dong) && unitFits(u.ho, selfHo);
     };
     const others = [...units.entries()].filter(([k, u]) => !isSelf(k, u)).map(([, u]) => {
       // 같은 단지면 동·호수만, 다른 단지면 단지 이름도 함께
