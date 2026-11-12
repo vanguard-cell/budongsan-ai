@@ -50,7 +50,7 @@ function floorOf(ho: string, isShop = false, shopByHundreds = false): string {
   if (!isFinite(n) || n < 100) return "";
   // 상가는 1033호 = 1층 033호처럼 끝 세 자리가 호수
   // 상가는 지하·1·2·3층이 전부 — 그 밖의 호수는 '기타'로 모음
-  // 단, 201호·901호처럼 세 자리 호수가 같이 있는 상가는 1001호 = 10층 01호 (건의 #230)
+  // 단, 901호처럼 9층 호수가 있는 상가만 1001호 = 10층 01호 — 9층 다음만 10층 (건의 #230)
   if (isShop && !shopByHundreds) {
     const f = n >= 1000 ? Math.floor(n / 1000) : 0;
     return f >= 1 && f <= 3 ? String(f) : "";
@@ -67,12 +67,13 @@ function floorOfRow(r: Row, isShop = false, shopByHundreds = false): string {
   }
   return floorOf(r.ho, isShop, shopByHundreds);
 }
-/** 상가인데 201호·901호 같은 세 자리 호수가 있으면 호수 앞자리 두 개가 층 (1001호 = 10층) */
+/** 상가인데 901호 같은 9층 호수가 있을 때만 호수 앞자리 두 개가 층 (1001호 = 10층)
+ *  9층이 없는 상가(예: 1001호부터 1층)는 1001호 = 1층 그대로 (건의 #230) */
 function hasHundredsHo(rows: Row[]): boolean {
   return rows.some(r => {
     if (/^(비|B|지하)/.test(r.ho)) return false;
     const n = parseInt(r.ho.split("-")[0].replace(/\D/g, ""), 10);
-    return isFinite(n) && n >= 200 && n <= 999;
+    return isFinite(n) && n >= 900 && n <= 999;
   });
 }
 const hoNum = (ho: string) => {
