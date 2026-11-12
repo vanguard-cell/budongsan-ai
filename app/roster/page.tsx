@@ -441,6 +441,8 @@ export default function RosterPage() {
         <div className="flex flex-wrap gap-2 items-center">
           {isOwner && (selMode ? (
             <>
+              <button onClick={() => setPicked(new Set(rows.flatMap(r => r.roster ? [r.roster.id] : [])))}
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 whitespace-nowrap">보이는 줄 모두 고르기</button>
               <button onClick={removePicked} disabled={!picked.size}
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 whitespace-nowrap disabled:opacity-40">{picked.size}줄 지우기</button>
               <button onClick={exitSel}
