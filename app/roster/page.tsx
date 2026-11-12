@@ -43,28 +43,37 @@ interface Row {
 type SourceFilter = "all" | "roster" | "prop" | "contract";
 
 /** 호수 → 층 ("1201" → 12, "401" → 4, "비1022" → 지하) */
-function floorOf(ho: string, isShop = false): string {
+function floorOf(ho: string, isShop = false, shopByHundreds = false): string {
   if (/^(비|B|지하)/.test(ho)) return "지하";
   // "1024-1" 처럼 가지번호가 있으면 앞 번호만 기준
   const n = parseInt(ho.split("-")[0].replace(/\D/g, ""), 10);
   if (!isFinite(n) || n < 100) return "";
   // 상가는 1033호 = 1층 033호처럼 끝 세 자리가 호수
   // 상가는 지하·1·2·3층이 전부 — 그 밖의 호수는 '기타'로 모음
-  if (isShop) {
+  // 단, 201호·901호처럼 세 자리 호수가 같이 있는 상가는 1001호 = 10층 01호 (건의 #230)
+  if (isShop && !shopByHundreds) {
     const f = n >= 1000 ? Math.floor(n / 1000) : 0;
     return f >= 1 && f <= 3 ? String(f) : "";
   }
   return String(Math.floor(n / 100));
 }
 /** 층 — 고객명단에서 직접 고친 층·명부 엑셀 층 → 매물 등록 층 → 호수로 계산 순 (건의 #230) */
-function floorOfRow(r: Row, isShop = false): string {
+function floorOfRow(r: Row, isShop = false, shopByHundreds = false): string {
   const t = (r.roster?.floor?.trim() || r.prop?.floor?.trim() || "").replace(/\s|층/g, "");
   if (t) {
     if (/^(-|비|B|b|지하)/.test(t)) return "지하";
     const n = parseInt(t.replace(/\D/g, ""), 10);
     if (isFinite(n) && n > 0) return String(n);
   }
-  return floorOf(r.ho, isShop);
+  return floorOf(r.ho, isShop, shopByHundreds);
+}
+/** 상가인데 201호·901호 같은 세 자리 호수가 있으면 호수 앞자리 두 개가 층 (1001호 = 10층) */
+function hasHundredsHo(rows: Row[]): boolean {
+  return rows.some(r => {
+    if (/^(비|B|지하)/.test(r.ho)) return false;
+    const n = parseInt(r.ho.split("-")[0].replace(/\D/g, ""), 10);
+    return isFinite(n) && n >= 200 && n <= 999;
+  });
 }
 const hoNum = (ho: string) => {
   // "203-1"처럼 가지번호가 있으면 앞 번호(203)로 정렬 — 203호 바로 밑에 오게 (건의 #230)
@@ -269,17 +278,20 @@ export default function RosterPage() {
 
   // 상가 단지는 층별(지하·1층·2층…)로 나눠 보기
   const isShopComplex = complexName.includes("상가");
+  const byHundreds = isShopComplex && hasHundredsHo(allRows);
   const floors = useMemo(() => {
     if (!isShopComplex) return [] as string[];
     const fl = (n: string) => (n === "지하" ? -1 : Number(n) || 0);
-    return [...new Set(allRows.map(r => floorOfRow(r, true)))].sort((a, b) => fl(a) - fl(b));
+    const h = hasHundredsHo(allRows);
+    return [...new Set(allRows.map(r => floorOfRow(r, true, h)))].sort((a, b) => fl(a) - fl(b));
   }, [allRows, isShopComplex]);
 
   const rows = useMemo(() => {
     const q = query.trim().replace(/\s+/g, "");
+    const h = hasHundredsHo(allRows);
     return allRows.filter(r => {
       if (dong !== "all" && r.dong !== dong) return false;
-      if (floor !== "all" && floorOfRow(r, true) !== floor) return false;
+      if (floor !== "all" && floorOfRow(r, true, h) !== floor) return false;
       if (source === "roster" && (r.prop || r.contract)) return false;
       if (source === "prop" && !r.prop) return false;
       if (source === "contract" && !r.contract) return false;
@@ -329,7 +341,8 @@ export default function RosterPage() {
         if (u.floor && old && !old.floor?.trim()) floorFill.push({ id: old.id, floor: u.floor });
         if (inPC.has(k)) {
           inPropOrContract++;
-          if (u.uniqueNo && !old) uniqueOnly.push(u);
+          // 매물·만기에만 있는 세대도 엑셀의 층은 명단에 저장 (건의 #230)
+          if ((u.uniqueNo || u.floor) && !old) uniqueOnly.push(u);
           else if (u.uniqueNo && old && !old.uniqueNo) uniqueFill.push({ id: old.id, uniqueNo: u.uniqueNo });
           continue;
         }
@@ -414,7 +427,7 @@ export default function RosterPage() {
     const data = rows.map(r => {
       const v = view(r);
       return {
-        "동": r.dong, "호수": r.ho, "층": floorOfRow(r, complexName.includes("상가")), "타입": v.unitType, "전용면적(㎡)": v.area, "향": v.direction,
+        "동": r.dong, "호수": r.ho, "층": floorOfRow(r, isShopComplex, byHundreds), "타입": v.unitType, "전용면적(㎡)": v.area, "향": v.direction,
         "임대인": v.ownerName, "임대인 전화": v.ownerPhone, "공동명의": v.owner2Name, "공동명의 전화": v.owner2Phone, "임차인": v.tenantName, "임차인 전화": v.tenantPhone,
         "만기일": v.leaseEndDate, "등록 위치": [r.prop && "매물", r.contract && "만기", !r.prop && !r.contract && "명단"].filter(Boolean).join("·"),
         "메모": v.memo,
@@ -642,7 +655,7 @@ export default function RosterPage() {
                   </td>
                   {/* 층은 눌러서 직접 적을 수 있음 — 안 적으면 호수로 계산한 층을 흐리게 보여줌 (건의 #230) */}
                   {SHOW_FLOOR_COL && <td className="px-1 py-1.5 tabular-nums whitespace-nowrap text-gray-700 dark:text-gray-300 max-w-0">
-                    <EditCell value={r.roster?.floor?.trim() || ""} placeholder={floorLabel(floorOfRow(r, complexName.includes("상가")))} onSave={val => saveCo(r, "floor", val)} />
+                    <EditCell value={r.roster?.floor?.trim() || ""} placeholder={floorLabel(floorOfRow(r, isShopComplex, byHundreds))} onSave={val => saveCo(r, "floor", val)} />
                   </td>}
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", fmtArea(v.area), { area: true })}</td>
@@ -763,8 +776,8 @@ function UploadPreview({ preview, busy, onCancel, onConfirm }: {
   onConfirm: () => void;
 }) {
   const { parsed, fresh, inPropOrContract, inRoster, dupInFile, uniqueOnly, uniqueFill, floorFill } = preview;
-  const uniqueCount = uniqueOnly.length + uniqueFill.length;
-  const floorCount = floorFill.length;
+  const uniqueCount = uniqueOnly.filter(u => u.uniqueNo).length + uniqueFill.length;
+  const floorCount = floorFill.length + uniqueOnly.filter(u => u.floor).length;
   const complexes = [...new Set(parsed.units.map(u => u.complex))];
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={onCancel}>

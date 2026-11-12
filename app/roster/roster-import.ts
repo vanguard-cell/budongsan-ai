@@ -67,7 +67,7 @@ function findColumns(header: unknown[], body: unknown[][]): Partial<Record<Col, 
     const set = (c: Col) => { if (at[c] === undefined) at[c] = i; };
     if (!h) continue;
     if (h.includes("고유번호")) set("uniqueNo");
-    else if (h === "층" || h === "층수" || h === "해당층") set("floor");
+    else if (/^(해당)?층(수|별|구분)?$/.test(h) || /^floor$/i.test(h)) set("floor");
     else if (/단지|주소|건물|소재지/.test(h)) set("complex");
     else if (/전용|면적/.test(h)) set("area");
     else if (/타입|평면/.test(h)) set("unitType");
@@ -111,6 +111,16 @@ function findColumns(header: unknown[], body: unknown[][]): Partial<Record<Col, 
 export async function parseRosterFile(file: File, fallbackComplex: string): Promise<ParsedRoster> {
   const wb = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
   const ws = wb.Sheets[wb.SheetNames[0]];
+  // 병합된 칸(예: 층 칸을 10층 세대 여러 줄에 걸쳐 합쳐 둔 경우)은 첫 줄에만 값이 있음
+  // → 합쳐진 모든 줄에 같은 값을 채워 넣어, 아래 줄 세대도 층을 읽게 함 (건의 #230)
+  for (const m of ws["!merges"] || []) {
+    const top = ws[XLSX.utils.encode_cell(m.s)];
+    if (!top) continue;
+    for (let R = m.s.r; R <= m.e.r; R++) for (let C = m.s.c; C <= m.e.c; C++) {
+      const a = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[a] || ws[a].v === undefined || ws[a].v === "") ws[a] = { ...top };
+    }
+  }
   const raw = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, defval: "", blankrows: false });
 
   let hi = 0;
