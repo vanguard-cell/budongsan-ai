@@ -56,9 +56,9 @@ function floorOf(ho: string, isShop = false): string {
   }
   return String(Math.floor(n / 100));
 }
-/** 층 — 매물 등록·명부 엑셀에 직접 적은 층이 있으면 그걸 먼저, 없으면 호수로 계산 (건의 #230) */
+/** 층 — 고객명단에서 직접 고친 층·명부 엑셀 층 → 매물 등록 층 → 호수로 계산 순 (건의 #230) */
 function floorOfRow(r: Row, isShop = false): string {
-  const t = (r.prop?.floor?.trim() || r.roster?.floor?.trim() || "").replace(/\s|층/g, "");
+  const t = (r.roster?.floor?.trim() || r.prop?.floor?.trim() || "").replace(/\s|층/g, "");
   if (t) {
     if (/^(-|비|B|b|지하)/.test(t)) return "지하";
     const n = parseInt(t.replace(/\D/g, ""), 10);
@@ -375,7 +375,8 @@ export default function RosterPage() {
     catch (e) { console.error("[roster] 수정 실패:", e); setMsg("❌ 저장하지 못했어요. 다시 해 주세요."); }
   };
 
-  const saveCo = async (r: Row, field: "owner2Name" | "owner2Phone", value: string) => {
+  // 층 칸도 같은 방식 — 매물·만기에만 있는 세대도 층을 적을 수 있음 (건의 #230)
+  const saveCo = async (r: Row, field: "owner2Name" | "owner2Phone" | "floor", value: string) => {
     if (!user) return;
     try {
       if (r.roster) { await saveCell(r.roster, field, value); return; }
@@ -570,7 +571,7 @@ export default function RosterPage() {
               <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 left-0 z-30 bg-white dark:bg-slate-900">동</th>
               <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 left-[70px] z-30 bg-white dark:bg-slate-900 border-r border-[var(--sidebar-bd)]">호수</th>
               {/* 층 칸 다시 표시 (건의 #230, 이전 #174에서 숨겼음) */}
-              {SHOW_FLOOR_COL && <th className="font-medium px-2 py-2.5 w-[44px] whitespace-nowrap sticky top-0 z-20 bg-white dark:bg-slate-900">층</th>}
+              {SHOW_FLOOR_COL && <th className="font-medium px-2 py-2.5 w-[56px] whitespace-nowrap sticky top-0 z-20 bg-white dark:bg-slate-900">층</th>}
               <th className="font-medium px-2 py-2.5 w-[56px] sticky top-0 z-20 bg-white dark:bg-slate-900">타입</th>
               <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 z-20 bg-white dark:bg-slate-900">면적㎡</th>
               <th className="font-medium px-2 py-2.5 w-[56px] sticky top-0 z-20 bg-white dark:bg-slate-900">향</th>
@@ -631,7 +632,10 @@ export default function RosterPage() {
                   <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>
                     {editable && u ? <EditCell value={u.ho} onSave={val => saveCell(u, "ho", val)} /> : r.ho}
                   </td>
-                  {SHOW_FLOOR_COL && <td className="px-2 py-1.5 tabular-nums whitespace-nowrap text-gray-500 dark:text-gray-400">{floorOfRow(r, complexName.includes("상가"))}</td>}
+                  {/* 층은 눌러서 직접 적을 수 있음 — 안 적으면 호수로 계산한 층을 흐리게 보여줌 (건의 #230) */}
+                  {SHOW_FLOOR_COL && <td className="px-1 py-1.5 tabular-nums whitespace-nowrap text-gray-700 dark:text-gray-300 max-w-0">
+                    <EditCell value={r.roster?.floor?.trim() || ""} placeholder={floorLabel(floorOfRow(r, complexName.includes("상가")))} onSave={val => saveCo(r, "floor", val)} />
+                  </td>}
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", fmtArea(v.area), { area: true })}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("direction", v.direction)}</td>
@@ -705,7 +709,9 @@ export default function RosterPage() {
 }
 
 /** 칸을 눌러 바로 고쳐 쓰기 — Enter·칸 밖 누르기 = 저장, Esc = 취소 */
-function EditCell({ value, onSave, phone, date }: { value: string; onSave: (v: string) => void; phone?: boolean; date?: boolean }) {
+const floorLabel = (f: string) => f === "" ? "" : f === "지하" ? "지하" : `${f}층`;
+
+function EditCell({ value, onSave, phone, date, placeholder }: { value: string; onSave: (v: string) => void; phone?: boolean; date?: boolean; placeholder?: string }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const cancelled = useRef(false);
@@ -726,7 +732,7 @@ function EditCell({ value, onSave, phone, date }: { value: string; onSave: (v: s
     return (
       <button type="button" onClick={() => { setDraft(value); setEditing(true); }}
         className="block w-full text-left truncate px-1.5 py-0.5 rounded border border-dashed border-[var(--sidebar-bd)] hover:bg-[var(--tint-blue-bg)] min-h-[1.5rem]" title={value || "눌러서 입력"}>
-        {value || <span className="text-gray-300 dark:text-gray-600">+</span>}
+        {value || (placeholder ? <span className="text-gray-400 dark:text-gray-500">{placeholder}</span> : <span className="text-gray-300 dark:text-gray-600">+</span>)}
       </button>
     );
   }
