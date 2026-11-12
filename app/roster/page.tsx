@@ -331,14 +331,15 @@ export default function RosterPage() {
       // 이미 있는 세대라도 엑셀의 고유번호는 저장해 둠 (매물·만기 프린트에서 찾아 쓰기 위해)
       const uniqueOnly: ParsedRoster["units"] = [];
       const uniqueFill: { id: string; uniqueNo: string }[] = [];
-      // 이미 명단에 있는 세대에 층이 비어 있으면 엑셀의 층을 채움 (건의 #230)
+      // 이미 명단에 있는 세대도 엑셀의 층으로 채움 (건의 #230)
       const floorFill: { id: string; floor: string }[] = [];
       for (const u of parsed.units) {
         const k = unitKey(u.complex, u.dong, u.ho);
         if (seen.has(k)) { dupInFile++; continue; }
         seen.add(k);
         const old = inR.get(k);
-        if (u.floor && old && !old.floor?.trim()) floorFill.push({ id: old.id, floor: u.floor });
+        // 엑셀에 적힌 층이 기준 — 이미 다른 층이 들어 있어도 엑셀 층으로 바꿈
+        if (u.floor && old && (old.floor?.trim() || "") !== u.floor) floorFill.push({ id: old.id, floor: u.floor });
         if (inPC.has(k)) {
           inPropOrContract++;
           // 매물·만기에만 있는 세대도 엑셀의 층은 명단에 저장 (건의 #230)
