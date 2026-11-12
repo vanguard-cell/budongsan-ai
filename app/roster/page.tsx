@@ -480,17 +480,26 @@ export default function RosterPage() {
           {isOwner && (selMode ? (
             <>
               <button onClick={() => setPicked(new Set(rows.flatMap(r => r.roster ? [r.roster.id] : [])))}
-                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 whitespace-nowrap">보이는 줄 모두 고르기</button>
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 whitespace-nowrap">모두 고르기</button>
               <button onClick={removePicked} disabled={!picked.size}
-                className="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 whitespace-nowrap disabled:opacity-40">{picked.size}줄 지우기</button>
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 whitespace-nowrap disabled:opacity-40">{picked.size}줄 삭제</button>
               <button onClick={exitSel}
                 className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 whitespace-nowrap">취소</button>
             </>
           ) : (
-            <button onClick={() => setSelMode(true)}
-              className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center gap-1.5 whitespace-nowrap">
-              <span className="material-symbols-outlined text-base">delete</span>여러 개 지우기
-            </button>
+            <>
+              {/* 건건이 골라 지우기 = 선택 삭제, 보이는 줄 한꺼번에 = 일괄삭제 (건의 #231) */}
+              <button onClick={() => setSelMode(true)}
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+                <span className="material-symbols-outlined text-base">checklist</span>선택 삭제
+              </button>
+              <button onClick={() => { setPicked(new Set(rows.flatMap(r => r.roster ? [r.roster.id] : []))); setSelMode(true); }}
+                disabled={!rows.some(r => r.roster)}
+                title="지금 보이는 명단 줄을 모두 골라요 — 빨간 삭제 버튼을 눌러야 지워져요"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center gap-1.5 whitespace-nowrap disabled:opacity-40">
+                <span className="material-symbols-outlined text-base">delete_sweep</span>일괄삭제
+              </button>
+            </>
           ))}
           <button onClick={exportExcel} disabled={!rows.length}
             className="px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center gap-1.5 disabled:opacity-40">
