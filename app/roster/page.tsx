@@ -28,7 +28,7 @@ import { downloadVcf, type VcardContact } from "@/lib/vcard";
 import { defaultRosterSms, loadRosterSms, saveRosterSms, rosterSmsHref, applyRemoteRosterSms, allRosterSms } from "./roster-sms";
 import { subscribeRosterSms, saveRosterSmsRemote } from "@/lib/roster-sms-db";
 
-const SHOW_FLOOR_COL = false;
+const SHOW_FLOOR_COL = true;
 const COMPLEX_STORAGE = "roster_complex";
 
 interface Row {
@@ -555,8 +555,8 @@ export default function RosterPage() {
             <tr className="border-b border-[var(--sidebar-bd)] text-[12px] text-gray-400 dark:text-gray-500 text-left">
               <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 left-0 z-30 bg-white dark:bg-slate-900">동</th>
               <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 left-[70px] z-30 bg-white dark:bg-slate-900 border-r border-[var(--sidebar-bd)]">호수</th>
-              {/* 층 칸은 화면에서 숨김 (건의 #174) — 필요하면 SHOW_FLOOR_COL 을 true 로 */}
-              {SHOW_FLOOR_COL && <th className="font-medium px-2 py-2.5 w-[44px] sticky top-0 z-20 bg-white dark:bg-slate-900">층</th>}
+              {/* 층 칸 다시 표시 (건의 #230, 이전 #174에서 숨겼음) */}
+              {SHOW_FLOOR_COL && <th className="font-medium px-2 py-2.5 w-[44px] whitespace-nowrap sticky top-0 z-20 bg-white dark:bg-slate-900">층</th>}
               <th className="font-medium px-2 py-2.5 w-[56px] sticky top-0 z-20 bg-white dark:bg-slate-900">타입</th>
               <th className="font-medium px-2 py-2.5 w-[70px] sticky top-0 z-20 bg-white dark:bg-slate-900">면적㎡</th>
               <th className="font-medium px-2 py-2.5 w-[56px] sticky top-0 z-20 bg-white dark:bg-slate-900">향</th>
@@ -617,7 +617,7 @@ export default function RosterPage() {
                   <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>
                     {editable && u ? <EditCell value={u.ho} onSave={val => saveCell(u, "ho", val)} /> : r.ho}
                   </td>
-                  {SHOW_FLOOR_COL && <td className="px-2 py-1.5 tabular-nums text-gray-500 dark:text-gray-400">{floorOf(r.ho, complexName.includes("상가"))}</td>}
+                  {SHOW_FLOOR_COL && <td className="px-2 py-1.5 tabular-nums whitespace-nowrap text-gray-500 dark:text-gray-400">{floorOf(r.ho, complexName.includes("상가"))}</td>}
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", fmtArea(v.area), { area: true })}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("direction", v.direction)}</td>
