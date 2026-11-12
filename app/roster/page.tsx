@@ -56,6 +56,17 @@ function floorOf(ho: string, isShop = false): string {
   }
   return String(Math.floor(n / 100));
 }
+/** 층 — 매물 등록 때 직접 적은 층이 있으면 그걸 먼저, 없으면 호수로 계산 (건의 #230) */
+function floorOfRow(r: Row, isShop = false): string {
+  const t = (r.prop?.floor || "").trim().replace(/\s|층/g, "");
+  if (t) {
+    if (/^(-|비|B|b|지하)/.test(t)) return "지하";
+    const n = parseInt(t.replace(/\D/g, ""), 10);
+    // 상가는 지하·1·2·3층만 따로 나눠 보므로 그 밖의 숫자는 호수 계산을 따름
+    if (isFinite(n) && n > 0 && (!isShop || n <= 3)) return String(n);
+  }
+  return floorOf(r.ho, isShop);
+}
 const hoNum = (ho: string) => {
   const n = parseInt(ho.replace(/\D/g, ""), 10);
   // 지하는 일반 호수보다 앞, 지하끼리는 숫자 작은 순
@@ -254,14 +265,14 @@ export default function RosterPage() {
   const floors = useMemo(() => {
     if (!isShopComplex) return [] as string[];
     const fl = (n: string) => (n === "지하" ? -1 : Number(n) || 0);
-    return [...new Set(allRows.map(r => floorOf(r.ho, true)))].sort((a, b) => fl(a) - fl(b));
+    return [...new Set(allRows.map(r => floorOfRow(r, true)))].sort((a, b) => fl(a) - fl(b));
   }, [allRows, isShopComplex]);
 
   const rows = useMemo(() => {
     const q = query.trim().replace(/\s+/g, "");
     return allRows.filter(r => {
       if (dong !== "all" && r.dong !== dong) return false;
-      if (floor !== "all" && floorOf(r.ho, true) !== floor) return false;
+      if (floor !== "all" && floorOfRow(r, true) !== floor) return false;
       if (source === "roster" && (r.prop || r.contract)) return false;
       if (source === "prop" && !r.prop) return false;
       if (source === "contract" && !r.contract) return false;
@@ -391,7 +402,7 @@ export default function RosterPage() {
     const data = rows.map(r => {
       const v = view(r);
       return {
-        "동": r.dong, "호수": r.ho, "층": floorOf(r.ho, complexName.includes("상가")), "타입": v.unitType, "전용면적(㎡)": v.area, "향": v.direction,
+        "동": r.dong, "호수": r.ho, "층": floorOfRow(r, complexName.includes("상가")), "타입": v.unitType, "전용면적(㎡)": v.area, "향": v.direction,
         "임대인": v.ownerName, "임대인 전화": v.ownerPhone, "공동명의": v.owner2Name, "공동명의 전화": v.owner2Phone, "임차인": v.tenantName, "임차인 전화": v.tenantPhone,
         "만기일": v.leaseEndDate, "등록 위치": [r.prop && "매물", r.contract && "만기", !r.prop && !r.contract && "명단"].filter(Boolean).join("·"),
         "메모": v.memo,
@@ -617,7 +628,7 @@ export default function RosterPage() {
                   <td className={`px-2 py-1.5 tabular-nums font-semibold sticky left-[70px] z-10 border-r border-[var(--sidebar-bd)] ${idTint || "bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"}`}>
                     {editable && u ? <EditCell value={u.ho} onSave={val => saveCell(u, "ho", val)} /> : r.ho}
                   </td>
-                  {SHOW_FLOOR_COL && <td className="px-2 py-1.5 tabular-nums whitespace-nowrap text-gray-500 dark:text-gray-400">{floorOf(r.ho, complexName.includes("상가"))}</td>}
+                  {SHOW_FLOOR_COL && <td className="px-2 py-1.5 tabular-nums whitespace-nowrap text-gray-500 dark:text-gray-400">{floorOfRow(r, complexName.includes("상가"))}</td>}
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("unitType", v.unitType)}</td>
                   <td className="px-1 py-1.5 tabular-nums text-gray-700 dark:text-gray-300 max-w-0">{cell("area", fmtArea(v.area), { area: true })}</td>
                   <td className="px-1 py-1.5 text-gray-700 dark:text-gray-300 max-w-0">{cell("direction", v.direction)}</td>
