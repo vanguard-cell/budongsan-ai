@@ -67,9 +67,17 @@ function floorOfRow(r: Row, isShop = false): string {
   return floorOf(r.ho, isShop);
 }
 const hoNum = (ho: string) => {
-  const n = parseInt(ho.replace(/\D/g, ""), 10);
+  // "203-1"처럼 가지번호가 있으면 앞 번호(203)로 정렬 — 203호 바로 밑에 오게 (건의 #230)
+  const n = parseInt(ho.split("-")[0].replace(/\D/g, ""), 10);
   // 지하는 일반 호수보다 앞, 지하끼리는 숫자 작은 순
   return /^(비|B|지하)/.test(ho) ? (isFinite(n) ? n : 0) - 1e7 : (isFinite(n) ? n : 0);
+};
+/** 가지번호 ("203-1" → 1, "203" → 0) */
+const hoSub = (ho: string) => {
+  const i = ho.indexOf("-");
+  if (i < 0) return 0;
+  const n = parseInt(ho.slice(i + 1).replace(/\D/g, ""), 10);
+  return isFinite(n) ? n : 0;
 };
 
 /** 같은 세대에 여러 건이면 진행 중인 것, 그중 최신 */
@@ -254,7 +262,7 @@ export default function RosterPage() {
       const r = row(u.dong, u.ho); if (!r.roster) r.roster = u;
     }
     return [...m.values()].sort((a, b) =>
-      (Number(a.dong) || 0) - (Number(b.dong) || 0) || hoNum(a.ho) - hoNum(b.ho));
+      (Number(a.dong) || 0) - (Number(b.dong) || 0) || hoNum(a.ho) - hoNum(b.ho) || hoSub(a.ho) - hoSub(b.ho));
   }, [properties, contracts, roster, complex]);
 
   const dongs = useMemo(() => [...new Set(allRows.map(r => r.dong))].sort((a, b) => (Number(a) || 0) - (Number(b) || 0)), [allRows]);
