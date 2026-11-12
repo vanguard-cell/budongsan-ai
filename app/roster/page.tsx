@@ -56,14 +56,13 @@ function floorOf(ho: string, isShop = false): string {
   }
   return String(Math.floor(n / 100));
 }
-/** 층 — 매물 등록 때 직접 적은 층이 있으면 그걸 먼저, 없으면 호수로 계산 (건의 #230) */
+/** 층 — 매물 등록·명부 엑셀에 직접 적은 층이 있으면 그걸 먼저, 없으면 호수로 계산 (건의 #230) */
 function floorOfRow(r: Row, isShop = false): string {
-  const t = (r.prop?.floor || "").trim().replace(/\s|층/g, "");
+  const t = (r.prop?.floor?.trim() || r.roster?.floor?.trim() || "").replace(/\s|층/g, "");
   if (t) {
     if (/^(-|비|B|b|지하)/.test(t)) return "지하";
     const n = parseInt(t.replace(/\D/g, ""), 10);
-    // 상가는 지하·1·2·3층만 따로 나눠 보므로 그 밖의 숫자는 호수 계산을 따름
-    if (isFinite(n) && n > 0 && (!isShop || n <= 3)) return String(n);
+    if (isFinite(n) && n > 0) return String(n);
   }
   return floorOf(r.ho, isShop);
 }
@@ -170,7 +169,7 @@ export default function RosterPage() {
     if (q) setQuery(q);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[] } | null>(null);
+  const [preview, setPreview] = useState<{ parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[]; floorFill: { id: string; floor: string }[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [selMode, setSelMode] = useState(false);   // 여러 줄 골라 지우기 (건의 #216)
@@ -312,11 +311,14 @@ export default function RosterPage() {
       // 이미 있는 세대라도 엑셀의 고유번호는 저장해 둠 (매물·만기 프린트에서 찾아 쓰기 위해)
       const uniqueOnly: ParsedRoster["units"] = [];
       const uniqueFill: { id: string; uniqueNo: string }[] = [];
+      // 이미 명단에 있는 세대에 층이 비어 있으면 엑셀의 층을 채움 (건의 #230)
+      const floorFill: { id: string; floor: string }[] = [];
       for (const u of parsed.units) {
         const k = unitKey(u.complex, u.dong, u.ho);
         if (seen.has(k)) { dupInFile++; continue; }
         seen.add(k);
         const old = inR.get(k);
+        if (u.floor && old && !old.floor?.trim()) floorFill.push({ id: old.id, floor: u.floor });
         if (inPC.has(k)) {
           inPropOrContract++;
           if (u.uniqueNo && !old) uniqueOnly.push(u);
@@ -330,7 +332,7 @@ export default function RosterPage() {
         }
         fresh.push(u);
       }
-      setPreview({ parsed, fresh, inPropOrContract, inRoster, dupInFile, uniqueOnly, uniqueFill });
+      setPreview({ parsed, fresh, inPropOrContract, inRoster, dupInFile, uniqueOnly, uniqueFill, floorFill });
     } catch (e) {
       console.error("[roster] 엑셀 읽기 실패:", e);
       setMsg("❌ 엑셀 파일을 읽지 못했어요. .xlsx 파일인지 확인해 주세요.");
@@ -343,9 +345,10 @@ export default function RosterPage() {
     try {
       const n = await addRosterUnits(user.agencyId, [...preview.fresh, ...preview.uniqueOnly].map(u => ({ ...u, createdAt: Date.now() })));
       for (const f of preview.uniqueFill) await setRosterUniqueNo(user.agencyId, f.id, f.uniqueNo);
+      for (const f of preview.floorFill) await updateRosterField(user.agencyId, f.id, "floor", f.floor);
       const first = preview.fresh[0];
       if (first) setComplex(complexKey(first.complex));
-      setMsg(`✅ ${preview.fresh.length}세대를 고객명단에 추가했어요.${n - preview.fresh.length + preview.uniqueFill.length > 0 ? ` (고유번호 ${n - preview.fresh.length + preview.uniqueFill.length}세대 저장)` : ""}`);
+      setMsg(`✅ ${preview.fresh.length}세대를 고객명단에 추가했어요.${n - preview.fresh.length + preview.uniqueFill.length > 0 ? ` (고유번호 ${n - preview.fresh.length + preview.uniqueFill.length}세대 저장)` : ""}${preview.floorFill.length ? ` (층 ${preview.floorFill.length}세대 채움)` : ""}`);
       setPreview(null);
     } catch (e) {
       console.error("[roster] 저장 실패:", e);
@@ -740,13 +743,14 @@ function EditCell({ value, onSave, phone, date }: { value: string; onSave: (v: s
 }
 
 function UploadPreview({ preview, busy, onCancel, onConfirm }: {
-  preview: { parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[] };
+  preview: { parsed: ParsedRoster; fresh: ParsedRoster["units"]; inPropOrContract: number; inRoster: number; dupInFile: number; uniqueOnly: ParsedRoster["units"]; uniqueFill: { id: string; uniqueNo: string }[]; floorFill: { id: string; floor: string }[] };
   busy: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const { parsed, fresh, inPropOrContract, inRoster, dupInFile, uniqueOnly, uniqueFill } = preview;
+  const { parsed, fresh, inPropOrContract, inRoster, dupInFile, uniqueOnly, uniqueFill, floorFill } = preview;
   const uniqueCount = uniqueOnly.length + uniqueFill.length;
+  const floorCount = floorFill.length;
   const complexes = [...new Set(parsed.units.map(u => u.complex))];
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center" onClick={onCancel}>
@@ -760,6 +764,7 @@ function UploadPreview({ preview, busy, onCancel, onConfirm }: {
           <Stat label="이미 매물·만기에 있음" value={inPropOrContract} />
           <Stat label="이미 명단에 있음" value={inRoster} />
           {uniqueCount > 0 && <Stat label="고유번호만 저장" value={uniqueCount} strong />}
+          {floorCount > 0 && <Stat label="층 채우기" value={floorCount} strong />}
         </div>
         {(dupInFile > 0 || parsed.skipped > 0) && (
           <p className="text-[11px] text-gray-500 mt-2">
@@ -777,9 +782,9 @@ function UploadPreview({ preview, busy, onCancel, onConfirm }: {
 
         <div className="flex gap-2 mt-5">
           <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300">취소</button>
-          <button onClick={onConfirm} disabled={busy || fresh.length + uniqueCount === 0}
+          <button onClick={onConfirm} disabled={busy || fresh.length + uniqueCount + floorCount === 0}
             className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-white bg-[var(--brand-blue,#2383E2)] disabled:opacity-40">
-            {busy ? "저장 중…" : fresh.length ? `${fresh.length}세대 추가${uniqueCount ? " + 고유번호 저장" : ""}` : uniqueCount ? "고유번호 저장" : "추가할 세대 없음"}
+            {busy ? "저장 중…" : fresh.length ? `${fresh.length}세대 추가${uniqueCount ? " + 고유번호 저장" : ""}${floorCount ? " + 층" : ""}` : uniqueCount ? `고유번호${floorCount ? "·층" : ""} 저장` : floorCount ? `층 ${floorCount}세대 채우기` : "추가할 세대 없음"}
           </button>
         </div>
       </div>

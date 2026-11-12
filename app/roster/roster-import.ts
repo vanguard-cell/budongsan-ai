@@ -47,12 +47,12 @@ const DONG_HO = /^(\d{2,4})\s*[-동]\s*((?:비|B)?\d{2,5})\s*호?$/;
 
 type Col =
   | "complex" | "dongHo" | "dong" | "ho" | "area" | "unitType" | "direction" | "rooms" | "uniqueNo"
-  | "ownerName" | "ownerPhone" | "tenantName" | "tenantPhone" | "leaseEndDate" | "memo";
+  | "ownerName" | "ownerPhone" | "tenantName" | "tenantPhone" | "leaseEndDate" | "memo" | "floor";
 
 const COL_LABEL: Record<Col, string> = {
   complex: "단지", dongHo: "동-호", dong: "동", ho: "호수", area: "전용면적", unitType: "타입", direction: "향",
   rooms: "방수", uniqueNo: "고유번호", ownerName: "임대인", ownerPhone: "임대인 전화", tenantName: "임차인",
-  tenantPhone: "임차인 전화", leaseEndDate: "만기일", memo: "메모",
+  tenantPhone: "임차인 전화", leaseEndDate: "만기일", memo: "메모", floor: "층",
 };
 
 /** 칸 위치 찾기 — 제목 + 실제 값 모양으로 판단 */
@@ -67,6 +67,7 @@ function findColumns(header: unknown[], body: unknown[][]): Partial<Record<Col, 
     const set = (c: Col) => { if (at[c] === undefined) at[c] = i; };
     if (!h) continue;
     if (h.includes("고유번호")) set("uniqueNo");
+    else if (h === "층" || h === "층수" || h === "해당층") set("floor");
     else if (/단지|주소|건물|소재지/.test(h)) set("complex");
     else if (/전용|면적/.test(h)) set("area");
     else if (/타입|평면/.test(h)) set("unitType");
@@ -153,6 +154,7 @@ export async function parseRosterFile(file: File, fallbackComplex: string): Prom
       tenantPhone: cleanPhone(get(r, "tenantPhone")),
       leaseEndDate: cleanDate(get(r, "leaseEndDate")),
       memo: str(get(r, "memo")),
+      floor: str(get(r, "floor")).replace(/\s|층/g, ""),
     });
   }
   const columns = (Object.keys(at) as Col[]).map(c => COL_LABEL[c]);
