@@ -92,13 +92,10 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
   const complexAddr = (info?.address || "").trim();
   const extraAddr = complexAddr && !title.includes(complexAddr) ? complexAddr : "";
   // 주소를 맨 위 한 줄로 두고, 항목마다 줄을 나눠(▪) 한눈에 구분되게 (건의 #232)
-  // 단지 주소가 있으면 '단지 주소 + 동·호'만 쓰고 단지 이름 줄은 생략
-  const smsAddr = extraAddr
-    ? [extraAddr,
-       p.dong && !extraAddr.includes(`${p.dong}동`) ? `${p.dong}동` : "",
-       p.ho && !extraAddr.includes(`${p.ho}호`) ? `${p.ho}호` : ""].filter(Boolean).join(" ")
-    : title;
-  const smsHead = `📍 주소: ${smsAddr}`;
+  // 단지 주소가 있으면 주소 줄 바로 아래에 단지 이름·동·호 줄을 둔다 (건의 #232 — 단지 이름도 나와야 함)
+  const smsHead = extraAddr
+    ? `📍 주소: ${extraAddr}\n🏢 단지: ${title}`
+    : `📍 주소: ${title}`;
   const smsBody = [
     [p.propertyType, p.dealType].filter(Boolean).join(" · "),
     `${dealLabel}: ${price}`,
