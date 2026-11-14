@@ -88,8 +88,13 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
   const title = addressStr(p);
   const occLabel = p.occupancy ? (({ owner: "주인거주", vacant: "공실", tenant: "임차인 (임대중)", jeonse: "임차인 (전세)", wolse: "임차인 (월세)" } as Record<string, string>)[p.occupancy] || "") : "";
   // 손님에게 문자로 보낼 글 (연락처·고유번호·비번·메모 없이)
+  // 단지 주소(단지 공통 정보의 '주소' 칸)도 문자에 넣는다 — 매물 주소와 같으면 한 번만
+  const complexAddr = (info?.address || "").trim();
+  const extraAddr = complexAddr && !title.includes(complexAddr) ? complexAddr : "";
   const smsText = [
-    `[매물 안내] ${title}`,
+    "[매물 안내]",
+    extraAddr ? `매물: ${title}` : `주소: ${title}`,
+    extraAddr ? `주소: ${extraAddr}` : "",
     [p.propertyType, p.dealType].filter(Boolean).join(" · "),
     `${dealLabel}: ${price}`,
     p.area ? `전용면적: ${p.area}㎡${pyeong ? ` (${pyeong}평)` : ""}` : "",
