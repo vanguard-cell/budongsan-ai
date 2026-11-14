@@ -91,10 +91,15 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
   // 단지 주소(단지 공통 정보의 '주소' 칸)도 문자에 넣는다 — 매물 주소와 같으면 한 번만
   const complexAddr = (info?.address || "").trim();
   const extraAddr = complexAddr && !title.includes(complexAddr) ? complexAddr : "";
-  const smsText = [
-    "[매물 안내]",
-    extraAddr ? `매물: ${title}` : `주소: ${title}`,
-    extraAddr ? `주소: ${extraAddr}` : "",
+  // 주소를 맨 위 한 줄로 두고, 항목마다 줄을 나눠(▪) 한눈에 구분되게 (건의 #232)
+  // 단지 주소가 있으면 '단지 주소 + 동·호'만 쓰고 단지 이름 줄은 생략
+  const smsAddr = extraAddr
+    ? [extraAddr,
+       p.dong && !extraAddr.includes(`${p.dong}동`) ? `${p.dong}동` : "",
+       p.ho && !extraAddr.includes(`${p.ho}호`) ? `${p.ho}호` : ""].filter(Boolean).join(" ")
+    : title;
+  const smsHead = `📍 주소: ${smsAddr}`;
+  const smsBody = [
     [p.propertyType, p.dealType].filter(Boolean).join(" · "),
     `${dealLabel}: ${price}`,
     p.area ? `전용면적: ${p.area}㎡${pyeong ? ` (${pyeong}평)` : ""}` : "",
@@ -104,8 +109,8 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
     info?.approvalDate ? `사용승인일: ${fmtApprovalDate(info.approvalDate)}` : "",
     info?.households ? `세대수: ${fmtNum(info.households)}세대` : "",
     p.options ? `옵션: ${p.options}` : "",
-    agency ? `\n${agency}` : "",
-  ].filter(Boolean).join("\n");
+  ].filter(Boolean).map(line => `▪ ${line}`).join("\n");
+  const smsText = [smsHead, `[매물 안내]\n${smsBody}`, agency].filter(Boolean).join("\n\n");
   const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
 <style>
