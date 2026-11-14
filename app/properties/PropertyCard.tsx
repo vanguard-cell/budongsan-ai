@@ -386,7 +386,7 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           className="whitespace-nowrap text-[11px] px-2.5 py-1 rounded-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
           🖨️ 프린트
         </button>
-        <button onClick={() => printProperty(p, complexInfo, uniqueNo, true)} title="손님 브리핑용 — 집주인·세입자 연락처, 호수, 메모를 빼고 한 장으로"
+        <button onClick={() => printProperty(p, complexInfo, uniqueNo, true)} title="손님 브리핑용 — 집주인·세입자 연락처, 메모를 빼고 한 장으로 (문자로도 보낼 수 있어요)"
           className="whitespace-nowrap text-[11px] px-2.5 py-1 rounded-full border border-sky-300 dark:border-sky-700 bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 font-semibold hover:bg-sky-100 transition-colors">
           👥 손님용
         </button>

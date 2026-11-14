@@ -28,17 +28,15 @@ function fmtPhone(v?: string): string {
   return t;
 }
 
-/** 호수 → 층 (1203 → 12층, 503 → 5층). 숫자 3자리 이상일 때만, 아니면 빈칸 */
-function hoToFloor(ho?: string): string {
-  const d = (ho || "").replace(/\D/g, "");
-  if (d.length < 3) return "";
-  const f = parseInt(d.slice(0, -2), 10);
-  return f > 0 ? `${f}층` : "";
+/** 문자 작성창 주소 — 받는 사람은 비워 두고 내용만 채운다 (아이폰은 &, 그 외는 ?) */
+function smsHref(body: string): string {
+  const sep = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?";
+  return `sms:${sep}body=${encodeURIComponent(body)}`;
 }
 
 /**
- * briefing=true — 손님 브리핑용: 집주인·세입자 이름/전화, 호수, 고유번호, 공동비번, 메모를 뺀다.
- * (호수 대신 층만 보여준다)
+ * briefing=true — 손님 브리핑용: 집주인·세입자 이름/전화, 고유번호, 공동비번, 메모를 뺀다.
+ * (동·호수는 보여준다. 미리보기 위 '문자로 보내기'로 같은 내용을 글로 보낼 수 있다)
  */
 export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string, briefing = false) {
   const price = p.dealType === "월세"
@@ -58,7 +56,7 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
     `<div class="box"><div class="bt">${esc(title)}</div><div class="bb">${body}</div></div>`;
   const cells = [
     cell("종류", [p.propertyType, p.dealType].filter(Boolean).join(" · ")),
-    cell("동", p.dong), briefing ? cell("층", hoToFloor(p.ho)) : cell("호", p.ho),
+    cell("동", p.dong), cell("호", p.ho),
     cell("전용면적", p.area ? `${p.area}㎡${pyeong ? ` (${pyeong}평)` : ""}` : ""),
     cell("타입", p.unitType), cell("방향", p.direction),
     cell("방 수", p.rooms ? `${p.rooms}개` : ""),
@@ -87,11 +85,22 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
     cell("세입자", phone(p.tenantName, p.tenantPhone), 3),
   ].join("");
   const agency = getAgencyDisplayName();
-  // 브리핑용 제목: 주소에서 호수를 빼고 동까지만
-  const title = briefing
-    ? [p.ho ? p.address.replace(`${p.ho}호`, "").replace(/\s+/g, " ").trim() : p.address,
-       p.dong && !p.address.includes(`${p.dong}동`) ? `${p.dong}동` : ""].filter(Boolean).join(" ")
-    : addressStr(p);
+  const title = addressStr(p);
+  const occLabel = p.occupancy ? (({ owner: "주인거주", vacant: "공실", tenant: "임차인 (임대중)", jeonse: "임차인 (전세)", wolse: "임차인 (월세)" } as Record<string, string>)[p.occupancy] || "") : "";
+  // 손님에게 문자로 보낼 글 (연락처·고유번호·비번·메모 없이)
+  const smsText = [
+    `[매물 안내] ${title}`,
+    [p.propertyType, p.dealType].filter(Boolean).join(" · "),
+    `${dealLabel}: ${price}`,
+    p.area ? `전용면적: ${p.area}㎡${pyeong ? ` (${pyeong}평)` : ""}` : "",
+    [p.unitType ? `타입 ${p.unitType}` : "", p.direction ? `${p.direction}향`.replace(/향향$/, "향") : "", p.rooms ? `방 ${p.rooms}개` : ""].filter(Boolean).join(" · "),
+    occLabel ? `입주 상태: ${occLabel}` : "",
+    p.leaseEndDate && p.occupancy !== "owner" && p.occupancy !== "vacant" ? `임대차 만기: ${p.leaseEndDate}` : "",
+    info?.approvalDate ? `사용승인일: ${fmtApprovalDate(info.approvalDate)}` : "",
+    info?.households ? `세대수: ${fmtNum(info.households)}세대` : "",
+    p.options ? `옵션: ${p.options}` : "",
+    agency ? `\n${agency}` : "",
+  ].filter(Boolean).join("\n");
   const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
 <style>
@@ -126,7 +135,7 @@ ${briefing ? "" : `${box("연락처", people)}
   wrap.id = "print-property-preview";
   wrap.style.cssText = "position:fixed;inset:0;z-index:99999;background:#e5e7eb;display:flex;flex-direction:column";
   const bar = document.createElement("div");
-  bar.style.cssText = "display:flex;gap:8px;padding:10px;background:#111;justify-content:flex-end";
+  bar.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;padding:10px;background:#111;justify-content:flex-end";
   const btnCss = "padding:10px 18px;border-radius:8px;font-size:16px;font-weight:700;border:0;white-space:nowrap";
   const close = document.createElement("button");
   close.textContent = "닫기";
@@ -143,7 +152,15 @@ ${briefing ? "" : `${box("연락처", people)}
     if (!cw) return;
     try { cw.focus(); cw.print(); } catch { alert("프린트 창을 열 수 없어요."); }
   };
-  bar.append(close, doPrint);
+  if (briefing) {
+    const sms = document.createElement("a");
+    sms.textContent = "💬 문자로 보내기";
+    sms.href = smsHref(smsText);
+    sms.style.cssText = btnCss + ";background:#38bdf8;color:#111;text-decoration:none;display:inline-block";
+    bar.append(close, sms, doPrint);
+  } else {
+    bar.append(close, doPrint);
+  }
   wrap.append(bar, f);
   document.body.appendChild(wrap);
 }
