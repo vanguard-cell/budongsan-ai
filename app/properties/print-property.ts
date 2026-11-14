@@ -28,7 +28,19 @@ function fmtPhone(v?: string): string {
   return t;
 }
 
-export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string) {
+/** 호수 → 층 (1203 → 12층, 503 → 5층). 숫자 3자리 이상일 때만, 아니면 빈칸 */
+function hoToFloor(ho?: string): string {
+  const d = (ho || "").replace(/\D/g, "");
+  if (d.length < 3) return "";
+  const f = parseInt(d.slice(0, -2), 10);
+  return f > 0 ? `${f}층` : "";
+}
+
+/**
+ * briefing=true — 손님 브리핑용: 집주인·세입자 이름/전화, 호수, 고유번호, 공동비번, 메모를 뺀다.
+ * (호수 대신 층만 보여준다)
+ */
+export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string, briefing = false) {
   const price = p.dealType === "월세"
     ? `${p.price ? fmtNum(p.price) : "0"} / ${p.monthly ? fmtNum(p.monthly) : "0"} 만원`
     : p.price ? `${fmtNum(p.price)} 만원` : "—";
@@ -46,7 +58,7 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
     `<div class="box"><div class="bt">${esc(title)}</div><div class="bb">${body}</div></div>`;
   const cells = [
     cell("종류", [p.propertyType, p.dealType].filter(Boolean).join(" · ")),
-    cell("동", p.dong), cell("호", p.ho),
+    cell("동", p.dong), briefing ? cell("층", hoToFloor(p.ho)) : cell("호", p.ho),
     cell("전용면적", p.area ? `${p.area}㎡${pyeong ? ` (${pyeong}평)` : ""}` : ""),
     cell("타입", p.unitType), cell("방향", p.direction),
     cell("방 수", p.rooms ? `${p.rooms}개` : ""),
@@ -54,13 +66,13 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
     cell("현재 보증금 / 월세", p.tenantDeposit || p.tenantMonthly ? `${man(p.tenantDeposit) || "0"} / ${man(p.tenantMonthly) || "0"} 만원` : "", 2),
     cell("임대차 만기", p.leaseEndDate),
     ...(p.occupancy ? [cell("입주 상태", ({ owner: "주인거주", vacant: "공실", tenant: "임차인 (임대중)", jeonse: "임차인 (전세)", wolse: "임차인 (월세)" } as Record<string, string>)[p.occupancy] || "", 3)] : []),
-    cell("고유번호", p.uniqueNo || uniqueNo || "", 3),
+    ...(briefing ? [] : [cell("고유번호", p.uniqueNo || uniqueNo || "", 3)]),
     cell("옵션", p.options, 3),
     cell("대출", p.loan ? fmtLoanView(p.loan) : "", 3),
   ].join("");
   const complexCells = [
-    ...(info?.approvalDate || info?.households || info?.commonPassword
-      ? [cell("사용승인일", fmtApprovalDate(info.approvalDate), 1, true), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : "", 1, true), cell("공동비번", info.commonPassword || "", 1, true)]
+    ...(info?.approvalDate || info?.households || (!briefing && info?.commonPassword)
+      ? [cell("사용승인일", fmtApprovalDate(info.approvalDate), 1, true), cell("세대수", info.households ? `${fmtNum(info.households)}세대` : "", 1, true), briefing ? cell("", "", 1, true) : cell("공동비번", info.commonPassword || "", 1, true)]
       : []),
     ...(info?.address || info?.minFloor || info?.maxFloor
       ? [cell("주소", info.address || "", 1, true), cell("최저층", info.minFloor ? `${info.minFloor}층` : "", 1, true), cell("최고층", info.maxFloor ? `${info.maxFloor}층` : "", 1, true)]
@@ -75,8 +87,13 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
     cell("세입자", phone(p.tenantName, p.tenantPhone), 3),
   ].join("");
   const agency = getAgencyDisplayName();
+  // 브리핑용 제목: 주소에서 호수를 빼고 동까지만
+  const title = briefing
+    ? [p.ho ? p.address.replace(`${p.ho}호`, "").replace(/\s+/g, " ").trim() : p.address,
+       p.dong && !p.address.includes(`${p.dong}동`) ? `${p.dong}동` : ""].filter(Boolean).join(" ")
+    : addressStr(p);
   const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(addressStr(p))}</title>
+<title>${esc(title)}</title>
 <style>
   *{box-sizing:border-box}
   body{font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#000;margin:0;padding:8px}
@@ -94,12 +111,12 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
   .memo{min-height:50px;padding:6px;font-size:12px;white-space:pre-wrap;word-break:break-all}
   @media print{body{padding:0}@page{margin:6mm}}
 </style></head><body>
-<h1>${esc(addressStr(p))}</h1>
-<div class="sub">${agency ? `${esc(agency)} · ` : ""}출력일 ${kstDateStr()}</div>
+<h1>${esc(title)}</h1>
+<div class="sub">${briefing ? "매물 브리핑 · " : ""}${agency ? `${esc(agency)} · ` : ""}출력일 ${kstDateStr()}</div>
 ${box("매물 정보", cells)}
 ${complexCells ? box("단지 공통 정보", complexCells) : ""}
-${box("연락처", people)}
-<div class="box"><div class="bt">메모 / 상담 내용</div><div class="memo">${esc(p.memo)}</div></div>
+${briefing ? "" : `${box("연락처", people)}
+<div class="box"><div class="bt">메모 / 상담 내용</div><div class="memo">${esc(p.memo)}</div></div>`}
 <script>window.onload=function(){setTimeout(function(){window.print()},200)}</script>
 </body></html>`;
   // 새 창 대신 화면 안에 미리보기를 띄우고, 위의 '인쇄' 버튼으로 인쇄 (휴대폰에서도 미리보기 가능)
