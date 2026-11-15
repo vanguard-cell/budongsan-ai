@@ -101,11 +101,12 @@ export function printProperty(p: Property, info?: ComplexInfo, uniqueNo?: string
     `${dealLabel}: ${price}`,
     p.area ? `전용면적: ${p.area}㎡${pyeong ? ` (${pyeong}평)` : ""}` : "",
     [p.unitType ? `타입 ${p.unitType}` : "", p.direction ? `${p.direction}향`.replace(/향향$/, "향") : "", p.rooms ? `방 ${p.rooms}개` : ""].filter(Boolean).join(" · "),
+    // 옵션은 맨 아래에 묻혀 안 보였다 — 면적·타입 바로 아래로 올림 (건의 #233)
+    p.options ? `옵션: ${p.options}` : "",
     occLabel ? `입주 상태: ${occLabel}` : "",
     p.leaseEndDate && p.occupancy !== "owner" && p.occupancy !== "vacant" ? `임대차 만기: ${p.leaseEndDate}` : "",
     info?.approvalDate ? `사용승인일: ${fmtApprovalDate(info.approvalDate)}` : "",
     info?.households ? `세대수: ${fmtNum(info.households)}세대` : "",
-    p.options ? `옵션: ${p.options}` : "",
   ].filter(Boolean).map(line => `▪ ${line}`).join("\n");
   const smsText = [smsHead, `[매물 안내]\n${smsBody}`, agency].filter(Boolean).join("\n\n");
   const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
