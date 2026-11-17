@@ -22,7 +22,8 @@ const STYPE_COLORS: Record<string, string> = {
 };
 
 /* ── 매물 카드 ── */
-export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo, onToggleCp, onToggleHold, complexInfo, holding }: {
+export default function PropertyCard({ property: p, schedules, isPinned, onPin, onEdit, onClose, onDelete, onReopen, onProgress, onCloneSameComplex, onSaveMemo, onToggleCp, onToggleHold, complexInfo, holding, isLowest }: {
+  isLowest?: boolean; // 같은 단지·전용면적·거래 중 최저가 (건의 #235)
   holding?: { count: number; label: string; others: string[]; lines: string[] };
   complexInfo?: import("@/lib/properties-db").ComplexInfo;
   property: Property;
@@ -156,6 +157,9 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           <div className="flex items-center gap-x-2 min-w-0">
             {isHold && (
               <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-700 text-white font-bold" title="보류 중인 매물">⏸ 보류</span>
+            )}
+            {isLowest && !isClosed && (
+              <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-red-600 text-white font-bold" title="같은 단지·같은 전용면적·같은 거래 매물 중 가장 싼 매물">최저가</span>
             )}
             <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-gray-900 dark:text-gray-100" title={addressStr(p)}>
               <AddressWithUnit text={addressStr(p)} />

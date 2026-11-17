@@ -542,6 +542,31 @@ export default function PropertiesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [properties, viewMode, selectedComplex, selectedDong, filterPropType]);
 
+  // 건의 #235: 같은 단지·같은 전용면적·같은 거래(매매/전세) 중 가장 싼 매물 → 카드에 '최저가' 표시
+  // 계약 진행 중·보류·종료 매물과 상가·사무실은 비교에서 뺀다. 비교할 매물이 2개 이상일 때만 표시 (같은 값이면 모두 표시)
+  const lowestIds = useMemo(() => {
+    const groups = new Map<string, { id: string; price: number }[]>();
+    for (const p of properties) {
+      if (p.status !== "active" || isContracted(p) || p.onHold) continue;
+      if (p.dealType !== "매매" && p.dealType !== "전세") continue;
+      if (p.propertyType === "상가" || p.propertyType === "사무실") continue;
+      const c = complexKey(p), a = areaLabel(p), price = priceNum(p);
+      if (!c || !a || price <= 0) continue;
+      const k = `${p.propertyType || ""}|${c}|${a}|${p.dealType}`;
+      const arr = groups.get(k);
+      if (arr) arr.push({ id: p.id, price }); else groups.set(k, [{ id: p.id, price }]);
+    }
+    const ids = new Set<string>();
+    for (const arr of groups.values()) {
+      if (arr.length < 2) continue;
+      const min = Math.min(...arr.map(x => x.price));
+      if (arr.some(x => x.price > min)) for (const x of arr) if (x.price === min) ids.add(x.id);
+    }
+    return ids;
+    // complexKey·areaLabel·priceNum·isContracted 는 매물 값으로만 결과가 바뀌는 함수라 뺌
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [properties]);
+
   // 건의 #213: 선택 단지(·동·면적)에 있는 향 종류
   const dirList = useMemo(() => {
     if (!selectedComplex) return [];
@@ -1279,6 +1304,7 @@ export default function PropertiesPage() {
                       holding={holdingOf(p.ownerPhone, p.address, p.dong, p.ho, (p.extraContacts || [])[0]?.phone)}
                       complexInfo={complexInfoMap[complexInfoKey(p.propertyType || "", baseAddr(p))]}
                       schedules={schedules.filter(s => s.propertyId === p.id)}
+                      isLowest={lowestIds.has(p.id)}
                       isPinned={pinnedIds.has(p.id)}
                       onPin={() => togglePin(p.id)}
                       onEdit={() => setEditing({ ...p })}
