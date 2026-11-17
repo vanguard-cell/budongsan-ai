@@ -194,6 +194,17 @@ export default function PropertyCard({ property: p, schedules, isPinned, onPin, 
           <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0">
             <span className={`flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded font-medium ${DEAL_BADGE[p.dealType] || "bg-gray-100 text-gray-600"}`}>{p.dealType}</span>
             <span className="flex-shrink-0 whitespace-nowrap text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">{priceStr}</span>
+            {/* 상가·사무실 월세: 전용면적 기준 평당 월세 (건의 #236) */}
+            {(() => {
+              if (p.dealType !== "월세" || (p.propertyType !== "상가" && p.propertyType !== "사무실")) return null;
+              const m2 = parseFloat(String(p.area || "").replace(/[^\d.]/g, ""));
+              const rent = parseFloat(String(p.monthly || "").replace(/[^\d.]/g, ""));
+              if (!(m2 > 0) || !(rent > 0)) return null;
+              const per = Math.round(rent / (m2 / 3.3058) * 10) / 10;
+              return (
+                <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 font-bold tabular-nums" title="월세 ÷ 전용면적(평)">평당 {per.toLocaleString()}만</span>
+              );
+            })()}
             {isClosed && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-400">거래완료</span>}
             {hasContractDate && !isClosed && <span className="flex-shrink-0 whitespace-nowrap text-[11px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold">계약진행중</span>}
             {p.occupancy && p.occupancy !== "tenant" && p.occupancy !== "owner" && p.occupancy !== "vacant" && <span className="whitespace-nowrap text-[11px] text-gray-600 dark:text-gray-400">{OCC_LABEL[p.occupancy]}</span>}
