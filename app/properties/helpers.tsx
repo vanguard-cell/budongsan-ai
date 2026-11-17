@@ -83,7 +83,17 @@ export function calcNetYield(dealType: string, propertyType: string, price: stri
   return { yieldPct: (m * 12) / invest * 100, tax, fee, taxRate, feeRate, invest };
 }
 
-/** 날짜·시간 한국식 표시 — "2026-06-17" → "6/17(화)" / "2026-06-17T14:00" → "6/17(화) 14:00" */
+/** 시간 오전·오후 표시 — "14:00" → "오후 2:00", "09:30" → "오전 9:30" (건의 #234). 모양이 다르면 그대로 */
+export function fmtAmPm(t?: string | null): string {
+  const m = /^(\d{1,2}):(\d{2})/.exec((t || "").trim());
+  if (!m) return t || "";
+  const h = Number(m[1]);
+  if (h > 23) return t || "";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h < 12 ? "오전" : "오후"} ${h12}:${m[2]}`;
+}
+
+/** 날짜·시간 한국식 표시 — "2026-06-17" → "6/17(화)" / "2026-06-17T14:00" → "6/17(화) 오후 2:00" */
 export function formatDateKo(v: string): string {
   if (!v) return "";
   const hasTime = v.includes("T");
@@ -96,7 +106,7 @@ export function formatDateKo(v: string): string {
   if (!hasTime) return base;
   const hh = String(d.getHours()).padStart(2, "0");
   const mi = String(d.getMinutes()).padStart(2, "0");
-  return `${base} ${hh}:${mi}`;
+  return `${base} ${fmtAmPm(`${hh}:${mi}`)}`;
 }
 
 /** 한국식 단위 보조 — "29600" → "2억 9,600" */

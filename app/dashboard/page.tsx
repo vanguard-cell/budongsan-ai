@@ -26,6 +26,7 @@ import type { Customer } from "@/app/customers/customer-types";
 import { dDay } from "@/app/expiry/contracts";
 import { followUpDDay, followUpSeverity } from "@/app/customers/customer-types";
 import SideDrawer, { DrawerItem, DrawerEmpty, type ContactKind } from "@/app/components/SideDrawer";
+import { fmtAmPm } from "@/app/properties/helpers";
 
 /* 상태색 — 의미 고정 (메모리 확정안) */
 const C = {
@@ -202,7 +203,7 @@ export default function DashboardPage() {
   /* 카드 미리보기 텍스트 */
   const s0 = todaySchedules[0];
   const previewSchedule = s0
-    ? `${s0.time} ${s0.scheduleType} · ${s0.visitorName || s0.propertyAddress || "일정"}`
+    ? `${fmtAmPm(s0.time)} ${s0.scheduleType} · ${s0.visitorName || s0.propertyAddress || "일정"}`
     : null;
   const b0 = balanceItems[0];
   const previewBalance = b0
@@ -389,7 +390,7 @@ export default function DashboardPage() {
           todaySchedules.map(s => (
             <DrawerItem
               key={s.id}
-              title={`${s.time} · ${s.scheduleType}`}
+              title={`${fmtAmPm(s.time)} · ${s.scheduleType}`}
               sub={[s.visitorName, s.propertyAddress, s.memo].filter(Boolean).join(" · ")}
               badge="오늘"
               badgeColor={C.orange}

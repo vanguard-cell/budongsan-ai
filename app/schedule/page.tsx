@@ -19,7 +19,7 @@ import SideDrawer from "@/app/components/SideDrawer";
 import { downloadIcs } from "@/lib/ics";
 import KoreanDatePicker from "@/app/KoreanDatePicker";
 import { kstDateStr } from "@/lib/kst";
-import { PROPERTY_TYPES, fmtKoreanNum, formatDateKo } from "@/app/properties/helpers";
+import { PROPERTY_TYPES, fmtKoreanNum, formatDateKo, fmtAmPm } from "@/app/properties/helpers";
 import { stripUnit, complexShortName } from "@/lib/address";
 
 /* ── 타입 ── */
@@ -575,7 +575,7 @@ export default function SchedulePage() {
                 <div>
                   <div className="flex flex-wrap gap-1.5 mb-1.5">
                     <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${TYPE_COLORS[s.scheduleType]}`}>{s.scheduleType}</span>
-                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{s.date} {s.time}</span>
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{s.date} {fmtAmPm(s.time)}</span>
                     {s.status === "done" && <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-green-100 text-green-700">완료</span>}
                   </div>
                   <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{s.propertyAddress || "주소 미입력"}</p>
@@ -604,7 +604,7 @@ export default function SchedulePage() {
                     <span className="px-2 py-0.5 rounded-md text-[11px] font-bold text-white" style={{ backgroundColor: accent }}>
                       {KIND_LABEL[it.propertyKind]}
                     </span>
-                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{p.dealType} · {it.date}{it.time ? ` ${it.time}` : ""}</span>
+                    <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300">{p.dealType} · {it.date}{it.time ? ` ${fmtAmPm(it.time)}` : ""}</span>
                   </div>
                   <p className="font-bold text-[15px] text-gray-900 dark:text-gray-100 break-all">{p.address}</p>
                 </div>
@@ -653,7 +653,7 @@ function visitSmsHref(phone: string, name: string, date: string, list: Schedule[
   const [, m, d] = date.split("-");
   const when = `${Number(m)}월 ${Number(d)}일`;
   const agency = getAgencyDisplayName();
-  const times = visits.map(v => v.time).filter(Boolean).join(", ");
+  const times = visits.map(v => fmtAmPm(v.time)).filter(Boolean).join(", ");
   const text = `안녕하세요?\n${agency ? agency + " 입니다.\n" : ""}고객님의 방문 예약을 알려 드립니다.\n${when}${times ? " " + times : ""} 입니다.\n혹시 방문 일정에 변경이 있다면 알려 주세요^^\n즐거운 마음으로 뵙겠습니다.`;
   const sep = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent) ? "&" : "?";
   return `sms:${digits}${sep}body=${encodeURIComponent(text)}`;
@@ -743,10 +743,10 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
   const { label, title } = itemText(item);
   let lead = "", done = false;
   if (item.schedule) {
-    lead = item.schedule.time || "";
+    lead = fmtAmPm(item.schedule.time);
     done = item.schedule.status === "done";
   } else if (item.property && item.propertyKind) {
-    lead = item.time || "";   // 계약일에 시간을 넣었으면 목록에도 그 시간이 보인다
+    lead = fmtAmPm(item.time);   // 계약일에 시간을 넣었으면 목록에도 그 시간이 보인다
   }
   if (!lead) {
     const dd = dDay(item.date);
@@ -765,7 +765,9 @@ function CompactRow({ item, linked, onOpenProperty }: { item: UnifiedItem; linke
   return (
     <div className={`px-3 py-2 rounded-xl border bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors ${done ? "opacity-50" : ""}`}>
     <div className="flex items-center gap-2.5">
-      <span className="w-11 shrink-0 text-center text-[12px] font-bold tabular-nums text-gray-700 dark:text-gray-200">{lead || "—"}</span>
+      <span className="w-11 shrink-0 text-center text-[12px] font-bold tabular-nums text-gray-700 dark:text-gray-200">{/^(오전|오후) /.test(lead)
+        ? <span className="flex flex-col items-center leading-tight whitespace-nowrap"><span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{lead.slice(0, 2)}</span><span>{lead.slice(3)}</span></span>
+        : (lead || "—")}</span>
       <span className="w-[3px] h-4 rounded-sm shrink-0" style={{ background: bar }} />
       <span className={`w-12 shrink-0 text-center text-[11px] leading-tight font-light px-0.5 py-0.5 rounded-full whitespace-nowrap ${SOURCE_CELL_CLASSES[item.schedule?.scheduleType === "기타" ? "etc" : item.source]}`}>{label}</span>
       <span className="flex-1 min-w-0 line-clamp-2 break-words text-[13px] leading-snug text-gray-800 dark:text-gray-100">{title}</span>

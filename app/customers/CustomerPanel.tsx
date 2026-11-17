@@ -10,6 +10,7 @@ import { type Customer, type CustomerStatus, type CustomerEvent, SIDE_LABELS, in
 import type { Schedule } from "@/lib/schedules-db";
 import SideDrawer from "@/app/components/SideDrawer";
 import MemoText from "@/app/components/MemoText";
+import { fmtAmPm } from "@/app/properties/helpers";
 
 const STATUS_ACCENT: Record<CustomerStatus, string> = {
   active: "#2383E2", matched: "#EF9F27", closed: "#1D9E75", lost: "#888780",
@@ -158,7 +159,7 @@ export default function CustomerPanel({ customer: c, onClose, onEdit, onChangeSt
                 <div className="space-y-0.5">
                   {visits.map(v => (
                     <div key={v.id} className="break-all">
-                      <b className="whitespace-nowrap">{v.date.slice(5).replace("-", "/")} {v.time}</b>
+                      <b className="whitespace-nowrap">{v.date.slice(5).replace("-", "/")} {fmtAmPm(v.time)}</b>
                       {v.propertyAddress && <> · {v.propertyAddress}</>}
                       {v.status === "done" && <span className="ml-1 text-gray-400 whitespace-nowrap">(완료)</span>}
                     </div>
